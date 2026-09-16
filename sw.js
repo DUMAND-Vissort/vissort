@@ -1,13 +1,15 @@
-const CACHE_VERSION = 'vissort-v7';
+const CACHE_VERSION = 'vissort-v8';
 const CACHE_STATIC  = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
+  '/admin.html',
   '/user.html',
   '/app.js',
   '/user.js',
+  '/voice.js',
 ];
 
 self.addEventListener('install', (event) => {
