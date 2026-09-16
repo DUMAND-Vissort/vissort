@@ -29,7 +29,7 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 
 .scenes{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media (max-width:900px){.scenes{grid-template-columns:1fr}}
-.scene-wrap{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:1/1;background:#e8e0d0}
+.scene-wrap{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:1/1}
 .scene-wrap svg{display:block;width:100%;height:100%}
 .scene-label{position:absolute;top:9px;left:9px;padding:4px 11px;background:rgba(0,0,0,.75);color:#fff;font-size:11px;border-radius:5px;font-weight:600;letter-spacing:.3px;z-index:5}
 .scene-wrap.right .scene-label{background:rgba(99,102,241,.9)}
@@ -63,7 +63,8 @@ main{padding:20px;max-width:1500px;margin:0 auto}
     <div class="control">V <input type="number" id="inp-v" value="1.0" min="0.1" max="2.0" step="0.1"></div>
     <div class="control">м <input type="number" id="inp-dist" value="1.0" min="0.3" max="10" step="0.1"></div>
     <div class="control">PPI <input type="number" id="inp-ppi" value="96" min="50" max="800" step="1"></div>
-    <div class="control">Фон <input type="color" id="inp-bg" value="#e8e0d0"></div>
+    <div class="control">Фон L <input type="color" id="inp-bg-l" value="#e8e0d0"></div>
+    <div class="control">Фон R <input type="color" id="inp-bg-r" value="#e8e0d0"></div>
     <span class="info-chip">Отличие: <b id="info-mm">—</b> мм / <b id="info-px">—</b> px</span>
     <button class="btn btn-primary" id="btn-reset">⟳ Заново</button>
   </div>
@@ -109,7 +110,6 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 <script>
 'use strict';
 
-// ==================== ФОРМУЛЫ ====================
 function acuityToSizeMm(a, d){
   const dd = (d && d > 0) ? d : 1;
   const V = Math.max(0.01, a || 1.0);
@@ -122,114 +122,89 @@ function acuityToSizePx(a, d, ppi){
   return Math.round(Math.max(1, Math.min(3000, p / dpr)));
 }
 
-// ==================== СОСТОЯНИЕ ====================
 const VIEW_W = 1024, VIEW_H = 1024;
-const IMG_SRC = 'wolves.png';        // ← ИМЯ ФАЙЛА КАРТИНКИ
+const IMG_SRC = 'wolves.png';
 const INK = '#0a0a0a';
 
 let currentAcuity = 1.0;
 let currentDistance = 1.0;
 let currentPPI = 96;
-let bgColor = '#e8e0d0';
+let bgLeft  = '#e8e0d0';
+let bgRight = '#e8e0d0';
 let foundCount = 0, missCount = 0;
 let startTime = 0, timerInterval = null, elapsed = 0;
-let S = 8;   // размер отличия в единицах viewBox
+let S = 8;
 
-// ==================== 10 ОТЛИЧИЙ ====================
-// Каждое отличие — маленький штрих поверх картинки.
-// Правишь X и Y, если промахнулся.
-// type: 'dot' | 'line' | 'cross' | 'circle'
-// size множитель: 1 = базовый размер (S)
 const DIFF_POINTS = [
-  { key: 'd01', type: 'dot',    x: 400, y: 530, k: 0.6 },   // точка на носу центрального волка
-  { key: 'd02', type: 'line',   x: 340, y: 560, k: 2.5, a: 30 },  // чёрточка на щеке
-  { key: 'd03', type: 'cross',  x: 620, y: 130, k: 1.0 },   // звёздочка рядом с луной
-  { key: 'd04', type: 'line',   x: 180, y: 300, k: 2.0, a: -60 }, // иголка на левой ёлке
-  { key: 'd05', type: 'dot',    x: 640, y: 500, k: 0.6 },   // точка на ухе правого волка
-  { key: 'd06', type: 'line',   x: 350, y: 620, k: 2.5, a: 75 }, // чёрточка на шее
-  { key: 'd07', type: 'circle', x: 650, y: 750, k: 0.8 },   // кружок у хвоста
-  { key: 'd08', type: 'dot',    x: 130, y: 780, k: 0.6 },   // ягодка на кустике
-  { key: 'd09', type: 'cross',  x: 220, y: 560, k: 0.9 },   // крестик у левого волка
-  { key: 'd10', type: 'line',   x: 500, y: 850, k: 2.0, a: 90 }  // травинка внизу
+  { key: 'd01', type: 'dot',    x: 400, y: 530, k: 0.6 },
+  { key: 'd02', type: 'line',   x: 340, y: 560, k: 2.5, a: 30 },
+  { key: 'd03', type: 'cross',  x: 620, y: 130, k: 1.0 },
+  { key: 'd04', type: 'line',   x: 180, y: 300, k: 2.0, a: -60 },
+  { key: 'd05', type: 'dot',    x: 640, y: 500, k: 0.6 },
+  { key: 'd06', type: 'line',   x: 350, y: 620, k: 2.5, a: 75 },
+  { key: 'd07', type: 'circle', x: 650, y: 750, k: 0.8 },
+  { key: 'd08', type: 'dot',    x: 130, y: 780, k: 0.6 },
+  { key: 'd09', type: 'cross',  x: 220, y: 560, k: 0.9 },
+  { key: 'd10', type: 'line',   x: 500, y: 850, k: 2.0, a: 90 }
 ];
 
-// ==================== РИСОВАНИЕ ОТЛИЧИЯ ====================
 function drawDiff(d){
   const sz = S * d.k;
   const x = d.x, y = d.y;
-  if (d.type === 'dot'){
-    return `<circle cx="${x}" cy="${y}" r="${sz}" fill="${INK}"/>`;
-  }
-  if (d.type === 'circle'){
-    return `<circle cx="${x}" cy="${y}" r="${sz}" stroke="${INK}" fill="none" stroke-width="2"/>`;
-  }
+  if (d.type === 'dot')    return `<circle cx="${x}" cy="${y}" r="${sz}" fill="${INK}"/>`;
+  if (d.type === 'circle') return `<circle cx="${x}" cy="${y}" r="${sz}" stroke="${INK}" fill="none" stroke-width="2"/>`;
   if (d.type === 'line'){
     const a = (d.a || 0) * Math.PI / 180;
-    const x1 = x - Math.cos(a) * sz;
-    const y1 = y - Math.sin(a) * sz;
-    const x2 = x + Math.cos(a) * sz;
-    const y2 = y + Math.sin(a) * sz;
+    const x1 = x - Math.cos(a) * sz, y1 = y - Math.sin(a) * sz;
+    const x2 = x + Math.cos(a) * sz, y2 = y + Math.sin(a) * sz;
     return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`;
   }
   if (d.type === 'cross'){
-    const a = sz;
-    return `
-      <line x1="${x - a}" y1="${y}" x2="${x + a}" y2="${y}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
-      <line x1="${x}" y1="${y - a}" x2="${x}" y2="${y + a}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
-    `;
+    return `<line x1="${x - sz}" y1="${y}" x2="${x + sz}" y2="${y}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="${x}" y1="${y - sz}" x2="${x}" y2="${y + sz}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`;
   }
   return '';
 }
 
-// ==================== СБОРКА СЦЕНЫ ====================
 function buildScene(isRight, S){
   const p = [];
+  const bg = isRight ? bgRight : bgLeft;
 
-  // Фон (за пределами картинки, если пропорции не совпадают)
-  p.push(`<rect width="${VIEW_W}" height="${VIEW_H}" fill="${bgColor}"/>`);
+  // Фон — цветная заливка
+  p.push(`<rect width="${VIEW_W}" height="${VIEW_H}" fill="${bg}"/>`);
 
-  // Картинка-основа
-  p.push(`<image href="${IMG_SRC}" xlink:href="${IMG_SRC}" x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" preserveAspectRatio="xMidYMid meet"/>`);
+  // Картинка поверх фона в режиме умножения (белое пропускает фон, чёрное остаётся)
+  p.push(`<image href="${IMG_SRC}" xlink:href="${IMG_SRC}" x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" preserveAspectRatio="xMidYMid meet" style="mix-blend-mode:multiply;"/>`);
 
   if (isRight){
-    // 10 отличий
     DIFF_POINTS.forEach(d => p.push(drawDiff(d)));
-
-    // Клик-зоны
     const hr = Math.min(60, Math.max(14, S * 1.8));
     DIFF_POINTS.forEach(d => {
       p.push(`<circle cx="${d.x}" cy="${d.y}" r="${hr}" class="diff-zone" data-diff="${d.key}"/>`);
       p.push(`<circle cx="${d.x}" cy="${d.y}" r="${hr * 0.9}" class="diff-marker" data-marker="${d.key}"/>`);
     });
   }
-
   return p.join('');
 }
 
-// ==================== РЕНДЕР ====================
 const sceneLeft  = document.getElementById('scene-left');
 const sceneRight = document.getElementById('scene-right');
 
 function render(){
   sceneLeft.innerHTML  = buildScene(false, S);
   sceneRight.innerHTML = buildScene(true,  S);
-  sceneRight.querySelectorAll('.diff-zone').forEach(z => {
-    z.addEventListener('click', handleDiffClick);
-  });
+  sceneRight.querySelectorAll('.diff-zone').forEach(z => z.addEventListener('click', handleDiffClick));
   updateInfoChip();
 }
 
-// ==================== КЛИК ====================
 function handleDiffClick(e){
   e.stopPropagation();
   const z = e.currentTarget;
   if (z.dataset.found === '1') return;
   z.dataset.found = '1';
   z.classList.add('diff-found');
-
   const marker = sceneRight.querySelector(`.diff-marker[data-marker="${z.dataset.diff}"]`);
   if (marker) marker.classList.add('diff-found');
-
   foundCount++;
   document.getElementById('stat-found').textContent = foundCount;
   if (foundCount >= 10) setTimeout(showWin, 300);
@@ -251,7 +226,6 @@ sceneRight.addEventListener('click', (e) => {
   setTimeout(() => f.remove(), 400);
 });
 
-// ==================== ТАЙМЕР ====================
 function startTimer(){
   startTime = Date.now();
   elapsed = 0;
@@ -264,13 +238,11 @@ function startTimer(){
   }, 250);
 }
 
-// ==================== ИНФО-ЧИП ====================
 function updateInfoChip(){
   document.getElementById('info-mm').textContent = acuityToSizeMm(currentAcuity, currentDistance).toFixed(2);
   document.getElementById('info-px').textContent = acuityToSizePx(currentAcuity, currentDistance, currentPPI);
 }
 
-// ==================== ПЕРЕСЧЁТ РАЗМЕРА ====================
 function recalcDiffSize(){
   const px = acuityToSizePx(currentAcuity, currentDistance, currentPPI);
   const rect = sceneRight.getBoundingClientRect();
@@ -279,25 +251,25 @@ function recalcDiffSize(){
   S = Math.max(4, Math.min(60, px * scale));
 }
 
-// ==================== НАСТРОЙКИ ====================
 function applySettings(){
   currentAcuity   = Math.max(0.1, Math.min(2.0, parseFloat(document.getElementById('inp-v').value) || 1.0));
   currentDistance = Math.max(0.3, Math.min(10,  parseFloat(document.getElementById('inp-dist').value) || 1.0));
   currentPPI      = Math.max(50,  Math.min(800, parseInt(document.getElementById('inp-ppi').value) || 96));
-  bgColor = document.getElementById('inp-bg').value;
+  bgLeft  = document.getElementById('inp-bg-l').value;
+  bgRight = document.getElementById('inp-bg-r').value;
 
   const url = new URL(location.href);
   url.searchParams.set('v', currentAcuity.toFixed(1));
   url.searchParams.set('d', currentDistance.toFixed(1));
   url.searchParams.set('ppi', currentPPI);
-  url.searchParams.set('bg', bgColor.replace('#',''));
+  url.searchParams.set('bgl', bgLeft.replace('#',''));
+  url.searchParams.set('bgr', bgRight.replace('#',''));
   history.replaceState(null, '', url);
 
   recalcDiffSize();
   render();
 }
 
-// ==================== РЕСТАРТ ====================
 function resetGame(){
   foundCount = 0; missCount = 0;
   document.getElementById('stat-found').textContent = '0';
@@ -309,7 +281,6 @@ function resetGame(){
   startTimer();
 }
 
-// ==================== ПОБЕДА ====================
 function showWin(){
   if (timerInterval) clearInterval(timerInterval);
   const m = Math.floor(elapsed / 60);
@@ -320,20 +291,21 @@ function showWin(){
   document.getElementById('win-overlay').classList.add('visible');
 }
 
-// ==================== INIT ====================
 function init(){
   const p = new URLSearchParams(location.search);
   if (p.has('v'))   currentAcuity   = parseFloat(p.get('v'))   || 1.0;
   if (p.has('d'))   currentDistance = parseFloat(p.get('d'))   || 1.0;
   if (p.has('ppi')) currentPPI      = parseInt(p.get('ppi'))   || 96;
-  if (p.has('bg'))  bgColor = '#' + p.get('bg');
+  if (p.has('bgl')) bgLeft  = '#' + p.get('bgl');
+  if (p.has('bgr')) bgRight = '#' + p.get('bgr');
 
   document.getElementById('inp-v').value = currentAcuity;
   document.getElementById('inp-dist').value = currentDistance;
   document.getElementById('inp-ppi').value = currentPPI;
-  document.getElementById('inp-bg').value = bgColor;
+  document.getElementById('inp-bg-l').value = bgLeft;
+  document.getElementById('inp-bg-r').value = bgRight;
 
-  ['inp-v','inp-dist','inp-ppi','inp-bg'].forEach(id => {
+  ['inp-v','inp-dist','inp-ppi','inp-bg-l','inp-bg-r'].forEach(id => {
     document.getElementById(id).addEventListener('change', applySettings);
   });
   document.getElementById('btn-reset').addEventListener('click', resetGame);
