@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vissort — Тренировка</title>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--hdr-h:52px;--btn-h:32px;--gap:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0b0b0f;color:#e5e7eb;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:var(--gap);padding:6px 12px;background:#14141b;border-bottom:1px solid #2a2a35;height:var(--hdr-h);min-height:var(--hdr-h);z-index:100;flex-wrap:nowrap;overflow:hidden}
+.hdr-spacer{flex:1;min-width:8px}
+.chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;background:#1e1e28;font-size:12px;color:#9ca3af;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto;cursor:pointer}
+.chip b{color:#fff;margin-left:4px}
+#hdr-scenario{color:#e5e7eb;font-weight:600}
+.counters{display:flex;gap:6px;flex-wrap:nowrap;flex:0 0 auto}
+.counter{padding:4px 10px;border-radius:6px;background:#1e1e28;font-size:12px;color:#9ca3af;white-space:nowrap}
+.counter b{color:#fff;margin-left:4px;font-weight:600}
+.btn{height:var(--btn-h);padding:0 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:#0ea5e9}
+.btn-success{background:#10b981}
+.btn-warn{background:#eab308;color:#111}
+.btn-danger{background:#dc2626}
+.btn-ghost{background:transparent;border:1px solid #3f3f46;color:#e5e7eb}
+main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
+#stim-display{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
+#stim{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0}
+#reading-viewport{display:none;position:absolute;inset:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-behavior:smooth;z-index:10;user-select:text}
+#reading-viewport::-webkit-scrollbar{display:none}
+#reading-content{height:100%;width:100%;box-sizing:border-box;padding:30px 50px 140px;font-size:24px;line-height:1.5;column-fill:auto;word-break:keep-all;overflow-wrap:normal;hyphens:none}
+#reading-content p{margin:0 0 1em 0}
+#reading-toolbar{display:none;position:absolute;bottom:0;left:0;right:0;padding:10px 16px;background:rgba(15,15,20,.95);border-top:1px solid #2a2a35;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;z-index:25}
+#reading-page-info{background:#1e1e28;padding:6px 14px;border-radius:6px;font-size:13px;min-width:100px;text-align:center}
+#physio-indicator{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff;font-size:13px;z-index:30;display:none}
+#cam-indicator{position:absolute;top:12px;right:12px;padding:6px 14px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff;font-size:13px;z-index:30;display:none}
+#response-buttons{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:none;gap:12px;z-index:20}
+.btn-resp{width:64px;height:64px;border-radius:12px;background:#1e1e28;border:1px solid #3f3f46;color:#fff;font-size:28px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.btn-resp:hover{background:#2d2d3a}
+.btn-resp.wide{width:auto;padding:0 24px;font-size:20px}
+#status-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;background:#0b0b0f;z-index:50}
+#status-overlay.hidden{display:none}
+#status-overlay .box{max-width:520px;width:100%}
+#status-overlay h2{font-size:20px;margin-bottom:10px}
+#status-overlay p{color:#9ca3af;font-size:14px;line-height:1.5}
+#status-overlay .btn{margin-top:16px}
+.scenario-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#1e1e28;border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid transparent}
+.scenario-item:hover{background:#2d2d3a}
+.scenario-item.active{border-color:#0ea5e9}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);align-items:center;justify-content:center;z-index:1500}
+.modal.open{display:flex}
+.modal-content{background:#14141b;padding:22px;border-radius:10px;width:460px;max-width:92vw;max-height:88vh;overflow:auto;border:1px solid #2a2a35}
+.modal-content h3{margin-bottom:12px;font-size:16px}
+.modal-content label{display:block;font-size:12px;color:#9ca3af;margin:8px 0 4px}
+.modal-content input{width:100%;padding:8px 10px;background:#0b0b0f;border:1px solid #2a2a35;border-radius:6px;color:#fff;font-size:14px;font-family:inherit}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.hidden{display:none!important}
+.res-table{width:100%;border-collapse:collapse;font-size:12px}
+.res-table th{text-align:left;padding:6px 4px;color:#9ca3af;border-bottom:1px solid #2a2a35;font-weight:600}
+.res-table td{padding:6px 4px;border-bottom:1px solid #1e1e28}
+@media (max-width:720px){
+  :root{--hdr-h:46px;--btn-h:28px}
+  .counter{font-size:11px;padding:3px 8px}
+  .btn{font-size:12px;padding:0 10px}
+  #hdr-scenario{max-width:120px}
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="chip" id="hdr-scenario" title="Выбрать сценарий">—</span>
+  <div class="counters">
+    <span class="counter">Серия <b id="cnt-series-progress">0/0</b></span>
+    <span class="counter">V <b id="cnt-acuity">—</b></span>
+    <span class="counter">✓ <b id="cnt-correct">0</b></span>
+    <span class="counter">✗ <b id="cnt-incorrect">0</b></span>
+    <span class="counter">∅ <b id="cnt-noanswer">0</b></span>
+  </div>
+  <div class="hdr-spacer"></div>
+  <button class="btn btn-ghost" id="btn-history">📊 История</button>
+  <button class="btn btn-primary" id="btn-player">▶ Начать</button>
+  <button class="btn btn-warn" id="btn-player-pause" disabled>⏸</button>
+  <button class="btn btn-danger" id="btn-player-stop" disabled>⏹</button>
+  <span class="chip" id="hdr-user">—</span>
+  <button class="btn btn-ghost" id="btn-logout">Выйти</button>
+</header>
+
+<main>
+  <div id="stim-display">
+    <div id="stim"></div>
+    <div id="reading-viewport"><div id="reading-content"></div></div>
+    <div id="physio-indicator"></div>
+    <div id="cam-indicator"></div>
+    <div id="reading-toolbar">
+      <button class="btn btn-ghost" id="reading-prev">◀ Назад</button>
+      <button class="btn btn-warn" id="reading-play-pause">⏸ Пауза</button>
+      <button class="btn btn-ghost" id="reading-next">Вперёд ▶</button>
+      <span id="reading-page-info">Стр. 1 / 1</span>
+      <button class="btn btn-danger" id="reading-not-see">🔻 Не вижу</button>
+      <button class="btn btn-success" id="reading-see-well">🔺 Вижу хорошо</button>
+      <button class="btn btn-primary" id="reading-finish">⏹ Закончить</button>
+    </div>
+    <div id="response-buttons">
+      <button class="btn-resp" data-dir="вверх">▲</button>
+      <button class="btn-resp" data-dir="вниз">▼</button>
+      <button class="btn-resp" data-dir="влево">◀</button>
+      <button class="btn-resp" data-dir="вправо">▶</button>
+      <button class="btn-resp wide" data-answer="да" style="display:none;">Да</button>
+      <button class="btn-resp wide" data-answer="нет" style="display:none;">Нет</button>
+    </div>
+  </div>
+
+  <div id="status-overlay">
+    <div class="box">
+      <h2 id="status-title">Загрузка…</h2>
+      <p id="status-text">Проверяем авторизацию.</p>
+      <button class="btn btn-primary hidden" id="status-action">Войти</button>
+    </div>
+  </div>
+</main>
+
+<div class="modal" id="scenario-modal">
+  <div class="modal-content">
+    <h3>Выберите сценарий</h3>
+    <div id="scenario-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="scenario-close">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="history-modal">
+  <div class="modal-content" style="width:640px">
+    <h3>Мои результаты</h3>
+    <div id="history-body" style="font-size:13px;color:#9ca3af">Загрузка…</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="history-close">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="auth-modal">
+  <div class="modal-content">
+    <h3 id="auth-title">Вход</h3>
+    <label>Email</label>
+    <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
+    <label>Пароль</label>
+    <input type="password" id="auth-password" autocomplete="current-password">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="auth-toggle">Регистрация</button>
+      <button class="btn btn-primary" id="auth-submit">Войти</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="pause-modal">
+  <div class="modal-content" style="text-align:center">
+    <h3>Пауза</h3>
+    <p style="color:#9ca3af;font-size:13px;margin-bottom:14px">Тренировка приостановлена.</p>
+    <button class="btn btn-success" id="pause-continue">▶ Продолжить</button>
+    <button class="btn btn-danger" id="pause-exit">✕ Выйти</button>
+  </div>
+</div>
+
+<script src="voice.js" defer></script>
+<script src="user.js" defer></script>
+</body>
+</html>

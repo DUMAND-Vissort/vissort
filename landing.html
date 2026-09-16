@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vissort — Онлайн-тренировка зрения</title>
+<meta name="description" content="Онлайн-платформа для тренировки остроты зрения, аккомодации и периферийного зрения. Персональные программы, контроль дистанции через камеру, чтение с физиологическим фоном.">
+<style>
+:root{
+  --bg:#0b0b12;
+  --bg-2:#121220;
+  --bg-3:#1a1a2e;
+  --line:#252540;
+  --txt:#e8e8f0;
+  --muted:#9494a8;
+  --accent:#6366f1;
+  --accent-2:#8b5cf6;
+  --green:#10b981;
+  --orange:#f97316;
+  --pink:#ec4899;
+  --cyan:#06b6d4;
+  --r:14px;
+  --shadow:0 20px 60px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,Tahoma,sans-serif;
+  background:var(--bg);color:var(--txt);line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+img,svg{max-width:100%;display:block}
+.container{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(11,11,18,.85);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.3px}
+.logo-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:grid;place-items:center;font-size:17px;
+  box-shadow:0 4px 16px rgba(99,102,241,.5);
+}
+.nav-links{display:flex;gap:26px;font-size:14px;color:var(--muted)}
+.nav-links a:hover{color:var(--txt)}
+.nav-cta{display:flex;gap:10px;align-items:center}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border-radius:10px;border:none;cursor:pointer;
+  font-size:14px;font-weight:600;font-family:inherit;transition:.18s;
+  white-space:nowrap;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;box-shadow:0 8px 24px rgba(99,102,241,.35);
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(99,102,241,.5)}
+.btn-ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--bg-3);border-color:#3a3a5a}
+.btn-lg{padding:14px 26px;font-size:15px}
+
+/* HERO */
+.hero{padding:80px 0 60px;position:relative;overflow:hidden}
+.hero::before{
+  content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:900px;height:900px;border-radius:50%;
+  background:radial-gradient(circle,rgba(99,102,241,.18),transparent 60%);
+  pointer-events:none;
+}
+.hero-inner{position:relative;display:grid;grid-template-columns:1.15fr 1fr;gap:60px;align-items:center}
+.tag{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;background:rgba(99,102,241,.12);
+  border:1px solid rgba(99,102,241,.35);border-radius:999px;
+  font-size:12px;font-weight:600;color:#a5b4fc;letter-spacing:.3px;
+}
+.tag .dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 10px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+h1{font-size:clamp(30px,4.5vw,52px);line-height:1.1;letter-spacing:-1px;margin:20px 0 18px;font-weight:800}
+h1 .grad{background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:17px;color:var(--muted);max-width:520px;margin-bottom:30px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.hero-stats{display:flex;gap:32px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.hero-stats b{display:block;font-size:22px;color:var(--txt);font-weight:800;letter-spacing:-.5px;margin-bottom:2px}
+
+/* HERO VISUAL */
+.hero-visual{position:relative;aspect-ratio:1;display:grid;place-items:center}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(2px);
+  animation:float 8s ease-in-out infinite;
+}
+.orb-1{width:240px;height:240px;background:radial-gradient(circle at 30% 30%,#8b5cf6,#4c1d95);top:10%;left:8%;animation-delay:0s}
+.orb-2{width:180px;height:180px;background:radial-gradient(circle at 30% 30%,#06b6d4,#0e7490);bottom:12%;right:10%;animation-delay:-2s}
+.orb-3{width:120px;height:120px;background:radial-gradient(circle at 30% 30%,#ec4899,#831843);top:35%;right:22%;animation-delay:-4s}
+.orb-4{width:90px;height:90px;background:radial-gradient(circle at 30% 30%,#10b981,#065f46);bottom:25%;left:12%;animation-delay:-6s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+.eye{
+  position:relative;z-index:2;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#fff 0%,#e0e0f0 45%,#6366f1 70%,#1e1b4b 100%);
+  box-shadow:0 0 80px rgba(99,102,241,.6),inset 0 0 40px rgba(0,0,0,.4);
+  display:grid;place-items:center;
+}
+.eye::after{
+  content:'';width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle at 40% 40%,#0b0b12,#000);
+  box-shadow:inset 0 0 12px rgba(255,255,255,.4);
+}
+
+/* SECTIONS */
+section{padding:80px 0}
+.section-head{text-align:center;max-width:680px;margin:0 auto 56px}
+.section-head h2{font-size:clamp(26px,3.2vw,38px);letter-spacing:-.6px;margin-bottom:14px;font-weight:800}
+.section-head p{color:var(--muted);font-size:16px}
+
+/* FEATURES */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.feature{
+  padding:26px;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r);transition:.2s;
+}
+.feature:hover{transform:translateY(-4px);border-color:#3a3a5a;background:var(--bg-3)}
+.f-icon{
+  width:48px;height:48px;border-radius:12px;display:grid;place-items:center;
+  font-size:24px;margin-bottom:16px;
+}
+.f-icon.i1{background:rgba(99,102,241,.15);color:#a5b4fc}
+.f-icon.i2{background:rgba(16,185,129,.15);color:#6ee7b7}
+.f-icon.i3{background:rgba(236,72,153,.15);color:#f9a8d4}
+.f-icon.i4{background:rgba(249,115,22,.15);color:#fdba74}
+.f-icon.i5{background:rgba(6,182,212,.15);color:#67e8f9}
+.f-icon.i6{background:rgba(139,92,246,.15);color:#c4b5fd}
+.feature h3{font-size:16px;margin-bottom:8px;font-weight:700}
+.feature p{color:var(--muted);font-size:13.5px}
+
+/* PROGRAMS */
+.programs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.program{
+  padding:24px;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r);position:relative;overflow:hidden;
+}
+.program::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--pc,var(--accent));
+}
+.program.p1{--pc:#6366f1}
+.program.p2{--pc:#f97316}
+.program.p3{--pc:#06b6d4}
+.program.p4{--pc:#ec4899}
+.program.p5{--pc:#10b981}
+.program.p6{--pc:#8b5cf6}
+.program .emoji{font-size:32px;margin-bottom:14px}
+.program h3{font-size:15px;margin-bottom:8px;font-weight:700}
+.program p{color:var(--muted);font-size:13px}
+
+/* HOW */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+.step{padding:24px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--line);position:relative}
+.step-num{
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  font-weight:800;font-size:15px;margin-bottom:16px;
+}
+.step h3{font-size:15px;margin-bottom:8px;font-weight:700}
+.step p{color:var(--muted);font-size:13.5px}
+
+/* PRICING */
+.pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;align-items:start}
+.plan{
+  padding:32px 28px;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r);position:relative;transition:.2s;
+}
+.plan:hover{transform:translateY(-3px);border-color:#3a3a5a}
+.plan.featured{
+  border-color:var(--accent);
+  background:linear-gradient(180deg,rgba(99,102,241,.08),var(--bg-2) 40%);
+  box-shadow:0 20px 60px rgba(99,102,241,.25);
+}
+.plan.featured::before{
+  content:'Популярный';position:absolute;top:-12px;right:24px;
+  padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;letter-spacing:.3px;
+}
+.plan-name{font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.plan-price{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.plan-price b{font-size:38px;font-weight:800;letter-spacing:-1px}
+.plan-price span{color:var(--muted);font-size:14px}
+.plan-desc{color:var(--muted);font-size:13.5px;margin-bottom:22px;min-height:40px}
+.plan-list{list-style:none;margin-bottom:26px}
+.plan-list li{
+  padding:9px 0;font-size:13.5px;display:flex;gap:10px;align-items:flex-start;
+  border-bottom:1px solid rgba(37,37,64,.6);
+}
+.plan-list li:last-child{border-bottom:none}
+.check{
+  flex-shrink:0;width:18px;height:18px;border-radius:50%;
+  background:rgba(16,185,129,.15);color:var(--green);
+  display:grid;place-items:center;font-size:11px;font-weight:800;margin-top:2px;
+}
+.plan .btn{width:100%}
+
+/* FAQ */
+.faq{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+details{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:12px;
+  padding:18px 22px;transition:.2s;
+}
+details[open]{border-color:#3a3a5a;background:var(--bg-3)}
+details summary{
+  cursor:pointer;font-weight:600;font-size:15px;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+}
+details summary::-webkit-details-marker{display:none}
+details summary::after{
+  content:'+';font-size:20px;color:var(--muted);
+  transition:.25s;flex-shrink:0;
+}
+details[open] summary::after{content:'−';color:var(--accent)}
+details p{color:var(--muted);font-size:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+
+/* CTA */
+.cta{
+  text-align:center;padding:70px 40px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.08));
+  border:1px solid rgba(99,102,241,.35);
+  position:relative;overflow:hidden;
+}
+.cta h2{font-size:clamp(24px,3vw,34px);letter-spacing:-.5px;margin-bottom:14px;font-weight:800}
+.cta p{color:var(--muted);max-width:520px;margin:0 auto 26px;font-size:16px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--line);padding:40px 0 30px;background:var(--bg-2);font-size:13px;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.foot-links{display:flex;gap:22px;flex-wrap:wrap}
+.foot-links a:hover{color:var(--txt)}
+
+/* RESPONSIVE */
+@media (max-width:900px){
+  .hero-inner{grid-template-columns:1fr;gap:40px;text-align:center}
+  .hero-actions{justify-content:center}
+  .hero-stats{justify-content:center}
+  .lead{margin-left:auto;margin-right:auto}
+  .nav-links{display:none}
+}
+@media (max-width:520px){
+  section{padding:60px 0}
+  .hero{padding:50px 0 40px}
+  .cta{padding:50px 24px}
+  .plan{padding:26px 22px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <a class="logo" href="#top">
+      <span class="logo-mark">👁</span>
+      Vissort
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Возможности</a>
+      <a href="#programs">Программы</a>
+      <a href="#how">Как это работает</a>
+      <a href="#pricing">Тарифы</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="#">Войти</a>
+      <a class="btn btn-primary" href="#pricing">Начать</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-inner">
+    <div>
+      <span class="tag"><span class="dot"></span> Онлайн · без оборудования</span>
+      <h1>Тренируйте зрение <span class="grad">каждый день</span> — 10 минут достаточно</h1>
+      <p class="lead">
+        Персональные программы для остроты зрения, аккомодации и периферийного восприятия.
+        Контроль дистанции через камеру, адаптивный подбор сложности и подробная статистика прогресса.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#pricing">Попробовать бесплатно</a>
+        <a class="btn btn-ghost btn-lg" href="#how">Как это работает</a>
+      </div>
+      <div class="hero-stats">
+        <div><b>12 400+</b> активных пользователей</div>
+        <div><b>87%</b> отмечают улучшение</div>
+        <div><b>10 мин</b> в день</div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="orb orb-4"></div>
+      <div class="eye"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-head">
+      <h2>Научный подход к тренировке зрения</h2>
+      <p>Мы объединили классические методики (Сивцев, Ландольт, аккомодационные упражнения) с современными технологиями.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="f-icon i1">🎯</div>
+        <h3>Острота зрения</h3>
+        <p>Стимулы Сивцева и кольца Ландольта с точным расчётом размера в миллиметрах и пикселях под ваш экран.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon i2">📷</div>
+        <h3>Контроль дистанции</h3>
+        <p>Камера следит за расстоянием до экрана. Если вы приблизились или отклонились — приложение подскажет.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon i3">📖</div>
+        <h3>Тренировка чтения</h3>
+        <p>Чтение реальных книг (TXT, FB2, EPUB) с физиологическим фоном и плавной сменой цвета для аккомодации.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon i4">⚖️</div>
+        <h3>Сравнение направлений</h3>
+        <p>Задания на различение пространственных признаков. Тренируют точность и скорость обработки зрительной информации.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon i5">👁️</div>
+        <h3>Периферийное зрение</h3>
+        <p>Динамические точки на периферии поля зрения. Расширяют обзор и снимают зрительное напряжение.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon i6">📊</div>
+        <h3>Статистика прогресса</h3>
+        <p>Графики остроты, реакций, частоты морганий и стабильности дистанции. Всё сохраняется в личном кабинете.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMS -->
+<section id="programs">
+  <div class="container">
+    <div class="section-head">
+      <h2>Программы тренировок</h2>
+      <p>Выберите готовый сценарий или соберите свой в визуальном конструкторе.</p>
+    </div>
+    <div class="programs">
+      <div class="program p1">
+        <div class="emoji">👁️</div>
+        <h3>Базовый курс</h3>
+        <p>Классические упражнения для поддержания остроты зрения. 10 минут в день, 21 день.</p>
+      </div>
+      <div class="program p2">
+        <div class="emoji">⚖️</div>
+        <h3>Аккомодация</h3>
+        <p>Плавные переходы фокуса на разной дистанции. Помогает при спазме аккомодации и усталости.</p>
+      </div>
+      <div class="program p3">
+        <div class="emoji">📖</div>
+        <h3>Чтение+</h3>
+        <p>Чтение книг с адаптивным размером шрифта и физиологическим фоном. 15–30 минут.</p>
+      </div>
+      <div class="program p4">
+        <div class="emoji">🎯</div>
+        <h3>Динамика цвета</h3>
+        <p>Цветовые стимулы с плавной сменой оттенка. Тренируют цветовосприятие и снимают утомление.</p>
+      </div>
+      <div class="program p5">
+        <div class="emoji">🔭</div>
+        <h3>Периферия</h3>
+        <p>Динамические точки на границе поля зрения. Для расширения обзора и снижения напряжения.</p>
+      </div>
+      <div class="program p6">
+        <div class="emoji">🧩</div>
+        <h3>Конструктор</h3>
+        <p>Соберите собственный сценарий: сетки, петли, условия, наследование параметров.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="container">
+    <div class="section-head">
+      <h2>Как это работает</h2>
+      <p>От регистрации до первой тренировки — меньше двух минут.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Калибровка экрана</h3>
+        <p>Один раз измеряете полосу линейкой — система знает точный PPI вашего монитора.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Выбор программы</h3>
+        <p>Готовый курс или свой сценарий. Администратор может назначить персональный план.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Тренировка</h3>
+        <p>10–15 минут ежедневно. Программа адаптирует сложность под ваши результаты.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Прогресс</h3>
+        <p>Смотрите статистику в личном кабинете и делитесь с врачом или тренером.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-head">
+      <h2>Простые и честные тарифы</h2>
+      <p>Первые 7 дней — бесплатно. Отмена в один клик, без вопросов.</p>
+    </div>
+    <div class="pricing">
+
+      <div class="plan">
+        <div class="plan-name">Старт</div>
+        <div class="plan-price"><b>0 ₽</b><span>/ навсегда</span></div>
+        <p class="plan-desc">Для знакомства с платформой и базовых упражнений.</p>
+        <ul class="plan-list">
+          <li><span class="check">✓</span> 1 программа на выбор</li>
+          <li><span class="check">✓</span> Тренировка остроты зрения</li>
+          <li><span class="check">✓</span> Калибровка экрана</li>
+          <li><span class="check">✓</span> История последних 7 дней</li>
+        </ul>
+        <button class="btn btn-ghost">Начать бесплатно</button>
+      </div>
+
+      <div class="plan featured">
+        <div class="plan-name">Профи</div>
+        <div class="plan-price"><b>690 ₽</b><span>/ месяц</span></div>
+        <p class="plan-desc">Полный доступ ко всем программам и функциям.</p>
+        <ul class="plan-list">
+          <li><span class="check">✓</span> Все 6 программ тренировок</li>
+          <li><span class="check">✓</span> Контроль дистанции через камеру</li>
+          <li><span class="check">✓</span> Тренировка чтения (книги FB2/EPUB)</li>
+          <li><span class="check">✓</span> Периферийное зрение и дефокус</li>
+          <li><span class="check">✓</span> Полная статистика и экспорт</li>
+          <li><span class="check">✓</span> Персональные сценарии от тренера</li>
+        </ul>
+        <button class="btn btn-primary">Оформить Профи</button>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Клиника</div>
+        <div class="plan-price"><b>4 900 ₽</b><span>/ месяц</span></div>
+        <p class="plan-desc">Для офтальмологов, клиник и центров восстановления зрения.</p>
+        <ul class="plan-list">
+          <li><span class="check">✓</span> Всё из тарифа Профи</li>
+          <li><span class="check">✓</span> До 50 пациентов</li>
+          <li><span class="check">✓</span> Панель администратора</li>
+          <li><span class="check">✓</span> Назначение индивидуальных программ</li>
+          <li><span class="check">✓</span> Просмотр результатов пациентов</li>
+          <li><span class="check">✓</span> Приоритетная поддержка</li>
+        </ul>
+        <button class="btn btn-ghost">Связаться с нами</button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head">
+      <h2>Частые вопросы</h2>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>Нужно ли специальное оборудование?</summary>
+        <p>Нет. Достаточно компьютера или планшета с камерой и браузером Chrome, Edge, Safari или Firefox. Для функций контроля дистанции нужна веб-камера.</p>
+      </details>
+      <details>
+        <summary>Это заменяет визит к офтальмологу?</summary>
+        <p>Нет. Vissort — это тренажёр, а не медицинская диагностика. При проблемах со зрением обязательно проконсультируйтесь с врачом. Платформа может быть использована как дополнительный инструмент по рекомендации специалиста.</p>
+      </details>
+      <details>
+        <summary>Сколько времени нужно тренироваться?</summary>
+        <p>Оптимально — 10–15 минут в день, 5–6 раз в неделю. Регулярность важнее длительности: короткие ежедневные сессии эффективнее долгих раз в неделю.</p>
+      </details>
+      <details>
+        <summary>Работает ли на телефоне?</summary>
+        <p>Да, платформа адаптирована для мобильных устройств. Однако для полноценного опыта с контролем дистанции и тонкой калибровкой экрана рекомендуем планшет или компьютер.</p>
+      </details>
+      <details>
+        <summary>Можно ли использовать для ребёнка?</summary>
+        <p>Да, начиная с 6–7 лет под присмотром взрослых. Для детей рекомендуем программу «Базовый курс» и сессии по 5–7 минут. Учитывайте, что длительная работа за экраном имеет свои ограничения.</p>
+      </details>
+      <details>
+        <summary>Как отменить подписку?</summary>
+        <p>В личном кабинете в разделе «Подписка» — одна кнопка, без звонков и писем. Доступ сохранится до конца оплаченного периода.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="container">
+    <div class="cta">
+      <h2>Начните тренировать зрение сегодня</h2>
+      <p>7 дней бесплатно. Без привязки карты. Первые результаты заметите через 2–3 недели регулярных занятий.</p>
+      <a class="btn btn-primary btn-lg" href="#pricing">Создать аккаунт</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container foot">
+    <div>© 2026 Vissort. Тренажёр зрения, не является медицинским изделием.</div>
+    <div class="foot-links">
+      <a href="#">О проекте</a>
+      <a href="#">Политика конфиденциальности</a>
+      <a href="#">Условия использования</a>
+      <a href="#">Контакты</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
