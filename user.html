@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0b0b12">
 <title>Vissort — Тренировка</title>
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,13 +23,15 @@ header{display:flex;align-items:center;gap:var(--gap);padding:6px 12px;backgroun
 .counters{display:flex;gap:6px;flex-wrap:nowrap;flex:0 0 auto}
 .counter{padding:4px 10px;border-radius:6px;background:#1e1e28;font-size:12px;color:#9ca3af;white-space:nowrap}
 .counter b{color:#fff;margin-left:4px;font-weight:600}
-.btn{height:var(--btn-h);padding:0 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+.btn{height:var(--btn-h);padding:0 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;text-decoration:none}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-primary{background:#0ea5e9}
 .btn-success{background:#10b981}
 .btn-warn{background:#eab308;color:#111}
 .btn-danger{background:#dc2626}
 .btn-ghost{background:transparent;border:1px solid #3f3f46;color:#e5e7eb}
+.btn-ghost:hover{background:#1e1e28}
+.btn-games{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
 main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
 #stim-display{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
 #stim{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0}
@@ -61,6 +67,11 @@ main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
 .res-table{width:100%;border-collapse:collapse;font-size:12px}
 .res-table th{text-align:left;padding:6px 4px;color:#9ca3af;border-bottom:1px solid #2a2a35;font-weight:600}
 .res-table td{padding:6px 4px;border-bottom:1px solid #1e1e28}
+.games-menu{display:none;position:fixed;top:calc(var(--hdr-h) + 6px);right:12px;background:#14141b;border:1px solid #2a2a35;border-radius:10px;padding:8px;z-index:200;min-width:220px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.games-menu.open{display:block}
+.games-menu a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;color:#e5e7eb;text-decoration:none;font-size:13px}
+.games-menu a:hover{background:#1e1e28}
+.games-menu .g-icon{font-size:20px}
 @media (max-width:720px){
   :root{--hdr-h:46px;--btn-h:28px}
   .counter{font-size:11px;padding:3px 8px}
@@ -80,6 +91,7 @@ main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
     <span class="counter">∅ <b id="cnt-noanswer">0</b></span>
   </div>
   <div class="hdr-spacer"></div>
+  <button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
   <button class="btn btn-ghost" id="btn-history">📊 История</button>
   <button class="btn btn-primary" id="btn-player">▶ Начать</button>
   <button class="btn btn-warn" id="btn-player-pause" disabled>⏸</button>
@@ -87,6 +99,11 @@ main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
   <span class="chip" id="hdr-user">—</span>
   <button class="btn btn-ghost" id="btn-logout">Выйти</button>
 </header>
+
+<div class="games-menu" id="games-menu">
+  <a href="/pyatnashki.html"><span class="g-icon">🔢</span><span>Пятнашки</span></a>
+  <a href="/differences-wolf.html"><span class="g-icon">🐺</span><span>Найди 10 отличий — Волки</span></a>
+</div>
 
 <main>
   <div id="stim-display">
@@ -167,5 +184,24 @@ main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
 
 <script src="voice.js" defer></script>
 <script src="user.js" defer></script>
+<script>
+// ==================== МЕНЮ ИГР ====================
+(function(){
+  'use strict';
+  const btn = document.getElementById('btn-games');
+  const menu = document.getElementById('games-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target) && e.target !== btn) menu.classList.remove('open');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') menu.classList.remove('open');
+  });
+})();
+</script>
 </body>
 </html>
