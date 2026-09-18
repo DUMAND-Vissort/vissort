@@ -60,6 +60,10 @@ let _distanceBaseline = null, _distanceOutOfBoundsSince = 0, _distanceWarningKin
 let _periAnimId = null;
 let _periAnimStart = null;
 
+// --- МОРГАНИЕ ---
+let _blinkTimerId = null;
+let _blinkStateLocal = { tick: 0, current: 'A' };
+
 let blinkEnabled = true;
 let blinkThreshold = 0.21;
 let blinkMinRate = 8;
@@ -143,6 +147,7 @@ const btnEnableCamera = document.getElementById('btn-enable-camera');
 const btnDisableCamera = document.getElementById('btn-disable-camera');
 const btnCalibrate = document.getElementById('btn-calibrate-camera');
 const btnCalibrateScreen = document.getElementById('btn-calibrate-screen');
+const btnScenarioTime = document.getElementById('btn-scenario-time');
 const btnInspector = document.getElementById('btn-inspector');
 const btnSave = document.getElementById('btn-save');
 const btnOpen = document.getElementById('btn-open');
@@ -463,6 +468,152 @@ function applyScreenCalib() {
     modalEl.style.display = 'none';
 }
 
+// ==================== ОЦЕНКА ВРЕМЕНИ СЦЕНАРИЯ ====================
+function estimateScenarioDurationMs(){
+    if (!nodes || nodes.length === 0) return 0;
+    const visited = new Set();
+    let total = 0;
+    const startNode = nodes.find(n => n.isStart === true) || nodes[0];
+    if (!startNode) return 0;
+
+    function nodeDuration(node){
+        const delay1 = node.delay1 || 0;
+        const duration = node.duration || 1000;
+        const delay2 = node.delay2 || 1000;
+        const seriesCount = node.seriesCount || 1;
+        const seriesSize = node.seriesSize || 1;
+
+        if (node.nodeType === 'READING'){
+            return (node.duration || 60000) + (node.delay1 || 0) + (node.delay2 || 0);
+        }
+        if (node.nodeType === 'COMPARE'){
+            return (delay1 + duration + delay2) * seriesCount * seriesSize;
+        }
+        // STIMULUS / DYNAMIC
+        let perNode = (delay1 + duration + delay2) * seriesCount * seriesSize;
+        if (node.singleStimDynamicEnabled){
+            perNode = Math.max(perNode, (delay1 + (node.singleStimDuration || 10000) + delay2) * seriesCount * seriesSize);
+        }
+        if (node.singleBgDynamicEnabled){
+            perNode = Math.max(perNode, (delay1 + (node.singleBgDuration || 10000) + delay2) * seriesCount * seriesSize);
+        }
+        return perNode;
+    }
+
+    function visit(nodeId){
+        if (visited.has(nodeId)) return;
+        visited.add(nodeId);
+        const node = getNode(nodeId);
+        if (!node) return;
+        if (node.isActive === false && node.nodeType !== 'LOGIC_IF') return;
+
+        total += nodeDuration(node);
+
+        connections
+            .filter(c => c.fromId === nodeId && !c.isLoop)
+            .forEach(c => visit(c.toId));
+
+        connections
+            .filter(c => c.fromId === nodeId && c.isLoop && c.toId !== nodeId)
+            .forEach(c => {
+                const lim = c.loopLimit || 1;
+                const target = getNode(c.toId);
+                if (!target) return;
+                total += nodeDuration(target) * lim * 2;
+            });
+    }
+
+    visit(startNode.id);
+    return total;
+}
+
+function formatDurationMs(ms){
+    if (!ms || ms <= 0) return '0 с';
+    const totalSec = Math.round(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h} ч ${m} мин ${s} с`;
+    if (m > 0) return `${m} мин ${s} с`;
+    return `${s} с`;
+}
+
+function showScenarioTimeReport(){
+    const modalEl = document.getElementById('scenario-time-modal');
+    const body = document.getElementById('scenario-time-body');
+    if (!modalEl || !body) return;
+
+    const totalMs = estimateScenarioDurationMs();
+    const nodesCount = nodes.length;
+    const connsCount = connections.length;
+
+    const rows = nodes
+        .filter(n => n.isActive !== false)
+        .map(n => {
+            const name = (n.name || '').replace(/</g, '&lt;');
+            const type = n.nodeType || 'STIMULUS';
+            const d1 = n.delay1 || 0;
+            const dur = n.duration || 1000;
+            const d2 = n.delay2 || 1000;
+            const sc = n.seriesCount || 1;
+            const ss = n.seriesSize || 1;
+            let oneRoundMs;
+            let totalNodeMs;
+            if (type === 'READING'){
+                oneRoundMs = (n.duration || 60000) + d1 + d2;
+                totalNodeMs = oneRoundMs;
+            } else {
+                oneRoundMs = d1 + dur + d2;
+                totalNodeMs = oneRoundMs * sc * ss;
+            }
+            return {
+                name, type, oneRoundMs, totalNodeMs,
+                shows: (type === 'READING') ? 1 : (sc * ss)
+            };
+        });
+
+    let html = `
+        <div style="margin-bottom:10px;">
+            <div>Узлов: <b>${nodesCount}</b> · Связей: <b>${connsCount}</b></div>
+            <div style="font-size:22px;color:#a5b4fc;font-weight:800;margin-top:6px;">
+                ${formatDurationMs(totalMs)}
+            </div>
+            <div style="color:#888;font-size:11px;">${Math.round(totalMs/1000)} секунд · ${Math.round(totalMs/60000*10)/10} минут</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+                <tr style="border-bottom:1px solid #3f3f46;color:#94a3b8;">
+                    <th style="text-align:left;padding:6px 4px;">Узел</th>
+                    <th style="text-align:right;padding:6px 4px;">Показов</th>
+                    <th style="text-align:right;padding:6px 4px;">1 показ</th>
+                    <th style="text-align:right;padding:6px 4px;">Всего</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    rows.forEach(r => {
+        html += `
+            <tr style="border-bottom:1px solid #1e1e24;">
+                <td style="padding:6px 4px;">${r.name}</td>
+                <td style="text-align:right;padding:6px 4px;">${r.shows}</td>
+                <td style="text-align:right;padding:6px 4px;color:#94a3b8;">${formatDurationMs(r.oneRoundMs)}</td>
+                <td style="text-align:right;padding:6px 4px;color:#a5b4fc;font-weight:600;">${formatDurationMs(r.totalNodeMs)}</td>
+            </tr>
+        `;
+    });
+    if (rows.length === 0){
+        html += `<tr><td colspan="4" style="text-align:center;padding:20px;color:#666;">Нет активных узлов</td></tr>`;
+    }
+    html += `</tbody></table>`;
+    html += `<div style="margin-top:12px;font-size:11px;color:#666;line-height:1.5;">
+        Расчёт: delay1 + показ + delay2 × серии × размер серии.<br>
+        Петли учитываются как заход туда-обратно × количество циклов.
+    </div>`;
+
+    body.innerHTML = html;
+    modalEl.style.display = 'flex';
+}
+
 // ==================== ИНДИКАТОРЫ / ПРЕДУПРЕЖДЕНИЯ ====================
 function updateLiveDistanceIndicator() {
     const indicator = document.getElementById('live-distance-indicator');
@@ -488,7 +639,7 @@ function showDistanceWarning(kind) {
     el.textContent = text;
     el.style.background = kind === 'up' ? 'rgba(220,38,38,0.92)' : 'rgba(234,88,12,0.92)';
     el.style.display = 'block';
-    if (window.Voice) window.Voice.say(text, { cancel: true });
+    if (window.Voice) window.Voice.sayKey(kind === 'up' ? 'moveUp' : 'moveBack', { cancel: true });
 }
 function hideDistanceWarning() {
     const el = document.getElementById('distance-warning');
@@ -508,6 +659,51 @@ function evaluateDistanceDeviation() {
     if (dev > distanceToleranceIncreasePct) return 'up';
     if (dev < -distanceToleranceDecreasePct) return 'down';
     return 'ok';
+}
+
+// ==================== МОРГАНИЕ (анимация) ====================
+function startBlinkAnimation(opts){
+    stopBlinkAnimation();
+    if (!opts) return;
+    const target = opts.target || 'stim';
+    const A = opts.colorA || { r: 255, g: 0, b: 0 };
+    const B = opts.colorB || { r: 0, g: 0, b: 255 };
+    const intervalMs = Math.max(50, opts.intervalMs || 500);
+    const duty = Math.max(0.05, Math.min(0.95, opts.duty ?? 0.5));
+    const count = Math.max(0, opts.count || 0);
+
+    _blinkStateLocal = { tick: 0, current: 'A' };
+
+    function apply(color){
+        if (target === 'stim' || target === 'both') setStimColorRGB(color.r, color.g, color.b);
+        if (target === 'bg'   || target === 'both') stimArea.style.backgroundColor = `rgb(${color.r},${color.g},${color.b})`;
+    }
+
+    function tick(){
+        if (!playerRunning || isPaused){ _blinkTimerId = null; return; }
+
+        const isA = _blinkStateLocal.current === 'A';
+        apply(isA ? A : B);
+
+        _blinkStateLocal.tick++;
+        if (count > 0 && _blinkStateLocal.tick >= count){
+            _blinkTimerId = null;
+            return;
+        }
+
+        const nextIsA = !isA;
+        const delay = nextIsA ? intervalMs * duty : intervalMs * (1 - duty);
+        _blinkStateLocal.current = nextIsA ? 'A' : 'B';
+
+        _blinkTimerId = setTimeout(tick, Math.max(20, delay));
+    }
+
+    _blinkTimerId = setTimeout(tick, 0);
+}
+
+function stopBlinkAnimation(){
+    if (_blinkTimerId){ clearTimeout(_blinkTimerId); _blinkTimerId = null; }
+    _blinkStateLocal = { tick: 0, current: 'A' };
 }
 
 // ==================== BLINK: EAR ====================
@@ -536,7 +732,7 @@ function showBlinkWarning() {
     el.style.display = 'block';
     clearTimeout(el._hideTimer);
     el._hideTimer = setTimeout(() => { el.style.display = 'none'; }, 3500);
-    if (window.Voice) window.Voice.say('Поморгайте', { cancel: true });
+    if (window.Voice) window.Voice.sayKey('blink', { cancel: true });
 }
 function hideBlinkWarning() { const el = document.getElementById('blink-warning'); if (el) el.style.display = 'none'; }
 
@@ -720,13 +916,12 @@ function scheduleVoiceCountdown(durationMs, p) {
     if (!window.Voice || !window.Voice.enabled) return;
     if (!durationMs || durationMs < 5000) return;
     const timers = [];
-    const say = (txt) => window.Voice.say(txt, { cancel: false });
     if (durationMs - 5000 > 0) {
-        timers.push(setTimeout(() => { if (!responsePhaseActive || isPaused) return; say('Осталось пять секунд'); }, durationMs - 5000));
+        timers.push(setTimeout(() => { if (!responsePhaseActive || isPaused) return; window.Voice.sayKey('countdown5'); }, durationMs - 5000));
     }
     [3, 2, 1].forEach(s => {
         const at = durationMs - s * 1000;
-        if (at > 0) timers.push(setTimeout(() => { if (!responsePhaseActive || isPaused) return; say(String(s)); }, at));
+        if (at > 0) timers.push(setTimeout(() => { if (!responsePhaseActive || isPaused) return; window.Voice.sayKey('countdown' + s); }, at));
     });
     const watcher = setInterval(() => { if (!responsePhaseActive) { timers.forEach(t => clearTimeout(t)); clearInterval(watcher); } }, 200);
 }
@@ -1058,7 +1253,6 @@ async function deleteScenarioFromCloud(scenarioKey) {
     } catch (e) { return { ok: false, reason: String(e) }; }
 }
 
-// --- Общая логика по entries [{name, text}] ---
 async function processSyncEntries(entries, folderName) {
     const currentFiles = new Map();
     for (const { name, text } of entries) {
@@ -1175,7 +1369,6 @@ async function syncFolderWithCloud() {
     }
 }
 
-// --- Fallback через <input type="file" webkitdirectory> ---
 async function syncFromFileList(fileList) {
     if (_syncInFlight) return;
     if (!db || !supabaseClient || !currentUser) return;
@@ -1202,7 +1395,6 @@ async function syncFromFileList(fileList) {
     }
 }
 
-// --- Умный запуск синка ---
 async function syncFolderWithCloudEnsured(reason) {
     if (_autoSyncInFlight) return;
     if (!navigator.onLine) { setSyncStatus('warn', '📡 офлайн'); return; }
@@ -1678,6 +1870,13 @@ function createNewNode(type, x, y) {
             periColor: { r: 0, g: 255, b: 100 }, periMotion: 'static', periSpeed: 0.3, periRandomAngles: true,
             dfEnabled: false, dfCenterRadiusMm: 13, dfCenterBg: { r: 204, g: 0, b: 0 },
             dfStimColor: { r: 0, g: 0, b: 0 }, dfPeriBg: { r: 0, g: 71, b: 171 }, dfPeriBlur: 0,
+            blinkEnabled: false,
+            blinkColorA: { r: 255, g: 0, b: 0 },
+            blinkColorB: { r: 0, g: 0, b: 255 },
+            blinkIntervalMs: 500,
+            blinkDuty: 0.5,
+            blinkCount: 0,
+            blinkTarget: 'stim',
             delay1: 1000, duration: 1000, response: 1000, delay2: 1000, isStart: false };
         node.stimSize = getNodeComputedSize(node);
     }
@@ -1798,6 +1997,7 @@ function fillStimulusNodeInfo(a, mm, px, dst, srs, dyn, node) {
         if (node.singleCircleEnabled) parts.push('🎯 Круги');
         if (node.periEnabled) parts.push('🟢 Точки');
         if (node.dfEnabled) parts.push('🔴 Дефокус');
+        if (node.blinkEnabled) parts.push('🔦 Моргание');
         if (node.singleGridEnabled && !node.singleCircleEnabled) { const cnt = Array.isArray(node.singleGridCells) && node.singleGridCells.length > 0 ? node.singleGridCells.length : (node.singleGridX || 1) * (node.singleGridY || 1); parts.push(`🔲${node.singleGridX || 1}×${node.singleGridY || 1}(${cnt})`); }
         if (node.singleStimDynamicEnabled && !node.singleCircleEnabled) parts.push('🎨');
         if (node.singleBgDynamicEnabled) parts.push('🖼️');
@@ -1981,6 +2181,33 @@ function ensureDefocusGeneratorUI() {
     const set = document.getElementById('gen-df-settings');
     cb.addEventListener('change', () => { set.style.display = cb.checked ? 'block' : 'none'; });
 }
+function ensureBlinkAnimationGeneratorUI() {
+    const container = document.getElementById('single-grid-settings');
+    if (!container || document.getElementById('gen-blink-anim-block')) return;
+    const block = document.createElement('div');
+    block.id = 'gen-blink-anim-block';
+    block.style.cssText = 'margin-top:10px;padding:8px;background:#1a0a05;border:1px solid #f97316;border-radius:4px;';
+    block.innerHTML = `
+        <label style="color:#fb923c;font-weight:bold;display:block;margin-bottom:4px;">🔦 Моргание</label>
+        <label><input type="checkbox" id="gen-blink-anim-enabled"> Включить моргание</label>
+        <div id="gen-blink-anim-settings" style="display:none;margin-top:6px;">
+            <label>Цель</label>
+            <select id="gen-blink-anim-target">
+                <option value="stim" selected>Только стимул</option>
+                <option value="bg">Только фон</option>
+                <option value="both">Стимул + фон</option>
+            </select>
+            <label>Цвет A</label><input type="color" id="gen-blink-anim-cA" value="#ff0000">
+            <label>Цвет B</label><input type="color" id="gen-blink-anim-cB" value="#0000ff">
+            <label>Период (мс)</label><input type="number" id="gen-blink-anim-interval" value="500" min="50" max="5000" step="50">
+            <label>Доля A</label><input type="number" id="gen-blink-anim-duty" value="0.5" min="0.05" max="0.95" step="0.05">
+            <label>Количество (0 = ∞)</label><input type="number" id="gen-blink-anim-count" value="0" min="0" max="9999">
+        </div>`;
+    container.appendChild(block);
+    const cb = document.getElementById('gen-blink-anim-enabled');
+    const set = document.getElementById('gen-blink-anim-settings');
+    cb.addEventListener('change', () => { set.style.display = cb.checked ? 'block' : 'none'; });
+}
 
 // ==================== app.js: Конец части 2 из 3 ====================
 // ==================== app.js: Начало части 3 из 3 ====================
@@ -2066,6 +2293,32 @@ function renderDefocusInspectorSection(node) {
                 <label>Размытие к краю (%)</label>
                 <input type="number" id="inp-df-blur" value="${node.dfPeriBlur || 0}" min="0" max="100" step="5">
                 <div class="acuity-hint">Центр — красный диск с чёрным стимулом; периферия — синяя заливка.</div>
+            </div>
+        </div>`;
+}
+function renderBlinkAnimationInspectorSection(node) {
+    return `
+        <div class="panel-section" style="background:#1a0a05;border-color:#f97316;">
+            <h3 style="color:#fb923c;border-color:#f97316;">🔦 Моргание</h3>
+            <div class="acuity-hint">Резкая смена цвета без плавного перехода. Отличается от «Динамики».</div>
+            <label><input type="checkbox" id="inp-blink-enabled" ${node.blinkEnabled ? 'checked' : ''}> Включить моргание</label>
+            <div id="insp-blink-settings" style="display:${node.blinkEnabled ? 'block' : 'none'};margin-top:6px;">
+                <label>Цель</label>
+                <select id="inp-blink-target">
+                    <option value="stim" ${(node.blinkTarget||'stim')==='stim'?'selected':''}>Только стимул</option>
+                    <option value="bg" ${node.blinkTarget==='bg'?'selected':''}>Только фон</option>
+                    <option value="both" ${node.blinkTarget==='both'?'selected':''}>Стимул + фон</option>
+                </select>
+                <label>Цвет A</label>
+                <input type="color" id="inp-blink-cA" value="${rgbToHex(node.blinkColorA?.r, node.blinkColorA?.g, node.blinkColorA?.b)}">
+                <label>Цвет B</label>
+                <input type="color" id="inp-blink-cB" value="${rgbToHex(node.blinkColorB?.r, node.blinkColorB?.g, node.blinkColorB?.b)}">
+                <label>Период (мс)</label>
+                <input type="number" id="inp-blink-interval" value="${node.blinkIntervalMs || 500}" min="50" max="5000" step="50">
+                <label>Доля A (0.05–0.95)</label>
+                <input type="number" id="inp-blink-duty" value="${node.blinkDuty ?? 0.5}" min="0.05" max="0.95" step="0.05">
+                <label>Количество морганий (0 = ∞)</label>
+                <input type="number" id="inp-blink-count" value="${node.blinkCount || 0}" min="0" max="9999" step="1">
             </div>
         </div>`;
 }
@@ -2159,6 +2412,7 @@ function updateStimulusInspector(node) {
 
     html += renderPeriInspectorSection(node);
     html += renderDefocusInspectorSection(node);
+    html += renderBlinkAnimationInspectorSection(node);
 
     const tf = [
         { id: 'delay1', label: 'Задержка 1', value: node.delay1 || 0 },
@@ -2224,6 +2478,7 @@ function updateStimulusInspector(node) {
     bind('inp-co-mid-enabled', 'insp-co-mid-row');
     bind('inp-peri-enabled', 'insp-peri-settings');
     bind('inp-df-enabled', 'insp-df-settings');
+    bind('inp-blink-enabled', 'insp-blink-settings');
     const sM = document.getElementById('inp-sti-mid-enabled'), sMR = document.getElementById('insp-sti-mid-row');
     if (sM && sMR) sM.addEventListener('change', () => { sMR.style.display = sM.checked ? 'block' : 'none'; });
     const bM = document.getElementById('inp-bg-mid-enabled'), bMR = document.getElementById('insp-bg-mid-row');
@@ -2430,6 +2685,16 @@ function applyDefocusInspectorChanges(node) {
     if (v('inp-df-peri-bg')) node.dfPeriBg = hexToRgb(v('inp-df-peri-bg').value);
     if (v('inp-df-blur')) node.dfPeriBlur = Math.max(0, Math.min(100, parseInt(v('inp-df-blur').value) || 0));
 }
+function applyBlinkAnimationInspectorChanges(node) {
+    const v = id => document.getElementById(id);
+    if (v('inp-blink-enabled'))  node.blinkEnabled    = v('inp-blink-enabled').checked;
+    if (v('inp-blink-target'))   node.blinkTarget     = v('inp-blink-target').value;
+    if (v('inp-blink-cA'))       node.blinkColorA     = hexToRgb(v('inp-blink-cA').value);
+    if (v('inp-blink-cB'))       node.blinkColorB     = hexToRgb(v('inp-blink-cB').value);
+    if (v('inp-blink-interval')) node.blinkIntervalMs = Math.max(50, Math.min(5000, parseInt(v('inp-blink-interval').value) || 500));
+    if (v('inp-blink-duty'))     node.blinkDuty       = Math.max(0.05, Math.min(0.95, parseFloat(v('inp-blink-duty').value) || 0.5));
+    if (v('inp-blink-count'))    node.blinkCount      = Math.max(0, parseInt(v('inp-blink-count').value) || 0);
+}
 function applyStimulusInspectorChanges(node) {
     const v = id => document.getElementById(id);
     if (v('inp-name')) node.name = v('inp-name').value;
@@ -2497,6 +2762,7 @@ function applyStimulusInspectorChanges(node) {
     if (v('inp-co-reverse')) node.circleOuterReverse = v('inp-co-reverse').checked;
     applyPeriInspectorChanges(node);
     applyDefocusInspectorChanges(node);
+    applyBlinkAnimationInspectorChanges(node);
     ['delay1', 'duration', 'response', 'delay2'].forEach(f => {
         const ni = document.getElementById('inp-' + f), us = document.getElementById('inp-' + f + '-unit');
         if (ni && us) node[f] = unitToMs(parseFloat(ni.value) || 0, us.value);
@@ -2678,8 +2944,8 @@ function processComparisonAnswer(isCorrect) { if (currentCompareNode) { if (isCo
 function defaultCellParams() { return { size: currentSize, stimR: currentStimColor.r, stimG: currentStimColor.g, stimB: currentStimColor.b, bgR: currentBgColor.r, bgG: currentBgColor.g, bgB: currentBgColor.b, duration: currentDuration }; }
 
 // ==================== ОТВЕТЫ ====================
-function handleDirectionAnswer(direction) { if (!responsePhaseActive) return; if (isBlinkResponseBlocked()) return; const ok = direction === currentCorrectDirection; lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; responsePhaseActive = false; if (window.Voice) window.Voice.say(ok ? 'Правильно' : 'Ошибка', { cancel: true }); document.body.style.backgroundColor = ok ? '#0a0' : '#a00'; setTimeout(() => document.body.style.backgroundColor = '#111', 200); }
-function handleCompareDirectionAnswer(answer) { if (!responsePhaseActive) return; if (isBlinkResponseBlocked()) return; const ok = (answer === currentCompareAnswer); lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; responsePhaseActive = false; if (window.Voice) window.Voice.say(ok ? 'Правильно' : 'Ошибка', { cancel: true }); document.body.style.backgroundColor = ok ? '#0a0' : '#a00'; setTimeout(() => document.body.style.backgroundColor = '#111', 200); processComparisonAnswer(ok); }
+function handleDirectionAnswer(direction) { if (!responsePhaseActive) return; if (isBlinkResponseBlocked()) return; const ok = direction === currentCorrectDirection; lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; responsePhaseActive = false; if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true }); document.body.style.backgroundColor = ok ? '#0a0' : '#a00'; setTimeout(() => document.body.style.backgroundColor = '#111', 200); }
+function handleCompareDirectionAnswer(answer) { if (!responsePhaseActive) return; if (isBlinkResponseBlocked()) return; const ok = (answer === currentCompareAnswer); lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; responsePhaseActive = false; if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true }); document.body.style.backgroundColor = ok ? '#0a0' : '#a00'; setTimeout(() => document.body.style.backgroundColor = '#111', 200); processComparisonAnswer(ok); }
 responseButtons.addEventListener('click', e => { const btn = e.target.closest('.btn-response'); if (!btn || !responsePhaseActive) return; if (btn.dataset.dir) handleDirectionAnswer(btn.dataset.dir); else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') { const inCmp = (currentCompareNode && currentCompareNode.compareMode === 'direction') || (!currentCompareNode && compareMode === 'direction' && trainingNode?.params?.trainingType === 'compare'); if (inCmp) handleCompareDirectionAnswer(btn.dataset.answer === 'да'); } });
 document.addEventListener('keydown', e => {
     if (readingViewportEl && readingViewportEl.style.display === 'block') {
@@ -2700,7 +2966,7 @@ document.addEventListener('keydown', e => {
 
 // ==================== СЛУЖЕБНЫЕ ====================
 function displayStimulus(html, bgColor) { stimDisplay.innerHTML = html; stimArea.style.backgroundColor = `rgb(${bgColor.r},${bgColor.g},${bgColor.b})`; }
-function hideStimulus() { stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); removeSingleGridLines(); stimDisplay.innerHTML = ''; stimDisplay.style.fontSize = ''; stimDisplay.style.color = ''; stimDisplay.style.backgroundColor = ''; stimDisplay.style.background = ''; stimArea.style.backgroundColor = ''; }
+function hideStimulus() { stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation(); removeSingleGridLines(); stimDisplay.innerHTML = ''; stimDisplay.style.fontSize = ''; stimDisplay.style.color = ''; stimDisplay.style.backgroundColor = ''; stimDisplay.style.background = ''; stimArea.style.backgroundColor = ''; }
 function updateCounters() { cntCompleted.textContent = completedSeries; cntSuccess.textContent = successfulSeries; cntFailed.textContent = failedSeries; cntSeriesCorrect.textContent = seriesCorrect; cntSeriesIncorrect.textContent = seriesIncorrect; cntSeriesNoAnswer.textContent = seriesNoAnswer; }
 function switchMode(mode) {
     currentMode = mode;
@@ -2743,7 +3009,7 @@ function startAutoTraining() {
     updateCounters();
     btnPlayer.disabled = true; btnPlayerStop.disabled = false; btnPlayerPause.disabled = false;
     btnPlayerPause.textContent = '⏸ Пауза';
-    if (window.Voice) window.Voice.say('Приготовьтесь', { cancel: true });
+    if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
     if (tt === 'reading') { btnPlayerPause.disabled = true; startReadingModeAuto(); }
     else if (tt === 'compare') { compareMode = trainingNode.params.compareMode || 'direction'; gridX = trainingNode.params.gridX || 3; gridY = trainingNode.params.gridY || 3; activeCells = trainingNode.params.activeCells || []; cellParams = trainingNode.params.cellParams || []; if (activeCells.length === 0) activeCells = [{ row: 0, col: 0 }, { row: 0, col: 1 }]; if (cellParams.length < activeCells.length) cellParams = activeCells.map(() => defaultCellParams()); showNextComparison(); }
     else showNextStimulus();
@@ -2760,7 +3026,7 @@ function playNodesSequence() {
     resetDistanceTracking(); resetBlinkState();
     btnPlayer.disabled = true; btnPlayerStop.disabled = false; btnPlayerPause.disabled = false;
     btnPlayerPause.textContent = '⏸ Пауза';
-    if (window.Voice) window.Voice.say('Приготовьтесь', { cancel: true });
+    if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
     playIndex = 0; playNextQueuedNode();
 }
 function playNextQueuedNode() {
@@ -2841,14 +3107,25 @@ function playStimulusNodeSeries(node) {
     if (node.singleGridEnabled) { const gx = node.singleGridX || 1, gy = node.singleGridY || 1; const cell = pickSingleGridCell(gx, gy, node.singleGridRandomCell !== false, node.singleGridAvoidRepeat !== false, node.singleGridFixedRow || 0, node.singleGridFixedCol || 0, node.singleGridCells || []); currentSingleCell = cell; applySingleGridPosition(eff, gx, gy, cell.row, cell.col, node.singleGridShowLines === true); }
     else if (node.singleRandomPos) applyRandomStimulusPosition(eff);
     buildPeripheralDots(node, eff);
+    stopBlinkAnimation();
     if (node.singleCircleEnabled) { startCircleAnimation(node); stopSingleStimAnimation(); }
     else { stopCircleAnimation(); if (node.singleStimDynamicEnabled) startSingleStimAnimation({ singleStimColor1: node.singleStimColor1, singleStimMidEnabled: node.singleStimMidEnabled, singleStimColor3: node.singleStimColor3, singleStimColor2: node.singleStimColor2, singleStimReverse: node.singleStimReverse, singleStimLoop: node.singleStimLoop, singleStimDuration: node.singleStimDuration }); else stopSingleStimAnimation(); }
     if (node.singleBgDynamicEnabled) startSingleBgAnimation({ singleBgColor1: node.singleBgColor1, singleBgMidEnabled: node.singleBgMidEnabled, singleBgColor3: node.singleBgColor3, singleBgColor2: node.singleBgColor2, singleBgReverse: node.singleBgReverse, singleBgLoop: node.singleBgLoop, singleBgDuration: node.singleBgDuration }); else stopSingleBgAnimation();
+    if (node.blinkEnabled){
+        startBlinkAnimation({
+            target:     node.blinkTarget || 'stim',
+            colorA:     node.blinkColorA || { r: 255, g: 0, b: 0 },
+            colorB:     node.blinkColorB || { r: 0, g: 0, b: 255 },
+            intervalMs: node.blinkIntervalMs || 500,
+            duty:       node.blinkDuty ?? 0.5,
+            count:      node.blinkCount || 0
+        });
+    }
     responsePhaseActive = true; responseStartTime = performance.now();
     document.querySelectorAll('.btn-response[data-dir]').forEach(b => b.style.display = 'flex');
     document.querySelectorAll('.btn-response[data-answer]').forEach(b => b.style.display = 'none');
     responseButtons.style.display = 'flex';
-    if (window.Voice) window.Voice.say('Смотрите', { cancel: true });
+    if (window.Voice) window.Voice.sayKey('look', { cancel: true });
     let sd = node.duration || 1000;
     if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
     if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
@@ -2856,8 +3133,8 @@ function playStimulusNodeSeries(node) {
     scheduleVoiceCountdown(sd, node);
     currentShowTimer = setTimeout(() => {
         hideStimulus(); responsePhaseActive = false;
-        stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation();
-        if (lastResponse.answered) { if (lastResponse.isCorrect) seriesCorrect++; else seriesIncorrect++; } else { seriesNoAnswer++; if (window.Voice) window.Voice.say('Время вышло', { cancel: true }); }
+        stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation();
+        if (lastResponse.answered) { if (lastResponse.isCorrect) seriesCorrect++; else seriesIncorrect++; } else { seriesNoAnswer++; if (window.Voice) window.Voice.sayKey('timeout', { cancel: true }); }
         seriesStep++; updateCounters();
         const d2 = node.delay2 || 1000;
         phaseTimers.push(setTimeout(() => { if (!playerRunning || isPaused) return; playStimulusNodeSeries(node); }, d2));
@@ -2924,14 +3201,25 @@ function showNextStimulus() {
     if (p.singleGridEnabled) { const gx = p.singleGridX || 1, gy = p.singleGridY || 1; const cell = pickSingleGridCell(gx, gy, p.singleGridRandomCell !== false, p.singleGridAvoidRepeat !== false, p.singleGridFixedRow || 0, p.singleGridFixedCol || 0, p.singleGridCells || []); currentSingleCell = cell; applySingleGridPosition(eff, gx, gy, cell.row, cell.col, p.singleGridShowLines === true); }
     else if (p.singleRandomPos) applyRandomStimulusPosition(eff);
     buildPeripheralDots(p, eff);
+    stopBlinkAnimation();
     if (p.singleCircleEnabled) { startCircleAnimation(p); stopSingleStimAnimation(); }
     else { stopCircleAnimation(); if (p.singleStimDynamicEnabled) startSingleStimAnimation(p); else stopSingleStimAnimation(); }
     if (p.singleBgDynamicEnabled) startSingleBgAnimation(p); else stopSingleBgAnimation();
+    if (p.blinkEnabled){
+        startBlinkAnimation({
+            target:     p.blinkTarget || 'stim',
+            colorA:     p.blinkColorA || { r: 255, g: 0, b: 0 },
+            colorB:     p.blinkColorB || { r: 0, g: 0, b: 255 },
+            intervalMs: p.blinkIntervalMs || 500,
+            duty:       p.blinkDuty ?? 0.5,
+            count:      p.blinkCount || 0
+        });
+    }
     responsePhaseActive = true; responseStartTime = performance.now();
     document.querySelectorAll('.btn-response[data-dir]').forEach(b => b.style.display = 'flex');
     document.querySelectorAll('.btn-response[data-answer]').forEach(b => b.style.display = 'none');
     responseButtons.style.display = 'flex';
-    if (window.Voice) window.Voice.say('Смотрите', { cancel: true });
+    if (window.Voice) window.Voice.sayKey('look', { cancel: true });
     let sd = currentDuration;
     if (p.singleStimDynamicEnabled) sd = Math.max(sd, p.singleStimDuration || 0);
     if (p.singleBgDynamicEnabled) sd = Math.max(sd, p.singleBgDuration || 0);
@@ -2939,8 +3227,8 @@ function showNextStimulus() {
     scheduleVoiceCountdown(sd, p);
     currentShowTimer = setTimeout(() => {
         hideStimulus(); responsePhaseActive = false;
-        stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation();
-        if (!lastResponse.answered) { lastResponse = { answered: false, isCorrect: false }; if (window.Voice) window.Voice.say('Время вышло', { cancel: true }); if (supabaseClient && currentUser && currentSessionId) supabaseClient.from('test_results').insert({ session_id: currentSessionId, node_id: 'training_node', response_time_ms: null, is_correct: false, created_at: new Date().toISOString() }); }
+        stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation();
+        if (!lastResponse.answered) { lastResponse = { answered: false, isCorrect: false }; if (window.Voice) window.Voice.sayKey('timeout', { cancel: true }); if (supabaseClient && currentUser && currentSessionId) supabaseClient.from('test_results').insert({ session_id: currentSessionId, node_id: 'training_node', response_time_ms: null, is_correct: false, created_at: new Date().toISOString() }); }
         else if (supabaseClient && currentUser && currentSessionId) supabaseClient.from('test_results').insert({ session_id: currentSessionId, node_id: 'training_node', response_time_ms: lastResponse.reactionTimeMs, is_correct: lastResponse.isCorrect, created_at: new Date().toISOString() });
         if (lastResponse.answered) { if (lastResponse.isCorrect) seriesCorrect++; else seriesIncorrect++; } else seriesNoAnswer++;
         seriesStep++; updateCounters();
@@ -3012,7 +3300,7 @@ function stopReadingNodeTimer() { if (readingNodeTimerInterval) { clearInterval(
 function stopPlayer() {
     phaseTimers.forEach(t => clearTimeout(t)); phaseTimers = [];
     if (currentShowTimer) clearTimeout(currentShowTimer);
-    stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopReadingNodeTimer();
+    stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation(); stopReadingNodeTimer();
     window.Voice?.stopReading();
     saveCurrentReadingBookmarkSilently(); resetDistanceTracking(); hideBlinkWarning();
     window._readingNodeWaiting = false;
@@ -3033,7 +3321,7 @@ function stopPlayer() {
 function togglePause() {
     if (!playerRunning) return;
     isPaused = !isPaused;
-    if (isPaused) { btnPlayerPause.textContent = '▶ Продолжить'; phaseTimers.forEach(t => clearTimeout(t)); phaseTimers = []; if (currentShowTimer) clearTimeout(currentShowTimer); stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopReadingNodeTimer(); hideStimulus(); responseButtons.style.display = 'none'; }
+    if (isPaused) { btnPlayerPause.textContent = '▶ Продолжить'; phaseTimers.forEach(t => clearTimeout(t)); phaseTimers = []; if (currentShowTimer) clearTimeout(currentShowTimer); stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation(); stopReadingNodeTimer(); hideStimulus(); responseButtons.style.display = 'none'; }
     else {
         btnPlayerPause.textContent = '⏸ Пауза';
         if (currentCompareNode) { playNextCompareRound(currentCompareNode); return; }
@@ -3044,7 +3332,7 @@ function togglePause() {
         else stopPlayer();
     }
 }
-function pauseTraining() { phaseTimers.forEach(t => clearTimeout(t)); phaseTimers = []; if (currentShowTimer) clearTimeout(currentShowTimer); stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopReadingNodeTimer(); responsePhaseActive = false; hideStimulus(); responseButtons.style.display = 'none'; isPaused = true; btnPlayerPause.disabled = true; pauseModal.style.display = 'flex'; }
+function pauseTraining() { phaseTimers.forEach(t => clearTimeout(t)); phaseTimers = []; if (currentShowTimer) clearTimeout(currentShowTimer); stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation(); stopReadingNodeTimer(); responsePhaseActive = false; hideStimulus(); responseButtons.style.display = 'none'; isPaused = true; btnPlayerPause.disabled = true; pauseModal.style.display = 'flex'; }
 function resumeTraining() { pauseModal.style.display = 'none'; isPaused = false; noAnswerSeriesStreak = 0; btnPlayerPause.disabled = false; if (currentCompareNode) { playNextCompareRound(currentCompareNode); return; } if (currentPlayingNodeId) { const node = getNode(currentPlayingNodeId); if (node) { playStimulusNodeSeries(node); return; } } if (trainingNode?.params?.trainingType === 'compare') showNextComparison(); else if (trainingNode?.params) showNextStimulus(); }
 function exitTrainingFromPause() { pauseModal.style.display = 'none'; stopPlayer(); }
 
@@ -3142,6 +3430,13 @@ function buildModeParamsFromUI() {
         p.dfStimColor = hexToRgb(safeVal('gen-df-stim-color', '#000000'));
         p.dfPeriBg = hexToRgb(safeVal('gen-df-peri-bg', '#0047ab'));
         p.dfPeriBlur = safeVal('gen-df-blur', 0, parseInt);
+        p.blinkEnabled = safeChecked('gen-blink-anim-enabled', false);
+        p.blinkTarget = safeVal('gen-blink-anim-target', 'stim');
+        p.blinkColorA = hexToRgb(safeVal('gen-blink-anim-cA', '#ff0000'));
+        p.blinkColorB = hexToRgb(safeVal('gen-blink-anim-cB', '#0000ff'));
+        p.blinkIntervalMs = safeVal('gen-blink-anim-interval', 500, parseInt);
+        p.blinkDuty = safeVal('gen-blink-anim-duty', 0.5, parseFloat);
+        p.blinkCount = safeVal('gen-blink-anim-count', 0, parseInt);
     }
     if (tt === 'compare') { Object.assign(p, collectCompareParams()); p.pairsCount = 2; }
     if (tt === 'reading') {
@@ -3245,6 +3540,13 @@ function modeParamsToNode(modeParams) {
     node.dfStimColor = modeParams.dfStimColor || { r: 0, g: 0, b: 0 };
     node.dfPeriBg = modeParams.dfPeriBg || { r: 0, g: 71, b: 171 };
     node.dfPeriBlur = modeParams.dfPeriBlur || 0;
+    node.blinkEnabled = modeParams.blinkEnabled === true;
+    node.blinkTarget = modeParams.blinkTarget || 'stim';
+    node.blinkColorA = modeParams.blinkColorA || { r: 255, g: 0, b: 0 };
+    node.blinkColorB = modeParams.blinkColorB || { r: 0, g: 0, b: 255 };
+    node.blinkIntervalMs = modeParams.blinkIntervalMs || 500;
+    node.blinkDuty = modeParams.blinkDuty ?? 0.5;
+    node.blinkCount = modeParams.blinkCount || 0;
     node.delay1 = modeParams.delay1 || 1000; node.duration = modeParams.startDuration || 1000;
     node.response = modeParams.response || 1000; node.delay2 = modeParams.delay2 || 1000;
     node.stimSize = getNodeComputedSize(node);
@@ -3449,6 +3751,13 @@ function loadGraph(file) {
                     if (node.dfStimColor === undefined) node.dfStimColor = { r: 0, g: 0, b: 0 };
                     if (node.dfPeriBg === undefined) node.dfPeriBg = { r: 0, g: 71, b: 171 };
                     if (node.dfPeriBlur === undefined) node.dfPeriBlur = 0;
+                    if (node.blinkEnabled === undefined) node.blinkEnabled = false;
+                    if (node.blinkColorA === undefined) node.blinkColorA = { r: 255, g: 0, b: 0 };
+                    if (node.blinkColorB === undefined) node.blinkColorB = { r: 0, g: 0, b: 255 };
+                    if (node.blinkIntervalMs === undefined) node.blinkIntervalMs = 500;
+                    if (node.blinkDuty === undefined) node.blinkDuty = 0.5;
+                    if (node.blinkCount === undefined) node.blinkCount = 0;
+                    if (node.blinkTarget === undefined) node.blinkTarget = 'stim';
                 }
                 if (node.nodeType === 'READING') { if (node.readingFontFamily === undefined) node.readingFontFamily = 'Segoe UI'; if (node.readingFontWeight === undefined) node.readingFontWeight = 'normal'; if (node.readingAcuity === undefined) node.readingAcuity = 1.0; if (node.readingDistance === undefined) node.readingDistance = readingDistance || 1; if (node.readingTextColor === undefined) node.readingTextColor = { r: 0, g: 0, b: 0 }; if (node.readingBgColor === undefined) node.readingBgColor = { r: 255, g: 255, b: 255 }; if (node.readingBgMode === undefined) node.readingBgMode = 'solid'; if (node.duration === undefined) node.duration = 60000; if (node.autoSaveBookmark === undefined) node.autoSaveBookmark = true; if (node.continueFromBookmark === undefined) node.continueFromBookmark = true; }
                 if (node.nodeType === 'COMPARE') { if (!node.compareMode) node.compareMode = 'direction'; if (node.pairsCount === undefined) node.pairsCount = 2; if (!node.gridX) node.gridX = 3; if (!node.gridY) node.gridY = 3; if (!Array.isArray(node.activeCells) || node.activeCells.length < 2) node.activeCells = [{ row: 0, col: 0 }, { row: 0, col: 1 }]; if (!Array.isArray(node.cellParams)) node.cellParams = []; while (node.cellParams.length < node.activeCells.length) node.cellParams.push(defaultCompareCellParams()); if (node.seriesCount === undefined) node.seriesCount = 5; if (node.seriesSize === undefined) node.seriesSize = 6; if (node.seriesThreshold === undefined) node.seriesThreshold = 4; if (node.delay1 === undefined) node.delay1 = 1000; if (node.duration === undefined) node.duration = 2000; if (node.delay2 === undefined) node.delay2 = 1000; }
@@ -3484,6 +3793,7 @@ function init() {
     ensureCircleGeneratorUI();
     ensurePeripheralGeneratorUI();
     ensureDefocusGeneratorUI();
+    ensureBlinkAnimationGeneratorUI();
     ensureBlinkCalibrationUI();
     const sfn = localStorage.getItem('selectedFolderName'); if (sfn) folderStatus.textContent = 'Папка: ' + sfn;
 
@@ -3507,6 +3817,8 @@ function init() {
     btnAddReading.addEventListener('click', () => createNewNode('READING'));
     if (btnAddCompare) btnAddCompare.addEventListener('click', () => createNewNode('COMPARE'));
     if (btnCalibrateScreen) btnCalibrateScreen.addEventListener('click', openScreenCalibModal);
+    if (btnScenarioTime) btnScenarioTime.addEventListener('click', showScenarioTimeReport);
+    document.getElementById('scenario-time-close')?.addEventListener('click', () => { document.getElementById('scenario-time-modal').style.display = 'none'; });
     document.getElementById('screen-calib-cancel')?.addEventListener('click', () => document.getElementById('screen-calib-modal').style.display = 'none');
     document.getElementById('screen-calib-apply')?.addEventListener('click', applyScreenCalib);
     document.getElementById('book-picker-close')?.addEventListener('click', closeBookPicker);

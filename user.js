@@ -43,6 +43,10 @@ let _circleInnerDurationMs = 10000, _circleOuterDurationMs = 10000;
 let _circleInnerLoop = true, _circleOuterLoop = true;
 let _periAnimId = null, _periAnimStart = null;
 
+// --- МОРГАНИЕ ---
+let _blinkTimerId = null;
+let _blinkLocalState = { tick: 0, current: 'A' };
+
 let readingPage = 0, readingTotalPages = 1, readingPaused = false;
 let readingBgAnimId = null, readingBgAnimStart = null, readingBgAnimPausedAt = null;
 
@@ -379,6 +383,43 @@ function startSingleBgAnimation(p){
 }
 function stopSingleBgAnimation(){if(singleBgAnimId){cancelAnimationFrame(singleBgAnimId);singleBgAnimId=null;}}
 
+// ==================== МОРГАНИЕ ====================
+function startBlinkAnimation(opts){
+    stopBlinkAnimation();
+    if (!opts) return;
+    const target = opts.target || 'stim';
+    const A = opts.colorA || { r: 255, g: 0, b: 0 };
+    const B = opts.colorB || { r: 0, g: 0, b: 255 };
+    const intervalMs = Math.max(50, opts.intervalMs || 500);
+    const duty = Math.max(0.05, Math.min(0.95, opts.duty ?? 0.5));
+    const count = Math.max(0, opts.count || 0);
+
+    _blinkLocalState = { tick: 0, current: 'A' };
+
+    function apply(color){
+        if (target === 'stim' || target === 'both') setStimColorRGB(color.r, color.g, color.b);
+        if (target === 'bg'   || target === 'both') stimArea.style.backgroundColor = `rgb(${color.r},${color.g},${color.b})`;
+    }
+
+    function tick(){
+        if (!playerRunning || isPaused){ _blinkTimerId = null; return; }
+        const isA = _blinkLocalState.current === 'A';
+        apply(isA ? A : B);
+        _blinkLocalState.tick++;
+        if (count > 0 && _blinkLocalState.tick >= count){ _blinkTimerId = null; return; }
+        const nextIsA = !isA;
+        const delay = nextIsA ? intervalMs * duty : intervalMs * (1 - duty);
+        _blinkLocalState.current = nextIsA ? 'A' : 'B';
+        _blinkTimerId = setTimeout(tick, Math.max(20, delay));
+    }
+    _blinkTimerId = setTimeout(tick, 0);
+}
+
+function stopBlinkAnimation(){
+    if (_blinkTimerId){ clearTimeout(_blinkTimerId); _blinkTimerId = null; }
+    _blinkLocalState = { tick: 0, current: 'A' };
+}
+
 function buildCirclePhases(A,midEn,M,B,rev){
     let base=(midEn&&M)?[{from:A,to:M},{from:M,to:B}]:[{from:A,to:B}];
     if(rev===true)return base.concat(base.slice().reverse().map(ph=>({from:ph.to,to:ph.from})));
@@ -546,7 +587,7 @@ function applyRandomStimulusPosition(size){
 
 function displayStimulus(html,bg){stimDisplay.innerHTML=html;stimArea.style.backgroundColor=`rgb(${bg.r},${bg.g},${bg.b})`;}
 function hideStimulus(){
-    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();removeSingleGridLines();
+    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();stopBlinkAnimation();removeSingleGridLines();
     stimDisplay.innerHTML='';stimDisplay.style.fontSize='';stimDisplay.style.backgroundColor='';stimArea.style.backgroundColor='';
 }
 
@@ -772,15 +813,26 @@ function playGraphStimulus(node) {
         applySingleGridPosition(eff, gx, gy, cell.row, cell.col, node.singleGridShowLines === true);
     } else if (node.singleRandomPos) applyRandomStimulusPosition(eff);
     buildPeripheralDots(node);
+    stopBlinkAnimation();
     if (node.singleCircleEnabled) { startCircleAnimation(node); stopSingleStimAnimation(); }
     else { stopCircleAnimation(); if (node.singleStimDynamicEnabled) startSingleStimAnimation(node); else stopSingleStimAnimation(); }
     if (node.singleBgDynamicEnabled) startSingleBgAnimation(node); else stopSingleBgAnimation();
+    if (node.blinkEnabled){
+        startBlinkAnimation({
+            target:     node.blinkTarget || 'stim',
+            colorA:     node.blinkColorA || { r: 255, g: 0, b: 0 },
+            colorB:     node.blinkColorB || { r: 0, g: 0, b: 255 },
+            intervalMs: node.blinkIntervalMs || 500,
+            duty:       node.blinkDuty ?? 0.5,
+            count:      node.blinkCount || 0
+        });
+    }
     responsePhaseActive = true;
     responseStartTime = performance.now();
     document.querySelectorAll('.btn-resp[data-dir]').forEach(b => b.style.display = 'flex');
     document.querySelectorAll('.btn-resp[data-answer]').forEach(b => b.style.display = 'none');
     responseButtons.style.display = 'flex';
-    if (window.Voice) window.Voice.say('Смотрите', { cancel: true });
+    if (window.Voice) window.Voice.sayKey('look', { cancel: true });
     let sd = node.duration || 1000;
     if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
     if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
@@ -792,7 +844,7 @@ function playGraphStimulus(node) {
     scheduleVoiceCountdown(sd);
     currentShowTimer = setTimeout(() => {
         hideStimulus(); responsePhaseActive = false;
-        stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation();
+        stopSingleStimAnimation(); stopSingleBgAnimation(); stopCircleAnimation(); stopPeripheralAnimation(); stopBlinkAnimation();
         if (lastResponse.answered) { if (lastResponse.isCorrect) seriesCorrect++; else seriesIncorrect++; }
         else { seriesNoAnswer++; saveResult(node.id, null, false); }
         seriesStep++; updateCounters();
@@ -827,7 +879,7 @@ function handleGraphDirectionAnswer(dir) {
     const ok = dir === currentCorrectDirection;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
     responsePhaseActive = false;
-    if (window.Voice) window.Voice.say(ok ? 'Правильно' : 'Ошибка', { cancel: true });
+    if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => { document.body.style.background = '#0b0b0f'; }, 200);
     saveResult(gCurrentNodeId || 'graph_single', lastResponse.reactionTimeMs, ok);
@@ -873,7 +925,7 @@ function handleGraphCompareAnswer(answer) {
     const ok = (answer === currentCompareAnswer);
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
     responsePhaseActive = false;
-    if (window.Voice) window.Voice.say(ok ? 'Правильно' : 'Ошибка', { cancel: true });
+    if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => { document.body.style.background = '#0b0b0f'; }, 200);
     processGraphCompareAnswer(ok);
@@ -979,7 +1031,7 @@ function startPlayer(){
     btnPlayer.disabled = true;
     btnPlayerStop.disabled = false;
     btnPlayerPause.disabled = false;
-    if(window.Voice)window.Voice.say('Приготовьтесь',{cancel:true});
+    if(window.Voice)window.Voice.sayKey('ready',{cancel:true});
 
     if (p.graph && Array.isArray(p.graph.nodes) && p.graph.nodes.length > 0) {
         updateCounters();
@@ -1037,15 +1089,26 @@ function showNextStimulus(){
         applySingleGridPosition(eff,gx,gy,cell.row,cell.col,p.singleGridShowLines===true);
     } else if(p.singleRandomPos)applyRandomStimulusPosition(eff);
     buildPeripheralDots(p);
+    stopBlinkAnimation();
     if(p.singleCircleEnabled){startCircleAnimation(p);stopSingleStimAnimation();}
     else{stopCircleAnimation();if(p.singleStimDynamicEnabled)startSingleStimAnimation(p);else stopSingleStimAnimation();}
     if(p.singleBgDynamicEnabled)startSingleBgAnimation(p);else stopSingleBgAnimation();
+    if(p.blinkEnabled){
+        startBlinkAnimation({
+            target:     p.blinkTarget || 'stim',
+            colorA:     p.blinkColorA || { r: 255, g: 0, b: 0 },
+            colorB:     p.blinkColorB || { r: 0, g: 0, b: 255 },
+            intervalMs: p.blinkIntervalMs || 500,
+            duty:       p.blinkDuty ?? 0.5,
+            count:      p.blinkCount || 0
+        });
+    }
     responsePhaseActive = true;
     responseStartTime = performance.now();
     document.querySelectorAll('.btn-resp[data-dir]').forEach(b=>b.style.display='flex');
     document.querySelectorAll('.btn-resp[data-answer]').forEach(b=>b.style.display='none');
     responseButtons.style.display='flex';
-    if(window.Voice)window.Voice.say('Смотрите',{cancel:true});
+    if(window.Voice)window.Voice.sayKey('look',{cancel:true});
     let sd=currentDuration;
     if(p.singleStimDynamicEnabled)sd=Math.max(sd,p.singleStimDuration||0);
     if(p.singleBgDynamicEnabled)sd=Math.max(sd,p.singleBgDuration||0);
@@ -1053,9 +1116,9 @@ function showNextStimulus(){
     scheduleVoiceCountdown(sd);
     currentShowTimer=setTimeout(()=>{
         hideStimulus();responsePhaseActive=false;
-        stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();
+        stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();stopBlinkAnimation();
         if(lastResponse.answered){if(lastResponse.isCorrect)seriesCorrect++;else seriesIncorrect++;}
-        else{seriesNoAnswer++;if(window.Voice)window.Voice.say('Время вышло',{cancel:true});saveResult('user_single',null,false);}
+        else{seriesNoAnswer++;if(window.Voice)window.Voice.sayKey('timeout',{cancel:true});saveResult('user_single',null,false);}
         seriesStep++;updateCounters();
         phaseTimers.push(setTimeout(()=>{if(playerRunning&&!isPaused)showNextStimulus();},p.delay2||1000));
     },sd);
@@ -1209,7 +1272,7 @@ function handleDirectionAnswer(direction){
     const ok=direction===currentCorrectDirection;
     lastResponse={answered:true,isCorrect:ok,reactionTimeMs:performance.now()-responseStartTime};
     responsePhaseActive=false;
-    if(window.Voice)window.Voice.say(ok?'Правильно':'Ошибка',{cancel:true});
+    if(window.Voice)window.Voice.sayKey(ok?'correct':'wrong',{cancel:true});
     document.body.style.background=ok?'#0a3d1a':'#3d0a0a';
     setTimeout(()=>{document.body.style.background='#0b0b0f';},200);
     saveResult('user_single',lastResponse.reactionTimeMs,ok);
@@ -1219,7 +1282,7 @@ function handleCompareAnswer(answer){
     const ok=(answer===currentCompareAnswer);
     lastResponse={answered:true,isCorrect:ok,reactionTimeMs:performance.now()-responseStartTime};
     responsePhaseActive=false;
-    if(window.Voice)window.Voice.say(ok?'Правильно':'Ошибка',{cancel:true});
+    if(window.Voice)window.Voice.sayKey(ok?'correct':'wrong',{cancel:true});
     document.body.style.background=ok?'#0a3d1a':'#3d0a0a';
     setTimeout(()=>{document.body.style.background='#0b0b0f';},200);
     processCompareAnswer(ok);
@@ -1390,7 +1453,7 @@ function showFinishedReport(){
 function pauseTraining(){
     phaseTimers.forEach(t=>clearTimeout(t));phaseTimers=[];
     if(currentShowTimer)clearTimeout(currentShowTimer);
-    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();
+    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();stopBlinkAnimation();
     responsePhaseActive=false;hideStimulus();responseButtons.style.display='none';
     isPaused=true;btnPlayerPause.disabled=true;
     pauseModal.classList.add('open');
@@ -1417,7 +1480,7 @@ function resumeTraining(){
 function stopPlayer(){
     phaseTimers.forEach(t=>clearTimeout(t));phaseTimers=[];
     if(currentShowTimer)clearTimeout(currentShowTimer);
-    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();
+    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();stopBlinkAnimation();
     stopReadingDynamicBg();
     window.Voice?.stopReading();
     playerRunning=false;isPaused=false;responsePhaseActive=false;
@@ -1445,7 +1508,7 @@ function togglePause(){
     isPaused=true;
     phaseTimers.forEach(t=>clearTimeout(t));phaseTimers=[];
     if(currentShowTimer)clearTimeout(currentShowTimer);
-    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();
+    stopSingleStimAnimation();stopSingleBgAnimation();stopCircleAnimation();stopPeripheralAnimation();stopBlinkAnimation();
     hideStimulus();responseButtons.style.display='none';
     pauseModal.classList.add('open');
 }
@@ -1468,9 +1531,8 @@ function scheduleVoiceCountdown(durationMs){
     if(!window.Voice||!window.Voice.enabled)return;
     if(!durationMs||durationMs<5000)return;
     const timers=[];
-    const say=(txt)=>window.Voice.say(txt,{cancel:false});
-    if(durationMs-5000>0)timers.push(setTimeout(()=>{if(responsePhaseActive&&!isPaused)say('Осталось пять секунд');},durationMs-5000));
-    [3,2,1].forEach(s=>{const at=durationMs-s*1000;if(at>0)timers.push(setTimeout(()=>{if(responsePhaseActive&&!isPaused)say(String(s));},at));});
+    if(durationMs-5000>0)timers.push(setTimeout(()=>{if(responsePhaseActive&&!isPaused)window.Voice.sayKey('countdown5');},durationMs-5000));
+    [3,2,1].forEach(s=>{const at=durationMs-s*1000;if(at>0)timers.push(setTimeout(()=>{if(responsePhaseActive&&!isPaused)window.Voice.sayKey('countdown'+s);},at));});
     const w=setInterval(()=>{if(!responsePhaseActive){timers.forEach(t=>clearTimeout(t));clearInterval(w);}},200);
 }
 

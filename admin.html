@@ -600,6 +600,7 @@
             <button class="btn btn-success btn-icon" id="btn-disable-camera" style="display:none;" title="Выключить камеру">📷</button>
             <button class="btn btn-warning btn-icon" id="btn-calibrate-camera" disabled title="Калибровка камеры">🎥</button>
             <button class="btn btn-warning btn-icon" id="btn-calibrate-screen" title="Калибровка экрана">📐</button>
+            <button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
             <button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
 
             <span class="header-sep"></span>
@@ -1171,6 +1172,18 @@
             <div class="modal-footer" style="justify-content: center;">
                 <button class="btn btn-success" id="screen-calib-apply">Применить и сохранить</button>
                 <button class="btn btn-secondary" id="screen-calib-cancel">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="scenario-time-modal">
+        <div class="modal-content" style="width: 560px;">
+            <h3>⏱ Оценка времени сценария</h3>
+            <div id="scenario-time-body" style="font-size:13px;color:#ccc;line-height:1.6;margin-top:10px;">
+                <div>Анализ графа…</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="scenario-time-close">Закрыть</button>
             </div>
         </div>
     </div>
