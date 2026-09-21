@@ -1542,30 +1542,30 @@ function scheduleVoiceCountdown(durationMs){
 // ==================== INIT ====================
 function init(){
     $('auth-submit').addEventListener('click',doAuth);
-    $('auth-toggle').addEventListener('click',()=>{authMode=(authMode==='signin')?'signup':'signin';updateAuthModal();});
-    $('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
-    $('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
-    btnLogout.addEventListener('click',async()=>{
-        try{stopPlayer();}catch(e){}
-        try{disableCamera();}catch(e){}
-        try{await supabaseClient.auth.signOut();}catch(e){}
-        currentUser=null;userScenario=null;userScenarios=[];
-        hdrUser.textContent='—';hdrScenario.textContent='—';
-        btnPlayer.disabled=true;
-        promptLogin();
-    });
+const safe = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
 
-    btnPlayer.addEventListener('click',startPlayer);
-    btnPlayerPause.addEventListener('click',togglePause);
-    btnPlayerStop.addEventListener('click',stopPlayer);
-    $('pause-continue').addEventListener('click',resumeTraining);
-    $('pause-exit').addEventListener('click',()=>{pauseModal.classList.remove('open');stopPlayer();});
-
-    hdrScenario.addEventListener('click',()=>{if(userScenarios.length>0)openScenarioPicker();});
-    $('scenario-close').addEventListener('click',()=>$('scenario-modal').classList.remove('open'));
-    btnHistory.addEventListener('click',openHistory);
-    $('history-close').addEventListener('click',()=>$('history-modal').classList.remove('open'));
-
+safe('auth-submit', el => el.addEventListener('click', doAuth));
+safe('auth-toggle', el => el.addEventListener('click', () => { authMode = (authMode === 'signin') ? 'signup' : 'signin'; updateAuthModal(); }));
+safe('auth-email', el => el.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); }));
+safe('auth-password', el => el.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); }));
+if (btnLogout) btnLogout.addEventListener('click', async () => {
+    try { stopPlayer(); } catch(e) {}
+    try { disableCamera(); } catch(e) {}
+    try { await supabaseClient.auth.signOut(); } catch(e) {}
+    currentUser = null; userScenario = null; userScenarios = [];
+    hdrUser.textContent = '—'; hdrScenario.textContent = '—';
+    btnPlayer.disabled = true;
+    promptLogin();
+});
+if (btnPlayer) btnPlayer.addEventListener('click', startPlayer);
+if (btnPlayerPause) btnPlayerPause.addEventListener('click', togglePause);
+if (btnPlayerStop) btnPlayerStop.addEventListener('click', stopPlayer);
+safe('pause-continue', el => el.addEventListener('click', resumeTraining));
+safe('pause-exit', el => el.addEventListener('click', () => { pauseModal.classList.remove('open'); stopPlayer(); }));
+safe('scenario-close', el => el.addEventListener('click', () => { const m = document.getElementById('scenario-modal'); if (m) m.classList.remove('open'); }));
+safe('history-close', el => el.addEventListener('click', () => { const m = document.getElementById('history-modal'); if (m) m.classList.remove('open'); }));
+if (hdrScenario) hdrScenario.addEventListener('click', () => { if (userScenarios.length > 0) openScenarioPicker(); });
+if (btnHistory) btnHistory.addEventListener('click', openHistory);
     $('reading-prev').addEventListener('click',prevReadingPage);
     $('reading-next').addEventListener('click',nextReadingPage);
     $('reading-play-pause').addEventListener('click',toggleReadingPause);
