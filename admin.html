@@ -22,18 +22,27 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#111115;
 :root{--hdr-h:74px;--row-h:30px;--btn-h:26px;--btn-font:11px;--gap:4px;--btn-max-w:80px;--counter-w:40px}
 header{background:#1e1e24;padding:4px 8px;display:flex;flex-direction:column;gap:var(--gap);border-bottom:1px solid #3f3f46;height:var(--hdr-h);min-height:var(--hdr-h);max-height:var(--hdr-h);z-index:1000;user-select:none;overflow:hidden}
 header.stimuli-mode{flex-direction:row;align-items:center;height:calc(var(--row-h) + 8px);min-height:calc(var(--row-h) + 8px);max-height:calc(var(--row-h) + 8px)}
-.header-left,.header-right{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--gap);height:var(--row-h);min-height:var(--row-h);max-height:var(--row-h);width:100%;overflow:hidden}
-header.stimuli-mode .header-left,header.stimuli-mode .header-right{display:contents}
-header.stimuli-mode .header-left > *:not(#btn-player):not(#btn-player-stop):not(#btn-player-pause):not(#btn-mode-toggle){display:none !important}
-header.stimuli-mode .header-right > *:not(#counters){display:none !important}
-.header-left .btn,.header-right .btn{flex:1 1 0;min-width:22px;max-width:var(--btn-max-w);padding:0 4px;border-radius:3px;cursor:pointer;font-weight:bold;font-size:var(--btn-font);white-space:nowrap;font-family:inherit;line-height:1;height:var(--btn-h);display:inline-flex;align-items:center;justify-content:center;overflow:hidden;text-overflow:ellipsis;color:white;border:none}
-.header-left .btn-icon,.header-right .btn-icon{padding:0 4px;font-size:13px}
-.header-left .btn:disabled,.header-right .btn:disabled{opacity:0.45;cursor:not-allowed}
-.header-left .status-chip,.header-right .status-chip,.header-left .header-sep,.header-right .header-sep,.header-left .counters,.header-right .counters{flex:0 0 auto}
-#btn-enable-camera{background:#4b5563}
-#btn-disable-camera{background:#10b981}
+.header-row{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--gap);height:var(--row-h);min-height:var(--row-h);max-height:var(--row-h);width:100%;overflow:hidden}
+.header-section{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--gap);height:var(--row-h);min-height:var(--row-h);max-height:var(--row-h);overflow:hidden;padding:0 4px;border-radius:4px;background:rgba(255,255,255,0.015)}
+.header-section.section-work{flex:4 1 0}
+.header-section.section-device{flex:2 1 0}
+.header-section.section-files{flex:5 1 0}
+.header-section.section-account{flex:3 1 0;justify-content:flex-end}
+.header-section .btn{flex:0 0 auto;padding:0 6px;border-radius:3px;cursor:pointer;font-weight:bold;font-size:var(--btn-font);white-space:nowrap;font-family:inherit;line-height:1;height:var(--btn-h);display:inline-flex;align-items:center;justify-content:center;overflow:hidden;text-overflow:ellipsis;color:white;border:none}
+.header-section .btn-icon{padding:0 5px;font-size:13px}
+.header-section .btn:disabled{opacity:0.45;cursor:not-allowed}
+.header-section .status-chip,.header-section .counters,.header-section .header-sep{flex:0 0 auto}
+.header-section .header-sep{display:inline-block;width:1px;height:14px;background:#3f3f46;margin:0 4px;flex-shrink:0}
+.section-sep{width:2px;height:22px;background:linear-gradient(180deg,transparent,#3f3f46,transparent);margin:0 6px;flex-shrink:0}
+header.stimuli-mode .header-section > *:not(#btn-player):not(#btn-player-stop):not(#btn-player-pause):not(#btn-mode-toggle):not(#counters){display:none !important}
+header.stimuli-mode .section-sep{display:none !important}
+header.stimuli-mode .header-section{flex:0 0 auto;background:transparent;padding:0}
+@media (max-width:1300px){.header-section.section-work{flex:3 1 0}.header-section.section-device{flex:1.5 1 0}.header-section.section-files{flex:3.5 1 0}.header-section.section-account{flex:2 1 0}}
+@media (max-width:1000px){.section-sep{width:1px;height:16px;margin:0 3px}}
+@media (max-width:820px){.header-section .btn{padding:0 4px}.header-section .btn-icon{padding:0 3px;font-size:12px}}
+
 #camera-status{display:none !important}
-@media (max-width:700px){:root{--btn-font:10px;--gap:2px;--btn-h:22px;--btn-max-w:60px;--counter-w:30px;--row-h:26px;--hdr-h:64px}header{padding:3px 6px}.header-left .btn,.header-right .btn{padding:0 2px}}
+@media (max-width:700px){:root{--btn-font:10px;--gap:2px;--btn-h:22px;--btn-max-w:60px;--counter-w:30px;--row-h:26px;--hdr-h:64px}header{padding:3px 6px}}
 @media (min-width:1800px){:root{--hdr-h:82px;--row-h:34px;--btn-h:28px;--btn-font:12px;--gap:6px;--btn-max-w:96px;--counter-w:48px}header{padding:4px 14px}}
 .btn-secondary{background:#4b5563}
 .btn-warning{background:#eab308;color:#111}
@@ -44,14 +53,12 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 .btn-compare{background:#f97316}
 .btn-mode{background:#2d2d3a;color:#eee;border:1px solid #3f3f46}
 .btn-mode.active{background:#8b5cf6;border-color:#8b5cf6}
-.header-sep{display:inline-block;width:1px;height:16px;background:#3f3f46;margin:0 3px;flex-shrink:0}
 .status-chip{display:inline-flex;align-items:center;background:#2d2d3a;color:#aaa;padding:0 6px;border-radius:3px;font-size:10px;height:20px;max-height:20px;white-space:nowrap;flex-shrink:0;max-width:130px;overflow:hidden;text-overflow:ellipsis}
 .status-chip.face-detected{color:#00ff00}
 .status-chip.face-missing{color:#ff6666}
 .status-chip.clickable{cursor:pointer}
 .status-chip.clickable:hover{background:#3a3a4a}
 
-/* === Чип синхронизации === */
 #sync-chip{font-weight:bold;transition:background 0.2s}
 #sync-chip.online{color:#22c55e;background:#0a2a1a}
 #sync-chip.offline{color:#f59e0b;background:#2a1f05}
@@ -199,7 +206,6 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 #live-distance-indicator{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
 #reading-timer{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
 
-/* === Баннер синхронизации === */
 #sync-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e24;border:1px solid #3f3f46;border-radius:8px;padding:12px 20px;font-size:13px;color:#eee;z-index:9998;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:transform 0.3s,opacity 0.3s;max-width:90vw}
 #sync-banner.visible{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
 #sync-banner .icon{font-size:18px;flex-shrink:0}
@@ -210,7 +216,6 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 #sync-banner button.primary{background:#0ea5e9}
 #sync-banner button.primary:hover{background:#38bdf8}
 
-/* === Модалка очереди === */
 #queue-modal .modal-content{width:720px;max-width:95vw}
 #queue-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
 #queue-table th{text-align:left;padding:8px 6px;color:#94a3b8;border-bottom:1px solid #3f3f46;font-weight:600}
@@ -224,27 +229,43 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 </head>
 <body>
 <header>
-<div class="header-left">
+<div class="header-row">
+
+<!-- === СЕКЦИЯ 1: РАБОТА === -->
+<div class="header-section section-work">
 <button class="btn btn-warning btn-icon" id="btn-player" title="Плеер">▶</button>
 <button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">⏹</button>
 <button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">⏸</button>
 <button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
-</div>
-<div class="header-right">
+<span class="header-sep"></span>
 <button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>
 <button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
 <button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
 <button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">⚖️</button>
 <button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
 <button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
-<span class="header-sep"></span>
+<button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
+<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
+</div>
+
+<span class="section-sep"></span>
+
+<!-- === СЕКЦИЯ 2: ОБОРУДОВАНИЕ === -->
+<div class="header-section section-device">
 <button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Включить камеру">📷</button>
 <button class="btn btn-success btn-icon" id="btn-disable-camera" style="display:none;" title="Выключить камеру">📷</button>
 <button class="btn btn-warning btn-icon" id="btn-calibrate-camera" disabled title="Калибровка камеры">🎥</button>
 <button class="btn btn-warning btn-icon" id="btn-calibrate-screen" title="Калибровка экрана">📐</button>
-<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
-<button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
 <span class="header-sep"></span>
+<span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
+<span class="status-chip" id="distance-display" title="Дистанция">—</span>
+<span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
+</div>
+
+<span class="section-sep"></span>
+
+<!-- === СЕКЦИЯ 3: ФАЙЛЫ === -->
+<div class="header-section section-files">
 <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
 <button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
 <input type="file" id="file-input" accept=".json" style="display:none;">
@@ -253,14 +274,9 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 <button class="btn btn-secondary btn-icon" id="btn-select-templates-folder" title="Папка заготовок">📋</button>
 <input type="file" id="templates-folder-input" webkitdirectory directory multiple style="display:none;">
 <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
-<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
 <span class="header-sep"></span>
 <span class="status-chip" id="folder-status" title="Папка">📁 —</span>
 <span class="status-chip" id="templates-folder-status" title="Папка заготовок">📋 —</span>
-<span class="status-chip clickable" id="sync-chip" title="Синхронизация — нажмите для очереди">🟢 Онлайн</span>
-<span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
-<span class="status-chip" id="distance-display" title="Дистанция">—</span>
-<span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
 <div class="counters" id="counters">
 <span class="counter" title="Полных серий"><span class="label">П:</span> <b id="cnt-completed">0</b></span>
 <span class="counter" title="Успешных серий"><span class="label">У:</span> <b id="cnt-success">0</b></span>
@@ -269,9 +285,19 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 <span class="counter" title="Неправильных ответов"><span class="label">✗</span> <b id="cnt-series-incorrect">0</b></span>
 <span class="counter" title="Без ответа"><span class="label">∅</span> <b id="cnt-series-noanswer">0</b></span>
 </div>
+</div>
+
+<span class="section-sep"></span>
+
+<!-- === СЕКЦИЯ 4: АККАУНТ === -->
+<div class="header-section section-account">
+<span class="status-chip clickable" id="sync-chip" title="Синхронизация — нажмите для очереди">🟢 Онлайн</span>
+<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
 <span class="header-sep"></span>
 <button class="btn btn-secondary" id="btn-auth">Войти</button>
 <span class="status-chip" id="user-email" title="Email" style="display:none;"></span>
+</div>
+
 </div>
 </header>
 <div class="main-layout" id="main-layout">
@@ -331,7 +357,6 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 </div>
 <div id="block-list"></div>
 
-<!-- ==================== БАННЕР СИНХРОНИЗАЦИИ ==================== -->
 <div id="sync-banner">
 <span class="icon" id="sync-banner-icon">🟢</span>
 <span class="text" id="sync-banner-text">Готово</span>
@@ -341,25 +366,13 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 </div>
 </div>
 
-<!-- ==================== МОДАЛКА ОЧЕРЕДИ ==================== -->
 <div class="modal" id="queue-modal">
 <div class="modal-content">
 <h3>📋 Очередь синхронизации</h3>
-<p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
-Изменения, которые ещё не отправлены в облако. Отправляются автоматически при появлении интернета.
-</p>
+<p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Изменения, которые ещё не отправлены в облако. Отправляются автоматически при появлении интернета.</p>
 <div id="queue-body">
 <table id="queue-table">
-<thead>
-<tr>
-<th>Тип</th>
-<th>Действие</th>
-<th>ID</th>
-<th>Создано</th>
-<th>Попыток</th>
-<th>Статус</th>
-</tr>
-</thead>
+<thead><tr><th>Тип</th><th>Действие</th><th>ID</th><th>Создано</th><th>Попыток</th><th>Статус</th></tr></thead>
 <tbody id="queue-tbody"></tbody>
 </table>
 <div id="queue-empty" style="display:none;">Очередь пуста. Всё синхронизировано.</div>
@@ -618,20 +631,14 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 <div id="connection-menu"></div>
 <video id="hidden-video" playsinline muted></video>
 
-<!-- ==================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ==================== -->
 <script src="data-layer.js" defer></script>
 <script src="app.js" defer></script>
 <script src="keepalive.js" defer></script>
 <script src="voice.js" defer></script>
 
-<!-- ==================== ЛОГИКА UI СИНХРОНИЗАЦИИ ==================== -->
 <script>
-// Обновление чипа, баннера, модалки очереди.
-// Работает независимо от app.js — просто слушает события Data.
 (function installSyncUI() {
     'use strict';
-
-    // Ожидаем, пока data-layer.js инициализируется
     function waitForData() {
         return new Promise(resolve => {
             if (window.Data) return resolve(window.Data);
@@ -640,213 +647,96 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
             }, 50);
         });
     }
-
     let lastBannerState = null;
-
     function renderChip(status) {
         const chip = document.getElementById('sync-chip');
         if (!chip) return;
         chip.classList.remove('online', 'offline', 'syncing', 'queue', 'errors');
-
-        if (status.processing) {
-            chip.textContent = '🔄 Синк…';
-            chip.classList.add('syncing');
-            return;
-        }
-        if (status.problematic > 0) {
-            chip.textContent = `❗ ${status.problematic} ошибок`;
-            chip.classList.add('errors');
-            return;
-        }
-        if (status.queueSize > 0) {
-            chip.textContent = `⚠️ ${status.queueSize} изм.`;
-            chip.classList.add('queue');
-            return;
-        }
-        if (status.online) {
-            chip.textContent = '🟢 Онлайн';
-            chip.classList.add('online');
-        } else {
-            chip.textContent = '📡 Офлайн';
-            chip.classList.add('offline');
-        }
+        if (status.processing) { chip.textContent = '🔄 Синк…'; chip.classList.add('syncing'); return; }
+        if (status.problematic > 0) { chip.textContent = `❗ ${status.problematic} ошибок`; chip.classList.add('errors'); return; }
+        if (status.queueSize > 0) { chip.textContent = `⚠️ ${status.queueSize} изм.`; chip.classList.add('queue'); return; }
+        if (status.online) { chip.textContent = '🟢 Онлайн'; chip.classList.add('online'); }
+        else { chip.textContent = '📡 Офлайн'; chip.classList.add('offline'); }
     }
-
     function showBanner(icon, text, actionLabel, actionFn) {
         const banner = document.getElementById('sync-banner');
         const iconEl = document.getElementById('sync-banner-icon');
         const textEl = document.getElementById('sync-banner-text');
         const actionBtn = document.getElementById('sync-banner-action');
         if (!banner) return;
-        iconEl.textContent = icon;
-        textEl.textContent = text;
-        if (actionLabel) {
-            actionBtn.style.display = 'inline-block';
-            actionBtn.textContent = actionLabel;
-            actionBtn.onclick = actionFn || null;
-        } else {
-            actionBtn.style.display = 'none';
-            actionBtn.onclick = null;
-        }
+        iconEl.textContent = icon; textEl.textContent = text;
+        if (actionLabel) { actionBtn.style.display = 'inline-block'; actionBtn.textContent = actionLabel; actionBtn.onclick = actionFn || null; }
+        else { actionBtn.style.display = 'none'; actionBtn.onclick = null; }
         banner.classList.add('visible');
         clearTimeout(banner._hideTimer);
         banner._hideTimer = setTimeout(() => banner.classList.remove('visible'), 4500);
     }
-
-    function hideBanner() {
-        const banner = document.getElementById('sync-banner');
-        if (banner) banner.classList.remove('visible');
-    }
-
+    function hideBanner() { const b = document.getElementById('sync-banner'); if (b) b.classList.remove('visible'); }
     async function refreshQueueModal() {
-        const modal = document.getElementById('queue-modal');
-        if (!modal || modal.style.display !== 'flex') return;
-        const Data = window.Data;
-        if (!Data) return;
+        const m = document.getElementById('queue-modal');
+        if (!m || m.style.display !== 'flex') return;
+        const Data = window.Data; if (!Data) return;
         const queue = await Data.getQueue();
         const tbody = document.getElementById('queue-tbody');
         const empty = document.getElementById('queue-empty');
         const table = document.getElementById('queue-table');
         tbody.innerHTML = '';
-        if (queue.length === 0) {
-            table.style.display = 'none';
-            empty.style.display = 'block';
-            return;
-        }
-        table.style.display = 'table';
-        empty.style.display = 'none';
+        if (queue.length === 0) { table.style.display = 'none'; empty.style.display = 'block'; return; }
+        table.style.display = 'table'; empty.style.display = 'none';
         queue.forEach(item => {
             const tr = document.createElement('tr');
             if (item.problematic) tr.classList.add('problematic');
             const when = new Date(item.createdAt).toLocaleTimeString('ru-RU');
-            const statusText = item.problematic
-                ? `❌ ${item.lastError || 'ошибка'}`
-                : (item.retries > 0 ? `⏳ попыток: ${item.retries}` : '⏳ в очереди');
-            tr.innerHTML = `
-                <td>${escapeHtml(item.type)}</td>
-                <td>${escapeHtml(item.action)}</td>
-                <td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || '—').slice(0, 16))}</td>
-                <td>${when}</td>
-                <td>${item.retries || 0}</td>
-                <td>${escapeHtml(statusText)}</td>
-            `;
+            const statusText = item.problematic ? `❌ ${item.lastError || 'ошибка'}` : (item.retries > 0 ? `⏳ попыток: ${item.retries}` : '⏳ в очереди');
+            tr.innerHTML = `<td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.action)}</td><td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || '—').slice(0, 16))}</td><td>${when}</td><td>${item.retries || 0}</td><td>${escapeHtml(statusText)}</td>`;
             tbody.appendChild(tr);
         });
     }
-
-    function escapeHtml(s) {
-        const d = document.createElement('div');
-        d.textContent = String(s);
-        return d.innerHTML;
-    }
-
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
     async function updateAll() {
-        const Data = window.Data;
-        if (!Data) return;
+        const Data = window.Data; if (!Data) return;
         try {
             const status = await Data.getStatus();
             renderChip(status);
-            // Баннер меняем только при смене ключевого состояния
             const key = `${status.online}|${status.processing}|${status.queueSize}|${status.problematic}`;
             if (key !== lastBannerState) {
                 lastBannerState = key;
-                if (!status.online) {
-                    showBanner('📡', 'Нет интернета. Работаем локально, данные сохраняются в браузере.',
-                        status.queueSize > 0 ? 'Очередь' : null,
-                        status.queueSize > 0 ? openQueueModal : null);
-                } else if (status.processing) {
-                    showBanner('🔄', 'Синхронизация с облаком…', null, null);
-                } else if (status.problematic > 0) {
-                    showBanner('❗', `Не отправлено: ${status.problematic} записей`, 'Очередь', openQueueModal);
-                } else if (status.queueSize > 0) {
-                    showBanner('⚠️', `В очереди: ${status.queueSize} записей`, 'Очередь', openQueueModal);
-                } else if (status.online) {
-                    hideBanner();
-                }
+                if (!status.online) showBanner('📡', 'Нет интернета. Работаем локально, данные сохраняются в браузере.', status.queueSize > 0 ? 'Очередь' : null, status.queueSize > 0 ? openQueueModal : null);
+                else if (status.processing) showBanner('🔄', 'Синхронизация с облаком…', null, null);
+                else if (status.problematic > 0) showBanner('❗', `Не отправлено: ${status.problematic} записей`, 'Очередь', openQueueModal);
+                else if (status.queueSize > 0) showBanner('⚠️', `В очереди: ${status.queueSize} записей`, 'Очередь', openQueueModal);
+                else if (status.online) hideBanner();
             }
-        } catch (e) {
-            console.warn('[sync-ui] updateAll:', e);
-        }
+        } catch (e) { console.warn('[sync-ui] updateAll:', e); }
     }
-
-    function openQueueModal() {
-        const m = document.getElementById('queue-modal');
-        if (!m) return;
-        m.style.display = 'flex';
-        refreshQueueModal();
-    }
-
-    function closeQueueModal() {
-        const m = document.getElementById('queue-modal');
-        if (m) m.style.display = 'none';
-    }
-
+    function openQueueModal() { const m = document.getElementById('queue-modal'); if (!m) return; m.style.display = 'flex'; refreshQueueModal(); }
+    function closeQueueModal() { const m = document.getElementById('queue-modal'); if (m) m.style.display = 'none'; }
     async function bindEvents() {
         const Data = await waitForData();
-
-        // Клик по чипу — открыть очередь
-        const chip = document.getElementById('sync-chip');
-        if (chip) chip.addEventListener('click', openQueueModal);
-
-        // Закрыть баннер
-        const closeBtn = document.getElementById('sync-banner-close');
-        if (closeBtn) closeBtn.addEventListener('click', hideBanner);
-
-        // Закрыть модалку
-        const qClose = document.getElementById('queue-close');
-        if (qClose) qClose.addEventListener('click', closeQueueModal);
-        const qModal = document.getElementById('queue-modal');
-        if (qModal) qModal.addEventListener('click', e => {
-            if (e.target === qModal) closeQueueModal();
-        });
-
-        // Синхронизировать сейчас
+        const chip = document.getElementById('sync-chip'); if (chip) chip.addEventListener('click', openQueueModal);
+        const closeBtn = document.getElementById('sync-banner-close'); if (closeBtn) closeBtn.addEventListener('click', hideBanner);
+        const qClose = document.getElementById('queue-close'); if (qClose) qClose.addEventListener('click', closeQueueModal);
+        const qModal = document.getElementById('queue-modal'); if (qModal) qModal.addEventListener('click', e => { if (e.target === qModal) closeQueueModal(); });
         const syncNow = document.getElementById('queue-sync-now');
         if (syncNow) syncNow.addEventListener('click', async () => {
-            syncNow.disabled = true;
-            syncNow.textContent = '⏳ Отправляю…';
-            try {
-                await Data.flush();
-                await refreshQueueModal();
-                await updateAll();
-            } finally {
-                syncNow.disabled = false;
-                syncNow.textContent = '🔄 Синхронизировать сейчас';
-            }
+            syncNow.disabled = true; syncNow.textContent = '⏳ Отправляю…';
+            try { await Data.flush(); await refreshQueueModal(); await updateAll(); }
+            finally { syncNow.disabled = false; syncNow.textContent = '🔄 Синхронизировать сейчас'; }
         });
-
-        // Очистить очередь
         const clearBtn = document.getElementById('queue-clear');
         if (clearBtn) clearBtn.addEventListener('click', async () => {
             if (!confirm('Очистить всю очередь? Неотправленные изменения будут потеряны.')) return;
-            await Data.clearQueue();
-            await refreshQueueModal();
-            await updateAll();
+            await Data.clearQueue(); await refreshQueueModal(); await updateAll();
         });
-
-        // Слушаем события Data
         Data.onChange((type) => {
-            if (type === 'queue-changed' || type === 'sync-start' || type === 'sync-end' ||
-                type === 'online' || type === 'offline' || type === 'ready') {
-                updateAll();
-                refreshQueueModal();
-            }
+            if (type === 'queue-changed' || type === 'sync-start' || type === 'sync-end' || type === 'online' || type === 'offline' || type === 'ready') { updateAll(); refreshQueueModal(); }
         });
-// Ждём открытия IndexedDB
-await Data.ready;
-        // Периодическое обновление (раз в 5 сек — на случай пропущенных событий)
         setInterval(updateAll, 5000);
         setInterval(refreshQueueModal, 5000);
-
-        // Первый рендер
         updateAll();
     }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindEvents);
-    } else {
-        bindEvents();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindEvents);
+    else bindEvents();
 })();
 </script>
 </body>
