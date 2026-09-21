@@ -60,7 +60,9 @@
     }
     function now() { return Date.now(); }
     function nowIso() { return new Date().toISOString(); }
-
+    function isUuid(v) {
+        return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    }
     function stripLocalFlags(obj) {
         if (!obj || typeof obj !== 'object') return obj;
         const { _dirty, _syncedAt, _cachedAt, _source, ...clean } = obj;
@@ -159,7 +161,7 @@
         if (!res.ok) {
             let body = '';
             try { body = await res.text(); } catch (_) {}
-            throw new Error(`Supabase HTTP ${res.status}: ${body.slice(0, 200)}`);
+            throw new Error(`Supabase HTTP ${res.status}: ${body.slice(0, 300)}`);
         }
         if (res.status === 204) return null;
         const text = await res.text();
@@ -190,6 +192,7 @@
             type: entry.type,
             action: entry.action,
             entityId: entry.entityId,
+            localId: entry.localId || null,   // локальный id (для маппинга после создания)
             payload: entry.payload || null,
             createdAt: now(),
             retries: 0,
@@ -224,40 +227,92 @@
     // ОТПРАВКА В SUPABASE
     // ============================================================
     async function pushToCloud(entry) {
-        const { type, action, entityId, payload } = entry;
+        const { type, action, entityId, localId, payload } = entry;
 
+        // --- SCENARIO ---
         if (type === 'scenario') {
             if (action === 'delete') {
-                await sbFetch(`scenarios?id=eq.${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+                // Удаление — только для валидных UUID (облачных)
+                if (isUuid(entityId)) {
+                    await sbFetch(`scenarios?id=eq.${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+                }
                 return;
             }
-            await sbFetch('scenarios', {
+
+            // Готовим payload для Supabase
+            const cloudPayload = stripLocalFlags({ ...payload });
+            // Если id локальный — удаляем, чтобы Supabase сгенерировал свой UUID
+            if (cloudPayload.id && !isUuid(cloudPayload.id)) {
+                delete cloudPayload.id;
+            }
+
+            const result = await sbFetch('scenarios', {
                 method: 'POST',
                 headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-                body: JSON.stringify([payload])
+                body: JSON.stringify([cloudPayload])
             });
+
+            // Если это был локальный сценарий — сохраняем полученный UUID в локальный IndexedDB
+            const cloudId = Array.isArray(result) && result[0] ? result[0].id : null;
+            if (cloudId && localId && localId !== cloudId) {
+                const localRec = await idbGet(STORES.scenarios, localId);
+                if (localRec) {
+                    const oldId = localRec.id;
+                    localRec.id = cloudId;
+                    localRec.cloudId = cloudId;
+                    await idbPut(STORES.scenarios, localRec);
+                    await idbDelete(STORES.scenarios, oldId);
+                    log(`[scenario] локальный id ${localId} → облачный ${cloudId}`);
+                    emit('scenarios-changed', { id: cloudId, renamed: true });
+                }
+            }
             return;
         }
 
+        // --- TEMPLATE ---
         if (type === 'template') {
             if (action === 'delete') {
-                await sbFetch(`templates?id=eq.${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+                if (isUuid(entityId)) {
+                    await sbFetch(`templates?id=eq.${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+                }
                 return;
             }
-            await sbFetch('templates', {
+            const cloudPayload = stripLocalFlags({ ...payload });
+            if (cloudPayload.id && !isUuid(cloudPayload.id)) {
+                delete cloudPayload.id;
+            }
+            const result = await sbFetch('templates', {
                 method: 'POST',
                 headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-                body: JSON.stringify([payload])
+                body: JSON.stringify([cloudPayload])
             });
+            const cloudId = Array.isArray(result) && result[0] ? result[0].id : null;
+            if (cloudId && localId && localId !== cloudId) {
+                const localRec = await idbGet(STORES.templates, localId);
+                if (localRec) {
+                    const oldId = localRec.id;
+                    localRec.id = cloudId;
+                    localRec.cloudId = cloudId;
+                    await idbPut(STORES.templates, localRec);
+                    await idbDelete(STORES.templates, oldId);
+                    emit('templates-changed', { id: cloudId, renamed: true });
+                }
+            }
             return;
         }
 
+        // --- ASSIGNMENT ---
         if (type === 'assignment') {
             if (action === 'delete') {
-                await sbFetch(`user_scenarios?id=eq.${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+                if (isUuid(entityId)) {
+                    await sbFetch(`user_scenarios?id=eq.${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+                }
                 return;
             }
-            const { id, _dirty, _syncedAt, ...cleanPayload } = payload;
+            const cleanPayload = { ...payload };
+            delete cleanPayload.id;
+            delete cleanPayload._dirty;
+            delete cleanPayload._syncedAt;
             await sbFetch('user_scenarios', {
                 method: 'POST',
                 headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
@@ -266,8 +321,12 @@
             return;
         }
 
+        // --- RESULT ---
         if (type === 'result') {
-            const { localId, _dirty, _syncedAt, ...cleanPayload } = payload;
+            const cleanPayload = { ...payload };
+            delete cleanPayload.localId;
+            delete cleanPayload._dirty;
+            delete cleanPayload._syncedAt;
             await sbFetch('test_results', {
                 method: 'POST',
                 body: JSON.stringify([cleanPayload])
@@ -315,9 +374,7 @@
                         warn('push failed:', entry.type, entry.action, err.message);
                         const retries = (entry.retries || 0) + 1;
                         const patch = { retries, lastError: err.message };
-                        if (retries >= MAX_RETRIES || isAuthError(err.message)) {
-                            patch.problematic = true;
-                        }
+                        if (retries >= MAX_RETRIES || isAuthError(err.message)) patch.problematic = true;
                         await queueUpdate(entry.id, patch);
                     }
                 }
@@ -387,10 +444,7 @@
     Data.isOnline = isOnline;
     Data.onChange = (cb) => {
         listeners.push(cb);
-        return () => {
-            const i = listeners.indexOf(cb);
-            if (i >= 0) listeners.splice(i, 1);
-        };
+        return () => { const i = listeners.indexOf(cb); if (i >= 0) listeners.splice(i, 1); };
     };
     Data.setAuth = setAuth;
     Data.clearAuth = clearAuth;
@@ -422,13 +476,22 @@
             try {
                 const cloud = await sbFetch('scenarios?select=*&order=updated_at.desc');
                 if (Array.isArray(cloud)) {
+                    // Очищаем локальный кэш и заливаем свежее из облака
+                    const local = await idbGetAll(STORES.scenarios);
+                    const cloudIds = new Set(cloud.map(s => s.id));
                     for (const s of cloud) {
                         await idbPut(STORES.scenarios, { ...s, _dirty: false, _syncedAt: now() });
+                    }
+                    // Удаляем локальные записи, которых нет в облаке И которые не _dirty
+                    for (const l of local) {
+                        if (!cloudIds.has(l.id) && !l._dirty) {
+                            await idbDelete(STORES.scenarios, l.id);
+                        }
                     }
                     log(`getScenarios: загружено из облака ${cloud.length}`);
                 }
             } catch (e) {
-                warn('getScenarios: облако недоступно, отдаём кэш. ', e.message);
+                warn('getScenarios: облако недоступно, отдаём кэш.', e.message);
             }
         }
         const local = await Data.getScenariosLocal();
@@ -439,6 +502,7 @@
     Data.getScenarioById = async (id) => idbGet(STORES.scenarios, id);
 
     Data.saveScenario = async (scenario) => {
+        // Локальный id: если задан валидный uuid — используем его, иначе генерируем свой
         const id = scenario.id || uuid();
         const existing = await idbGet(STORES.scenarios, id);
         const record = {
@@ -455,6 +519,7 @@
             type: 'scenario',
             action: existing ? 'update' : 'create',
             entityId: id,
+            localId: id,
             payload: stripLocalFlags(record)
         });
         if (isOnline() && currentUserId) processQueue();
@@ -486,7 +551,7 @@
                     log(`getTemplates: загружено из облака ${cloud.length}`);
                 }
             } catch (e) {
-                warn('getTemplates: облако недоступно, отдаём кэш. ', e.message);
+                warn('getTemplates: облако недоступно, отдаём кэш.', e.message);
             }
         }
         const local = await Data.getTemplatesLocal();
@@ -513,6 +578,7 @@
             type: 'template',
             action: existing ? 'update' : 'create',
             entityId: id,
+            localId: id,
             payload: stripLocalFlags(record)
         });
         if (isOnline() && currentUserId) processQueue();
@@ -533,13 +599,11 @@
             try {
                 const cloud = await sbFetch('profiles?select=id,email,full_name');
                 if (Array.isArray(cloud)) {
-                    for (const u of cloud) {
-                        await idbPut(STORES.users, { ...u, _cachedAt: now() });
-                    }
+                    for (const u of cloud) await idbPut(STORES.users, { ...u, _cachedAt: now() });
                     log(`getUsers: загружено ${cloud.length}`);
                 }
             } catch (e) {
-                warn('getUsers: облако недоступно, отдаём кэш. ', e.message);
+                warn('getUsers: облако недоступно, отдаём кэш.', e.message);
             }
         }
         const local = await idbGetAll(STORES.users);
@@ -554,13 +618,11 @@
                 const cloud = await sbFetch('user_scenarios?select=*');
                 if (Array.isArray(cloud)) {
                     await idbClear(STORES.assignments);
-                    for (const a of cloud) {
-                        await idbPut(STORES.assignments, { ...a, _cachedAt: now() });
-                    }
+                    for (const a of cloud) await idbPut(STORES.assignments, { ...a, _cachedAt: now() });
                     log(`getAssignments: загружено ${cloud.length}`);
                 }
             } catch (e) {
-                warn('getAssignments: облако недоступно, отдаём кэш. ', e.message);
+                warn('getAssignments: облако недоступно, отдаём кэш.', e.message);
             }
         }
         return await idbGetAll(STORES.assignments);
@@ -596,24 +658,14 @@
             created_at: result.created_at || nowIso()
         };
         await idbPut(STORES.results, record);
-        await queueAdd({
-            type: 'result',
-            action: 'create',
-            entityId: null,
-            payload: record
-        });
+        await queueAdd({ type: 'result', action: 'create', entityId: null, payload: record });
         if (isOnline() && currentUserId) processQueue();
     };
     Data.getResultsLocal = async () => idbGetAll(STORES.results);
 
     // ---------- ПАПКИ ----------
-    Data.saveFolderHandle = async (key, handle) => {
-        await idbPut(STORES.settings, { key, value: handle });
-    };
-    Data.getFolderHandle = async (key) => {
-        const r = await idbGet(STORES.settings, key);
-        return r ? r.value : null;
-    };
+    Data.saveFolderHandle = async (key, handle) => { await idbPut(STORES.settings, { key, value: handle }); };
+    Data.getFolderHandle = async (key) => { const r = await idbGet(STORES.settings, key); return r ? r.value : null; };
     Data.scanFolder = async (handle, filterExt = '.json') => {
         if (!handle) return [];
         const out = [];
@@ -655,9 +707,7 @@
         log('миграция v2→v3: помечаем все scenarios как _dirty');
         const scenarios = await idbGetAll(STORES.scenarios);
         for (const s of scenarios) {
-            if (s._dirty === undefined) {
-                await idbPut(STORES.scenarios, { ...s, _dirty: true, _syncedAt: null });
-            }
+            if (s._dirty === undefined) await idbPut(STORES.scenarios, { ...s, _dirty: true, _syncedAt: null });
         }
         await idbPut(STORES.settings, { key: 'migrated_v2_v3', value: true });
     }
@@ -699,29 +749,20 @@
             idbGetAll(STORES.results),
             idbGetAll(STORES.syncQueue)
         ]);
-        return {
-            exportedAt: nowIso(),
-            version: DB_VERSION,
-            data: { scenarios, templates, users, assignments, results, queue }
-        };
+        return { exportedAt: nowIso(), version: DB_VERSION, data: { scenarios, templates, users, assignments, results, queue } };
     };
 
     Data.importAll = async (bundle) => {
         if (!bundle || !bundle.data) throw new Error('Некорректный формат');
         const d = bundle.data;
         const pairs = [
-            [STORES.scenarios, d.scenarios],
-            [STORES.templates, d.templates],
-            [STORES.users, d.users],
-            [STORES.assignments, d.assignments],
-            [STORES.results, d.results],
-            [STORES.syncQueue, d.queue]
+            [STORES.scenarios, d.scenarios], [STORES.templates, d.templates],
+            [STORES.users, d.users], [STORES.assignments, d.assignments],
+            [STORES.results, d.results], [STORES.syncQueue, d.queue]
         ];
         for (const [store, arr] of pairs) {
             if (!Array.isArray(arr)) continue;
-            for (const item of arr) {
-                try { await idbPut(store, item); } catch (_) {}
-            }
+            for (const item of arr) { try { await idbPut(store, item); } catch (_) {} }
         }
         emit('imported', {});
     };
@@ -756,13 +797,11 @@
                     type: 'template',
                     action: existing ? 'update' : 'create',
                     entityId: record.id,
+                    localId: record.id,
                     payload: stripLocalFlags(record)
                 });
                 existing ? updated++ : added++;
-            } catch (e) {
-                warn('bulkImportTemplates: пропущен', f.name, e.message);
-                skipped++;
-            }
+            } catch (e) { warn('bulkImportTemplates: пропущен', f.name, e.message); skipped++; }
         }
         if (isOnline() && currentUserId) processQueue();
         emit('templates-changed', { added, updated, skipped });
@@ -781,9 +820,7 @@
             });
             clearTimeout(t);
             return res.ok || res.status === 404 || res.status === 401;
-        } catch (_) {
-            return false;
-        }
+        } catch (_) { return false; }
     };
 
     // ============================================================
@@ -821,13 +858,8 @@
         return Data;
     }
 
-    // ============================================================
-    // ЭКСПОРТ
-    // ============================================================
     Data.init = init;
     global.Data = Data;
-
     Data.ready = init();
-
     log('модуль установлен');
 })(window);
