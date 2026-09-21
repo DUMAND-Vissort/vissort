@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
@@ -48,6 +48,18 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 .status-chip{display:inline-flex;align-items:center;background:#2d2d3a;color:#aaa;padding:0 6px;border-radius:3px;font-size:10px;height:20px;max-height:20px;white-space:nowrap;flex-shrink:0;max-width:130px;overflow:hidden;text-overflow:ellipsis}
 .status-chip.face-detected{color:#00ff00}
 .status-chip.face-missing{color:#ff6666}
+.status-chip.clickable{cursor:pointer}
+.status-chip.clickable:hover{background:#3a3a4a}
+
+/* === Чип синхронизации === */
+#sync-chip{font-weight:bold;transition:background 0.2s}
+#sync-chip.online{color:#22c55e;background:#0a2a1a}
+#sync-chip.offline{color:#f59e0b;background:#2a1f05}
+#sync-chip.syncing{color:#38bdf8;background:#0a1a2a;animation:pulseSync 1.2s ease-in-out infinite}
+#sync-chip.queue{color:#fb923c;background:#2a1205}
+#sync-chip.errors{color:#ef4444;background:#2a0505}
+@keyframes pulseSync{0%,100%{opacity:1}50%{opacity:0.5}}
+
 .counters{display:inline-flex;align-items:center;gap:3px;font-size:10px;flex-shrink:0;flex-wrap:nowrap;margin-left:0}
 .counter{background:#2d2d3a;color:#ccc;padding:0 2px;border-radius:3px;height:20px;max-height:20px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex:0 0 var(--counter-w);width:var(--counter-w);min-width:var(--counter-w);max-width:var(--counter-w);overflow:hidden;font-size:10px}
 .counter b{color:#fff;margin-left:2px;font-weight:bold}
@@ -186,6 +198,28 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 #physio-indicator{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
 #live-distance-indicator{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
 #reading-timer{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
+
+/* === Баннер синхронизации === */
+#sync-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e24;border:1px solid #3f3f46;border-radius:8px;padding:12px 20px;font-size:13px;color:#eee;z-index:9998;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:transform 0.3s,opacity 0.3s;max-width:90vw}
+#sync-banner.visible{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+#sync-banner .icon{font-size:18px;flex-shrink:0}
+#sync-banner .text{flex:1;min-width:0}
+#sync-banner .actions{display:flex;gap:8px;flex-shrink:0}
+#sync-banner button{background:#3a3a4a;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600}
+#sync-banner button:hover{background:#4a4a5a}
+#sync-banner button.primary{background:#0ea5e9}
+#sync-banner button.primary:hover{background:#38bdf8}
+
+/* === Модалка очереди === */
+#queue-modal .modal-content{width:720px;max-width:95vw}
+#queue-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+#queue-table th{text-align:left;padding:8px 6px;color:#94a3b8;border-bottom:1px solid #3f3f46;font-weight:600}
+#queue-table td{padding:8px 6px;border-bottom:1px solid #1e1e24}
+#queue-table tr.problematic{background:rgba(220,38,38,0.1)}
+#queue-table tr.problematic td{color:#f87171}
+#queue-empty{text-align:center;color:#666;padding:30px;font-style:italic}
+.queue-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.queue-actions .btn{font-size:13px;padding:8px 16px;height:auto}
 </style>
 </head>
 <body>
@@ -215,11 +249,15 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 <button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
 <input type="file" id="file-input" accept=".json" style="display:none;">
 <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-<button class="btn btn-secondary btn-icon" id="btn-select-folder" title="Выбрать папку">📁</button>
+<button class="btn btn-secondary btn-icon" id="btn-select-folder" title="Папка сценариев">📁</button>
+<button class="btn btn-secondary btn-icon" id="btn-select-templates-folder" title="Папка заготовок">📋</button>
+<input type="file" id="templates-folder-input" webkitdirectory directory multiple style="display:none;">
 <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
 <button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
 <span class="header-sep"></span>
 <span class="status-chip" id="folder-status" title="Папка">📁 —</span>
+<span class="status-chip" id="templates-folder-status" title="Папка заготовок">📋 —</span>
+<span class="status-chip clickable" id="sync-chip" title="Синхронизация — нажмите для очереди">🟢 Онлайн</span>
 <span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
 <span class="status-chip" id="distance-display" title="Дистанция">—</span>
 <span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
@@ -292,6 +330,47 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 <button class="btn btn-warning" id="btn-generate-sequence">⚡ Сгенерировать</button>
 </div>
 <div id="block-list"></div>
+
+<!-- ==================== БАННЕР СИНХРОНИЗАЦИИ ==================== -->
+<div id="sync-banner">
+<span class="icon" id="sync-banner-icon">🟢</span>
+<span class="text" id="sync-banner-text">Готово</span>
+<div class="actions">
+<button id="sync-banner-action" style="display:none;">Открыть</button>
+<button id="sync-banner-close">×</button>
+</div>
+</div>
+
+<!-- ==================== МОДАЛКА ОЧЕРЕДИ ==================== -->
+<div class="modal" id="queue-modal">
+<div class="modal-content">
+<h3>📋 Очередь синхронизации</h3>
+<p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+Изменения, которые ещё не отправлены в облако. Отправляются автоматически при появлении интернета.
+</p>
+<div id="queue-body">
+<table id="queue-table">
+<thead>
+<tr>
+<th>Тип</th>
+<th>Действие</th>
+<th>ID</th>
+<th>Создано</th>
+<th>Попыток</th>
+<th>Статус</th>
+</tr>
+</thead>
+<tbody id="queue-tbody"></tbody>
+</table>
+<div id="queue-empty" style="display:none;">Очередь пуста. Всё синхронизировано.</div>
+</div>
+<div class="modal-footer queue-actions">
+<button class="btn btn-warning" id="queue-sync-now">🔄 Синхронизировать сейчас</button>
+<button class="btn btn-danger" id="queue-clear">🗑 Очистить всё</button>
+<button class="btn btn-secondary" id="queue-close">Закрыть</button>
+</div>
+</div>
+</div>
 
 <div class="modal" id="generator-modal">
 <div class="modal-content">
@@ -538,8 +617,236 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
 
 <div id="connection-menu"></div>
 <video id="hidden-video" playsinline muted></video>
+
+<!-- ==================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ==================== -->
+<script src="data-layer.js" defer></script>
 <script src="app.js" defer></script>
 <script src="keepalive.js" defer></script>
 <script src="voice.js" defer></script>
+
+<!-- ==================== ЛОГИКА UI СИНХРОНИЗАЦИИ ==================== -->
+<script>
+// Обновление чипа, баннера, модалки очереди.
+// Работает независимо от app.js — просто слушает события Data.
+(function installSyncUI() {
+    'use strict';
+
+    // Ожидаем, пока data-layer.js инициализируется
+    function waitForData() {
+        return new Promise(resolve => {
+            if (window.Data) return resolve(window.Data);
+            const t = setInterval(() => {
+                if (window.Data) { clearInterval(t); resolve(window.Data); }
+            }, 50);
+        });
+    }
+
+    let lastBannerState = null;
+
+    function renderChip(status) {
+        const chip = document.getElementById('sync-chip');
+        if (!chip) return;
+        chip.classList.remove('online', 'offline', 'syncing', 'queue', 'errors');
+
+        if (status.processing) {
+            chip.textContent = '🔄 Синк…';
+            chip.classList.add('syncing');
+            return;
+        }
+        if (status.problematic > 0) {
+            chip.textContent = `❗ ${status.problematic} ошибок`;
+            chip.classList.add('errors');
+            return;
+        }
+        if (status.queueSize > 0) {
+            chip.textContent = `⚠️ ${status.queueSize} изм.`;
+            chip.classList.add('queue');
+            return;
+        }
+        if (status.online) {
+            chip.textContent = '🟢 Онлайн';
+            chip.classList.add('online');
+        } else {
+            chip.textContent = '📡 Офлайн';
+            chip.classList.add('offline');
+        }
+    }
+
+    function showBanner(icon, text, actionLabel, actionFn) {
+        const banner = document.getElementById('sync-banner');
+        const iconEl = document.getElementById('sync-banner-icon');
+        const textEl = document.getElementById('sync-banner-text');
+        const actionBtn = document.getElementById('sync-banner-action');
+        if (!banner) return;
+        iconEl.textContent = icon;
+        textEl.textContent = text;
+        if (actionLabel) {
+            actionBtn.style.display = 'inline-block';
+            actionBtn.textContent = actionLabel;
+            actionBtn.onclick = actionFn || null;
+        } else {
+            actionBtn.style.display = 'none';
+            actionBtn.onclick = null;
+        }
+        banner.classList.add('visible');
+        clearTimeout(banner._hideTimer);
+        banner._hideTimer = setTimeout(() => banner.classList.remove('visible'), 4500);
+    }
+
+    function hideBanner() {
+        const banner = document.getElementById('sync-banner');
+        if (banner) banner.classList.remove('visible');
+    }
+
+    async function refreshQueueModal() {
+        const modal = document.getElementById('queue-modal');
+        if (!modal || modal.style.display !== 'flex') return;
+        const Data = window.Data;
+        if (!Data) return;
+        const queue = await Data.getQueue();
+        const tbody = document.getElementById('queue-tbody');
+        const empty = document.getElementById('queue-empty');
+        const table = document.getElementById('queue-table');
+        tbody.innerHTML = '';
+        if (queue.length === 0) {
+            table.style.display = 'none';
+            empty.style.display = 'block';
+            return;
+        }
+        table.style.display = 'table';
+        empty.style.display = 'none';
+        queue.forEach(item => {
+            const tr = document.createElement('tr');
+            if (item.problematic) tr.classList.add('problematic');
+            const when = new Date(item.createdAt).toLocaleTimeString('ru-RU');
+            const statusText = item.problematic
+                ? `❌ ${item.lastError || 'ошибка'}`
+                : (item.retries > 0 ? `⏳ попыток: ${item.retries}` : '⏳ в очереди');
+            tr.innerHTML = `
+                <td>${escapeHtml(item.type)}</td>
+                <td>${escapeHtml(item.action)}</td>
+                <td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || '—').slice(0, 16))}</td>
+                <td>${when}</td>
+                <td>${item.retries || 0}</td>
+                <td>${escapeHtml(statusText)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = String(s);
+        return d.innerHTML;
+    }
+
+    async function updateAll() {
+        const Data = window.Data;
+        if (!Data) return;
+        try {
+            const status = await Data.getStatus();
+            renderChip(status);
+            // Баннер меняем только при смене ключевого состояния
+            const key = `${status.online}|${status.processing}|${status.queueSize}|${status.problematic}`;
+            if (key !== lastBannerState) {
+                lastBannerState = key;
+                if (!status.online) {
+                    showBanner('📡', 'Нет интернета. Работаем локально, данные сохраняются в браузере.',
+                        status.queueSize > 0 ? 'Очередь' : null,
+                        status.queueSize > 0 ? openQueueModal : null);
+                } else if (status.processing) {
+                    showBanner('🔄', 'Синхронизация с облаком…', null, null);
+                } else if (status.problematic > 0) {
+                    showBanner('❗', `Не отправлено: ${status.problematic} записей`, 'Очередь', openQueueModal);
+                } else if (status.queueSize > 0) {
+                    showBanner('⚠️', `В очереди: ${status.queueSize} записей`, 'Очередь', openQueueModal);
+                } else if (status.online) {
+                    hideBanner();
+                }
+            }
+        } catch (e) {
+            console.warn('[sync-ui] updateAll:', e);
+        }
+    }
+
+    function openQueueModal() {
+        const m = document.getElementById('queue-modal');
+        if (!m) return;
+        m.style.display = 'flex';
+        refreshQueueModal();
+    }
+
+    function closeQueueModal() {
+        const m = document.getElementById('queue-modal');
+        if (m) m.style.display = 'none';
+    }
+
+    async function bindEvents() {
+        const Data = await waitForData();
+
+        // Клик по чипу — открыть очередь
+        const chip = document.getElementById('sync-chip');
+        if (chip) chip.addEventListener('click', openQueueModal);
+
+        // Закрыть баннер
+        const closeBtn = document.getElementById('sync-banner-close');
+        if (closeBtn) closeBtn.addEventListener('click', hideBanner);
+
+        // Закрыть модалку
+        const qClose = document.getElementById('queue-close');
+        if (qClose) qClose.addEventListener('click', closeQueueModal);
+        const qModal = document.getElementById('queue-modal');
+        if (qModal) qModal.addEventListener('click', e => {
+            if (e.target === qModal) closeQueueModal();
+        });
+
+        // Синхронизировать сейчас
+        const syncNow = document.getElementById('queue-sync-now');
+        if (syncNow) syncNow.addEventListener('click', async () => {
+            syncNow.disabled = true;
+            syncNow.textContent = '⏳ Отправляю…';
+            try {
+                await Data.flush();
+                await refreshQueueModal();
+                await updateAll();
+            } finally {
+                syncNow.disabled = false;
+                syncNow.textContent = '🔄 Синхронизировать сейчас';
+            }
+        });
+
+        // Очистить очередь
+        const clearBtn = document.getElementById('queue-clear');
+        if (clearBtn) clearBtn.addEventListener('click', async () => {
+            if (!confirm('Очистить всю очередь? Неотправленные изменения будут потеряны.')) return;
+            await Data.clearQueue();
+            await refreshQueueModal();
+            await updateAll();
+        });
+
+        // Слушаем события Data
+        Data.onChange((type) => {
+            if (type === 'queue-changed' || type === 'sync-start' || type === 'sync-end' ||
+                type === 'online' || type === 'offline' || type === 'ready') {
+                updateAll();
+                refreshQueueModal();
+            }
+        });
+
+        // Периодическое обновление (раз в 5 сек — на случай пропущенных событий)
+        setInterval(updateAll, 5000);
+        setInterval(refreshQueueModal, 5000);
+
+        // Первый рендер
+        updateAll();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindEvents);
+    } else {
+        bindEvents();
+    }
+})();
+</script>
 </body>
 </html>

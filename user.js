@@ -61,6 +61,66 @@ let _blinkClosedSince = 0;
 let _blinkIsClosed = false;
 const BLINK_THRESHOLD = 0.21;
 
+// === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
+let graphActive = false;
+let gNodes = [];
+let gConnections = [];
+let gQueue = [];
+let gIndex = 0;
+let gCurrentNodeId = null;
+let gNodeAcuityCurrent = 1.0;
+let gCurrentCompareNode = null;
+
+// ==================== RATE LIMIT ====================
+let _answerTimestamps = [];
+function checkRateLimit() {
+    const now = Date.now();
+    _answerTimestamps = _answerTimestamps.filter(t => now - t < 60000);
+    if (_answerTimestamps.length >= 100) {
+        console.warn('[rate-limit] Слишком много ответов в минуту');
+        return false;
+    }
+    _answerTimestamps.push(now);
+    return true;
+}
+
+// ==================== SCENARIO VALIDATION ====================
+function validateScenario(scenario) {
+    if (!scenario || typeof scenario !== 'object') return false;
+    const p = scenario.params;
+    if (!p || typeof p !== 'object') return false;
+
+    if (p.graph) {
+        if (!Array.isArray(p.graph.nodes)) return false;
+        if (p.graph.nodes.length > 500) return false;
+        for (const node of p.graph.nodes) {
+            if (typeof node.id !== 'string') return false;
+            if (typeof node.x !== 'number' || node.x < -100000 || node.x > 100000) return false;
+            if (typeof node.y !== 'number' || node.y < -100000 || node.y > 100000) return false;
+            if (node.width && (node.width < 0 || node.width > 10000)) return false;
+            if (node.height && (node.height < 0 || node.height > 10000)) return false;
+            if (node.seriesCount && (node.seriesCount < 0 || node.seriesCount > 1000)) return false;
+            if (node.seriesSize && (node.seriesSize < 0 || node.seriesSize > 1000)) return false;
+            if (node.duration && (node.duration < 0 || node.duration > 3600000)) return false;
+        }
+    }
+
+    if (p.graph && p.graph.books) {
+        for (const id of Object.keys(p.graph.books)) {
+            const book = p.graph.books[id];
+            if (typeof book.text === 'string' && book.text.length > 10000000) {
+                console.warn('Книга слишком большая:', id);
+                return false;
+            }
+        }
+    }
+
+    if (p.distanceMeters && (p.distanceMeters < 0.01 || p.distanceMeters > 100)) return false;
+    if (p.ppi && (p.ppi < 20 || p.ppi > 2000)) return false;
+
+    return true;
+}
+
 const $ = (id) => document.getElementById(id);
 const stimDisplay = $('stim');
 const stimArea = $('stim-display');
@@ -383,7 +443,7 @@ function startSingleBgAnimation(p){
 }
 function stopSingleBgAnimation(){if(singleBgAnimId){cancelAnimationFrame(singleBgAnimId);singleBgAnimId=null;}}
 
-// ==================== МОРГАНИЕ ====================
+// ==================== МОРГАНИЕ (анимация) ====================
 function startBlinkAnimation(opts){
     stopBlinkAnimation();
     if (!opts) return;
@@ -688,15 +748,6 @@ function disableCamera(){
 // ==================== user.js: Начало части 2 из 4 ====================
 
 // ==================== ПЛЕЕР ГРАФА ====================
-let graphActive = false;
-let gNodes = [];
-let gConnections = [];
-let gQueue = [];
-let gIndex = 0;
-let gCurrentNodeId = null;
-let gNodeAcuityCurrent = 1.0;
-let gCurrentCompareNode = null;
-
 function gGetNode(id) { return gNodes.find(n => n.id === id); }
 
 function buildGraphQueue() {
@@ -1020,6 +1071,10 @@ function finishGraphReading(node) {
 // ==================== ЗАПУСК ====================
 function startPlayer(){
     if(!userScenario){alert('Сценарий не назначен');return;}
+    if(!validateScenario(userScenario)){
+        alert('Сценарий повреждён или содержит некорректные данные.');
+        return;
+    }
     sessionId = 'u_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
     const p = userScenario.params || {};
     playerRunning = true; isPaused = false;
@@ -1245,6 +1300,8 @@ function createCellElement(cell,params,direction,idx){
     stimDisplay.appendChild(el);
 }
 function processCompareAnswer(isCorrect){
+    if(!playerRunning || isPaused) return;
+    if(currentShowTimer){clearTimeout(currentShowTimer);currentShowTimer=null;}
     const p=userScenario?.params||{};
     if(isCorrect)seriesCorrect++;else seriesIncorrect++;
     seriesStep++;updateCounters();
@@ -1515,6 +1572,7 @@ function togglePause(){
 
 // ==================== SAVE RESULT ====================
 async function saveResult(nodeId,reactionTimeMs,isCorrect){
+    if(!checkRateLimit())return;
     if(!supabaseClient||!currentUser||!sessionId)return;
     try{
         await supabaseClient.from('test_results').insert({

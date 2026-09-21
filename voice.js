@@ -120,7 +120,25 @@
 
         _splitSentences(text) {
             if (!text) return [];
-            // Без lookbehind — совместимо с Safari < 16.4
+
+            // Безопасное разбиение по запятым — без lookbehind (совместимо с Safari < 16.4)
+            function splitByCommas(t) {
+                const parts = [];
+                let buf = '';
+                for (let i = 0; i < t.length; i++) {
+                    const ch = t[i];
+                    buf += ch;
+                    if (ch === ',') {
+                        const trimmed = buf.trim();
+                        if (trimmed) parts.push(trimmed);
+                        buf = '';
+                    }
+                }
+                if (buf.trim()) parts.push(buf.trim());
+                return parts;
+            }
+
+            // Разбиение на предложения (тоже без lookbehind)
             const rough = [];
             const re = /[^.!?…]+[.!?…]+|[^.!?…]+$/g;
             const norm = text.replace(/\s+/g, ' ').trim();
@@ -134,7 +152,7 @@
             for (const s of rough) {
                 if (s.length <= MAX) { result.push(s); continue; }
                 let buf = '';
-                const parts = s.split(/(?<=,)\s+/);
+                const parts = splitByCommas(s);
                 for (const part of parts) {
                     if ((buf + ' ' + part).trim().length > MAX && buf) {
                         result.push(buf.trim()); buf = part;
@@ -245,47 +263,49 @@
             this.readText(text, 0);
         }
     };
-Voice.sayKey = function(key, opts) {
-    const phrases = {
-        ready:          'Приготовьтесь',
-        look:           'Смотрите',
-        correct:        'Правильно',
-        wrong:          'Ошибка',
-        timeout:        'Время вышло',
-        blink:          'Поморгайте',
-        moveBack:       'Не приближайтесь',
-        moveUp:         'Не отклоняйтесь',
-        countdown5:     'Осталось пять секунд',
-        countdown4:     'Четыре',
-        countdown3:     'Три',
-        countdown2:     'Два',
-        countdown1:     'Один',
-        paused:         'Пауза',
-        resumed:        'Продолжаем',
-        finished:       'Тренировка завершена',
-        readingStart:   'Начинаем чтение',
-        readingPause:   'Пауза',
-        readingResume:  'Продолжаем',
-        readingEnd:     'Чтение завершено',
-        nextNode:       'Следующее задание',
-        seriesDone:     'Серия завершена',
-        seriesFailed:   'Серия не пройдена',
-        camOff:         'Камера выключена',
-        camOn:          'Камера включена',
-        faceLost:       'Лицо не найдено',
-        faceFound:      'Лицо найдено',
-        voiceOn:        'Озвучивание включено',
-        voiceOff:       'Озвучивание выключено',
-        voiceSelected:  'Голос выбран',
-        voiceTest:      'Правильно. Не отклоняйтесь. Осталось пять секунд.'
+
+    Voice.sayKey = function(key, opts) {
+        const phrases = {
+            ready:          'Приготовьтесь',
+            look:           'Смотрите',
+            correct:        'Правильно',
+            wrong:          'Ошибка',
+            timeout:        'Время вышло',
+            blink:          'Поморгайте',
+            moveBack:       'Не приближайтесь',
+            moveUp:         'Не отклоняйтесь',
+            countdown5:     'Осталось пять секунд',
+            countdown4:     'Четыре',
+            countdown3:     'Три',
+            countdown2:     'Два',
+            countdown1:     'Один',
+            paused:         'Пауза',
+            resumed:        'Продолжаем',
+            finished:       'Тренировка завершена',
+            readingStart:   'Начинаем чтение',
+            readingPause:   'Пауза',
+            readingResume:  'Продолжаем',
+            readingEnd:     'Чтение завершено',
+            nextNode:       'Следующее задание',
+            seriesDone:     'Серия завершена',
+            seriesFailed:   'Серия не пройдена',
+            camOff:         'Камера выключена',
+            camOn:          'Камера включена',
+            faceLost:       'Лицо не найдено',
+            faceFound:      'Лицо найдено',
+            voiceOn:        'Озвучивание включено',
+            voiceOff:       'Озвучивание выключено',
+            voiceSelected:  'Голос выбран',
+            voiceTest:      'Правильно. Не отклоняйтесь. Осталось пять секунд.'
+        };
+        const text = phrases[key];
+        if (!text) {
+            console.warn('[voice] нет фразы для ключа:', key);
+            return;
+        }
+        this.say(text, opts);
     };
-    const text = phrases[key];
-    if (!text) {
-        console.warn('[voice] нет фразы для ключа:', key);
-        return;
-    }
-    this.say(text, opts);
-};
+
     window.Voice = Voice;
 
     function ensureStyle() {
@@ -406,8 +426,12 @@ Voice.sayKey = function(key, opts) {
     }
 
     function openVoicePicker() {
-        const m = document.getElementById('voice-picker-modal');
-        if (m) { m.style.display = 'flex'; renderVoiceList(); return; }
+        const existing = document.getElementById('voice-picker-modal');
+        if (existing) {
+            existing.style.display = 'flex';
+            renderVoiceList();
+            return;
+        }
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.id = 'voice-picker-modal';
@@ -428,21 +452,40 @@ Voice.sayKey = function(key, opts) {
                 </div>
             </div>`;
         document.body.appendChild(modal);
-        modal.addEventListener('click', e => { if (e.target.id === 'voice-picker-modal') modal.style.display = 'none'; });
-        modal.querySelector('#voice-close').addEventListener('click', () => { modal.style.display = 'none'; });
-        modal.querySelector('#voice-test').addEventListener('click', () => Voice.say('Правильно. Не отклоняйтесь. Осталось пять секунд.', { cancel: true, allowRepeat: true }));
+
+        const closeBtn = modal.querySelector('#voice-close');
+        const onClose = () => { modal.remove(); };
+        closeBtn.addEventListener('click', onClose);
+        modal.addEventListener('click', e => { if (e.target.id === 'voice-picker-modal') onClose(); });
+
+        modal.querySelector('#voice-test').addEventListener('click', () =>
+            Voice.say('Правильно. Не отклоняйтесь. Осталось пять секунд.', { cancel: true, allowRepeat: true })
+        );
+
         const rateEl = modal.querySelector('#voice-rate');
         rateEl.value = Voice.rate;
         modal.querySelector('#voice-rate-val').textContent = Voice.rate.toFixed(1);
-        rateEl.addEventListener('input', () => { Voice.setRate(rateEl.value); modal.querySelector('#voice-rate-val').textContent = Voice.rate.toFixed(1); });
+        rateEl.addEventListener('input', () => {
+            Voice.setRate(rateEl.value);
+            modal.querySelector('#voice-rate-val').textContent = Voice.rate.toFixed(1);
+        });
+
         const rrateEl = modal.querySelector('#voice-rrate');
         rrateEl.value = Voice.readingRate;
         modal.querySelector('#voice-rrate-val').textContent = Voice.readingRate.toFixed(1);
-        rrateEl.addEventListener('input', () => { Voice.setReadingRate(rrateEl.value); modal.querySelector('#voice-rrate-val').textContent = Voice.readingRate.toFixed(1); });
+        rrateEl.addEventListener('input', () => {
+            Voice.setReadingRate(rrateEl.value);
+            modal.querySelector('#voice-rrate-val').textContent = Voice.readingRate.toFixed(1);
+        });
+
         const volEl = modal.querySelector('#voice-volume');
         volEl.value = Voice.volume;
         modal.querySelector('#voice-volume-val').textContent = Math.round(Voice.volume * 100) + '%';
-        volEl.addEventListener('input', () => { Voice.setVolume(volEl.value); modal.querySelector('#voice-volume-val').textContent = Math.round(Voice.volume * 100) + '%'; });
+        volEl.addEventListener('input', () => {
+            Voice.setVolume(volEl.value);
+            modal.querySelector('#voice-volume-val').textContent = Math.round(Voice.volume * 100) + '%';
+        });
+
         renderVoiceList();
     }
 

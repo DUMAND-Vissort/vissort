@@ -114,6 +114,8 @@ let readingCurrentNode = null;
 let db = null, trainingNode = null, blockList = [], selectedFolderHandle = null;
 let currentPlayingNodeId = null, nodeAcuityCurrent = 1.0;
 
+let _saveGraphInFlight = false;
+
 window._pendingGeneratorMode = false;
 window._books = window._books || {};
 window._currentScenarioKey = window._currentScenarioKey || null;
@@ -462,6 +464,9 @@ function applyScreenCalib() {
         if (node && (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC')) {
             node.stimPPI = ppi; node.stimSize = getNodeComputedSize(node);
             requestRenderGraph(); updateInspector();
+        } else if (node && node.nodeType === 'READING') {
+            node.readingPPI = ppi;
+            requestRenderGraph(); updateInspector();
         }
     }
     alert(`✅ PPI сохранён: ${ppi}`);
@@ -489,7 +494,6 @@ function estimateScenarioDurationMs(){
         if (node.nodeType === 'COMPARE'){
             return (delay1 + duration + delay2) * seriesCount * seriesSize;
         }
-        // STIMULUS / DYNAMIC
         let perNode = (delay1 + duration + delay2) * seriesCount * seriesSize;
         if (node.singleStimDynamicEnabled){
             perNode = Math.max(perNode, (delay1 + (node.singleStimDuration || 10000) + delay2) * seriesCount * seriesSize);
@@ -516,10 +520,14 @@ function estimateScenarioDurationMs(){
         connections
             .filter(c => c.fromId === nodeId && c.isLoop && c.toId !== nodeId)
             .forEach(c => {
-                const lim = c.loopLimit || 1;
+                const lim = Math.max(1, c.loopLimit || 1);
                 const target = getNode(c.toId);
+                const source = getNode(c.fromId);
                 if (!target) return;
-                total += nodeDuration(target) * lim * 2;
+                total += nodeDuration(target) * lim;
+                if (source && source.id !== target.id) {
+                    total += nodeDuration(source) * lim;
+                }
             });
     }
 
@@ -958,7 +966,10 @@ function showSWUpdateBanner(reg) {
     el.id = 'sw-update-banner';
     el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;z-index:10000;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,0.4);font-family:"Segoe UI",Tahoma,sans-serif;';
     el.innerHTML = '<span>Доступна новая версия</span><button style="background:#fff;color:#10b981;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-weight:bold;font-family:inherit;">Обновить</button>';
-    el.querySelector('button').addEventListener('click', () => { reg.waiting?.postMessage({ type: 'SKIP_WAITING' }); el.remove(); });
+    el.querySelector('button').addEventListener('click', () => {
+        try { reg.waiting?.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
+        el.remove();
+    });
     document.body.appendChild(el);
 }
 
@@ -1028,6 +1039,7 @@ async function syncPendingResults() {
     const all = await idbGetAll('syncQueue');
     for (const rec of all) {
         const { error } = await supabaseClient.from('test_results').insert({
+            user_id: currentUser.id,
             session_id: rec.session_id, node_id: rec.node_id,
             response_time_ms: rec.response_time_ms, is_correct: rec.is_correct,
             created_at: rec.created_at
@@ -2076,7 +2088,6 @@ function showConnectionMenu(e, conn) {
         const lt = document.createElement('div'); lt.textContent = 'Параметры петли'; lt.style.cssText = 'font-weight:bold;margin-bottom:4px;'; menu.appendChild(lt);
         const lcl = document.createElement('label'); lcl.style.cssText = 'display:block;margin-bottom:4px;'; lcl.textContent = 'Кол-во циклов';
         const lci = document.createElement('input'); lci.type = 'number'; lci.min = '1'; lci.value = conn.loopLimit || 1; lci.style.width = '100%'; lci.addEventListener('change', ev => { conn.loopLimit = parseInt(ev.target.value) || 1; requestRenderGraph(); }); lcl.appendChild(lci); menu.appendChild(lcl);
-        const il = document.createElement('label'); il.style.cssText = 'display:flex;align-items:center;gap:5px;'; const ic = document.createElement('input'); ic.type = 'checkbox'; ic.checked = conn.initiateByAnswer === true; ic.addEventListener('change', ev => { conn.initiateByAnswer = ev.target.checked; requestRenderGraph(); }); il.appendChild(ic); il.appendChild(document.createTextNode('Инициировать по ответу')); menu.appendChild(il);
     }
     const sep2 = document.createElement('hr'); sep2.style.margin = '4px 0'; menu.appendChild(sep2);
     const db = document.createElement('button'); db.className = 'btn btn-danger'; db.style.width = '100%'; db.textContent = '✕ Удалить связь';
@@ -2245,7 +2256,7 @@ function renderInspectorGridPreview() {
         });
         p.appendChild(cell);
     }
-    p.dataset.selected = JSON.stringify(sel);
+    // dataset.selected ведётся обработчиками кликов — здесь НЕ перезаписываем
 }
 
 function renderPeriInspectorSection(node) {
@@ -2687,13 +2698,14 @@ function applyDefocusInspectorChanges(node) {
 }
 function applyBlinkAnimationInspectorChanges(node) {
     const v = id => document.getElementById(id);
-    if (v('inp-blink-enabled'))  node.blinkEnabled    = v('inp-blink-enabled').checked;
-    if (v('inp-blink-target'))   node.blinkTarget     = v('inp-blink-target').value;
-    if (v('inp-blink-cA'))       node.blinkColorA     = hexToRgb(v('inp-blink-cA').value);
-    if (v('inp-blink-cB'))       node.blinkColorB     = hexToRgb(v('inp-blink-cB').value);
-    if (v('inp-blink-interval')) node.blinkIntervalMs = Math.max(50, Math.min(5000, parseInt(v('inp-blink-interval').value) || 500));
-    if (v('inp-blink-duty'))     node.blinkDuty       = Math.max(0.05, Math.min(0.95, parseFloat(v('inp-blink-duty').value) || 0.5));
-    if (v('inp-blink-count'))    node.blinkCount      = Math.max(0, parseInt(v('inp-blink-count').value) || 0);
+    const el = v('inp-blink-enabled');
+    if (el) node.blinkEnabled = el.checked;
+    const t = v('inp-blink-target'); if (t) node.blinkTarget = t.value;
+    const cA = v('inp-blink-cA'); if (cA) node.blinkColorA = hexToRgb(cA.value);
+    const cB = v('inp-blink-cB'); if (cB) node.blinkColorB = hexToRgb(cB.value);
+    const iv = v('inp-blink-interval'); if (iv) node.blinkIntervalMs = Math.max(50, Math.min(5000, parseInt(iv.value) || 500));
+    const dt = v('inp-blink-duty'); if (dt) node.blinkDuty = Math.max(0.05, Math.min(0.95, parseFloat(dt.value) || 0.5));
+    const cn = v('inp-blink-count'); if (cn) node.blinkCount = Math.max(0, parseInt(cn.value) || 0);
 }
 function applyStimulusInspectorChanges(node) {
     const v = id => document.getElementById(id);
@@ -2940,7 +2952,20 @@ function showFindSameComparisonInternal(pc) { const need = pc * 2; const sh = ac
 function handleFindSameClick(idx) { if (!responsePhaseActive || !_findSameState || isNaN(idx)) return; const st = _findSameState; const cell = st.cells[idx]; const key = `${cell.row},${cell.col}`; if (st.foundCells.has(key)) return; if (st.firstSelectedIdx === null) { st.firstSelectedIdx = idx; flashCell(idx, 'selected'); return; } const fi = st.firstSelectedIdx; if (fi === idx) { st.firstSelectedIdx = null; flashCell(idx, 'unselect'); return; } const fp = Math.floor(fi / 2), sp = Math.floor(idx / 2); if (fp === sp) { const a = st.cells[fi], b = st.cells[idx]; st.foundCells.add(`${a.row},${a.col}`); st.foundCells.add(`${b.row},${b.col}`); st.pairs[fp].found = true; flashCell(fi, 'found'); flashCell(idx, 'found'); st.firstSelectedIdx = null; if (st.pairs.every(p => p.found)) { lastResponse = { answered: true, isCorrect: true, reactionTimeMs: performance.now() - responseStartTime }; responsePhaseActive = false; processComparisonAnswer(true); } } else { flashCell(fi, 'unselect'); flashCell(idx, 'wrong'); st.firstSelectedIdx = null; } }
 function flashCell(idx, kind) { const el = document.querySelector(`.grid-cell[data-index="${idx}"]`); if (!el) return; const ob = el.style.border, os = el.style.boxShadow; if (kind === 'selected') { el.style.border = '3px solid #38bdf8'; el.style.boxShadow = '0 0 12px #38bdf8'; } else if (kind === 'found') { el.style.border = '4px solid #22c55e'; el.style.boxShadow = '0 0 20px #22c55e'; } else if (kind === 'wrong') { el.style.border = '4px solid #ef4444'; el.style.boxShadow = '0 0 20px #ef4444'; setTimeout(() => { el.style.border = ob; el.style.boxShadow = os; }, 400); } else if (kind === 'unselect') { el.style.border = ob; el.style.boxShadow = os; } }
 function createCellElement(cell, params, direction, idx) { const cw = stimDisplay.offsetWidth / gridX, ch = stimDisplay.offsetHeight / gridY; const el = document.createElement('div'); el.className = 'grid-cell'; el.style.cssText = `left:${cell.col*cw}px;top:${cell.row*ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR||0},${params.bgG||0},${params.bgB||0});position:absolute;box-sizing:border-box;border:3px solid transparent;`; el.dataset.index = idx !== undefined ? idx : activeCells.indexOf(cell); const size = params.size || currentSize; const svgData = getStimulusSVG({ stimType: trainingNode?.params?.type || 'LETTER_E', stimDirection: direction, stimR: params.stimR || 255, stimG: params.stimG || 255, stimB: params.stimB || 255, bgR: params.bgR || 0, bgG: params.bgG || 0, bgB: params.bgB || 0 }, size); el.innerHTML = svgData.html; stimDisplay.appendChild(el); }
-function processComparisonAnswer(isCorrect) { if (currentCompareNode) { if (isCorrect) seriesCorrect++; else seriesIncorrect++; seriesStep++; updateCounters(); const n = currentCompareNode; phaseTimers.push(setTimeout(() => { if (playerRunning && !isPaused) playNextCompareRound(n); }, n.delay2 || 1000)); return; } if (isCorrect) seriesCorrect++; else seriesIncorrect++; seriesStep++; updateCounters(); phaseTimers.push(setTimeout(() => { if (playerRunning && !isPaused) showNextComparison(); }, trainingNode?.params?.delay2 || 1000)); }
+function processComparisonAnswer(isCorrect) {
+    if (!playerRunning || isPaused) return;
+    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    if (currentCompareNode) {
+        if (isCorrect) seriesCorrect++; else seriesIncorrect++;
+        seriesStep++; updateCounters();
+        const n = currentCompareNode;
+        phaseTimers.push(setTimeout(() => { if (playerRunning && !isPaused) playNextCompareRound(n); }, n.delay2 || 1000));
+        return;
+    }
+    if (isCorrect) seriesCorrect++; else seriesIncorrect++;
+    seriesStep++; updateCounters();
+    phaseTimers.push(setTimeout(() => { if (playerRunning && !isPaused) showNextComparison(); }, trainingNode?.params?.delay2 || 1000));
+}
 function defaultCellParams() { return { size: currentSize, stimR: currentStimColor.r, stimG: currentStimColor.g, stimB: currentStimColor.b, bgR: currentBgColor.r, bgG: currentBgColor.g, bgB: currentBgColor.b, duration: currentDuration }; }
 
 // ==================== ОТВЕТЫ ====================
@@ -2985,6 +3010,7 @@ function switchMode(mode) {
         btnModeToggle.textContent = '🖼️ Стимулы';
         if (countersEl) countersEl.style.display = 'inline-flex';
         if (headerEl) headerEl.classList.add('stimuli-mode');
+        if (inspectorEl) inspectorEl.style.display = 'none';
     }
 }
 
@@ -3627,39 +3653,45 @@ async function assignScenario() { const u = document.getElementById('selected-us
 
 // ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ГРАФА ====================
 async function saveGraph() {
-    if (!window._currentScenarioKey) window._currentScenarioKey = generateScenarioKey();
-    const data = buildScenarioPayloadFromCurrent();
-    const jsonStr = JSON.stringify(data, null, 2);
+    if (_saveGraphInFlight) { console.warn('[saveGraph] уже сохраняется'); return; }
+    _saveGraphInFlight = true;
+    try {
+        if (!window._currentScenarioKey) window._currentScenarioKey = generateScenarioKey();
+        const data = buildScenarioPayloadFromCurrent();
+        const jsonStr = JSON.stringify(data, null, 2);
 
-    if (HAS_FS_ACCESS && selectedFolderHandle) {
-        try {
-            let fileName = window._currentScenarioFileName;
-            if (!fileName) {
-                const ans = prompt('Имя файла сценария (без пути):',
-                    'scenario_' + new Date().toISOString().slice(0, 10) + '.json');
-                if (!ans) return;
-                fileName = /\.json$/i.test(ans) ? ans : ans + '.json';
-                window._currentScenarioFileName = fileName;
+        if (HAS_FS_ACCESS && selectedFolderHandle) {
+            try {
+                let fileName = window._currentScenarioFileName;
+                if (!fileName) {
+                    const ans = prompt('Имя файла сценария (без пути):',
+                        'scenario_' + new Date().toISOString().slice(0, 10) + '.json');
+                    if (!ans) return;
+                    fileName = /\.json$/i.test(ans) ? ans : ans + '.json';
+                    window._currentScenarioFileName = fileName;
+                }
+                const fh = await selectedFolderHandle.getFileHandle(fileName, { create: true });
+                const w = await fh.createWritable();
+                await w.write(jsonStr);
+                await w.close();
+                alert('Файл сохранён: ' + fileName);
+                syncFolderWithCloudEnsured('after-save');
+                return;
+            } catch (err) {
+                console.warn('[saveGraph] запись в папку:', err);
             }
-            const fh = await selectedFolderHandle.getFileHandle(fileName, { create: true });
-            const w = await fh.createWritable();
-            await w.write(jsonStr);
-            await w.close();
-            alert('Файл сохранён: ' + fileName);
-            syncFolderWithCloudEnsured('after-save');
-            return;
-        } catch (err) {
-            console.warn('[saveGraph] запись в папку:', err);
         }
-    }
 
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = window._currentScenarioFileName || 'scenario.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = window._currentScenarioFileName || 'scenario.json';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } finally {
+        _saveGraphInFlight = false;
+    }
 }
 function loadGraph(file) {
     const reader = new FileReader();
