@@ -482,29 +482,19 @@ function estimateScenarioDurationMs(){
     let total = 0;
     const startNode = nodes.find(n => n.isStart === true) || nodes[0];
     if (!startNode) return 0;
-
     function nodeDuration(node){
         const delay1 = node.delay1 || 0;
         const duration = node.duration || 1000;
         const delay2 = node.delay2 || 1000;
         const seriesCount = node.seriesCount || 1;
         const seriesSize = node.seriesSize || 1;
-        if (node.nodeType === 'READING'){
-            return (node.duration || 60000) + (node.delay1 || 0) + (node.delay2 || 0);
-        }
-        if (node.nodeType === 'COMPARE'){
-            return (delay1 + duration + delay2) * seriesCount * seriesSize;
-        }
+        if (node.nodeType === 'READING') return (node.duration || 60000) + (node.delay1 || 0) + (node.delay2 || 0);
+        if (node.nodeType === 'COMPARE') return (delay1 + duration + delay2) * seriesCount * seriesSize;
         let perNode = (delay1 + duration + delay2) * seriesCount * seriesSize;
-        if (node.singleStimDynamicEnabled){
-            perNode = Math.max(perNode, (delay1 + (node.singleStimDuration || 10000) + delay2) * seriesCount * seriesSize);
-        }
-        if (node.singleBgDynamicEnabled){
-            perNode = Math.max(perNode, (delay1 + (node.singleBgDuration || 10000) + delay2) * seriesCount * seriesSize);
-        }
+        if (node.singleStimDynamicEnabled) perNode = Math.max(perNode, (delay1 + (node.singleStimDuration || 10000) + delay2) * seriesCount * seriesSize);
+        if (node.singleBgDynamicEnabled) perNode = Math.max(perNode, (delay1 + (node.singleBgDuration || 10000) + delay2) * seriesCount * seriesSize);
         return perNode;
     }
-
     function visit(nodeId){
         if (visited.has(nodeId)) return;
         visited.add(nodeId);
@@ -1049,1056 +1039,912 @@ function setStimColorRGB(r, g, b) {
     const p = svg.querySelector('path'); if (p) p.setAttribute('fill', color);
     const c = svg.querySelector('circle'); if (c) c.setAttribute('stroke', color);
 }
-// ==================== app.js ====================
-// Vissort Studio — редактор сценариев для админа
-// Data layer (IndexedDB + Supabase REST + syncQueue)
-// ====================
+// ==================== АНИМАЦИЯ КРУГА ====================
+let _circleAnimId = null, _circleAnimStart = null;
+let _circleInnerPhases = null, _circleOuterPhases = null;
+let _circleInnerDurationMs = 10000, _circleOuterDurationMs = 10000;
+let _circleInnerLoop = true, _circleOuterLoop = true;
 
-// ==================== НАСТРОЙКИ ====================
-const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
-const IS_DEV = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-const HAS_FS_ACCESS = typeof window.showDirectoryPicker === 'function';
-const LS_KEYS = {
-    readingFontFamily: 'vissort_readingFontFamily',
-    readingFontWeight: 'vissort_readingFontWeight',
-    readingAcuity: 'vissort_readingAcuity',
-    readingDistance: 'vissort_readingDistance',
-    generalDistance: 'vissort_generalDistance',
-    distIncTol: 'vissort_distIncTol',
-    distDecTol: 'vissort_distDecTol',
-    distTimeout: 'vissort_distTimeout',
-    blinkEnabled: 'vissort_blinkEnabled',
-    blinkThreshold: 'vissort_blinkThreshold',
-    blinkMinRate: 'vissort_blinkMinRate',
-    blinkWindow: 'vissort_blinkWindow',
-    blinkLockShow: 'vissort_blinkLockShow'
-};
-const MAX_DISTANCE_LOG = 2000;
-
-// ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
-let supabaseClient = null, currentUser = null, currentSessionId = null, authMode = 'signin';
-let nodes = [], connections = [], activeNodeId = null;
-let dragNodeId = null, offsetX = 0, offsetY = 0;
-let resizeNodeId = null, startW = 0, startH = 0, startMouseX = 0, startMouseY = 0;
-let currentMode = 'nodes', renderScheduled = false;
-const nodeElements = new Map(), connectionElements = new Map();
-let tempLineElement = null, tempLineMoveHandler = null, currentConnectionForMenu = null;
-let playQueue = [], playIndex = 0;
-let singleStimAnimId = null, singleBgAnimId = null, singleStimAnimStart = null, singleBgAnimStart = null;
-let currentSingleCell = { row: 0, col: 0 };
-let playerRunning = false, isPaused = false;
-let phaseTimers = [], currentShowTimer = null;
-let responsePhaseActive = false, responseStartTime = 0;
-let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-let currentCorrectDirection = null, lastDirection = null;
-let completedSeries = 0, successfulSeries = 0, failedSeries = 0;
-let seriesCorrect = 0, seriesIncorrect = 0, seriesNoAnswer = 0;
-let seriesStep = 0, noAnswerSeriesStreak = 0;
-let currentSize = 27, currentDuration = 2550;
-let currentStimColor = { r: 0, g: 255, b: 0 };
-let currentBgColor = { r: 0, g: 0, b: 0 };
-let compareMode = 'direction', gridX = 3, gridY = 3;
-let activeCells = [], cellParams = [], currentCompareAnswer = null;
-let selectedCells = [], singleGridX = 1, singleGridY = 1;
-let currentCompareNode = null, _findSameState = null;
-
-let readingDistance = 1, generalDistance = 1;
-let distanceToleranceIncreasePct = 15, distanceToleranceDecreasePct = 10, distanceRestoreTimeoutSec = 3;
-let _distanceBaseline = null, _distanceOutOfBoundsSince = 0, _distanceWarningKind = null, _distanceRecalcScheduled = false;
-
-let _periAnimId = null;
-let _periAnimStart = null;
-
-// --- МОРГАНИЕ ---
-let _blinkTimerId = null;
-let _blinkStateLocal = { tick: 0, current: 'A' };
-
-let blinkEnabled = true;
-let blinkThreshold = 0.21;
-let blinkMinRate = 8;
-let blinkWindowSec = 30;
-let blinkLockShow = true;
-const BLINK_BLOCK_MS = 200;
-const BLINK_AUTOPAUSE_MS = 800;
-const BLINK_SHORT_MS = 100;
-const BLINK_LONG_MS = 400;
-const BLINK_ASYM_RATIO = 0.45;
-
-let _blinkState = createEmptyBlinkState();
-let _blinkResponseBlockUntil = 0;
-let _blinkCalibration = null;
-let _waitingForOpenEyes = false;
-
-function createEmptyBlinkState() {
-    return {
-        lastEAR: 0.3,
-        lastEarL: 0.3, lastEarR: 0.3,
-        isClosed: false,
-        closeStartMs: 0,
-        blinks: [],
-        totalBlinks: 0,
-        longBlinks: 0,
-        asymBlinks: 0,
-        lastBlinkMs: 0,
-        warningShownAt: 0,
-        sessionStartMs: 0,
-        minRateObserved: null
-    };
+function buildCirclePhases(colorA, midEnabled, colorMid, colorB, reverse) {
+    let base;
+    if (midEnabled && colorMid) base = [{ from: colorA, to: colorMid }, { from: colorMid, to: colorB }];
+    else base = [{ from: colorA, to: colorB }];
+    if (reverse === true) return base.concat(base.slice().reverse().map(ph => ({ from: ph.to, to: ph.from })));
+    return base;
 }
-
-let videoStream = null, cameraActive = false;
-let videoFrameId = null;
-let focalLengthPx = localStorage.getItem('focalLengthPx') || null;
-const realIPD_MM = 63;
-let currentDistanceMeters = null, lastEyeDistancePx = null;
-let distanceLog = [], distanceMin = null, distanceMax = null;
-let distanceSum = 0, distanceCount = 0, distanceLastUpdate = 0;
-let currentAcuity = 1.0, screenPPI = 96, trainingDistance = 1;
-
-let readingViewportEl = null, readingContentEl = null, readingToolbarEl = null;
-let readingPage = 0, readingTotalPages = 1, readingPaused = false;
-let readingFontFamily = 'Segoe UI', readingFontWeight = 'normal';
-let readingCurrentNode = null;
-
-let trainingNode = null, blockList = [], selectedFolderHandle = null, templatesFolderHandle = null;
-let currentPlayingNodeId = null, nodeAcuityCurrent = 1.0;
-
-let _saveGraphInFlight = false;
-
-window._pendingGeneratorMode = false;
-window._books = window._books || {};
-window._currentScenarioKey = window._currentScenarioKey || null;
-window._currentScenarioFileName = window._currentScenarioFileName || null;
-window._currentScenarioId = window._currentScenarioId || null;
-
-// ==================== DOM-ССЫЛКИ ====================
-const canvas = document.getElementById('canvas');
-const stimDisplay = document.getElementById('stim');
-const stimArea = document.getElementById('stim-display');
-const responseButtons = document.getElementById('response-buttons');
-const inspectorEl = document.getElementById('inspector');
-const modal = document.getElementById('generator-modal');
-const cntCompleted = document.getElementById('cnt-completed');
-const cntSuccess = document.getElementById('cnt-success');
-const cntFailed = document.getElementById('cnt-failed');
-const cntSeriesCorrect = document.getElementById('cnt-series-correct');
-const cntSeriesIncorrect = document.getElementById('cnt-series-incorrect');
-const cntSeriesNoAnswer = document.getElementById('cnt-series-noanswer');
-const pauseModal = document.getElementById('pause-modal');
-const btnPlayer = document.getElementById('btn-player');
-const btnPlayerStop = document.getElementById('btn-player-stop');
-const btnPlayerPause = document.getElementById('btn-player-pause');
-const btnModeToggle = document.getElementById('btn-mode-toggle');
-const btnAddStim = document.getElementById('btn-add-stim');
-const btnAddLogic = document.getElementById('btn-add-logic');
-const btnAddDynamic = document.getElementById('btn-add-dynamic');
-const btnAddReading = document.getElementById('btn-add-reading');
-const btnAddCompare = document.getElementById('btn-add-compare');
-const btnGenerator = document.getElementById('btn-generator');
-const btnEnableCamera = document.getElementById('btn-enable-camera');
-const btnDisableCamera = document.getElementById('btn-disable-camera');
-const btnCalibrate = document.getElementById('btn-calibrate-camera');
-const btnCalibrateScreen = document.getElementById('btn-calibrate-screen');
-const btnScenarioTime = document.getElementById('btn-scenario-time');
-const btnInspector = document.getElementById('btn-inspector');
-const btnSave = document.getElementById('btn-save');
-const btnOpen = document.getElementById('btn-open');
-const fileInput = document.getElementById('file-input');
-const folderInput = document.getElementById('folder-input');
-const templatesFolderInput = document.getElementById('templates-folder-input');
-const btnAddBlock = document.getElementById('btn-add-block');
-const btnClearBlocks = document.getElementById('btn-clear-blocks');
-const btnGenerateSequence = document.getElementById('btn-generate-sequence');
-const blockNameInput = document.getElementById('block-name-input');
-const blockSelect = document.getElementById('block-select');
-const blockCountSpan = document.getElementById('block-count');
-const blockListDiv = document.getElementById('block-list');
-const btnAuth = document.getElementById('btn-auth');
-const userEmailSpan = document.getElementById('user-email');
-const btnLibrary = document.getElementById('btn-library');
-const btnUsers = document.getElementById('btn-users');
-const btnSelectFolder = document.getElementById('btn-select-folder');
-const btnSelectTemplatesFolder = document.getElementById('btn-select-templates-folder');
-const folderStatus = document.getElementById('folder-status');
-const templatesFolderStatus = document.getElementById('templates-folder-status');
-const readingFileInput = document.getElementById('reading-file-input');
-const readingFileName = document.getElementById('reading-file-name');
-
-// ==================== ФОРМУЛЫ ОСТРОТЫ ====================
-function acuityToSizeMm(acuity, distanceMeters) {
-    const d = (distanceMeters && distanceMeters > 0) ? distanceMeters : 1;
-    const V = Math.max(0.01, acuity || 1.0);
-    return d * 1.454 / V;
-}
-function acuityToSizePx(acuity, distanceMeters, ppi) {
-    const sizeMm = acuityToSizeMm(acuity, distanceMeters);
-    const dpr = window.devicePixelRatio || 1;
-    const physicalPx = sizeMm * (ppi || 96) / 25.4;
-    return Math.round(Math.max(1, Math.min(3000, physicalPx / dpr)));
-}
-function getNodeComputedSizeMm(node) {
-    return acuityToSizeMm(node.stimAcuity || 1.0, node.stimDistance || trainingNode?.params?.distanceMeters || 1);
-}
-function getNodeComputedSize(node) {
-    return acuityToSizePx(node.stimAcuity || 1.0,
-        node.stimDistance || trainingNode?.params?.distanceMeters || 1,
-        node.stimPPI || trainingNode?.params?.ppi || screenPPI || 96);
-}
-function acuityToFontSizePx(acuity, distanceMeters, ppi) {
-    const xHeightMm = acuityToSizeMm(acuity, distanceMeters);
-    const fontSizeMm = xHeightMm / 0.5;
-    const dpr = window.devicePixelRatio || 1;
-    const physicalPx = fontSizeMm * (ppi || 96) / 25.4;
-    return Math.round(Math.max(8, Math.min(2000, physicalPx / dpr)));
-}
-
-// ==================== УТИЛИТЫ ====================
-const TIME_UNITS = { ms: 1, s: 1000, min: 60000 };
-function msToUnit(ms, unit) { return ms / TIME_UNITS[unit]; }
-function unitToMs(v, unit) { return v * TIME_UNITS[unit]; }
-function detectUnit(ms) {
-    if (ms >= 60000 && ms % 60000 === 0) return 'min';
-    if (ms >= 1000 && ms % 1000 === 0) return 's';
-    if (ms === 0) return 's';
-    return 'ms';
-}
-function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-function safeVal(id, defVal, parser) {
-    const el = document.getElementById(id);
-    if (!el) return defVal;
-    const v = parser ? parser(el.value) : el.value;
-    return (v === null || v === undefined || v === '' || (typeof v === 'number' && isNaN(v))) ? defVal : v;
-}
-function safeChecked(id, defVal) { const el = document.getElementById(id); return el ? el.checked === true : defVal; }
-function hashCode(str) { let h = 0; for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; } return Math.abs(h).toString(36); }
-async function sha1(str) {
-    if (!window.crypto || !window.crypto.subtle) return 'weak-' + hashCode(str);
-    const buf = new TextEncoder().encode(str);
-    const hb = await window.crypto.subtle.digest('SHA-1', buf);
-    return Array.from(new Uint8Array(hb)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-function hexToRgb(hex) {
-    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return r ? { r: parseInt(r[1],16), g: parseInt(r[2],16), b: parseInt(r[3],16) } : { r:0,g:0,b:0 };
-}
-function rgbToHex(r,g,b) {
-    const s = (c) => Math.min(255, Math.max(0, c || 0));
-    return '#' + [s(r), s(g), s(b)].map(c => c.toString(16).padStart(2,'0')).join('');
-}
-function lerpColor(from, to, t) {
-    return { r: Math.round(from.r + (to.r - from.r) * t), g: Math.round(from.g + (to.g - from.g) * t), b: Math.round(from.b + (to.b - from.b) * t) };
-}
-
-// ==================== SCENARIO KEY / BOOKMARKS ====================
-function generateScenarioKey() { return 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
-function bookmarkKeyFor(bookId) { return 'vissort_bookmark_' + (window._currentScenarioKey || 'default') + '_' + bookId; }
-function getLastBookId() {
-    try { const k = 'vissort_lastBookId_' + (window._currentScenarioKey || 'default'); const id = localStorage.getItem(k); if (id && window._books && window._books[id]) return id; } catch (_) {}
-    return null;
-}
-function setLastBookId(id) {
-    try { const k = 'vissort_lastBookId_' + (window._currentScenarioKey || 'default'); if (id) localStorage.setItem(k, id); else localStorage.removeItem(k); } catch (_) {}
-}
-
-// ==================== ПОЛЬЗОВАТЕЛЬСКИЕ НАСТРОЙКИ ====================
-function loadUserSettings() {
-    let ff = localStorage.getItem(LS_KEYS.readingFontFamily);
-    if (ff && (ff.includes(',') || ff.includes('"'))) ff = ff.split(',')[0].trim().replace(/['"]/g, '');
-    if (ff) readingFontFamily = ff;
-    const fw = localStorage.getItem(LS_KEYS.readingFontWeight);
-    if (fw === 'normal' || fw === 'bold') readingFontWeight = fw;
-    const ac = parseFloat(localStorage.getItem(LS_KEYS.readingAcuity));
-    if (!isNaN(ac) && ac >= 0.1 && ac <= 2.0) currentAcuity = ac;
-    const rd = parseFloat(localStorage.getItem(LS_KEYS.readingDistance));
-    if (!isNaN(rd) && rd > 0) readingDistance = rd;
-    const gd = parseFloat(localStorage.getItem(LS_KEYS.generalDistance));
-    if (!isNaN(gd) && gd > 0) generalDistance = gd;
-    const it = parseFloat(localStorage.getItem(LS_KEYS.distIncTol)); if (!isNaN(it) && it >= 0 && it <= 100) distanceToleranceIncreasePct = it;
-    const dt = parseFloat(localStorage.getItem(LS_KEYS.distDecTol)); if (!isNaN(dt) && dt >= 0 && dt <= 100) distanceToleranceDecreasePct = dt;
-    const to = parseFloat(localStorage.getItem(LS_KEYS.distTimeout)); if (!isNaN(to) && to >= 0 && to <= 60) distanceRestoreTimeoutSec = to;
-    const be = localStorage.getItem(LS_KEYS.blinkEnabled); if (be !== null) blinkEnabled = be === 'true';
-    const bt = parseFloat(localStorage.getItem(LS_KEYS.blinkThreshold)); if (!isNaN(bt) && bt > 0.05 && bt < 0.5) blinkThreshold = bt;
-    const bm = parseFloat(localStorage.getItem(LS_KEYS.blinkMinRate)); if (!isNaN(bm) && bm >= 0 && bm <= 60) blinkMinRate = bm;
-    const bw = parseFloat(localStorage.getItem(LS_KEYS.blinkWindow)); if (!isNaN(bw) && bw >= 5 && bw <= 120) blinkWindowSec = bw;
-    const bls = localStorage.getItem(LS_KEYS.blinkLockShow); if (bls !== null) blinkLockShow = bls === 'true';
-}
-function saveUserSettings() {
-    try {
-        localStorage.setItem(LS_KEYS.readingFontFamily, readingFontFamily);
-        localStorage.setItem(LS_KEYS.readingFontWeight, readingFontWeight);
-        localStorage.setItem(LS_KEYS.readingAcuity, String(currentAcuity));
-        localStorage.setItem(LS_KEYS.readingDistance, String(readingDistance));
-        localStorage.setItem(LS_KEYS.generalDistance, String(generalDistance));
-        localStorage.setItem(LS_KEYS.distIncTol, String(distanceToleranceIncreasePct));
-        localStorage.setItem(LS_KEYS.distDecTol, String(distanceToleranceDecreasePct));
-        localStorage.setItem(LS_KEYS.distTimeout, String(distanceRestoreTimeoutSec));
-        localStorage.setItem(LS_KEYS.blinkEnabled, String(blinkEnabled));
-        localStorage.setItem(LS_KEYS.blinkThreshold, String(blinkThreshold));
-        localStorage.setItem(LS_KEYS.blinkMinRate, String(blinkMinRate));
-        localStorage.setItem(LS_KEYS.blinkWindow, String(blinkWindowSec));
-        localStorage.setItem(LS_KEYS.blinkLockShow, String(blinkLockShow));
-    } catch (e) { console.warn('save settings:', e); }
-}
-
-// ==================== КОДИРОВКИ / ШРИФТ / ПАРСИНГ ====================
-function decodeTextBuffer(buf) {
-    const b = new Uint8Array(buf);
-    if (b.length >= 3 && b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF) return new TextDecoder('utf-8').decode(b);
-    if (b.length >= 2 && b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(b);
-    if (b.length >= 2 && b[0] === 0xFE && b[1] === 0xFF) return new TextDecoder('utf-16be').decode(b);
-    try { return new TextDecoder('utf-8', { fatal: true }).decode(b); }
-    catch (e) { try { return new TextDecoder('windows-1251').decode(b); } catch (e2) { return new TextDecoder('utf-8').decode(b); } }
-}
-async function decodeTextFile(file) { return decodeTextBuffer(await file.arrayBuffer()); }
-async function loadSivtsevFont() {
-    const FONT_URL = 'https://cdn.jsdelivr.net/gh/shoorick/sivtsev-font@master/Sivtsev-Eye-Chart.otf';
-    const KEY = 'sivtsevFontLoaded';
-    if (localStorage.getItem(KEY) === 'true') return;
-    let loaded = false;
-    if (document.fonts && document.fonts.forEach) {
-        document.fonts.forEach(f => { if (f.family === 'Sivtsev' && f.status === 'loaded') loaded = true; });
-    }
-    if (loaded) { localStorage.setItem(KEY, 'true'); return; }
-    try {
-        const font = new FontFace('Sivtsev', `url(${FONT_URL}) format('opentype')`, { style: 'normal', weight: 'normal' });
-        await font.load(); document.fonts.add(font); localStorage.setItem(KEY, 'true');
-    } catch (err) { console.error('Sivtsev:', err); }
-}
-async function parseReadingFile(file) {
-    const n = (file.name || '').toLowerCase();
-    if (n.endsWith('.txt')) return await decodeTextFile(file);
-    if (n.endsWith('.fb2')) return await parseFb2File(file);
-    if (n.endsWith('.epub')) return await parseEpubFile(file);
-    return await decodeTextFile(file);
-}
-async function parseFb2File(file) {
-    let xmlText = await decodeTextFile(file);
-    if (xmlText.charCodeAt(0) === 0xFEFF) xmlText = xmlText.slice(1);
-    xmlText = xmlText.replace(/<!DOCTYPE[^>\[]*(\[[\s\S]*?\])?[^>]*>/gi, '').replace(/<\?xml[^?]*\?>/i, '<?xml version="1.0" encoding="UTF-8"?>');
-    xmlText = xmlText.replace(/&nbsp;/g, '\u00A0').replace(/&mdash;/g, '\u2014').replace(/&ndash;/g, '\u2013').replace(/&hellip;/g, '\u2026').replace(/&laquo;/g, '\u00AB').replace(/&raquo;/g, '\u00BB').replace(/&ldquo;/g, '\u201C').replace(/&rdquo;/g, '\u201D').replace(/&lsquo;/g, '\u2018').replace(/&rsquo;/g, '\u2019').replace(/&copy;/g, '\u00A9').replace(/&reg;/g, '\u00AE').replace(/&trade;/g, '\u2122');
-    const parser = new DOMParser();
-    let doc = parser.parseFromString(xmlText, 'application/xml');
-    if (doc.querySelector('parsererror')) doc = parser.parseFromString(xmlText, 'text/html');
-    const bodies = doc.querySelectorAll('body');
-    if (bodies.length === 0) return extractFb2TextByRegex(xmlText);
-    const result = [];
-    bodies.forEach(body => {
-        const bn = (body.getAttribute?.('name') || '').toLowerCase();
-        if (bn === 'notes' || bn === 'comments') return;
-        body.querySelectorAll('title, subtitle, p, v, text-author, empty-line, poem, epigraph, cite').forEach(node => {
-            if (node.tagName.toLowerCase() === 'empty-line') { result.push(''); return; }
-            const t = (node.textContent || '').replace(/\s+/g, ' ').trim();
-            if (t) result.push(t);
-        });
-    });
-    return result.length === 0 ? '' : result.join('\n');
-}
-function extractFb2TextByRegex(xmlText) {
-    let t = xmlText.replace(/<[!?][^>]*>/g, ' ').replace(/<binary[\s\S]*?<\/binary>/gi, ' ').replace(/<empty-line\s*\/?>/gi, '\n').replace(/<\/(p|title|subtitle|v|text-author|section|poem|epigraph|cite)>/gi, '\n').replace(/<[^>]+>/g, '');
-    t = t.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
-    return t.replace(/[ \t]+/g, ' ').replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
-}
-async function parseEpubFile(file) {
-    if (typeof JSZip === 'undefined') throw new Error('JSZip не загружен');
-    const zip = await JSZip.loadAsync(await file.arrayBuffer());
-    let opfPath = null;
-    const cf = zip.file('META-INF/container.xml');
-    if (cf) {
-        const xml = await cf.async('string');
-        const doc = new DOMParser().parseFromString(xml, 'application/xml');
-        const rf = doc.querySelector('rootfile');
-        if (rf) opfPath = rf.getAttribute('full-path');
-    }
-    if (!opfPath) zip.forEach((p) => { if (!opfPath && /\.opf$/i.test(p)) opfPath = p; });
-    if (!opfPath) return await extractAllHtmlFromZip(zip);
-    const opfFile = zip.file(opfPath);
-    if (!opfFile) return await extractAllHtmlFromZip(zip);
-    const opfDoc = new DOMParser().parseFromString(await opfFile.async('string'), 'application/xml');
-    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-    const manifest = {};
-    opfDoc.querySelectorAll('manifest > item').forEach(item => {
-        const id = item.getAttribute('id'), href = item.getAttribute('href'), mt = item.getAttribute('media-type') || '';
-        if (id && href) manifest[id] = { href, mediaType: mt };
-    });
-    const spine = [];
-    opfDoc.querySelectorAll('spine > itemref').forEach(ref => {
-        const idref = ref.getAttribute('idref');
-        if (idref && manifest[idref]) spine.push(manifest[idref].href);
-    });
-    if (spine.length === 0) Object.values(manifest).forEach(m => { if (/html|xhtml/i.test(m.mediaType) || /\.x?html?$/i.test(m.href)) spine.push(m.href); });
-    const result = [];
-    for (const href of spine) {
-        const clean = decodeURIComponent(href.split('#')[0]);
-        const entry = zip.file(normalizeZipPath(opfDir + clean));
-        if (!entry) continue;
-        const text = extractTextFromHtml(await entry.async('string'));
-        if (text) result.push(text);
-    }
-    return result.join('\n\n');
-}
-function normalizeZipPath(path) {
-    const stack = [];
-    for (const part of path.split('/')) {
-        if (part === '' || part === '.') continue;
-        if (part === '..') stack.pop(); else stack.push(part);
-    }
-    return stack.join('/');
-}
-function extractTextFromHtml(html) {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    if (!doc.body) return '';
-    doc.body.querySelectorAll('script, style, nav').forEach(el => el.remove());
-    const blocks = doc.body.querySelectorAll('p, h1, h2, h3, h4, h5, h6, div, li');
-    const texts = [];
-    if (blocks.length > 0) blocks.forEach(el => { const t = (el.textContent || '').replace(/\s+/g, ' ').trim(); if (t) texts.push(t); });
-    else { const t = (doc.body.textContent || '').replace(/\s+/g, ' ').trim(); if (t) texts.push(t); }
-    return texts.join('\n');
-}
-async function extractAllHtmlFromZip(zip) {
-    const files = [];
-    zip.forEach((p, e) => { if (!e.dir && /\.(x?html?|htm)$/i.test(p)) files.push({ p, e }); });
-    files.sort((a, b) => a.p.localeCompare(b.p));
-    const result = [];
-    for (const { e } of files) { const t = extractTextFromHtml(await e.async('string')); if (t) result.push(t); }
-    return result.join('\n\n');
-}
-
-// ==================== КАЛИБРОВКА ЭКРАНА ====================
-const CALIB_BAR_PX = 400;
-function detectDeviceType() {
-    const ua = navigator.userAgent || '';
-    if (/iPad|Tablet|PlayBook|Silk/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
-    if (/Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(ua)) return 'mobile';
-    return 'desktop';
-}
-function detectPPIHeuristic() {
-    const type = detectDeviceType(), dpr = window.devicePixelRatio || 1;
-    if (type === 'mobile') { if (dpr >= 3.5) return 500; if (dpr >= 3) return 460; if (dpr >= 2.75) return 400; if (dpr >= 2) return 320; return 220; }
-    if (type === 'tablet') return dpr >= 2 ? 264 : 160;
-    return Math.round(96 * dpr);
-}
-function ppiFromMeasuredMm(mm) { if (!mm || mm <= 0) return null; return Math.round(CALIB_BAR_PX * (window.devicePixelRatio || 1) * 25.4 / mm); }
-function savePPI(ppi) { localStorage.setItem('screenPPI', String(ppi)); localStorage.setItem('screenPPICalibrated', 'true'); }
-function loadPPI() { const s = localStorage.getItem('screenPPI'); return (s && !isNaN(parseInt(s))) ? parseInt(s) : detectPPIHeuristic(); }
-function initScreenCalibration() { screenPPI = loadPPI(); }
-function openScreenCalibModal() {
-    const modalEl = document.getElementById('screen-calib-modal');
-    if (!modalEl) return;
-    const bar = document.getElementById('screen-calib-bar');
-    if (bar) bar.style.width = CALIB_BAR_PX + 'px';
-    const initialPPI = loadPPI(), dpr = window.devicePixelRatio || 1;
-    const mmInput = document.getElementById('screen-calib-mm');
-    if (!mmInput) return;
-    mmInput.value = Math.round((CALIB_BAR_PX * dpr / initialPPI) * 25.4 * 2) / 2;
-    const resultEl = document.getElementById('screen-calib-result');
-    const detailEl = document.getElementById('screen-calib-detail');
-    const autoEl = document.getElementById('screen-calib-auto');
-    const update = () => {
-        const ppi = ppiFromMeasuredMm(parseFloat(mmInput.value) || 0);
-        if (resultEl) resultEl.textContent = ppi ? ppi : '—';
-        if (detailEl) detailEl.textContent = ppi ? `${CALIB_BAR_PX * dpr} физ. px = ${(CALIB_BAR_PX * dpr / ppi * 25.4).toFixed(1)} мм` : '';
-    };
-    mmInput.oninput = update; update();
-    if (autoEl) { const info = { w: Math.round(window.screen.width * dpr), h: Math.round(window.screen.height * dpr) };
-        autoEl.textContent = `${detectDeviceType()}, DPR: ${dpr}, ${info.w}×${info.h}, эвристика: ${detectPPIHeuristic()} PPI`; }
-    modalEl.style.display = 'flex';
-}
-function applyScreenCalib() {
-    const mmInput = document.getElementById('screen-calib-mm');
-    const modalEl = document.getElementById('screen-calib-modal');
-    if (!mmInput || !modalEl) return;
-    const mm = parseFloat(mmInput.value);
-    if (!mm || mm < 5 || mm > 500) { alert('Введите длину в мм (5..500)'); return; }
-    const ppi = ppiFromMeasuredMm(mm);
-    if (!ppi || ppi < 20 || ppi > 2000) { alert('PPI вне разумных пределов'); return; }
-    savePPI(ppi); screenPPI = ppi;
-    if (activeNodeId) {
-        const node = getNode(activeNodeId);
-        if (node && (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC')) {
-            node.stimPPI = ppi; node.stimSize = getNodeComputedSize(node);
-            requestRenderGraph(); updateInspector();
-        } else if (node && node.nodeType === 'READING') {
-            node.readingPPI = ppi;
-            requestRenderGraph(); updateInspector();
+function startCircleAnimation(node) {
+    stopCircleAnimation();
+    if (!stimDisplay) return;
+    const svg = stimDisplay.querySelector('svg'); if (!svg) return;
+    const grads = svg.querySelectorAll('radialGradient');
+    if (grads.length < 2) return;
+    const outerGrad = grads[0], innerGrad = grads[1];
+    _circleInnerPhases = buildCirclePhases(node.circleInnerColor1, node.circleInnerMidEnabled, node.circleInnerColor3, node.circleInnerColor2, node.circleInnerReverse);
+    _circleOuterPhases = buildCirclePhases(node.circleOuterColor1, node.circleOuterMidEnabled, node.circleOuterColor3, node.circleOuterColor2, node.circleOuterReverse);
+    _circleInnerDurationMs = Math.max(200, node.circleInnerDuration || 10000);
+    _circleOuterDurationMs = Math.max(200, node.circleOuterDuration || 10000);
+    _circleInnerLoop = node.circleInnerLoop !== false;
+    _circleOuterLoop = node.circleOuterLoop !== false;
+    _circleAnimStart = null;
+    function paintGradient(gradEl, phases, cycleMs, elapsed) {
+        if (!gradEl) return;
+        const count = phases.length;
+        if (count === 0) return;
+        let t = (elapsed % cycleMs) / cycleMs;
+        const pi = Math.max(0, Math.min(count - 1, Math.floor(t * count)));
+        const ph = phases[pi]; if (!ph) return;
+        const stops = gradEl.querySelectorAll('stop');
+        if (stops.length >= 2) {
+            stops[0].setAttribute('stop-color', `rgb(${ph.from.r},${ph.from.g},${ph.from.b})`);
+            if (stops.length >= 3) {
+                const midCur = lerpColor(ph.from, ph.to, 0.5);
+                stops[1].setAttribute('stop-color', `rgb(${midCur.r},${midCur.g},${midCur.b})`);
+                stops[stops.length - 1].setAttribute('stop-color', `rgb(${ph.to.r},${ph.to.g},${ph.to.b})`);
+            } else {
+                stops[stops.length - 1].setAttribute('stop-color', `rgb(${ph.to.r},${ph.to.g},${ph.to.b})`);
+            }
         }
     }
-    alert(`✅ PPI сохранён: ${ppi}`);
-    modalEl.style.display = 'none';
+    function tick(now) {
+        if (!playerRunning || isPaused) { _circleAnimId = null; return; }
+        if (_circleAnimStart === null) _circleAnimStart = now;
+        const elapsed = now - _circleAnimStart;
+        const innerDone = !_circleInnerLoop && elapsed > _circleInnerDurationMs;
+        const outerDone = !_circleOuterLoop && elapsed > _circleOuterDurationMs;
+        if (innerDone && outerDone) { _circleAnimId = null; return; }
+        if (!innerDone) paintGradient(innerGrad, _circleInnerPhases, _circleInnerDurationMs, elapsed);
+        if (!outerDone) paintGradient(outerGrad, _circleOuterPhases, _circleOuterDurationMs, elapsed);
+        _circleAnimId = requestAnimationFrame(tick);
+    }
+    _circleAnimId = requestAnimationFrame(tick);
+}
+function stopCircleAnimation() {
+    if (_circleAnimId) { cancelAnimationFrame(_circleAnimId); _circleAnimId = null; }
+    _circleInnerPhases = null; _circleOuterPhases = null;
 }
 
-// ==================== ОЦЕНКА ВРЕМЕНИ СЦЕНАРИЯ ====================
-function estimateScenarioDurationMs(){
-    if (!nodes || nodes.length === 0) return 0;
-    const visited = new Set();
-    let total = 0;
+// ==================== ПЕРИФЕРИЯ ====================
+function getPeripheralLayer() {
+    let layer = document.getElementById('peri-layer');
+    if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'peri-layer';
+        layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden;';
+        if (getComputedStyle(stimArea).position === 'static') stimArea.style.position = 'relative';
+        stimArea.appendChild(layer);
+    }
+    return layer;
+}
+function clearPeripheralLayer() { const layer = document.getElementById('peri-layer'); if (layer) layer.innerHTML = ''; }
+function stopPeripheralAnimation() { if (_periAnimId) { cancelAnimationFrame(_periAnimId); _periAnimId = null; } _periAnimStart = null; clearPeripheralLayer(); }
+function buildPeripheralDots(node, stimSize) {
+    clearPeripheralLayer();
+    if (!node.periEnabled) return;
+    const layer = getPeripheralLayer();
+    const aw = stimArea.clientWidth, ah = stimArea.clientHeight;
+    if (aw <= 0 || ah <= 0) return;
+    const count = Math.max(1, Math.min(12, node.periCount || 4));
+    const dCalc = currentDistanceMeters || node.stimDistance || 1;
+    const pCalc = node.stimPPI || screenPPI || 96;
+    const sizePx = acuityToSizePx(node.periAcuity || 0.3, dCalc, pCalc);
+    const half = Math.min(aw, ah) / 2;
+    const rMin = (node.periRadiusMinPct ?? 60) / 100 * half;
+    const rMax = (node.periRadiusMaxPct ?? 90) / 100 * half;
+    const color = node.periColor || { r: 0, g: 255, b: 100 };
+    const colorStr = `rgb(${color.r},${color.g},${color.b})`;
+    const baseAngles = [];
+    for (let i = 0; i < count; i++) baseAngles.push(node.periRandomAngles ? Math.random() * Math.PI * 2 : (i / count) * Math.PI * 2);
+    const radii = baseAngles.map(() => rMin + Math.random() * (rMax - rMin));
+    const cx = aw / 2, cy = ah / 2;
+    function drawAt(t) {
+        layer.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            let angle = baseAngles[i];
+            let scale = 1;
+            if (node.periMotion === 'rotate') {
+                const speed = Math.max(0.02, Math.min(2, node.periSpeed || 0.3));
+                angle += t / 1000 * speed * Math.PI * 2;
+            } else if (node.periMotion === 'pulse') {
+                const speed = Math.max(0.5, Math.min(5, node.periSpeed || 1));
+                scale = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(angle * 3 + t / 1000 * speed * Math.PI * 2));
+            }
+            const x = cx + Math.cos(angle) * radii[i];
+            const y = cy + Math.sin(angle) * radii[i];
+            const d = document.createElement('div');
+            const s = Math.max(2, sizePx * scale);
+            d.style.cssText = `position:absolute;left:${x - s/2}px;top:${y - s/2}px;width:${s}px;height:${s}px;border-radius:50%;background:${colorStr};box-shadow:0 0 6px rgba(0,0,0,0.4);`;
+            layer.appendChild(d);
+        }
+    }
+    drawAt(0);
+    if (node.periMotion === 'static') return;
+    _periAnimStart = null;
+    function tick(now) {
+        if (!playerRunning || isPaused) { _periAnimId = null; return; }
+        if (_periAnimStart === null) _periAnimStart = now;
+        drawAt(now - _periAnimStart);
+        _periAnimId = requestAnimationFrame(tick);
+    }
+    _periAnimId = requestAnimationFrame(tick);
+}
+
+// ==================== ДЕФОКУС ====================
+function buildDefocusFrame(node, stimSize, stimHtml, stimDirection) {
+    if (!node.dfEnabled) return null;
+    const aw = stimArea.clientWidth, ah = stimArea.clientHeight;
+    if (aw <= 0 || ah <= 0) return null;
+    const pCalc = node.stimPPI || screenPPI || 96;
+    const rMm = Math.max(5, node.dfCenterRadiusMm || 13);
+    const rPx = Math.round(rMm * pCalc / 25.4 / (window.devicePixelRatio || 1));
+    const diameter = rPx * 2;
+    const per = node.dfPeriBg || { r: 0, g: 71, b: 171 };
+    const cb = node.dfCenterBg || { r: 204, g: 0, b: 0 };
+    const sc = node.dfStimColor || { r: 0, g: 0, b: 0 };
+    const blur = Math.max(0, Math.min(100, node.dfPeriBlur || 0));
+    const periStyle = blur > 0
+        ? `radial-gradient(circle at center, rgb(${per.r},${per.g},${per.b}) 0%, rgb(${per.r},${per.g},${per.b}) ${100-blur}%, rgba(${per.r},${per.g},${per.b},0) 100%)`
+        : `rgb(${per.r},${per.g},${per.b})`;
+    const blackHtml = stimHtml
+        .replace(/fill="rgb\(\d+,\d+,\d+\)"/g, `fill="rgb(${sc.r},${sc.g},${sc.b})"`)
+        .replace(/stroke="rgb\(\d+,\d+,\d+\)"/g, `stroke="rgb(${sc.r},${sc.g},${sc.b})"`);
+    const frame = document.createElement('div');
+    frame.id = 'defocus-frame';
+    frame.style.cssText = `position:absolute;inset:0;background:${periStyle};display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;`;
+    const center = document.createElement('div');
+    center.style.cssText = `width:${diameter}px;height:${diameter}px;border-radius:50%;background:rgb(${cb.r},${cb.g},${cb.b});display:flex;align-items:center;justify-content:center;`;
+    center.innerHTML = blackHtml;
+    frame.appendChild(center);
+    return { html: frame, diameter };
+}
+
+// ==================== СЕТКА ОДИНОЧНОГО СТИМУЛА ====================
+function removeSingleGridLines() { if (!stimArea) return; stimArea.querySelectorAll('.single-grid-overlay').forEach(el => el.remove()); }
+function drawSingleGridLines(gx, gy) {
+    if (!stimArea) return;
+    removeSingleGridLines();
+    if (gx <= 1 && gy <= 1) return;
+    const o = document.createElement('div');
+    o.className = 'single-grid-overlay';
+    o.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2;';
+    const imgs = [], sizes = [];
+    if (gx > 1) { imgs.push('linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px)'); sizes.push(`${100 / gx}% 100%`); }
+    if (gy > 1) { imgs.push('linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px)'); sizes.push(`100% ${100 / gy}%`); }
+    o.style.backgroundImage = imgs.join(', ');
+    o.style.backgroundSize = sizes.join(', ');
+    o.style.backgroundRepeat = 'repeat';
+    if (getComputedStyle(stimArea).position === 'static') stimArea.style.position = 'relative';
+    stimArea.appendChild(o);
+}
+function applySingleGridPosition(size, gx, gy, row, col, showLines) {
+    if (!stimArea || !stimDisplay) return;
+    const aw = stimArea.clientWidth, ah = stimArea.clientHeight;
+    if (aw <= 0 || ah <= 0) return;
+    gx = Math.max(1, parseInt(gx) || 1); gy = Math.max(1, parseInt(gy) || 1);
+    row = Math.max(0, Math.min(gy - 1, parseInt(row) || 0));
+    col = Math.max(0, Math.min(gx - 1, parseInt(col) || 0));
+    const cw = aw / gx, ch = ah / gy;
+    const tx = (col + 0.5) * cw, ty = (row + 0.5) * ch;
+    const dx = tx - aw / 2, dy = ty - ah / 2;
+    const svg = stimDisplay.querySelector('svg');
+    if (svg) svg.style.transform = `translate(${dx}px, ${dy}px)`;
+    if (showLines) drawSingleGridLines(gx, gy); else removeSingleGridLines();
+}
+function pickSingleGridCell(gx, gy, randomCell, avoidRepeat, fixedRow, fixedCol, selectedCells) {
+    gx = Math.max(1, parseInt(gx) || 1); gy = Math.max(1, parseInt(gy) || 1);
+    let allowed = [];
+    if (Array.isArray(selectedCells) && selectedCells.length > 0) {
+        allowed = selectedCells.filter(c => c && typeof c.row === 'number' && typeof c.col === 'number' && c.row >= 0 && c.row < gy && c.col >= 0 && c.col < gx);
+    }
+    if (allowed.length === 0) {
+        for (let r = 0; r < gy; r++) for (let c = 0; c < gx; c++) allowed.push({ row: r, col: c });
+    }
+    if (!randomCell) {
+        const wr = Math.max(0, Math.min(gy - 1, parseInt(fixedRow) || 0));
+        const wc = Math.max(0, Math.min(gx - 1, parseInt(fixedCol) || 0));
+        return allowed.find(c => c.row === wr && c.col === wc) || allowed[0];
+    }
+    if (allowed.length === 1) return allowed[0];
+    let cell, attempts = 0;
+    do {
+        cell = allowed[Math.floor(Math.random() * allowed.length)];
+        attempts++;
+    } while (avoidRepeat && attempts < 25 && cell.row === currentSingleCell.row && cell.col === currentSingleCell.col && allowed.length > 1);
+    return cell;
+}
+function applyRandomStimulusPosition(size) {
+    if (!stimArea || !stimDisplay) return;
+    const aw = stimArea.clientWidth, ah = stimArea.clientHeight;
+    if (aw <= 0 || ah <= 0) return;
+    const p = 20;
+    const dxM = Math.max(0, (aw - size) / 2 - p), dyM = Math.max(0, (ah - size) / 2 - p);
+    if (dxM <= 0 && dyM <= 0) return;
+    const dx = (Math.random() * 2 - 1) * dxM, dy = (Math.random() * 2 - 1) * dyM;
+    const svg = stimDisplay.querySelector('svg');
+    if (svg) svg.style.transform = `translate(${dx}px, ${dy}px)`;
+}
+
+// ==================== ДИНАМИКА ЦВЕТА ====================
+function buildGenericDynamicPhases(color1, midEnabled, color3, color2, reverse) {
+    const A = color1 || { r: 255, g: 0, b: 0 }, B = color2 || { r: 0, g: 0, b: 255 };
+    let base;
+    if (midEnabled && color3) base = [{ from: A, to: color3 }, { from: color3, to: B }];
+    else base = [{ from: A, to: B }];
+    if (reverse === true) return base.concat(base.slice().reverse().map(ph => ({ from: ph.to, to: ph.from })));
+    return base;
+}
+function startSingleStimAnimation(params) {
+    stopSingleStimAnimation();
+    if (!stimDisplay) return;
+    const phases = buildGenericDynamicPhases(params.singleStimColor1, params.singleStimMidEnabled, params.singleStimColor3, params.singleStimColor2, params.singleStimReverse);
+    const phaseCount = phases.length;
+    if (phaseCount === 0) return;
+    const totalTime = Math.max(200, params.singleStimDuration || 10000);
+    const phaseDuration = totalTime / phaseCount;
+    const shouldLoop = params.singleStimLoop === true;
+    const cycleDurationMs = phaseDuration * phaseCount;
+    const first = phases[0].from;
+    setStimColorRGB(first.r, first.g, first.b);
+    singleStimAnimStart = null;
+    function tick(now) {
+        if (!playerRunning || isPaused) { singleStimAnimId = null; return; }
+        if (singleStimAnimStart === null) singleStimAnimStart = now;
+        let elapsed = Math.max(0, now - singleStimAnimStart);
+        let cycleT = elapsed / cycleDurationMs;
+        if (cycleT >= 1) {
+            if (shouldLoop) {
+                singleStimAnimStart += Math.floor(cycleT) * cycleDurationMs;
+                elapsed = Math.max(0, now - singleStimAnimStart);
+                cycleT = elapsed / cycleDurationMs;
+            } else {
+                const last = phases[phaseCount - 1].to;
+                setStimColorRGB(last.r, last.g, last.b);
+                singleStimAnimId = null;
+                return;
+            }
+        }
+        cycleT = Math.max(0, cycleT);
+        const phaseIdx = Math.max(0, Math.min(phaseCount - 1, Math.floor(cycleT * phaseCount)));
+        const phaseProgress = Math.max(0, Math.min(1, (cycleT * phaseCount) - phaseIdx));
+        const phase = phases[phaseIdx];
+        if (!phase) { singleStimAnimId = null; return; }
+        const cur = lerpColor(phase.from, phase.to, phaseProgress);
+        setStimColorRGB(cur.r, cur.g, cur.b);
+        singleStimAnimId = requestAnimationFrame(tick);
+    }
+    singleStimAnimId = requestAnimationFrame(tick);
+}
+function stopSingleStimAnimation() {
+    if (singleStimAnimId) { cancelAnimationFrame(singleStimAnimId); singleStimAnimId = null; }
+}
+function startSingleBgAnimation(params) {
+    stopSingleBgAnimation();
+    if (!stimArea) return;
+    const phases = buildGenericDynamicPhases(params.singleBgColor1, params.singleBgMidEnabled, params.singleBgColor3, params.singleBgColor2, params.singleBgReverse);
+    const phaseCount = phases.length;
+    if (phaseCount === 0) return;
+    const totalTime = Math.max(200, params.singleBgDuration || 10000);
+    const phaseDuration = totalTime / phaseCount;
+    const shouldLoop = params.singleBgLoop === true;
+    const cycleDurationMs = phaseDuration * phaseCount;
+    const first = phases[0].from;
+    stimArea.style.backgroundColor = `rgb(${first.r},${first.g},${first.b})`;
+    singleBgAnimStart = null;
+    function tick(now) {
+        if (!playerRunning || isPaused) { singleBgAnimId = null; return; }
+        if (singleBgAnimStart === null) singleBgAnimStart = now;
+        let elapsed = Math.max(0, now - singleBgAnimStart);
+        let cycleT = elapsed / cycleDurationMs;
+        if (cycleT >= 1) {
+            if (shouldLoop) {
+                singleBgAnimStart += Math.floor(cycleT) * cycleDurationMs;
+                elapsed = Math.max(0, now - singleBgAnimStart);
+                cycleT = elapsed / cycleDurationMs;
+            } else {
+                const last = phases[phaseCount - 1].to;
+                stimArea.style.backgroundColor = `rgb(${last.r},${last.g},${last.b})`;
+                singleBgAnimId = null;
+                return;
+            }
+        }
+        cycleT = Math.max(0, cycleT);
+        const phaseIdx = Math.max(0, Math.min(phaseCount - 1, Math.floor(cycleT * phaseCount)));
+        const phaseProgress = Math.max(0, Math.min(1, (cycleT * phaseCount) - phaseIdx));
+        const phase = phases[phaseIdx];
+        if (!phase) { singleBgAnimId = null; return; }
+        const cur = lerpColor(phase.from, phase.to, phaseProgress);
+        stimArea.style.backgroundColor = `rgb(${cur.r},${cur.g},${cur.b})`;
+        singleBgAnimId = requestAnimationFrame(tick);
+    }
+    singleBgAnimId = requestAnimationFrame(tick);
+}
+function stopSingleBgAnimation() {
+    if (singleBgAnimId) { cancelAnimationFrame(singleBgAnimId); singleBgAnimId = null; }
+}
+
+// ==================== ФИЗИОЛОГИЧЕСКАЯ ШКАЛА ====================
+const PHYSIOLOGICAL_PHASES = [
+    { diopters: 0.0, wavelength_nm: 670, name: 'Глубокий карминно-красный', rgb: [180, 0, 0] },
+    { diopters: 0.1, wavelength_nm: 648, name: 'Классический красный', rgb: [235, 0, 0] },
+    { diopters: 0.2, wavelength_nm: 627, name: 'Алый / насыщенный красный', rgb: [255, 35, 0] },
+    { diopters: 0.3, wavelength_nm: 610, name: 'Огненно-оранжевый', rgb: [255, 90, 0] },
+    { diopters: 0.4, wavelength_nm: 593, name: 'Оранжево-жёлтый', rgb: [255, 145, 0] },
+    { diopters: 0.5, wavelength_nm: 578, name: 'Янтарно-жёлтый', rgb: [215, 215, 0] },
+    { diopters: 0.6, wavelength_nm: 564, name: 'Жёлто-зелёный (лайм)', rgb: [155, 245, 0] },
+    { diopters: 0.7, wavelength_nm: 551, name: 'Салатовый', rgb: [90, 240, 0] },
+    { diopters: 0.8, wavelength_nm: 538, name: 'Изумрудно-зелёный', rgb: [0, 230, 60] },
+    { diopters: 0.9, wavelength_nm: 525, name: 'Ярко-зелёный (мятный)', rgb: [0, 235, 110] },
+    { diopters: 1.0, wavelength_nm: 511, name: 'Мятно-бирюзовый', rgb: [0, 240, 160] },
+    { diopters: 1.1, wavelength_nm: 498, name: 'Морская волна', rgb: [0, 210, 210] },
+    { diopters: 1.2, wavelength_nm: 484, name: 'Яркий голубой', rgb: [0, 175, 255] },
+    { diopters: 1.3, wavelength_nm: 469, name: 'Васильково-голубой', rgb: [0, 115, 255] },
+    { diopters: 1.4, wavelength_nm: 454, name: 'Королевский синий', rgb: [0, 50, 255] },
+    { diopters: 1.5, wavelength_nm: 438, name: 'Ультрамарин / тёмно-синий', rgb: [35, 0, 230] },
+    { diopters: 1.6, wavelength_nm: 421, name: 'Фиолетово-синий', rgb: [90, 0, 190] }
+];
+
+// ==================== УТИЛИТЫ ГРАФА ====================
+function generateId() { return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2,4); }
+function getNode(id) { return nodes.find(n => n.id === id); }
+function getThreshold(size) { switch(size){ case 4: return 3; case 5: return 4; case 6: return 4; case 7: return 5; case 8: return 6; default: return Math.ceil(size/2); } }
+function randomDirection() { const d = ['вверх','вниз','влево','вправо']; return d[Math.floor(Math.random()*d.length)]; }
+function canAddConnection(fromId, toId, isLoop) {
+    if (fromId === toId) return isLoop;
+    if (isLoop) return !connections.some(c => ((c.fromId === fromId && c.toId === toId) || (c.fromId === toId && c.toId === fromId)) && (c.isLoop || false) === true);
+    return !connections.some(c => c.fromId === fromId && c.toId === toId && (c.isLoop || false) === false);
+}
+function buildPlayQueue() {
+    playQueue = [];
+    if (nodes.length === 0) return;
     const startNode = nodes.find(n => n.isStart === true) || nodes[0];
-    if (!startNode) return 0;
-
-    function nodeDuration(node){
-        const delay1 = node.delay1 || 0;
-        const duration = node.duration || 1000;
-        const delay2 = node.delay2 || 1000;
-        const seriesCount = node.seriesCount || 1;
-        const seriesSize = node.seriesSize || 1;
-        if (node.nodeType === 'READING'){
-            return (node.duration || 60000) + (node.delay1 || 0) + (node.delay2 || 0);
-        }
-        if (node.nodeType === 'COMPARE'){
-            return (delay1 + duration + delay2) * seriesCount * seriesSize;
-        }
-        let perNode = (delay1 + duration + delay2) * seriesCount * seriesSize;
-        if (node.singleStimDynamicEnabled){
-            perNode = Math.max(perNode, (delay1 + (node.singleStimDuration || 10000) + delay2) * seriesCount * seriesSize);
-        }
-        if (node.singleBgDynamicEnabled){
-            perNode = Math.max(perNode, (delay1 + (node.singleBgDuration || 10000) + delay2) * seriesCount * seriesSize);
-        }
-        return perNode;
-    }
-
-    function visit(nodeId){
+    const visited = new Set();
+    function visit(nodeId, connection = null, fromNodeId = null) {
         if (visited.has(nodeId)) return;
         visited.add(nodeId);
-        const node = getNode(nodeId);
-        if (!node) return;
-        if (node.isActive === false && node.nodeType !== 'LOGIC_IF') return;
-        total += nodeDuration(node);
-        connections.filter(c => c.fromId === nodeId && !c.isLoop).forEach(c => visit(c.toId));
-        connections.filter(c => c.fromId === nodeId && c.isLoop && c.toId !== nodeId).forEach(c => {
-            const lim = Math.max(1, c.loopLimit || 1);
-            const target = getNode(c.toId);
-            const source = getNode(c.fromId);
-            if (!target) return;
-            total += nodeDuration(target) * lim;
-            if (source && source.id !== target.id) total += nodeDuration(source) * lim;
+        playQueue.push({ nodeId, connection, fromNodeId });
+        connections.filter(c => c.fromId === nodeId && c.isLoop && c.toId !== nodeId).forEach(loop => {
+            const lim = loop.loopLimit || 1;
+            for (let i = 0; i < lim; i++) {
+                playQueue.push({ nodeId: loop.toId, connection: loop, fromNodeId: nodeId });
+                playQueue.push({ nodeId: nodeId, connection: loop, fromNodeId: loop.toId });
+            }
+        });
+        connections.filter(c => c.fromId === nodeId && !c.isLoop && c.toId !== nodeId).forEach(conn => visit(conn.toId, conn, nodeId));
+    }
+    visit(startNode.id, null, null);
+}
+
+// ==================== КНИГИ ====================
+function nodeToReadingParams(node) {
+    return {
+        bgMode: node.readingBgMode || 'solid',
+        bgColor: node.readingBgColor || { r: 255, g: 255, b: 255 },
+        splitLeftWidthPercent: node.readingSplitLeftWidthPercent ?? 50,
+        splitLeftColor: node.readingSplitLeftColor || { r: 0, g: 0, b: 0 },
+        splitRightColor: node.readingSplitRightColor || { r: 255, g: 255, b: 255 },
+        gradientMidEnabled: node.readingGradientMidEnabled !== false,
+        gradientLeftColor: node.readingGradientLeftColor || { r: 255, g: 255, b: 255 },
+        gradientMidColor: node.readingGradientMidColor || { r: 204, g: 204, b: 204 },
+        gradientMidPosition: node.readingGradientMidPosition ?? 50,
+        gradientRightColor: node.readingGradientRightColor || { r: 0, g: 0, b: 0 },
+        dynamicMode: node.readingDynamicMode || 'simple',
+        dynamicReverse: node.readingDynamicReverse === true,
+        dynamicMidEnabled: node.readingDynamicMidEnabled === true,
+        dynamicStartColor: node.readingDynamicStartColor || { r: 255, g: 0, b: 0 },
+        dynamicMidColor: node.readingDynamicMidColor || { r: 255, g: 255, b: 0 },
+        dynamicEndColor: node.readingDynamicEndColor || { r: 0, g: 0, b: 255 },
+        dynamicDuration: node.readingDynamicDuration || 10000,
+        dynamicLoop: node.readingDynamicLoop === true,
+        dynamicStep: node.readingDynamicStep || 0.1,
+        dynamicStepDuration: node.readingDynamicStepDuration || 1000,
+        dynamicShowLabel: node.readingDynamicShowLabel !== false
+    };
+}
+
+// ==================== СОЗДАНИЕ УЗЛА ====================
+function defaultCompareCellParams() {
+    const d = trainingNode?.params?.distanceMeters || generalDistance || 1;
+    const ppi = trainingNode?.params?.ppi || screenPPI || 96;
+    return { size: acuityToSizePx(1.0, d, ppi), acuity: 1.0, distance: d, ppi, stimR: 255, stimG: 255, stimB: 255, bgR: 0, bgG: 0, bgB: 0, duration: 2000 };
+}
+function createNewNode(type, x, y) {
+    const id = generateId();
+    const dd = trainingNode?.params?.distanceMeters || generalDistance || 1;
+    const dp = trainingNode?.params?.ppi || screenPPI || 96;
+    let node;
+    if (type === 'READING') {
+        node = {
+            id, nodeType: 'READING', x: x || (100 + Math.random()*300), y: y || (100 + Math.random()*200),
+            width: 300, height: 260, name: 'Чтение',
+            bookId: null, bookName: '', continueFromBookmark: true, autoSaveBookmark: true,
+            readingFontFamily: 'Segoe UI', readingFontWeight: 'normal',
+            readingAcuity: 1.0, readingDistance: readingDistance || 1, readingPPI: screenPPI || 96,
+            readingTextColor: { r: 0, g: 0, b: 0 },
+            readingBgMode: 'solid', readingBgColor: { r: 255, g: 255, b: 255 },
+            readingSplitLeftWidthPercent: 50, readingSplitLeftColor: { r: 0, g: 0, b: 0 }, readingSplitRightColor: { r: 255, g: 255, b: 255 },
+            readingGradientMidEnabled: true, readingGradientLeftColor: { r: 255, g: 255, b: 255 }, readingGradientMidColor: { r: 204, g: 204, b: 204 },
+            readingGradientMidPosition: 50, readingGradientRightColor: { r: 0, g: 0, b: 0 },
+            readingDynamicMode: 'simple', readingDynamicReverse: false, readingDynamicMidEnabled: false,
+            readingDynamicStartColor: { r: 255, g: 0, b: 0 }, readingDynamicMidColor: { r: 255, g: 255, b: 0 }, readingDynamicEndColor: { r: 0, g: 0, b: 255 },
+            readingDynamicDuration: 10000, readingDynamicLoop: false, readingDynamicStep: 0.1, readingDynamicStepDuration: 1000, readingDynamicShowLabel: true,
+            duration: 60000, isActive: true, isStart: false
+        };
+    } else if (type === 'COMPARE') {
+        node = {
+            id, nodeType: 'COMPARE', x: x || (100 + Math.random()*300), y: y || (100 + Math.random()*200),
+            width: 340, height: 320, name: 'Сравнение',
+            compareMode: 'direction', pairsCount: 2, gridX: 3, gridY: 3,
+            activeCells: [{ row: 0, col: 0 }, { row: 0, col: 1 }],
+            cellParams: [defaultCompareCellParams(), defaultCompareCellParams()],
+            seriesCount: 5, seriesSize: 6, seriesThreshold: 4,
+            delay1: 1000, duration: 2000, delay2: 1000,
+            isActive: true, isStart: false
+        };
+    } else {
+        node = {
+            id, nodeType: type, x: x || (100 + Math.random()*300), y: y || (100 + Math.random()*200),
+            width: 300, height: 300,
+            name: type === 'STIMULUS' ? 'Стимул' : (type === 'LOGIC_IF' ? 'Логика' : 'Динамика'),
+            stimType: 'LETTER_E', stimDirection: 'вверх',
+            stimR: 255, stimG: 255, stimB: 255, bgR: 11, bgG: 11, bgB: 13,
+            stimAcuity: 1.0, endAcuity: 1.0, acuityStep: 0.1,
+            stimDistance: dd, stimPPI: dp, stimSize: 40, stimDirectionFixed: 'вверх',
+            seriesCount: 5, seriesSize: 6, seriesThreshold: 4,
+            isActive: true, singleRandomPos: false,
+            singleGridEnabled: false, singleGridX: 3, singleGridY: 3,
+            singleGridShowLines: false, singleGridRandomCell: true,
+            singleGridAvoidRepeat: true, singleGridFixedRow: 0, singleGridFixedCol: 0, singleGridCells: [],
+            singleStimDynamicEnabled: false,
+            singleStimColor1: { r: 255, g: 0, b: 0 }, singleStimMidEnabled: false, singleStimColor3: { r: 255, g: 255, b: 0 }, singleStimColor2: { r: 0, g: 0, b: 255 },
+            singleStimDuration: 10000, singleStimLoop: false, singleStimReverse: false,
+            singleBgDynamicEnabled: false,
+            singleBgColor1: { r: 255, g: 0, b: 0 }, singleBgMidEnabled: false, singleBgColor3: { r: 255, g: 255, b: 0 }, singleBgColor2: { r: 0, g: 0, b: 255 },
+            singleBgDuration: 10000, singleBgLoop: false, singleBgReverse: false,
+            singleCircleEnabled: false,
+            circleInnerEnabled: true, circleInnerRadiusPct: 40,
+            circleInnerColor1: { r: 255, g: 0, b: 0 }, circleInnerMidEnabled: false, circleInnerColor3: { r: 255, g: 255, b: 0 }, circleInnerColor2: { r: 0, g: 0, b: 255 },
+            circleInnerDuration: 10000, circleInnerLoop: true, circleInnerReverse: false,
+            circleOuterEnabled: true,
+            circleOuterColor1: { r: 0, g: 255, b: 0 }, circleOuterMidEnabled: false, circleOuterColor3: { r: 0, g: 255, b: 255 }, circleOuterColor2: { r: 0, g: 128, b: 255 },
+            circleOuterDuration: 10000, circleOuterLoop: true, circleOuterReverse: false,
+            periEnabled: false, periCount: 4, periAcuity: 0.3, periRadiusMinPct: 60, periRadiusMaxPct: 90,
+            periColor: { r: 0, g: 255, b: 100 }, periMotion: 'static', periSpeed: 0.3, periRandomAngles: true,
+            dfEnabled: false, dfCenterRadiusMm: 13, dfCenterBg: { r: 204, g: 0, b: 0 }, dfStimColor: { r: 0, g: 0, b: 0 }, dfPeriBg: { r: 0, g: 71, b: 171 }, dfPeriBlur: 0,
+            blinkEnabled: false, blinkColorA: { r: 255, g: 0, b: 0 }, blinkColorB: { r: 0, g: 0, b: 255 }, blinkIntervalMs: 500, blinkDuty: 0.5, blinkCount: 0, blinkTarget: 'stim',
+            delay1: 1000, duration: 1000, response: 1000, delay2: 1000, isStart: false
+        };
+        node.stimSize = getNodeComputedSize(node);
+    }
+    nodes.push(node);
+    activeNodeId = id;
+    window._pendingGeneratorMode = false;
+    requestRenderGraph();
+    updateInspector();
+    inspectorEl.style.display = 'block';
+    return id;
+}
+function deleteNode(id) {
+    nodes = nodes.filter(n => n.id !== id);
+    connections = connections.filter(c => c.fromId !== id && c.toId !== id);
+    if (activeNodeId === id) { activeNodeId = null; inspectorEl.style.display = 'none'; updateInspector(); }
+    if (nodeElements.has(id)) { nodeElements.get(id).remove(); nodeElements.delete(id); }
+    for (const [k, els] of connectionElements) if (k.includes(id)) { els.line.remove(); els.arrow.remove(); connectionElements.delete(k); }
+    if (window._pendingConnectionHandler) { canvas.removeEventListener('click', window._pendingConnectionHandler); window._pendingConnectionHandler = null; clearTempLine(); }
+    requestRenderGraph();
+}
+function selectNode(id) {
+    activeNodeId = id;
+    window._pendingGeneratorMode = false;
+    inspectorEl.style.display = 'block';
+    requestRenderGraph();
+    updateInspector();
+}
+
+// ==================== РЕНДЕР ГРАФА ====================
+function requestRenderGraph() {
+    if (renderScheduled) return;
+    renderScheduled = true;
+    requestAnimationFrame(() => { renderScheduled = false; renderGraph(); });
+}
+function renderGraph() {
+    if (currentMode === 'stimuli') return;
+    nodes.forEach(node => {
+        let el = nodeElements.get(node.id);
+        if (!el) { el = createNodeElement(node); nodeElements.set(node.id, el); canvas.appendChild(el); }
+        else updateNodeElement(el, node);
+    });
+    const ids = new Set(nodes.map(n => n.id));
+    for (const [id, el] of nodeElements) if (!ids.has(id)) { el.remove(); nodeElements.delete(id); }
+    const cm = new Map();
+    connections.forEach(c => cm.set(c.fromId + '_' + c.toId, c));
+    for (const [k, els] of connectionElements) if (!cm.has(k)) { els.line.remove(); els.arrow.remove(); connectionElements.delete(k); }
+    connections.forEach(c => {
+        const k = c.fromId + '_' + c.toId;
+        if (!connectionElements.has(k)) {
+            const { line, arrow } = createConnectionElements(c);
+            if (line && arrow) { connectionElements.set(k, { line, arrow }); canvas.appendChild(line); canvas.appendChild(arrow); }
+        } else updateConnectionElements(connectionElements.get(k), c);
+    });
+}
+function clearTempLine() {
+    if (tempLineElement) { tempLineElement.remove(); tempLineElement = null; }
+    if (tempLineMoveHandler) { canvas.removeEventListener('mousemove', tempLineMoveHandler); tempLineMoveHandler = null; }
+}
+
+// ==================== РЕНДЕР УЗЛА ====================
+function createNodeElement(node) {
+    const el = document.createElement('div');
+    el.className = 'scenario-node';
+    if (node.nodeType === 'READING') el.classList.add('reading-node');
+    if (node.nodeType === 'COMPARE') el.classList.add('compare-node');
+    el.dataset.nodeId = node.id;
+    el.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.width}px;height:${node.height}px;`;
+    if (node.id === activeNodeId) el.classList.add('active');
+    const header = document.createElement('div');
+    header.className = 'node-header';
+    if (node.nodeType === 'READING') header.classList.add('reading-header');
+    if (node.nodeType === 'COMPARE') header.classList.add('compare-header');
+    const title = document.createElement('span'); title.textContent = node.name;
+    const startCb = document.createElement('input');
+    startCb.type = 'checkbox'; startCb.className = 'start-checkbox'; startCb.checked = node.isStart === true;
+    startCb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (startCb.checked) { nodes.forEach(n => { if (n.id !== node.id) n.isStart = false; }); node.isStart = true; }
+        else node.isStart = false;
+        requestRenderGraph(); updateInspector();
+    });
+    header.appendChild(title); header.appendChild(startCb); el.appendChild(header);
+    const content = document.createElement('div'); content.className = 'node-content';
+    if (node.nodeType === 'READING') {
+        const p = document.createElement('div'); p.className = 'node-preview-area'; p.style.background = '#0b0b14';
+        p.innerHTML = '<div style="text-align:center;"><div class="node-reading-icon">📖</div></div>';
+        content.appendChild(p);
+        const info = document.createElement('div'); info.className = 'node-info';
+        const b = document.createElement('div'); b.className = 'node-reading-book'; info.appendChild(b);
+        const d = document.createElement('div'); d.className = 'node-reading-sub'; info.appendChild(d);
+        const v = document.createElement('div'); v.className = 'node-reading-sub'; info.appendChild(v);
+        const f = document.createElement('div'); f.className = 'node-reading-sub'; info.appendChild(f);
+        content.appendChild(info); fillReadingNodeInfo(b, d, v, f, node);
+    } else if (node.nodeType === 'COMPARE') {
+        const p = document.createElement('div'); p.className = 'node-preview-area'; p.style.background = '#1a0a02';
+        p.innerHTML = '<div class="node-compare-icon">⚖️</div>';
+        content.appendChild(p);
+        const info = document.createElement('div'); info.className = 'node-info';
+        const m = document.createElement('div'); m.className = 'node-compare-sub'; info.appendChild(m);
+        const g = document.createElement('div'); g.className = 'node-compare-sub'; info.appendChild(g);
+        const s = document.createElement('div'); s.className = 'node-compare-sub'; info.appendChild(s);
+        const t = document.createElement('div'); t.className = 'node-compare-sub'; info.appendChild(t);
+        content.appendChild(info); fillCompareNodeInfo(m, g, s, t, node);
+    } else {
+        const p = document.createElement('div'); p.className = 'node-preview-area';
+        const cs = Math.min(120, getNodeComputedSize(node));
+        const { html, bgColor } = getStimulusSVG(node, cs);
+        p.style.background = bgColor;
+        const c = document.createElement('div');
+        c.style.cssText = `width:${cs}px;height:${cs}px;margin:0 auto;`;
+        c.innerHTML = html; p.appendChild(c); content.appendChild(p);
+        const info = document.createElement('div'); info.className = 'node-info';
+        const a = document.createElement('div'); a.className = 'node-acuity'; info.appendChild(a);
+        const mm = document.createElement('div'); mm.className = 'node-size-mm'; info.appendChild(mm);
+        const px = document.createElement('div'); px.className = 'node-size-px'; info.appendChild(px);
+        const dst = document.createElement('div'); dst.className = 'node-distance'; info.appendChild(dst);
+        const srs = document.createElement('div'); srs.className = 'node-inherit'; srs.style.color = '#a855f7'; info.appendChild(srs);
+        const dyn = document.createElement('div'); dyn.className = 'node-inherit'; dyn.style.color = '#f59e0b'; info.appendChild(dyn);
+        content.appendChild(info); fillStimulusNodeInfo(a, mm, px, dst, srs, dyn, node);
+    }
+    el.appendChild(content);
+    const body = document.createElement('div'); body.className = 'node-body';
+    const cb = document.createElement('button'); cb.className = 'node-btn btn-node-connect'; cb.textContent = '🔗 Связать';
+    cb.addEventListener('click', e => { e.stopPropagation(); startConnection(node.id, false); });
+    const lb = document.createElement('button'); lb.className = 'node-btn btn-node-loop'; lb.textContent = '🔄 Петля';
+    lb.addEventListener('click', e => { e.stopPropagation(); startConnection(node.id, true); });
+    const tb = document.createElement('button'); tb.className = 'node-btn'; tb.style.background = '#0ea5e9'; tb.textContent = '💾 В заготовки';
+    tb.title = 'Сохранить этот узел как заготовку';
+    tb.addEventListener('click', e => { e.stopPropagation(); saveNodeAsTemplate(node.id); });
+    const db = document.createElement('button'); db.className = 'node-btn btn-node-del'; db.textContent = '✕ Удалить';
+    db.addEventListener('click', e => { e.stopPropagation(); deleteNode(node.id); });
+    body.appendChild(cb); body.appendChild(lb); body.appendChild(tb); body.appendChild(db); el.appendChild(body);
+    const resize = document.createElement('div'); resize.className = 'node-resize-handle'; el.appendChild(resize);
+    header.addEventListener('mousedown', e => {
+        if (e.button !== 0 || window._pendingConnectionHandler) return;
+        dragNodeId = node.id;
+        const r = canvas.getBoundingClientRect();
+        offsetX = e.clientX - r.left - node.x;
+        offsetY = e.clientY - r.top - node.y;
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+    });
+    resize.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        resizeNodeId = node.id;
+        startW = node.width; startH = node.height;
+        startMouseX = e.clientX; startMouseY = e.clientY;
+        document.removeEventListener('mousemove', onResizeMove);
+        document.removeEventListener('mouseup', onResizeEnd);
+        document.addEventListener('mousemove', onResizeMove);
+        document.addEventListener('mouseup', onResizeEnd);
+    });
+    el.addEventListener('click', e => {
+        if (window._pendingConnectionHandler) return;
+        if (e.target.closest('.node-btn') || e.target.closest('.start-checkbox') || e.target.closest('.node-resize-handle')) return;
+        selectNode(node.id);
+    });
+    return el;
+}
+function fillReadingNodeInfo(b, d, v, f, node) {
+    if (b) {
+        if (node.bookId && window._books[node.bookId]) { b.textContent = `📖 ${node.bookName || '(без имени)'}`; b.style.color = '#7dd3fc'; }
+        else if (node.bookName) { b.textContent = `📖 ${node.bookName} ⚠`; b.style.color = '#f59e0b'; }
+        else { b.textContent = '📖 книга из сессии'; b.style.color = '#94a3b8'; }
+    }
+    if (d) { d.textContent = node.duration > 0 ? `⏱ ${(node.duration/1000).toFixed(0)} с` : '⏱ до кнопки'; d.style.color = '#64748b'; }
+    if (v) { v.textContent = `V = ${(node.readingAcuity || 1.0).toFixed(1)}`; v.style.color = '#64748b'; }
+    if (f) { f.textContent = node.readingFontFamily || 'Segoe UI'; f.style.color = '#64748b'; }
+}
+function fillStimulusNodeInfo(a, mm, px, dst, srs, dyn, node) {
+    if (a) { a.textContent = `V = ${(node.stimAcuity || 1.0).toFixed(1)}`; if (node.endAcuity != null && Math.abs(node.endAcuity - node.stimAcuity) > 0.001) a.textContent += `→${node.endAcuity.toFixed(1)}`; }
+    if (mm) mm.textContent = `${getNodeComputedSizeMm(node).toFixed(2)} мм`;
+    if (px) px.textContent = `≈ ${getNodeComputedSize(node)}px @ ${node.stimPPI || screenPPI || 96} PPI`;
+    if (dst) dst.textContent = `📏 ${(node.stimDistance || 1).toFixed(2)} м`;
+    if (srs) srs.textContent = `📊 ${node.seriesCount || 5}×${node.seriesSize || 6}`;
+    if (dyn) {
+        const parts = [];
+        if (node.singleCircleEnabled) parts.push('🎯 Круги');
+        if (node.periEnabled) parts.push('🟢 Точки');
+        if (node.dfEnabled) parts.push('🔴 Дефокус');
+        if (node.blinkEnabled) parts.push('🔦 Моргание');
+        if (node.singleGridEnabled && !node.singleCircleEnabled) { const cnt = Array.isArray(node.singleGridCells) && node.singleGridCells.length > 0 ? node.singleGridCells.length : (node.singleGridX || 1) * (node.singleGridY || 1); parts.push(`🔲${node.singleGridX || 1}×${node.singleGridY || 1}(${cnt})`); }
+        if (node.singleStimDynamicEnabled && !node.singleCircleEnabled) parts.push('🎨');
+        if (node.singleBgDynamicEnabled) parts.push('🖼️');
+        if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled) parts.push('🎲');
+        dyn.textContent = parts.join(' ');
+    }
+}
+function fillCompareNodeInfo(m, g, s, t, node) {
+    if (m) { m.textContent = node.compareMode === 'find_same' ? `🔍 Найти пары ×${node.pairsCount || 2}` : '↔️ Сравнить направления'; m.style.color = '#f97316'; m.style.fontWeight = 'bold'; }
+    if (g) { const n = (node.activeCells || []).length; g.textContent = `🔲 ${node.gridX || 3}×${node.gridY || 3} (${n} кл.)`; }
+    if (s) s.textContent = `📊 ${node.seriesCount || 5}×${node.seriesSize || 6}`;
+    if (t) t.textContent = `⏱ ${((node.duration || 0)/1000).toFixed(1)} с`;
+}
+function updateNodeElement(el, node) {
+    el.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.width}px;height:${node.height}px;`;
+    el.querySelector('.node-header span').textContent = node.name;
+    el.classList.toggle('active', node.id === activeNodeId);
+    el.classList.toggle('reading-node', node.nodeType === 'READING');
+    el.classList.toggle('compare-node', node.nodeType === 'COMPARE');
+    const sc = el.querySelector('.start-checkbox'); if (sc) sc.checked = node.isStart === true;
+    if (node.nodeType === 'READING') {
+        const p = el.querySelector('.node-preview-area'); if (p) p.style.background = '#0b0b14';
+        const b = el.querySelector('.node-reading-book'); const subs = el.querySelectorAll('.node-reading-sub');
+        fillReadingNodeInfo(b, subs[0], subs[1], subs[2], node);
+        return;
+    }
+    if (node.nodeType === 'COMPARE') {
+        const subs = el.querySelectorAll('.node-compare-sub');
+        fillCompareNodeInfo(subs[0], subs[1], subs[2], subs[3], node);
+        return;
+    }
+    const cs = Math.min(120, getNodeComputedSize(node));
+    const p = el.querySelector('.node-preview-area');
+    if (p) {
+        const { html, bgColor } = getStimulusSVG(node, cs);
+        p.style.background = bgColor; p.innerHTML = '';
+        const c = document.createElement('div'); c.style.cssText = `width:${cs}px;height:${cs}px;margin:0 auto;`; c.innerHTML = html; p.appendChild(c);
+    }
+    const a = el.querySelector('.node-acuity'), mm = el.querySelector('.node-size-mm'), px = el.querySelector('.node-size-px');
+    const dst = el.querySelector('.node-distance'); const inh = el.querySelectorAll('.node-inherit');
+    fillStimulusNodeInfo(a, mm, px, dst, inh[0], inh[1], node);
+}
+
+// ==================== СОЗДАНИЕ СВЯЗИ ====================
+function startConnection(sourceId, isLoop) {
+    if (window._pendingConnectionHandler) {
+        canvas.removeEventListener('click', window._pendingConnectionHandler);
+        clearTempLine();
+        nodeElements.forEach(el => el.classList.remove('connection-source'));
+    }
+    const handler = ev => {
+        if (ev.target.closest('.node-btn')) return;
+        const tel = ev.target.closest('.scenario-node');
+        if (!tel) { cancelConnection(); return; }
+        const tid = tel.dataset.nodeId;
+        if (tid === sourceId) { cancelConnection(); return; }
+        if (canAddConnection(sourceId, tid, isLoop)) {
+            connections.push({ fromId: sourceId, toId: tid, isLoop, loopMode: 'TIME', loopLimit: 1, lifeTime: 0, initiateByAnswer: true, condition: 'none', inheritSize: false, inheritSpeed: false });
+            const nc = connections[connections.length - 1];
+            cancelConnection();
+            setTimeout(() => showConnectionMenu({ clientX: ev.clientX, clientY: ev.clientY, preventDefault: () => {}, stopPropagation: () => {} }, nc), 100);
+        } else {
+            alert('Такая связь уже существует или превышен лимит.');
+            cancelConnection();
+        }
+    };
+    window._pendingConnectionHandler = handler;
+    canvas.addEventListener('click', handler);
+    nodeElements.forEach(el => el.classList.remove('connection-source'));
+    nodeElements.get(sourceId)?.classList.add('connection-source');
+    clearTempLine();
+    tempLineElement = document.createElement('div');
+    tempLineElement.id = 'temp-line';
+    tempLineElement.style.cssText = 'position:absolute;transform-origin:top left;z-index:4;pointer-events:none;height:0;border-top:3px dashed #f59e0b;';
+    canvas.appendChild(tempLineElement);
+    tempLineMoveHandler = ev => {
+        const r = canvas.getBoundingClientRect();
+        const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+        const sn = getNode(sourceId);
+        if (!sn) return;
+        const fx = sn.x + sn.width / 2, fy = sn.y + sn.height / 2;
+        const dx = mx - fx, dy = my - fy;
+        const len = Math.sqrt(dx*dx + dy*dy);
+        const ang = Math.atan2(dy, dx) * (180 / Math.PI);
+        tempLineElement.style.width = len + 'px';
+        tempLineElement.style.left = fx + 'px';
+        tempLineElement.style.top = fy + 'px';
+        tempLineElement.style.transform = `rotate(${ang}deg)`;
+    };
+    canvas.addEventListener('mousemove', tempLineMoveHandler);
+    requestRenderGraph();
+}
+function cancelConnection() {
+    if (window._pendingConnectionHandler) {
+        canvas.removeEventListener('click', window._pendingConnectionHandler);
+        window._pendingConnectionHandler = null;
+    }
+    clearTempLine();
+    nodeElements.forEach(el => el.classList.remove('connection-source'));
+    requestRenderGraph();
+}
+
+// ==================== РЕНДЕР СВЯЗЕЙ ====================
+function getNodeEdgePoint(node, tx, ty) {
+    const cx = node.x + node.width/2, cy = node.y + node.height/2;
+    const dx = tx - cx, dy = ty - cy;
+    if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return { x: cx, y: cy };
+    const s = Math.min((node.width/2)/Math.abs(dx), (node.height/2)/Math.abs(dy));
+    return { x: cx + dx*s, y: cy + dy*s };
+}
+function createConnectionElements(conn) {
+    const fn = getNode(conn.fromId), tn = getNode(conn.toId);
+    if (!fn || !tn) return { line: null, arrow: null };
+    if (conn.fromId === conn.toId) {
+        const cx = fn.x + fn.width/2, cy = fn.y + fn.height/2, ls = 30;
+        const div = document.createElement('div');
+        div.className = 'html-graph-line line-dashed';
+        div.style.cssText = `left:${cx - ls/2}px;top:${cy - ls/2}px;width:${ls}px;height:${ls}px;border:3px dashed #a855f7;border-radius:50%;position:absolute;z-index:5;pointer-events:auto;cursor:pointer;`;
+        div.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
+        const arrow = document.createElement('div');
+        arrow.className = 'line-arrow loop-arrow'; arrow.textContent = '↻';
+        arrow.style.cssText = `left:${cx + ls/2 - 5}px;top:${cy + ls/2 - 10}px;color:#a855f7;z-index:1000;cursor:pointer;`;
+        arrow.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
+        return { line: div, arrow };
+    }
+    const fp = getNodeEdgePoint(fn, tn.x + tn.width/2, tn.y + tn.height/2);
+    const tp = getNodeEdgePoint(tn, fn.x + fn.width/2, fn.y + fn.height/2);
+    const dx = tp.x - fp.x, dy = tp.y - fp.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 2) return { line: null, arrow: null };
+    const ang = Math.atan2(dy, dx) * (180 / Math.PI);
+    const isLoop = conn.isLoop || false;
+    const color = isLoop ? '#a855f7' : '#10b981';
+    const line = document.createElement('div');
+    line.className = 'html-graph-line ' + (isLoop ? 'line-dashed' : 'line-solid');
+    if (!isLoop) line.style.background = color; else line.style.borderTopColor = color;
+    line.style.cssText = `width:${len}px;left:${fp.x}px;top:${fp.y}px;transform:rotate(${ang}deg);pointer-events:auto;cursor:pointer;`;
+    line.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
+    const ax = fp.x + (dx/len) * 35 - 10, ay = fp.y + (dy/len) * 35 - 10;
+    const arrow = document.createElement('div');
+    arrow.className = 'line-arrow' + (isLoop ? ' loop-arrow' : ''); arrow.textContent = '▶';
+    arrow.style.cssText = `left:${ax}px;top:${ay}px;color:${color};transform:rotate(${ang}deg);position:absolute;display:flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:16px;z-index:1000;cursor:pointer;pointer-events:auto;`;
+    arrow.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
+    return { line, arrow };
+}
+function updateConnectionElements(els, conn) {
+    const fn = getNode(conn.fromId), tn = getNode(conn.toId);
+    if (!fn || !tn) return;
+    if (conn.fromId === conn.toId) {
+        const cx = fn.x + fn.width/2, cy = fn.y + fn.height/2, ls = 30;
+        els.line.style.left = (cx - ls/2) + 'px';
+        els.line.style.top = (cy - ls/2) + 'px';
+        els.arrow.style.left = (cx + ls/2 - 5) + 'px';
+        els.arrow.style.top = (cy + ls/2 - 10) + 'px';
+        return;
+    }
+    const fp = getNodeEdgePoint(fn, tn.x + tn.width/2, tn.y + tn.height/2);
+    const tp = getNodeEdgePoint(tn, fn.x + fn.width/2, fn.y + fn.height/2);
+    const dx = tp.x - fp.x, dy = tp.y - fp.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 2) return;
+    const ang = Math.atan2(dy, dx) * (180 / Math.PI);
+    const isLoop = conn.isLoop || false;
+    const color = isLoop ? '#a855f7' : '#10b981';
+    els.line.style.width = len + 'px';
+    els.line.style.left = fp.x + 'px';
+    els.line.style.top = fp.y + 'px';
+    els.line.style.transform = `rotate(${ang}deg)`;
+    els.arrow.style.left = (fp.x + (dx/len) * 35 - 10) + 'px';
+    els.arrow.style.top = (fp.y + (dy/len) * 35 - 10) + 'px';
+    els.arrow.style.transform = `rotate(${ang}deg)`;
+    els.arrow.style.color = color;
+}
+
+// ==================== DRAG / RESIZE ====================
+function onDragMove(e) {
+    if (!dragNodeId) return;
+    if (e.buttons === 0) { onDragEnd(); return; }
+    const node = getNode(dragNodeId);
+    if (node) {
+        const r = canvas.getBoundingClientRect();
+        node.x = e.clientX - r.left - offsetX;
+        node.y = e.clientY - r.top - offsetY;
+        updateNodeElement(nodeElements.get(node.id), node);
+        connections.forEach(c => {
+            if (c.fromId === node.id || c.toId === node.id)
+                updateConnectionElements(connectionElements.get(c.fromId + '_' + c.toId), c);
         });
     }
-    visit(startNode.id);
-    return total;
 }
-function formatDurationMs(ms){
-    if (!ms || ms <= 0) return '0 с';
-    const totalSec = Math.round(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-    if (h > 0) return `${h} ч ${m} мин ${s} с`;
-    if (m > 0) return `${m} мин ${s} с`;
-    return `${s} с`;
+function onDragEnd() {
+    dragNodeId = null;
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
 }
-function showScenarioTimeReport(){
-    const modalEl = document.getElementById('scenario-time-modal');
-    const body = document.getElementById('scenario-time-body');
-    if (!modalEl || !body) return;
-    const totalMs = estimateScenarioDurationMs();
-    const rows = nodes.filter(n => n.isActive !== false).map(n => {
-        const type = n.nodeType || 'STIMULUS';
-        const d1 = n.delay1 || 0;
-        const dur = n.duration || 1000;
-        const d2 = n.delay2 || 1000;
-        const sc = n.seriesCount || 1;
-        const ss = n.seriesSize || 1;
-        let oneRoundMs, totalNodeMs;
-        if (type === 'READING'){ oneRoundMs = (n.duration || 60000) + d1 + d2; totalNodeMs = oneRoundMs; }
-        else { oneRoundMs = d1 + dur + d2; totalNodeMs = oneRoundMs * sc * ss; }
-        return { name: (n.name || '').replace(/</g, '&lt;'), oneRoundMs, totalNodeMs, shows: (type === 'READING') ? 1 : (sc * ss) };
-    });
-    let html = `<div style="margin-bottom:10px;">
-        <div>Узлов: <b>${nodes.length}</b> · Связей: <b>${connections.length}</b></div>
-        <div style="font-size:22px;color:#a5b4fc;font-weight:800;margin-top:6px;">${formatDurationMs(totalMs)}</div>
-    </div><table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr style="border-bottom:1px solid #3f3f46;color:#94a3b8;">
-        <th style="text-align:left;padding:6px 4px;">Узел</th>
-        <th style="text-align:right;padding:6px 4px;">Показов</th>
-        <th style="text-align:right;padding:6px 4px;">1 показ</th>
-        <th style="text-align:right;padding:6px 4px;">Всего</th></tr></thead><tbody>`;
-    rows.forEach(r => {
-        html += `<tr style="border-bottom:1px solid #1e1e24;"><td style="padding:6px 4px;">${r.name}</td>
-        <td style="text-align:right;padding:6px 4px;">${r.shows}</td>
-        <td style="text-align:right;padding:6px 4px;color:#94a3b8;">${formatDurationMs(r.oneRoundMs)}</td>
-        <td style="text-align:right;padding:6px 4px;color:#a5b4fc;font-weight:600;">${formatDurationMs(r.totalNodeMs)}</td></tr>`;
-    });
-    html += `</tbody></table>`;
-    body.innerHTML = html;
-    modalEl.style.display = 'flex';
+function onResizeMove(e) {
+    if (!resizeNodeId) return;
+    if (e.buttons === 0) { onResizeEnd(); return; }
+    const node = getNode(resizeNodeId);
+    if (node) {
+        node.width = Math.max(200, startW + e.clientX - startMouseX);
+        node.height = Math.max(180, startH + e.clientY - startMouseY);
+        updateNodeElement(nodeElements.get(node.id), node);
+        connections.forEach(c => {
+            if (c.fromId === node.id || c.toId === node.id)
+                updateConnectionElements(connectionElements.get(c.fromId + '_' + c.toId), c);
+        });
+    }
+}
+function onResizeEnd() {
+    resizeNodeId = null;
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeEnd);
 }
 
-// ==================== ИНДИКАТОРЫ / ПРЕДУПРЕЖДЕНИЯ ====================
-function updateLiveDistanceIndicator() {
-    const indicator = document.getElementById('live-distance-indicator');
-    if (!indicator) return;
-    if (currentDistanceMeters == null || !isFinite(currentDistanceMeters)) { indicator.style.display = 'none'; return; }
-    indicator.textContent = `📏 ${currentDistanceMeters.toFixed(2)} м`;
-    indicator.style.display = 'block';
-}
-function hideLiveDistanceIndicator() { const i = document.getElementById('live-distance-indicator'); if (i) i.style.display = 'none'; }
-function getDistanceWarningEl() {
-    let el = document.getElementById('distance-warning');
-    if (el) return el;
-    el = document.createElement('div');
-    el.id = 'distance-warning';
-    el.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); padding: 22px 40px; background: rgba(220,38,38,0.92); color: #fff; font-size: 44px; font-weight: bold; border-radius: 14px; z-index: 99999; display: none; pointer-events: none; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); font-family: "Segoe UI",Tahoma,sans-serif; letter-spacing: 1px;';
-    document.body.appendChild(el);
-    return el;
-}
-function showDistanceWarning(kind) {
-    const el = getDistanceWarningEl();
-    el.textContent = kind === 'up' ? 'Не отклоняйтесь' : 'Не приближайтесь';
-    el.style.background = kind === 'up' ? 'rgba(220,38,38,0.92)' : 'rgba(234,88,12,0.92)';
-    el.style.display = 'block';
-    if (window.Voice) window.Voice.sayKey(kind === 'up' ? 'moveUp' : 'moveBack', { cancel: true });
-}
-function hideDistanceWarning() { const el = document.getElementById('distance-warning'); if (el) el.style.display = 'none'; _distanceWarningKind = null; }
-function resetDistanceTracking() { _distanceBaseline = null; _distanceOutOfBoundsSince = 0; _distanceWarningKind = null; _distanceRecalcScheduled = false; hideDistanceWarning(); }
-function setDistanceBaselineIfNeeded() { if (_distanceBaseline == null && currentDistanceMeters != null && isFinite(currentDistanceMeters)) _distanceBaseline = currentDistanceMeters; }
-function evaluateDistanceDeviation() {
-    if (_distanceBaseline == null || currentDistanceMeters == null || !isFinite(currentDistanceMeters)) return 'ok';
-    const dev = (currentDistanceMeters - _distanceBaseline) / _distanceBaseline * 100;
-    if (dev > distanceToleranceIncreasePct) return 'up';
-    if (dev < -distanceToleranceDecreasePct) return 'down';
-    return 'ok';
-}
-
-// ==================== МОРГАНИЕ (анимация) ====================
-function startBlinkAnimation(opts){
-    stopBlinkAnimation();
-    if (!opts) return;
-    const target = opts.target || 'stim';
-    const A = opts.colorA || { r: 255, g: 0, b: 0 };
-    const B = opts.colorB || { r: 0, g: 0, b: 255 };
-    const intervalMs = Math.max(50, opts.intervalMs || 500);
-    const duty = Math.max(0.05, Math.min(0.95, opts.duty ?? 0.5));
-    const count = Math.max(0, opts.count || 0);
-    _blinkStateLocal = { tick: 0, current: 'A' };
-    function apply(color){
-        if (target === 'stim' || target === 'both') setStimColorRGB(color.r, color.g, color.b);
-        if (target === 'bg'   || target === 'both') stimArea.style.backgroundColor = `rgb(${color.r},${color.g},${color.b})`;
+// ==================== МЕНЮ СВЯЗИ ====================
+function showConnectionMenu(e, conn) {
+    e.preventDefault(); e.stopPropagation();
+    currentConnectionForMenu = conn;
+    const menu = document.getElementById('connection-menu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    menu.innerHTML = '';
+    const title = document.createElement('div'); title.textContent = 'Наследование'; title.style.cssText = 'font-weight:bold;margin-bottom:4px;'; menu.appendChild(title);
+    const sL = document.createElement('label'); sL.style.cssText = 'display:flex;align-items:center;gap:5px;margin-bottom:4px;';
+    const sC = document.createElement('input'); sC.type = 'checkbox'; sC.checked = conn.inheritSize === true;
+    sC.addEventListener('change', ev => { conn.inheritSize = ev.target.checked; requestRenderGraph(); });
+    sL.appendChild(sC); sL.appendChild(document.createTextNode('Острота зрения (размер)')); menu.appendChild(sL);
+    const spL = document.createElement('label'); spL.style.cssText = 'display:flex;align-items:center;gap:5px;margin-bottom:4px;';
+    const spC = document.createElement('input'); spC.type = 'checkbox'; spC.checked = conn.inheritSpeed === true;
+    spC.addEventListener('change', ev => { conn.inheritSpeed = ev.target.checked; requestRenderGraph(); });
+    spL.appendChild(spC); spL.appendChild(document.createTextNode('Скорость')); menu.appendChild(spL);
+    const hint = document.createElement('div'); hint.style.cssText = 'font-size:10px;color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px solid #3f3f46;line-height:1.3;';
+    hint.textContent = 'Книга в узлах чтения наследуется автоматически.'; menu.appendChild(hint);
+    if (conn.isLoop) {
+        const sep = document.createElement('hr'); sep.style.margin = '4px 0'; menu.appendChild(sep);
+        const lt = document.createElement('div'); lt.textContent = 'Параметры петли'; lt.style.cssText = 'font-weight:bold;margin-bottom:4px;'; menu.appendChild(lt);
+        const lcl = document.createElement('label'); lcl.style.cssText = 'display:block;margin-bottom:4px;'; lcl.textContent = 'Кол-во циклов';
+        const lci = document.createElement('input'); lci.type = 'number'; lci.min = '1'; lci.value = conn.loopLimit || 1; lci.style.width = '100%';
+        lci.addEventListener('change', ev => { conn.loopLimit = parseInt(ev.target.value) || 1; requestRenderGraph(); });
+        lcl.appendChild(lci); menu.appendChild(lcl);
     }
-    function tick(){
-        if (!playerRunning || isPaused){ _blinkTimerId = null; return; }
-        const isA = _blinkStateLocal.current === 'A';
-        apply(isA ? A : B);
-        _blinkStateLocal.tick++;
-        if (count > 0 && _blinkStateLocal.tick >= count){ _blinkTimerId = null; return; }
-        const nextIsA = !isA;
-        const delay = nextIsA ? intervalMs * duty : intervalMs * (1 - duty);
-        _blinkStateLocal.current = nextIsA ? 'A' : 'B';
-        _blinkTimerId = setTimeout(tick, Math.max(20, delay));
-    }
-    _blinkTimerId = setTimeout(tick, 0);
+    const sep2 = document.createElement('hr'); sep2.style.margin = '4px 0'; menu.appendChild(sep2);
+    const db = document.createElement('button'); db.className = 'btn btn-danger'; db.style.width = '100%'; db.textContent = '✕ Удалить связь';
+    db.addEventListener('click', () => { connections = connections.filter(c => c !== conn); hideConnectionMenu(); requestRenderGraph(); });
+    menu.appendChild(db);
 }
-function stopBlinkAnimation(){
-    if (_blinkTimerId){ clearTimeout(_blinkTimerId); _blinkTimerId = null; }
-    _blinkStateLocal = { tick: 0, current: 'A' };
-}
-
-// ==================== BLINK: EAR ====================
-function computeEAR(eyePoints) {
-    if (!Array.isArray(eyePoints) || eyePoints.length < 6) return 0.3;
-    const [p1, p2, p3, p4, p5, p6] = eyePoints;
-    const v1 = Math.hypot(p2.x - p6.x, p2.y - p6.y);
-    const v2 = Math.hypot(p3.x - p5.x, p3.y - p5.y);
-    const h  = Math.hypot(p1.x - p4.x, p1.y - p4.y);
-    if (h < 1) return 0.3;
-    return (v1 + v2) / (2 * h);
-}
-function getBlinkWarningEl() {
-    let el = document.getElementById('blink-warning');
-    if (el) return el;
-    el = document.createElement('div');
-    el.id = 'blink-warning';
-    el.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 28px; background: rgba(14,165,233,0.92); color: #fff; font-size: 22px; font-weight: bold; border-radius: 10px; z-index: 99998; display: none; pointer-events: none; text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,0.5); font-family: "Segoe UI",Tahoma,sans-serif;';
-    el.textContent = 'Поморгайте';
-    document.body.appendChild(el);
-    return el;
-}
-function showBlinkWarning() {
-    const el = getBlinkWarningEl();
-    el.style.display = 'block';
-    clearTimeout(el._hideTimer);
-    el._hideTimer = setTimeout(() => { el.style.display = 'none'; }, 3500);
-    if (window.Voice) window.Voice.sayKey('blink', { cancel: true });
-}
-function hideBlinkWarning() { const el = document.getElementById('blink-warning'); if (el) el.style.display = 'none'; }
-function resetBlinkState() {
-    _blinkState = createEmptyBlinkState();
-    _blinkState.sessionStartMs = performance.now();
-    _blinkResponseBlockUntil = 0;
-    _waitingForOpenEyes = false;
-    hideBlinkWarning();
-}
-function processBlinkFrame(earL, earR) {
-    if (!cameraActive) return;
-    if (_blinkCalibration && _blinkCalibration.phase !== 'done') {
-        const ear = (earL + earR) / 2;
-        if (_blinkCalibration.phase === 'open') _blinkCalibration.openSamples.push(ear);
-        else if (_blinkCalibration.phase === 'closed') _blinkCalibration.closedSamples.push(ear);
-        return;
-    }
-    if (!blinkEnabled) return;
-    const now = performance.now();
-    const ear = (earL + earR) / 2;
-    _blinkState.lastEAR = ear;
-    _blinkState.lastEarL = earL;
-    _blinkState.lastEarR = earR;
-    const closedNow = ear < blinkThreshold;
-    if (_waitingForOpenEyes && !closedNow) _waitingForOpenEyes = false;
-    if (closedNow && !_blinkState.isClosed) {
-        _blinkState.isClosed = true;
-        _blinkState.closeStartMs = now;
-    } else if (!closedNow && _blinkState.isClosed) {
-        const duration = now - _blinkState.closeStartMs;
-        const minL = Math.min(earL, _blinkState.lastEarL);
-        const minR = Math.min(earR, _blinkState.lastEarR);
-        _blinkState.isClosed = false;
-        _blinkState.closeStartMs = 0;
-        if (duration >= BLINK_SHORT_MS && duration <= BLINK_AUTOPAUSE_MS) {
-            const maxEar = Math.max(minL, minR, 0.01);
-            const minEar = Math.min(minL, minR);
-            const asym = minEar / maxEar;
-            const isAsym = asym < BLINK_ASYM_RATIO;
-            const kind = duration > BLINK_LONG_MS ? 'long' : (isAsym ? 'asym' : 'normal');
-            _blinkState.blinks.push({ ts: now, durationMs: duration, earL: minL, earR: minR, asym, kind });
-            _blinkState.totalBlinks++;
-            if (kind === 'long') _blinkState.longBlinks++;
-            if (kind === 'asym') _blinkState.asymBlinks++;
-            _blinkState.lastBlinkMs = now;
-            _blinkResponseBlockUntil = now + BLINK_BLOCK_MS;
-        }
-    }
-    if (_blinkState.isClosed && _blinkState.closeStartMs > 0) {
-        const closedDur = now - _blinkState.closeStartMs;
-        if (closedDur > BLINK_AUTOPAUSE_MS && playerRunning && !isPaused) {
-            _blinkState.isClosed = false;
-            _blinkState.closeStartMs = 0;
-            pauseTraining();
-            return;
-        }
-    }
-    const windowStart = now - blinkWindowSec * 1000;
-    _blinkState.blinks = _blinkState.blinks.filter(b => b.ts >= windowStart);
-    if (playerRunning && !isPaused) {
-        const elapsedInWindowSec = Math.min(blinkWindowSec, (now - _blinkState.sessionStartMs) / 1000);
-        if (elapsedInWindowSec > blinkWindowSec / 2) {
-            const expectedSoFar = blinkMinRate * (elapsedInWindowSec / 60);
-            if (_blinkState.blinks.length < expectedSoFar) {
-                if (now - _blinkState.warningShownAt > 12000) { showBlinkWarning(); _blinkState.warningShownAt = now; }
-            }
-            const observedRate = _blinkState.blinks.length / Math.max(1, elapsedInWindowSec) * 60;
-            if (_blinkState.minRateObserved == null || observedRate < _blinkState.minRateObserved) _blinkState.minRateObserved = observedRate;
-        }
-    }
-}
-function isBlinkResponseBlocked() { return performance.now() < _blinkResponseBlockUntil; }
-function areEyesClosedNow() { return blinkEnabled && _blinkState.isClosed === true; }
-function ensureBlinkCalibrationUI() {
-    let btn = document.getElementById('btn-calibrate-blink');
-    if (!btn) {
-        const anchor = document.getElementById('btn-calibrate-camera');
-        if (anchor && anchor.parentNode) {
-            btn = document.createElement('button');
-            btn.className = 'btn btn-warning';
-            btn.id = 'btn-calibrate-blink';
-            btn.disabled = true;
-            btn.textContent = '👁️ Калибровка моргания';
-            anchor.parentNode.insertBefore(btn, anchor.nextSibling);
-            btn.addEventListener('click', startBlinkCalibration);
-        }
-    }
-    if (!document.getElementById('blink-calibration-modal')) {
-        const m = document.createElement('div');
-        m.className = 'modal';
-        m.id = 'blink-calibration-modal';
-        m.innerHTML = `<div class="modal-content" style="width: 480px; text-align: center;">
-            <h3>👁️ Калибровка моргания</h3>
-            <p style="font-size: 13px; color: #ccc;">Смотрите прямо в камеру. Две фазы по 3 секунды.</p>
-            <div id="blink-calib-phase" style="font-size: 20px; font-weight: bold; color: #38bdf8; margin: 16px 0;">Приготовьтесь…</div>
-            <div id="blink-calib-countdown" style="font-size: 64px; font-weight: bold; color: #fff; margin: 16px 0;">—</div>
-            <div id="blink-calib-result" style="font-size: 13px; color: #94a3b8; margin-top: 10px;">Текущий порог EAR: ${blinkThreshold.toFixed(3)}</div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button class="btn btn-secondary" id="blink-calib-cancel">Отмена</button>
-            </div></div>`;
-        document.body.appendChild(m);
-        document.getElementById('blink-calib-cancel').addEventListener('click', cancelBlinkCalibration);
-    }
-}
-function startBlinkCalibration() {
-    if (!cameraActive) { alert('Включите камеру'); return; }
-    ensureBlinkCalibrationUI();
-    _blinkCalibration = { phase: 'open', phaseStartMs: performance.now(), openSamples: [], closedSamples: [] };
-    document.getElementById('blink-calibration-modal').style.display = 'flex';
-    document.getElementById('blink-calib-result').textContent = 'Собираем данные…';
-    runBlinkCalibrationPhase('open');
-}
-function runBlinkCalibrationPhase(phase) {
-    const phaseEl = document.getElementById('blink-calib-phase');
-    const countEl = document.getElementById('blink-calib-countdown');
-    const PHASE_MS = 3000;
-    const startMs = performance.now();
-    _blinkCalibration.phase = phase;
-    if (phase === 'open') { phaseEl.textContent = 'Смотрите прямо, глаза ОТКРЫТЫ'; phaseEl.style.color = '#22c55e'; }
-    else { phaseEl.textContent = 'Закройте глаза (как при моргании)'; phaseEl.style.color = '#ef4444'; }
-    function tick() {
-        if (!_blinkCalibration) return;
-        const elapsed = performance.now() - startMs;
-        countEl.textContent = Math.max(0, Math.ceil((PHASE_MS - elapsed) / 1000));
-        if (elapsed >= PHASE_MS) {
-            if (phase === 'open') runBlinkCalibrationPhase('closed');
-            else finishBlinkCalibration();
-            return;
-        }
-        requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-}
-function finishBlinkCalibration() {
-    if (!_blinkCalibration) return;
-    const { openSamples, closedSamples } = _blinkCalibration;
-    if (openSamples.length < 5 || closedSamples.length < 5) { alert('Недостаточно данных с камеры. Убедитесь, что лицо видно, и повторите.'); cancelBlinkCalibration(); return; }
-    const meanOpen = openSamples.reduce((a, b) => a + b, 0) / openSamples.length;
-    const meanClosed = closedSamples.reduce((a, b) => a + b, 0) / closedSamples.length;
-    if (meanOpen <= meanClosed) { alert('Значения нелогичны. Повторите калибровку.'); cancelBlinkCalibration(); return; }
-    let th = (meanOpen + meanClosed) / 2;
-    th = Math.max(0.12, Math.min(0.35, th));
-    blinkThreshold = Math.round(th * 1000) / 1000;
-    saveUserSettings();
-    const r = document.getElementById('blink-calib-result');
-    if (r) r.innerHTML = `Открытые: <b>${meanOpen.toFixed(3)}</b> · Закрытые: <b>${meanClosed.toFixed(3)}</b><br>Новый порог EAR: <b style="color:#22c55e;">${blinkThreshold.toFixed(3)}</b>`;
-    _blinkCalibration = null;
-    setTimeout(() => { document.getElementById('blink-calibration-modal').style.display = 'none'; }, 1800);
-}
-function cancelBlinkCalibration() {
-    _blinkCalibration = null;
-    const m = document.getElementById('blink-calibration-modal');
-    if (m) m.style.display = 'none';
-}
-function buildBlinkReport() {
-    if (!blinkEnabled || !cameraActive) return '';
-    const s = _blinkState;
-    const durSec = Math.max(1, (performance.now() - s.sessionStartMs) / 1000);
-    const avgRate = s.totalBlinks / durSec * 60;
-    const avgDur = s.blinks.length > 0 ? s.blinks.reduce((a, b) => a + b.durationMs, 0) / s.blinks.length : 0;
-    const lines = [
-        `👁️ Моргания: всего ${s.totalBlinks}`,
-        `Средняя частота: ${avgRate.toFixed(1)}/мин`,
-        `Минимум: ${s.minRateObserved != null ? s.minRateObserved.toFixed(1) : '—'}/мин`
-    ];
-    if (s.longBlinks > 0) lines.push(`Долгих (>${BLINK_LONG_MS} мс): ${s.longBlinks}`);
-    if (s.asymBlinks > 0) lines.push(`Асимметричных: ${s.asymBlinks}`);
-    if (avgDur > 0) lines.push(`Средняя длительность: ${avgDur.toFixed(0)} мс`);
-    return '\n\n' + lines.join('\n');
-}
-function scheduleVoiceCountdown(durationMs, p) {
-    if (!window.Voice || !window.Voice.enabled) return;
-    if (!durationMs || durationMs < 5000) return;
-    const timers = [];
-    if (durationMs - 5000 > 0) {
-        timers.push(setTimeout(() => { if (!responsePhaseActive || isPaused) return; window.Voice.sayKey('countdown5'); }, durationMs - 5000));
-    }
-    [3, 2, 1].forEach(s => {
-        const at = durationMs - s * 1000;
-        if (at > 0) timers.push(setTimeout(() => { if (!responsePhaseActive || isPaused) return; window.Voice.sayKey('countdown' + s); }, at));
-    });
-    const watcher = setInterval(() => { if (!responsePhaseActive) { timers.forEach(t => clearTimeout(t)); clearInterval(watcher); } }, 200);
-}
-
-// ==================== КАМЕРА ====================
-async function loadFaceApiModels() {
-    const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(M);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(M);
-}
-async function enableCamera() {
-    if (cameraActive) return;
-    try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } });
-        const h = document.getElementById('hidden-video');
-        h.srcObject = videoStream;
-        await h.play();
-        cameraActive = true;
-        await loadFaceApiModels();
-        document.getElementById('camera-status').textContent = 'Камера включена';
-        btnCalibrate.disabled = false;
-        const bc = document.getElementById('btn-calibrate-blink');
-        if (bc) bc.disabled = false;
-        btnEnableCamera.style.display = 'none';
-        btnDisableCamera.style.display = 'inline-block';
-        if (videoFrameId) cancelAnimationFrame(videoFrameId);
-        videoFrameId = requestAnimationFrame(processVideoFrame);
-    } catch (err) { alert('Ошибка камеры: ' + err.message); }
-}
-async function disableCamera() {
-    if (videoFrameId) { cancelAnimationFrame(videoFrameId); videoFrameId = null; }
-    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-    document.getElementById('hidden-video').srcObject = null;
-    cameraActive = false;
-    document.getElementById('camera-status').textContent = 'Камера выключена';
-    const fs = document.getElementById('face-status'); fs.textContent = '—'; fs.className = 'face-missing';
-    document.getElementById('distance-display').textContent = '—';
-    btnCalibrate.disabled = true;
-    const bc = document.getElementById('btn-calibrate-blink'); if (bc) bc.disabled = true;
-    btnEnableCamera.style.display = 'inline-block';
-    btnDisableCamera.style.display = 'none';
-    hideLiveDistanceIndicator(); hideDistanceWarning(); hideBlinkWarning();
-}
-function recalcSizesForNewDistance() {
-    if (currentDistanceMeters == null || !isFinite(currentDistanceMeters)) return;
-    _distanceBaseline = currentDistanceMeters; _distanceOutOfBoundsSince = 0; hideDistanceWarning();
-    if (!playerRunning) return;
-    if (currentPlayingNodeId) {
-        const node = getNode(currentPlayingNodeId);
-        if (node && node.nodeType === 'STIMULUS') {
-            const ppi = node.stimPPI || screenPPI || 96;
-            const ns = acuityToSizePx(nodeAcuityCurrent, currentDistanceMeters, ppi);
-            currentSize = ns;
-            const svg = stimDisplay.querySelector('svg');
-            if (svg) { svg.setAttribute('width', ns); svg.setAttribute('height', ns); svg.setAttribute('viewBox', `0 0 ${ns} ${ns}`); }
-        }
-        return;
-    }
-    if (trainingNode?.params?.trainingType === 'single') {
-        currentSize = acuityToSizePx(currentAcuity, currentDistanceMeters, screenPPI);
-        const svg = stimDisplay.querySelector('svg');
-        if (svg) { svg.setAttribute('width', currentSize); svg.setAttribute('height', currentSize); svg.setAttribute('viewBox', `0 0 ${currentSize} ${currentSize}`); }
-        return;
-    }
-    if (readingViewportEl && readingViewportEl.style.display === 'block' && readingContentEl) {
-        const node = readingCurrentNode || getNode(window._currentReadingNodeId);
-        const V = node?.readingAcuity || currentAcuity || 1.0;
-        const ppi = node?.readingPPI || screenPPI || 96;
-        readingContentEl.style.fontSize = acuityToFontSizePx(V, currentDistanceMeters, ppi) + 'px';
-        setTimeout(() => { setupReadingColumns(); readingTotalPages = calcReadingTotalPages(); scrollReadingToPage(readingPage); }, 60);
-    }
-}
-async function processVideoFrame() {
-    if (!cameraActive) { videoFrameId = null; return; }
-    const v = document.getElementById('hidden-video');
-    if (v.readyState >= 2 && v.videoWidth > 0 && !v.paused) {
-        try {
-            const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-            const faceStatus = document.getElementById('face-status');
-            const calibInd = document.getElementById('calib-face-indicator');
-            if (det && det.landmarks) {
-                const le = det.landmarks.getLeftEye(), re = det.landmarks.getRightEye();
-                const lc = { x: (le[0].x + le[3].x) / 2, y: (le[0].y + le[3].y) / 2 };
-                const rc = { x: (re[0].x + re[3].x) / 2, y: (re[0].y + re[3].y) / 2 };
-                const ipd = Math.sqrt((rc.x - lc.x) ** 2 + (rc.y - lc.y) ** 2);
-                lastEyeDistancePx = ipd;
-                faceStatus.textContent = '✅ Лицо'; faceStatus.className = 'face-detected';
-                if (calibInd) { calibInd.textContent = '✅ Лицо'; calibInd.className = 'calib-face-indicator detected'; }
-                const earL = computeEAR(le), earR = computeEAR(re);
-                processBlinkFrame(earL, earR);
-                if (ipd > 0 && focalLengthPx) {
-                    currentDistanceMeters = ((realIPD_MM * focalLengthPx) / ipd) / 1000;
-                    document.getElementById('distance-display').textContent = currentDistanceMeters.toFixed(2) + ' м';
-                    if (distanceMin === null || currentDistanceMeters < distanceMin) distanceMin = currentDistanceMeters;
-                    if (distanceMax === null || currentDistanceMeters > distanceMax) distanceMax = currentDistanceMeters;
-                    distanceSum += currentDistanceMeters; distanceCount++;
-                    const now = performance.now();
-                    if (now - distanceLastUpdate > 1000) { distanceLog.push({ time: new Date().toISOString(), meters: currentDistanceMeters }); if (distanceLog.length > MAX_DISTANCE_LOG) distanceLog.splice(0, distanceLog.length - MAX_DISTANCE_LOG); distanceLastUpdate = now; }
-                    if (playerRunning) updateLiveDistanceIndicator();
-                    if (playerRunning && !isPaused) {
-                        setDistanceBaselineIfNeeded();
-                        const state = evaluateDistanceDeviation();
-                        if (state === 'ok') { _distanceOutOfBoundsSince = 0; if (_distanceWarningKind) hideDistanceWarning(); _distanceRecalcScheduled = false; }
-                        else {
-                            if (_distanceWarningKind !== state) { showDistanceWarning(state); _distanceWarningKind = state; _distanceOutOfBoundsSince = performance.now(); _distanceRecalcScheduled = false; }
-                            const el = (performance.now() - _distanceOutOfBoundsSince) / 1000;
-                            if (distanceRestoreTimeoutSec > 0 && el >= distanceRestoreTimeoutSec && !_distanceRecalcScheduled) { _distanceRecalcScheduled = true; recalcSizesForNewDistance(); }
-                        }
-                    }
-                } else { document.getElementById('distance-display').textContent = focalLengthPx ? '—' : 'Требуется калибровка'; }
-            } else {
-                faceStatus.textContent = '❌ Нет лица'; faceStatus.className = 'face-missing';
-                if (calibInd) { calibInd.textContent = '❌ Нет лица'; calibInd.className = 'calib-face-indicator missing'; }
-                document.getElementById('distance-display').textContent = '—';
-                _blinkState.isClosed = false; _blinkState.closeStartMs = 0;
-            }
-        } catch (e) { console.error(e); }
-    }
-    if (cameraActive) videoFrameId = requestAnimationFrame(processVideoFrame); else videoFrameId = null;
-}
-function openCalibrationModal() {
-    if (!cameraActive) { alert('Включите камеру'); return; }
-    document.getElementById('calibration-video').srcObject = videoStream;
-    document.getElementById('calibration-modal').style.display = 'flex';
-}
-function calibrateFocalLength() {
-    if (!cameraActive) { alert('Камера не включена'); return; }
-    if (!lastEyeDistancePx) { alert('Лицо не найдено'); return; }
-    const cm = parseFloat(document.getElementById('calib-distance').value);
-    if (isNaN(cm) || cm <= 0) { alert('Неверное расстояние'); return; }
-    focalLengthPx = (lastEyeDistancePx * cm * 10) / realIPD_MM;
-    localStorage.setItem('focalLengthPx', focalLengthPx);
-    alert('Калибровка камеры завершена!');
-    document.getElementById('calibration-modal').style.display = 'none';
-}
-
-// ==================== SVG-СТИМУЛЫ ====================
-function generateLetterE(size, r, g, b, angle = 0) {
-    const t = size / 5;
-    const path = `M 0 0 H ${size} V ${t} H ${t} V ${2*t} H ${size - t} V ${3*t} H ${t} V ${4*t} H ${size} V ${size} H 0 Z`;
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g transform="rotate(${angle}, ${size/2}, ${size/2})"><path d="${path}" fill="rgb(${r},${g},${b})"/></g></svg>`;
-}
-function generateLandoltRing(diameter, gapDirection, r, g, b, bgR, bgG, bgB) {
-    const sw = diameter * 0.2, gw = diameter * 0.2, gl = diameter * 0.23, sm = Math.max(1, sw * 0.1);
-    const or_ = diameter / 2, cx = diameter / 2, cy = diameter / 2;
-    let rx, ry, rw, rh;
-    if (gapDirection === 'вверх' || gapDirection === 'вниз') {
-        rw = gw; rh = gl + sm; rx = cx - rw / 2;
-        ry = gapDirection === 'вверх' ? cy - or_ - sm : cy + or_ - rh + sm;
-    } else {
-        rw = gl + sm; rh = gw; ry = cy - rh / 2;
-        rx = gapDirection === 'вправо' ? cx + or_ - rw + sm : cx - or_ - sm;
-    }
-    return `<svg width="${diameter}" height="${diameter}" viewBox="0 0 ${diameter} ${diameter}" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${or_ - sw/2}" fill="none" stroke="rgb(${r},${g},${b})" stroke-width="${sw}"/><rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="rgb(${bgR},${bgG},${bgB})"/></svg>`;
-}
-function getCircleStimulusSVG(node, size) {
-    const uid = 'cg_' + Math.random().toString(36).slice(2, 8);
-    const cx = size / 2, cy = size / 2, r = size / 2;
-    const innerEnabled = node.circleInnerEnabled !== false;
-    const outerEnabled = node.circleOuterEnabled !== false;
-    const innerR = Math.max(5, Math.min(95, node.circleInnerRadiusPct ?? 40));
-    const innerFr = innerR / 100;
-    const iA = node.circleInnerColor1 || { r: 255, g: 0, b: 0 };
-    const iB = node.circleInnerColor2 || { r: 0, g: 0, b: 255 };
-    const iMid = node.circleInnerMidEnabled ? (node.circleInnerColor3 || { r: 255, g: 255, b: 0 }) : null;
-    const innerStops = [];
-    if (iMid) {
-        innerStops.push(`<stop offset="0%" stop-color="rgb(${iA.r},${iA.g},${iA.b})"/>`);
-        innerStops.push(`<stop offset="50%" stop-color="rgb(${iMid.r},${iMid.g},${iMid.b})"/>`);
-        innerStops.push(`<stop offset="100%" stop-color="rgb(${iB.r},${iB.g},${iB.b})"/>`);
-    } else {
-        innerStops.push(`<stop offset="0%" stop-color="rgb(${iA.r},${iA.g},${iA.b})"/>`);
-        innerStops.push(`<stop offset="100%" stop-color="rgb(${iB.r},${iB.g},${iB.b})"/>`);
-    }
-    const oA = node.circleOuterColor1 || { r: 0, g: 255, b: 0 };
-    const oB = node.circleOuterColor2 || { r: 0, g: 128, b: 255 };
-    const oMid = node.circleOuterMidEnabled ? (node.circleOuterColor3 || { r: 0, g: 255, b: 255 }) : null;
-    const outerStops = [];
-    outerStops.push(`<stop offset="0%" stop-color="rgb(${oA.r},${oA.g},${oA.b})" stop-opacity="0"/>`);
-    outerStops.push(`<stop offset="${innerR}%" stop-color="rgb(${oA.r},${oA.g},${oA.b})" stop-opacity="1"/>`);
-    if (oMid) outerStops.push(`<stop offset="${(innerR + 100) / 2}%" stop-color="rgb(${oMid.r},${oMid.g},${oMid.b})"/>`);
-    outerStops.push(`<stop offset="100%" stop-color="rgb(${oB.r},${oB.g},${oB.b})"/>`);
-    const innerCircle = innerEnabled ? `<circle cx="${cx}" cy="${cy}" r="${r * innerFr}" fill="url(#${uid}_i)"/>` : '';
-    const outerCircle = outerEnabled ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${uid}_o)"/>` : '';
-    const html = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="${uid}_o" cx="50%" cy="50%" r="50%">${outerStops.join('')}</radialGradient><radialGradient id="${uid}_i" cx="50%" cy="50%" r="50%">${innerStops.join('')}</radialGradient></defs>${outerCircle}${innerCircle}</svg>`;
-    return { html, bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`, size, uid, innerR, outerEnabled, innerEnabled };
-}
-function getStimulusSVG(node, size) {
-    if (node.singleCircleEnabled) return getCircleStimulusSVG(node, size);
-    const r = node.stimR || 255, g = node.stimG || 255, b = node.stimB || 255;
-    let html;
-    if (node.stimType === 'LANDOLT') html = generateLandoltRing(size, node.stimDirection || 'вверх', r, g, b, node.bgR || 0, node.bgG || 0, node.bgB || 0);
-    else { const am = { 'вверх': 270, 'вправо': 0, 'вниз': 90, 'влево': 180 }; html = generateLetterE(size, r, g, b, am[node.stimDirection] || 0); }
-    return { html, bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`, size };
-}
-function setStimColorRGB(r, g, b) {
-    if (!stimDisplay) return;
-    const svg = stimDisplay.querySelector('svg'); if (!svg) return;
-    const color = `rgb(${r},${g},${b})`;
-    const p = svg.querySelector('path'); if (p) p.setAttribute('fill', color);
-    const c = svg.querySelector('circle'); if (c) c.setAttribute('stroke', color);
+function hideConnectionMenu() {
+    document.getElementById('connection-menu').style.display = 'none';
+    currentConnectionForMenu = null;
 }
 // ==================== ЗАГОТОВКИ (TEMPLATES) ====================
 async function saveNodeAsTemplate(nodeId) {
@@ -2114,12 +1960,7 @@ async function saveNodeAsTemplate(nodeId) {
     delete payload.id;
     delete payload.isStart;
     try {
-        await window.Data.saveTemplate({
-            name,
-            description,
-            kind: 'node',
-            payload
-        });
+        await window.Data.saveTemplate({ name, description, kind: 'node', payload });
         alert(`✅ Заготовка «${name}» сохранена${window.Data.isOnline() ? ' и отправляется в облако' : ' локально (отправится при появлении интернета)'}.`);
         refreshTemplatesIfOpen();
     } catch (e) {
@@ -3317,7 +3158,7 @@ function playNextCompareRound(node) {
     else if (compareMode === 'find_same') showFindSameComparison();
     const dur = cellParams[0]?.duration || node.duration || currentDuration;
     currentShowTimer = setTimeout(() => {
-        if (responsePhaseActive) { lastResponse = { answered: false, isCorrect: false }; processGraphCompareAnswer(false); }
+        if (responsePhaseActive) { lastResponse = { answered: false, isCorrect: false }; processComparisonAnswer(false); }
     }, dur);
     phaseTimers.push(currentShowTimer);
 }
@@ -3375,14 +3216,7 @@ function playStimulusNodeSeries(node) {
     else { stopCircleAnimation(); if (node.singleStimDynamicEnabled) startSingleStimAnimation({ singleStimColor1: node.singleStimColor1, singleStimMidEnabled: node.singleStimMidEnabled, singleStimColor3: node.singleStimColor3, singleStimColor2: node.singleStimColor2, singleStimReverse: node.singleStimReverse, singleStimLoop: node.singleStimLoop, singleStimDuration: node.singleStimDuration }); else stopSingleStimAnimation(); }
     if (node.singleBgDynamicEnabled) startSingleBgAnimation({ singleBgColor1: node.singleBgColor1, singleBgMidEnabled: node.singleBgMidEnabled, singleBgColor3: node.singleBgColor3, singleBgColor2: node.singleBgColor2, singleBgReverse: node.singleBgReverse, singleBgLoop: node.singleBgLoop, singleBgDuration: node.singleBgDuration }); else stopSingleBgAnimation();
     if (node.blinkEnabled) {
-        startBlinkAnimation({
-            target: node.blinkTarget || 'stim',
-            colorA: node.blinkColorA || { r: 255, g: 0, b: 0 },
-            colorB: node.blinkColorB || { r: 0, g: 0, b: 255 },
-            intervalMs: node.blinkIntervalMs || 500,
-            duty: node.blinkDuty ?? 0.5,
-            count: node.blinkCount || 0
-        });
+        startBlinkAnimation({ target: node.blinkTarget || 'stim', colorA: node.blinkColorA || { r: 255, g: 0, b: 0 }, colorB: node.blinkColorB || { r: 0, g: 0, b: 255 }, intervalMs: node.blinkIntervalMs || 500, duty: node.blinkDuty ?? 0.5, count: node.blinkCount || 0 });
     }
     responsePhaseActive = true; responseStartTime = performance.now();
     document.querySelectorAll('.btn-response[data-dir]').forEach(b => b.style.display = 'flex');
@@ -3392,11 +3226,7 @@ function playStimulusNodeSeries(node) {
     let sd = node.duration || 1000;
     if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
     if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
-    if (node.singleCircleEnabled) {
-        const ci = node.circleInnerEnabled !== false ? (node.circleInnerDuration || 0) : 0;
-        const co = node.circleOuterEnabled !== false ? (node.circleOuterDuration || 0) : 0;
-        sd = Math.max(sd, ci, co);
-    }
+    if (node.singleCircleEnabled) { const ci = node.circleInnerEnabled !== false ? (node.circleInnerDuration || 0) : 0; const co = node.circleOuterEnabled !== false ? (node.circleOuterDuration || 0) : 0; sd = Math.max(sd, ci, co); }
     scheduleVoiceCountdown(sd, node);
     currentShowTimer = setTimeout(() => {
         hideStimulus(); responsePhaseActive = false;
@@ -3517,7 +3347,7 @@ function stopReadingNodeTimer() {
     const el = document.getElementById('reading-timer'); if (el) el.style.display = 'none';
 }
 
-// ==================== ПЛЕЕР: АВТОТРЕНИРОВКА (без графа) ====================
+// ==================== ПЛЕЕР: АВТОТРЕНИРОВКА ====================
 function startReadingModeAuto() {
     if (!readingViewportEl) readingViewportEl = document.getElementById('reading-viewport');
     if (!readingContentEl) readingContentEl = document.getElementById('reading-content');
@@ -3541,8 +3371,7 @@ function startReadingModeAuto() {
     const dCalc = currentDistanceMeters || readingDistance || p.readingDistance || 1;
     readingContentEl.style.fontSize = acuityToFontSizePx(currentAcuity, dCalc, screenPPI) + 'px';
     setTimeout(() => { readingTotalPages = calcReadingTotalPages(); readingPage = 0; scrollReadingToPage(0); }, 80);
-    showReadingToolbar();
-    updateReadingFontIndicator();
+    showReadingToolbar(); updateReadingFontIndicator();
 }
 function showNextStimulus() {
     if (!playerRunning || isPaused) return;
@@ -3551,10 +3380,8 @@ function showNextStimulus() {
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const p = trainingNode?.params || {};
     let dir;
-    if (p.isActive) {
-        const d = ['вверх','вниз','влево','вправо'];
-        do { dir = d[Math.floor(Math.random()*d.length)]; } while (dir === lastDirection);
-    } else dir = 'вверх';
+    if (p.isActive) { const d = ['вверх','вниз','влево','вправо']; do { dir = d[Math.floor(Math.random()*d.length)]; } while (dir === lastDirection); }
+    else dir = 'вверх';
     lastDirection = dir; currentCorrectDirection = dir;
     const dCalc = currentDistanceMeters || generalDistance || trainingDistance;
     const eff = acuityToSizePx(currentAcuity, dCalc, screenPPI);
@@ -3566,33 +3393,17 @@ function showNextStimulus() {
     else svgData = getStimulusSVG({ stimType: p.type || 'LETTER_E', stimDirection: dir, stimR: sc.r, stimG: sc.g, stimB: sc.b, bgR: currentBgColor.r, bgG: currentBgColor.g, bgB: currentBgColor.b }, eff);
     if (p.dfEnabled) {
         const frame = buildDefocusFrame(p, eff, svgData.html, dir);
-        if (frame) {
-            stimDisplay.innerHTML = '';
-            stimDisplay.appendChild(frame.html);
-            stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
-        } else displayStimulus(svgData.html, currentBgColor);
+        if (frame) { stimDisplay.innerHTML = ''; stimDisplay.appendChild(frame.html); stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`; }
+        else displayStimulus(svgData.html, currentBgColor);
     } else displayStimulus(svgData.html, currentBgColor);
-    if (p.singleGridEnabled) {
-        const gx = p.singleGridX || 1, gy = p.singleGridY || 1;
-        const cell = pickSingleGridCell(gx, gy, p.singleGridRandomCell !== false, p.singleGridAvoidRepeat !== false, p.singleGridFixedRow || 0, p.singleGridFixedCol || 0, p.singleGridCells || []);
-        currentSingleCell = cell;
-        applySingleGridPosition(eff, gx, gy, cell.row, cell.col, p.singleGridShowLines === true);
-    } else if (p.singleRandomPos) applyRandomStimulusPosition(eff);
+    if (p.singleGridEnabled) { const gx = p.singleGridX || 1, gy = p.singleGridY || 1; const cell = pickSingleGridCell(gx, gy, p.singleGridRandomCell !== false, p.singleGridAvoidRepeat !== false, p.singleGridFixedRow || 0, p.singleGridFixedCol || 0, p.singleGridCells || []); currentSingleCell = cell; applySingleGridPosition(eff, gx, gy, cell.row, cell.col, p.singleGridShowLines === true); }
+    else if (p.singleRandomPos) applyRandomStimulusPosition(eff);
     buildPeripheralDots(p, eff);
     stopBlinkAnimation();
     if (p.singleCircleEnabled) { startCircleAnimation(p); stopSingleStimAnimation(); }
     else { stopCircleAnimation(); if (p.singleStimDynamicEnabled) startSingleStimAnimation(p); else stopSingleStimAnimation(); }
     if (p.singleBgDynamicEnabled) startSingleBgAnimation(p); else stopSingleBgAnimation();
-    if (p.blinkEnabled) {
-        startBlinkAnimation({
-            target: p.blinkTarget || 'stim',
-            colorA: p.blinkColorA || { r: 255, g: 0, b: 0 },
-            colorB: p.blinkColorB || { r: 0, g: 0, b: 255 },
-            intervalMs: p.blinkIntervalMs || 500,
-            duty: p.blinkDuty ?? 0.5,
-            count: p.blinkCount || 0
-        });
-    }
+    if (p.blinkEnabled) { startBlinkAnimation({ target: p.blinkTarget || 'stim', colorA: p.blinkColorA || { r: 255, g: 0, b: 0 }, colorB: p.blinkColorB || { r: 0, g: 0, b: 255 }, intervalMs: p.blinkIntervalMs || 500, duty: p.blinkDuty ?? 0.5, count: p.blinkCount || 0 }); }
     responsePhaseActive = true; responseStartTime = performance.now();
     document.querySelectorAll('.btn-response[data-dir]').forEach(b => b.style.display = 'flex');
     document.querySelectorAll('.btn-response[data-answer]').forEach(b => b.style.display = 'none');
@@ -3601,11 +3412,7 @@ function showNextStimulus() {
     let sd = currentDuration;
     if (p.singleStimDynamicEnabled) sd = Math.max(sd, p.singleStimDuration || 0);
     if (p.singleBgDynamicEnabled) sd = Math.max(sd, p.singleBgDuration || 0);
-    if (p.singleCircleEnabled) {
-        const ci = p.circleInnerEnabled !== false ? (p.circleInnerDuration || 0) : 0;
-        const co = p.circleOuterEnabled !== false ? (p.circleOuterDuration || 0) : 0;
-        sd = Math.max(sd, ci, co);
-    }
+    if (p.singleCircleEnabled) { const ci = p.circleInnerEnabled !== false ? (p.circleInnerDuration || 0) : 0; const co = p.circleOuterEnabled !== false ? (p.circleOuterDuration || 0) : 0; sd = Math.max(sd, ci, co); }
     scheduleVoiceCountdown(sd, p);
     currentShowTimer = setTimeout(() => {
         hideStimulus(); responsePhaseActive = false;
@@ -3613,9 +3420,7 @@ function showNextStimulus() {
         if (!lastResponse.answered) {
             lastResponse = { answered: false, isCorrect: false };
             if (window.Voice) window.Voice.sayKey('timeout', { cancel: true });
-            if (window.Data && currentSessionId) {
-                window.Data.saveResult({ session_id: currentSessionId, node_id: 'training_node', response_time_ms: null, is_correct: false });
-            }
+            if (window.Data && currentSessionId) window.Data.saveResult({ session_id: currentSessionId, node_id: 'training_node', response_time_ms: null, is_correct: false });
         } else if (window.Data && currentSessionId) {
             window.Data.saveResult({ session_id: currentSessionId, node_id: 'training_node', response_time_ms: lastResponse.reactionTimeMs, is_correct: lastResponse.isCorrect });
         }
@@ -3630,13 +3435,8 @@ function finishSeries() {
     const ok = seriesCorrect >= th;
     if (seriesNoAnswer === (trainingNode?.params?.seriesSize || 6)) noAnswerSeriesStreak++; else noAnswerSeriesStreak = 0;
     completedSeries++; if (ok) successfulSeries++; else failedSeries++;
-    if (ok) {
-        if (currentAcuity < (trainingNode?.params?.endAcuity || 2.0))
-            currentAcuity = Math.min(trainingNode?.params?.endAcuity || 2.0, Math.round((currentAcuity + (trainingNode?.params?.acuityStep || 0.1)) * 10) / 10);
-    } else {
-        if (currentAcuity > (trainingNode?.params?.startAcuity || 0.5))
-            currentAcuity = Math.max(trainingNode?.params?.startAcuity || 0.5, Math.round((currentAcuity - (trainingNode?.params?.acuityStep || 0.1)) * 10) / 10);
-    }
+    if (ok) { if (currentAcuity < (trainingNode?.params?.endAcuity || 2.0)) currentAcuity = Math.min(trainingNode?.params?.endAcuity || 2.0, Math.round((currentAcuity + (trainingNode?.params?.acuityStep || 0.1)) * 10) / 10); }
+    else { if (currentAcuity > (trainingNode?.params?.startAcuity || 0.5)) currentAcuity = Math.max(trainingNode?.params?.startAcuity || 0.5, Math.round((currentAcuity - (trainingNode?.params?.acuityStep || 0.1)) * 10) / 10); }
     const dCalc = currentDistanceMeters || generalDistance || trainingDistance;
     currentSize = acuityToSizePx(currentAcuity, dCalc, screenPPI);
     seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
@@ -3645,17 +3445,11 @@ function finishSeries() {
     if (completedSeries >= (trainingNode?.params?.seriesCount || 5)) {
         trainingNode.params.finalAcuity = currentAcuity;
         let distRep = '';
-        if (distanceCount > 0) {
-            const avg = distanceSum / distanceCount;
-            distRep = `\n\n📏 Дистанция: ср=${avg.toFixed(2)} м, мин=${distanceMin.toFixed(2)}, макс=${distanceMax.toFixed(2)}`;
-        }
+        if (distanceCount > 0) { const avg = distanceSum / distanceCount; distRep = `\n\n📏 Дистанция: ср=${avg.toFixed(2)} м, мин=${distanceMin.toFixed(2)}, макс=${distanceMax.toFixed(2)}`; }
         const blinkRep = buildBlinkReport();
         alert(`Тренировка завершена!\nУспешных: ${successfulSeries}\nНеуспешных: ${failedSeries}\nV = ${currentAcuity.toFixed(1)}${distRep}${blinkRep}`);
         stopPlayer();
-    } else {
-        const tt = trainingNode?.params?.trainingType || 'single';
-        if (tt === 'compare') showNextComparison(); else showNextStimulus();
-    }
+    } else { const tt = trainingNode?.params?.trainingType || 'single'; if (tt === 'compare') showNextComparison(); else showNextStimulus(); }
 }
 
 // ==================== ПЛЕЕР: СРАВНЕНИЕ (автотренировка) ====================
@@ -3725,8 +3519,7 @@ function handleFindSameClick(idx) {
     const fp = Math.floor(fi / 2), sp = Math.floor(idx / 2);
     if (fp === sp) {
         const a = st.cells[fi], b = st.cells[idx];
-        st.foundCells.add(`${a.row},${a.col}`);
-        st.foundCells.add(`${b.row},${b.col}`);
+        st.foundCells.add(`${a.row},${a.col}`); st.foundCells.add(`${b.row},${b.col}`);
         st.pairs[fp].found = true;
         flashCell(fi, 'found'); flashCell(idx, 'found');
         st.firstSelectedIdx = null;
@@ -3735,11 +3528,7 @@ function handleFindSameClick(idx) {
             responsePhaseActive = false;
             processComparisonAnswer(true);
         }
-    } else {
-        flashCell(fi, 'unselect');
-        flashCell(idx, 'wrong');
-        st.firstSelectedIdx = null;
-    }
+    } else { flashCell(fi, 'unselect'); flashCell(idx, 'wrong'); st.firstSelectedIdx = null; }
 }
 function flashCell(idx, kind) {
     const el = document.querySelector(`.grid-cell[data-index="${idx}"]`);
@@ -3747,11 +3536,7 @@ function flashCell(idx, kind) {
     const ob = el.style.border, os = el.style.boxShadow;
     if (kind === 'selected') { el.style.border = '3px solid #38bdf8'; el.style.boxShadow = '0 0 12px #38bdf8'; }
     else if (kind === 'found') { el.style.border = '4px solid #22c55e'; el.style.boxShadow = '0 0 20px #22c55e'; }
-    else if (kind === 'wrong') {
-        el.style.border = '4px solid #ef4444';
-        el.style.boxShadow = '0 0 20px #ef4444';
-        setTimeout(() => { el.style.border = ob; el.style.boxShadow = os; }, 400);
-    }
+    else if (kind === 'wrong') { el.style.border = '4px solid #ef4444'; el.style.boxShadow = '0 0 20px #ef4444'; setTimeout(() => { el.style.border = ob; el.style.boxShadow = os; }, 400); }
     else if (kind === 'unselect') { el.style.border = ob; el.style.boxShadow = os; }
 }
 function createCellElement(cell, params, direction, idx) {
@@ -3761,22 +3546,12 @@ function createCellElement(cell, params, direction, idx) {
     el.style.cssText = `left:${cell.col*cw}px;top:${cell.row*ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR||0},${params.bgG||0},${params.bgB||0});position:absolute;box-sizing:border-box;border:3px solid transparent;`;
     el.dataset.index = idx !== undefined ? idx : activeCells.indexOf(cell);
     const size = params.size || currentSize;
-    const svgData = getStimulusSVG({
-        stimType: trainingNode?.params?.type || 'LETTER_E',
-        stimDirection: direction,
-        stimR: params.stimR || 255, stimG: params.stimG || 255, stimB: params.stimB || 255,
-        bgR: params.bgR || 0, bgG: params.bgG || 0, bgB: params.bgB || 0
-    }, size);
+    const svgData = getStimulusSVG({ stimType: trainingNode?.params?.type || 'LETTER_E', stimDirection: direction, stimR: params.stimR || 255, stimG: params.stimG || 255, stimB: params.stimB || 255, bgR: params.bgR || 0, bgG: params.bgG || 0, bgB: params.bgB || 0 }, size);
     el.innerHTML = svgData.html;
     stimDisplay.appendChild(el);
 }
 function defaultCellParams() {
-    return {
-        size: currentSize,
-        stimR: currentStimColor.r, stimG: currentStimColor.g, stimB: currentStimColor.b,
-        bgR: currentBgColor.r, bgG: currentBgColor.g, bgB: currentBgColor.b,
-        duration: currentDuration
-    };
+    return { size: currentSize, stimR: currentStimColor.r, stimG: currentStimColor.g, stimB: currentStimColor.b, bgR: currentBgColor.r, bgG: currentBgColor.g, bgB: currentBgColor.b, duration: currentDuration };
 }
 function processComparisonAnswer(isCorrect) {
     if (!playerRunning || isPaused) return;
@@ -3820,8 +3595,7 @@ responseButtons.addEventListener('click', e => {
     if (!btn || !responsePhaseActive) return;
     if (btn.dataset.dir) handleDirectionAnswer(btn.dataset.dir);
     else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
-        const inCmp = (currentCompareNode && currentCompareNode.compareMode === 'direction') ||
-            (!currentCompareNode && compareMode === 'direction' && trainingNode?.params?.trainingType === 'compare');
+        const inCmp = (currentCompareNode && currentCompareNode.compareMode === 'direction') || (!currentCompareNode && compareMode === 'direction' && trainingNode?.params?.trainingType === 'compare');
         if (inCmp) handleCompareDirectionAnswer(btn.dataset.answer === 'да');
     }
 });
@@ -3836,12 +3610,9 @@ document.addEventListener('keydown', e => {
     const map = { 'ArrowUp':'вверх', 'ArrowDown':'вниз', 'ArrowLeft':'влево', 'ArrowRight':'вправо' };
     if (map[e.key]) {
         e.preventDefault();
-        const inCmp = (currentCompareNode && currentCompareNode.compareMode === 'direction') ||
-            (!currentCompareNode && compareMode === 'direction' && trainingNode?.params?.trainingType === 'compare');
-        if (inCmp) {
-            if (e.key === 'ArrowLeft') handleCompareDirectionAnswer(true);
-            else if (e.key === 'ArrowRight') handleCompareDirectionAnswer(false);
-        } else handleDirectionAnswer(map[e.key]);
+        const inCmp = (currentCompareNode && currentCompareNode.compareMode === 'direction') || (!currentCompareNode && compareMode === 'direction' && trainingNode?.params?.trainingType === 'compare');
+        if (inCmp) { if (e.key === 'ArrowLeft') handleCompareDirectionAnswer(true); else if (e.key === 'ArrowRight') handleCompareDirectionAnswer(false); }
+        else handleDirectionAnswer(map[e.key]);
     }
 });
 
@@ -4127,11 +3898,7 @@ function generateCellParamsFields() {
         const div = document.createElement('div');
         div.style.cssText = 'border:1px solid #444;padding:6px;margin-top:6px;';
         let opts = '';
-        for (let i = 1; i <= 20; i++) {
-            const v = i/10;
-            const mm = acuityToSizeMm(v, 1);
-            opts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} — ${mm.toFixed(2)} мм</option>`;
-        }
+        for (let i = 1; i <= 20; i++) { const v = i/10; const mm = acuityToSizeMm(v, 1); opts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} — ${mm.toFixed(2)} мм</option>`; }
         div.innerHTML = `
             <label><b>Клетка (${cell.row+1}, ${cell.col+1})</b></label>
             <label>V</label><select class="cell-acuity">${opts}</select>
@@ -4158,7 +3925,7 @@ function collectCompareParams() {
     return { compareMode: cm, gridX: gX, gridY: gY, activeCells: selectedCells.slice(), cellParams: cp };
 }
 
-// ==================== ГЕНЕРАТОР: СБОР ПАРАМЕТРОВ ИЗ UI ====================
+// ==================== ГЕНЕРАТОР: СБОР ПАРАМЕТРОВ ====================
 function buildModeParamsFromUI() {
     const ss = parseInt(document.getElementById('gen-series-size').value) || 6;
     const tt = document.getElementById('gen-training-type').value;
@@ -4168,10 +3935,8 @@ function buildModeParamsFromUI() {
     const tdEl = document.getElementById('gen-tol-dec'); if (tdEl) { const v = parseFloat(tdEl.value); if (!isNaN(v) && v >= 0 && v <= 100) { distanceToleranceDecreasePct = v; saveUserSettings(); } }
     const ttEl = document.getElementById('gen-tol-timeout'); if (ttEl) { const v = parseFloat(ttEl.value); if (!isNaN(v) && v >= 0 && v <= 60) { distanceRestoreTimeoutSec = v; saveUserSettings(); } }
     const p = {
-        mode: safeVal('gen-mode', 'общая'),
-        trainingType: tt,
-        seriesCount: safeVal('gen-series', 5, parseInt),
-        seriesSize: ss,
+        mode: safeVal('gen-mode', 'общая'), trainingType: tt,
+        seriesCount: safeVal('gen-series', 5, parseInt), seriesSize: ss,
         seriesThreshold: safeVal('gen-threshold', getThreshold(ss), parseInt),
         type: safeVal('gen-type', 'LETTER_E'),
         startAcuity: safeVal('gen-start-acuity', 0.5, parseFloat),
@@ -4186,8 +3951,7 @@ function buildModeParamsFromUI() {
         endBgColor: hexToRgb(safeVal('gen-end-bg', '#000000')),
         delay1: unitToMs(safeVal('gen-delay1', 1, parseFloat), safeVal('gen-delay1-unit', 's')),
         delay2: unitToMs(safeVal('gen-delay2', 1, parseFloat), safeVal('gen-delay2-unit', 's')),
-        isActive: safeChecked('gen-active', false),
-        response: 1000
+        isActive: safeChecked('gen-active', false), response: 1000
     };
     p.startDuration = p.delay2;
     if (tt === 'single') {
@@ -4285,7 +4049,7 @@ function buildModeParamsFromUI() {
     return p;
 }
 
-// ==================== ГЕНЕРАТОР: СОЗДАНИЕ УЗЛА ИЗ РЕЖИМА ====================
+// ==================== ГЕНЕРАТОР: СОЗДАНИЕ УЗЛА ====================
 function modeParamsToNode(modeParams) {
     const prevId = activeNodeId;
     const id = createNewNode('STIMULUS');
@@ -4375,8 +4139,7 @@ function modeParamsToNode(modeParams) {
     const pn = prevId ? getNode(prevId) : null;
     if (pn && pn.id !== node.id) {
         node.x = pn.x + 340; node.y = pn.y;
-        if (canAddConnection(pn.id, node.id, false))
-            connections.push({ fromId: pn.id, toId: node.id, isLoop: false, loopMode: 'TIME', loopLimit: 1, lifeTime: 0, initiateByAnswer: true, condition: 'none', inheritSize: false, inheritSpeed: false });
+        if (canAddConnection(pn.id, node.id, false)) connections.push({ fromId: pn.id, toId: node.id, isLoop: false, loopMode: 'TIME', loopLimit: 1, lifeTime: 0, initiateByAnswer: true, condition: 'none', inheritSize: false, inheritSpeed: false });
     }
     requestRenderGraph(); updateInspector();
 }
@@ -4424,13 +4187,12 @@ function modeParamsToReadingNode(modeParams) {
     const pn = prevId ? getNode(prevId) : null;
     if (pn && pn.id !== node.id) {
         node.x = pn.x + 340; node.y = pn.y;
-        if (canAddConnection(pn.id, node.id, false))
-            connections.push({ fromId: pn.id, toId: node.id, isLoop: false, loopMode: 'TIME', loopLimit: 1, lifeTime: 0, initiateByAnswer: true, condition: 'none', inheritSize: false, inheritSpeed: false });
+        if (canAddConnection(pn.id, node.id, false)) connections.push({ fromId: pn.id, toId: node.id, isLoop: false, loopMode: 'TIME', loopLimit: 1, lifeTime: 0, initiateByAnswer: true, condition: 'none', inheritSize: false, inheritSpeed: false });
     }
     requestRenderGraph(); updateInspector();
 }
 
-// ==================== ПАПКИ (через Data) ====================
+// ==================== ПАПКИ ====================
 async function restoreFolderHandle() {
     if (!HAS_FS_ACCESS) return false;
     try {
@@ -4439,10 +4201,7 @@ async function restoreFolderHandle() {
         selectedFolderHandle = h;
         folderStatus.textContent = '📁 ' + h.name;
         const perm = await h.queryPermission({ mode: 'readwrite' });
-        if (perm !== 'granted') {
-            folderStatus.textContent = '📁 ' + h.name + ' (нужно разрешение)';
-            return false;
-        }
+        if (perm !== 'granted') { folderStatus.textContent = '📁 ' + h.name + ' (нужно разрешение)'; return false; }
         return true;
     } catch (_) { return false; }
 }
@@ -4465,9 +4224,7 @@ async function selectFolder() {
             localStorage.setItem('selectedFolderName', newHandle.name);
             await window.Data.saveFolderHandle('scenariosFolderHandle', newHandle);
             await scanScenariosFolder();
-        } catch (err) {
-            if (err.name !== 'AbortError') console.error(err);
-        }
+        } catch (err) { if (err.name !== 'AbortError') console.error(err); }
     } else {
         if (!folderInput) { alert('Браузер не поддерживает выбор папки.'); return; }
         folderInput.value = '';
@@ -4492,15 +4249,10 @@ async function scanScenariosFolder() {
                 id,
                 name: (f.name || '').replace(/\.json$/i, ''),
                 training_type: parsed.trainingType || 'single',
-                params: {
-                    graph: { nodes: data.nodes, connections: data.connections || [], books: data.books || {} },
-                    scenarioKey: key
-                }
+                params: { graph: { nodes: data.nodes, connections: data.connections || [], books: data.books || {} }, scenarioKey: key }
             });
             imported++;
-        } catch (e) {
-            console.warn('[scenarios] пропущен файл:', f.name, e.message);
-        }
+        } catch (e) { console.warn('[scenarios] пропущен файл:', f.name, e.message); }
     }
     if (imported > 0) console.log(`[scenarios] импортировано из папки: ${imported}`);
 }
@@ -4527,9 +4279,7 @@ async function saveGraph() {
                     await window.Data.writeFileToFolder(selectedFolderHandle, fileName, jsonStr);
                     alert('📁 Файл сохранён: ' + fileName);
                 }
-            } catch (err) {
-                console.warn('[saveGraph] папка:', err);
-            }
+            } catch (err) { console.warn('[saveGraph] папка:', err); }
         } else {
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -4541,16 +4291,10 @@ async function saveGraph() {
         }
         const record = {
             id: window._currentScenarioId || ('local_' + window._currentScenarioKey),
-            name: window._currentScenarioFileName
-                ? window._currentScenarioFileName.replace(/\.json$/i, '')
-                : ('Сценарий ' + new Date().toLocaleString('ru-RU')),
+            name: window._currentScenarioFileName ? window._currentScenarioFileName.replace(/\.json$/i, '') : ('Сценарий ' + new Date().toLocaleString('ru-RU')),
             training_type: trainingNode?.params?.trainingType || 'single',
             params: {
-                graph: {
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    connections: JSON.parse(JSON.stringify(connections)),
-                    books: JSON.parse(JSON.stringify(window._books))
-                },
+                graph: { nodes: JSON.parse(JSON.stringify(nodes)), connections: JSON.parse(JSON.stringify(connections)), books: JSON.parse(JSON.stringify(window._books)) },
                 distances: { general: generalDistance, reading: readingDistance, incTol: distanceToleranceIncreasePct, decTol: distanceToleranceDecreasePct, timeout: distanceRestoreTimeoutSec },
                 blink: { enabled: blinkEnabled, threshold: blinkThreshold, minRate: blinkMinRate, window: blinkWindowSec, lockShow: blinkLockShow },
                 scenarioKey: window._currentScenarioKey
@@ -4559,19 +4303,13 @@ async function saveGraph() {
         const saved = await window.Data.saveScenario(record);
         window._currentScenarioId = saved.id;
         console.log('[saveGraph] сохранено локально, id:', saved.id);
-    } finally {
-        _saveGraphInFlight = false;
-    }
+    } finally { _saveGraphInFlight = false; }
 }
 function buildScenarioPayloadFromCurrent() {
     return {
         scenarioKey: window._currentScenarioKey || generateScenarioKey(),
         trainingType: trainingNode?.params?.trainingType || 'single',
-        graph: {
-            nodes: JSON.parse(JSON.stringify(nodes || [])),
-            connections: JSON.parse(JSON.stringify(connections || [])),
-            books: JSON.parse(JSON.stringify(window._books || {}))
-        },
+        graph: { nodes: JSON.parse(JSON.stringify(nodes || [])), connections: JSON.parse(JSON.stringify(connections || [])), books: JSON.parse(JSON.stringify(window._books || {})) },
         distances: { general: generalDistance, reading: readingDistance, incTol: distanceToleranceIncreasePct, decTol: distanceToleranceDecreasePct, timeout: distanceRestoreTimeoutSec },
         blink: { enabled: blinkEnabled, threshold: blinkThreshold, minRate: blinkMinRate, window: blinkWindowSec, lockShow: blinkLockShow }
     };
@@ -4730,21 +4468,14 @@ async function loadScenarioList() {
     try {
         const scenarios = await window.Data.getScenarios();
         list.innerHTML = '';
-        if (scenarios.length === 0) {
-            list.innerHTML = '<div style="padding:20px;color:#666;text-align:center;font-style:italic;">Пока нет сценариев.</div>';
-            return;
-        }
+        if (scenarios.length === 0) { list.innerHTML = '<div style="padding:20px;color:#666;text-align:center;font-style:italic;">Пока нет сценариев.</div>'; return; }
         scenarios.forEach(sc => {
             const div = document.createElement('div');
             div.style.cssText = 'border-bottom:1px solid #333;padding:8px 4px;';
             const nodeCount = sc.params?.graph?.nodes?.length || 0;
             const connCount = sc.params?.graph?.connections?.length || 0;
             const dirty = sc._dirty ? ' <span style="color:#f59e0b;font-size:10px;">● локально</span>' : '';
-            div.innerHTML = `
-                <b>${escapeHtml(sc.name || '(без имени)')}</b>${dirty}
-                <span style="color:#94a3b8;font-size:11px;">(${escapeHtml(sc.training_type || 'single')})</span>
-                <br><span style="font-size:11px;color:#94a3b8;">Узлов: ${nodeCount}, связей: ${connCount}</span><br>
-                <button class="btn btn-secondary btn-load-scenario" data-id="${escapeHtml(sc.id)}" style="margin-top:4px;font-size:11px;padding:3px 10px;">Загрузить</button>`;
+            div.innerHTML = `<b>${escapeHtml(sc.name || '(без имени)')}</b>${dirty} <span style="color:#94a3b8;font-size:11px;">(${escapeHtml(sc.training_type || 'single')})</span><br><span style="font-size:11px;color:#94a3b8;">Узлов: ${nodeCount}, связей: ${connCount}</span><br><button class="btn btn-secondary btn-load-scenario" data-id="${escapeHtml(sc.id)}" style="margin-top:4px;font-size:11px;padding:3px 10px;">Загрузить</button>`;
             list.appendChild(div);
         });
         list.querySelectorAll('.btn-load-scenario').forEach(btn => {
@@ -4764,15 +4495,11 @@ async function loadScenarioList() {
                     window._currentScenarioFileName = (sc.name || 'scenario') + '.json';
                     requestRenderGraph();
                     alert('Сценарий загружен в граф.');
-                } else {
-                    alert('Сценарий загружен. Нажмите «Плеер».');
-                }
+                } else alert('Сценарий загружен. Нажмите «Плеер».');
                 document.getElementById('library-modal').style.display = 'none';
             });
         });
-    } catch (e) {
-        list.innerHTML = `<div style="padding:20px;color:#dc2626;">Ошибка: ${escapeHtml(e.message)}</div>`;
-    }
+    } catch (e) { list.innerHTML = `<div style="padding:20px;color:#dc2626;">Ошибка: ${escapeHtml(e.message)}</div>`; }
 }
 async function saveCurrentScenario() {
     if (!window.Data || !window.Data.getCurrentUserId()) { alert('Войдите'); return; }
@@ -4783,14 +4510,7 @@ async function saveCurrentScenario() {
         id: window.Data.uuid(),
         name,
         training_type: trainingNode.params.trainingType || 'single',
-        params: {
-            graph: {
-                nodes: JSON.parse(JSON.stringify(nodes)),
-                connections: JSON.parse(JSON.stringify(connections)),
-                books: JSON.parse(JSON.stringify(window._books))
-            },
-            scenarioKey: window._currentScenarioKey || generateScenarioKey()
-        }
+        params: { graph: { nodes: JSON.parse(JSON.stringify(nodes)), connections: JSON.parse(JSON.stringify(connections)), books: JSON.parse(JSON.stringify(window._books)) }, scenarioKey: window._currentScenarioKey || generateScenarioKey() }
     };
     await window.Data.saveScenario(record);
     alert('Сохранено: ' + name);
@@ -4805,33 +4525,15 @@ async function loadUsers() {
     try {
         const users = await window.Data.getUsers();
         us.innerHTML = '';
-        if (users.length === 0) {
-            us.innerHTML = '<option value="">— нет пользователей —</option>';
-        } else {
-            users.forEach(p => {
-                const o = document.createElement('option');
-                o.value = p.id;
-                o.textContent = (p.email || '(без email)') + (p.full_name ? ' (' + p.full_name + ')' : '');
-                us.appendChild(o);
-            });
-        }
+        if (users.length === 0) us.innerHTML = '<option value="">— нет пользователей —</option>';
+        else users.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = (p.email || '(без email)') + (p.full_name ? ' (' + p.full_name + ')' : ''); us.appendChild(o); });
         const sc = document.getElementById('selected-scenario');
         sc.innerHTML = '<option>Загрузка…</option>';
         const scenarios = await window.Data.getScenariosLocal();
         sc.innerHTML = '';
-        if (scenarios.length === 0) {
-            sc.innerHTML = '<option value="">— нет сценариев —</option>';
-        } else {
-            scenarios.forEach(s => {
-                const o = document.createElement('option');
-                o.value = s.id;
-                o.textContent = s.name || '(без имени)';
-                sc.appendChild(o);
-            });
-        }
-    } catch (e) {
-        us.innerHTML = '<option value="">Ошибка: ' + escapeHtml(e.message) + '</option>';
-    }
+        if (scenarios.length === 0) sc.innerHTML = '<option value="">— нет сценариев —</option>';
+        else scenarios.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name || '(без имени)'; sc.appendChild(o); });
+    } catch (e) { us.innerHTML = '<option value="">Ошибка: ' + escapeHtml(e.message) + '</option>'; }
 }
 async function assignScenario() {
     const u = document.getElementById('selected-user').value;
@@ -4848,11 +4550,7 @@ function renderBlockList() {
         const t = document.createElement('span');
         t.className = 'block-tag';
         t.innerHTML = `${escapeHtml(b.name)} (${escapeHtml(b.type)}) <span class="remove-block" data-index="${i}">✕</span>`;
-        t.querySelector('.remove-block').addEventListener('click', function (e) {
-            e.stopPropagation();
-            blockList.splice(parseInt(this.dataset.index), 1);
-            renderBlockList();
-        });
+        t.querySelector('.remove-block').addEventListener('click', function (e) { e.stopPropagation(); blockList.splice(parseInt(this.dataset.index), 1); renderBlockList(); });
         blockListDiv.appendChild(t);
     });
     blockCountSpan.textContent = `Блоков: ${blockList.length}`;
@@ -4898,19 +4596,13 @@ function initSupabase() {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac'
     );
     supabaseClient.auth.getSession().then(({ data }) => {
-        if (data?.session) {
-            currentUser = data.session.user;
-            window.Data.setAuth(data.session.access_token, data.session.user.id);
-            updateAuthUI();
-        } else showAuthModal('signin');
+        if (data?.session) { currentUser = data.session.user; window.Data.setAuth(data.session.access_token, data.session.user.id); updateAuthUI(); }
+        else showAuthModal('signin');
     });
     supabaseClient.auth.onAuthStateChange((event, session) => {
         currentUser = session?.user || null;
-        if (session?.access_token) {
-            window.Data.setAuth(session.access_token, session.user.id);
-        } else if (event === 'SIGNED_OUT') {
-            window.Data.clearAuth();
-        }
+        if (session?.access_token) window.Data.setAuth(session.access_token, session.user.id);
+        else if (event === 'SIGNED_OUT') window.Data.clearAuth();
         updateAuthUI();
         if (event === 'SIGNED_OUT') showAuthModal('signin');
     });
@@ -4942,18 +4634,9 @@ function updateAuthUI() {
 }
 function showAuthModal(mode) {
     authMode = mode;
-    const t = document.getElementById('auth-title');
-    const nl = document.getElementById('auth-name-label');
-    const ni = document.getElementById('auth-name');
-    const tb = document.getElementById('auth-toggle');
-    const sb = document.getElementById('auth-submit');
-    if (mode === 'signin') {
-        t.textContent = 'Вход'; nl.style.display = 'none'; ni.style.display = 'none';
-        tb.textContent = 'Нет аккаунта? Регистрация'; sb.textContent = 'Войти';
-    } else {
-        t.textContent = 'Регистрация'; nl.style.display = 'block'; ni.style.display = 'block';
-        tb.textContent = 'Уже есть аккаунт? Войти'; sb.textContent = 'Зарегистрироваться';
-    }
+    const t = document.getElementById('auth-title'), nl = document.getElementById('auth-name-label'), ni = document.getElementById('auth-name'), tb = document.getElementById('auth-toggle'), sb = document.getElementById('auth-submit');
+    if (mode === 'signin') { t.textContent = 'Вход'; nl.style.display = 'none'; ni.style.display = 'none'; tb.textContent = 'Нет аккаунта? Регистрация'; sb.textContent = 'Войти'; }
+    else { t.textContent = 'Регистрация'; nl.style.display = 'block'; ni.style.display = 'block'; tb.textContent = 'Уже есть аккаунт? Войти'; sb.textContent = 'Зарегистрироваться'; }
     document.getElementById('auth-modal').style.display = 'flex';
 }
 
@@ -4968,9 +4651,7 @@ function registerServiceWorker() {
             reg.addEventListener('updatefound', () => {
                 const nw = reg.installing;
                 if (!nw) return;
-                nw.addEventListener('statechange', () => {
-                    if (nw.state === 'installed' && navigator.serviceWorker.controller) showSWUpdateBanner(reg);
-                });
+                nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller) showSWUpdateBanner(reg); });
             });
         } catch (err) { console.error('[SW]', err); }
     });
@@ -4986,10 +4667,7 @@ function showSWUpdateBanner(reg) {
     el.id = 'sw-update-banner';
     el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;z-index:10000;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,0.4);font-family:"Segoe UI",Tahoma,sans-serif;';
     el.innerHTML = '<span>Доступна новая версия</span><button style="background:#fff;color:#10b981;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-weight:bold;font-family:inherit;">Обновить</button>';
-    el.querySelector('button').addEventListener('click', () => {
-        try { reg.waiting?.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
-        el.remove();
-    });
+    el.querySelector('button').addEventListener('click', () => { try { reg.waiting?.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {} el.remove(); });
     document.body.appendChild(el);
 }
 
@@ -5000,13 +4678,11 @@ function init() {
     readingToolbarEl = document.getElementById('reading-toolbar');
     window._books = window._books || {};
     if (!window._currentScenarioKey) window._currentScenarioKey = generateScenarioKey();
-
     loadUserSettings();
     loadSivtsevFont();
     initScreenCalibration();
     initSupabase();
     initInspectorEvents();
-
     ensureSingleGridGeneratorUI();
     ensureDistanceGeneratorUI();
     ensureBlinkGeneratorUI();
@@ -5015,10 +4691,8 @@ function init() {
     ensureDefocusGeneratorUI();
     ensureBlinkAnimationGeneratorUI();
     ensureBlinkCalibrationUI();
-
     const sfn = localStorage.getItem('selectedFolderName');
     if (sfn) folderStatus.textContent = '📁 ' + sfn;
-
     btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
@@ -5032,7 +4706,6 @@ function init() {
     if (btnAddCompare) btnAddCompare.addEventListener('click', () => createNewNode('COMPARE'));
     if (btnCalibrateScreen) btnCalibrateScreen.addEventListener('click', openScreenCalibModal);
     if (btnScenarioTime) btnScenarioTime.addEventListener('click', showScenarioTimeReport);
-
     document.getElementById('scenario-time-close')?.addEventListener('click', () => { document.getElementById('scenario-time-modal').style.display = 'none'; });
     document.getElementById('screen-calib-cancel')?.addEventListener('click', () => document.getElementById('screen-calib-modal').style.display = 'none');
     document.getElementById('screen-calib-apply')?.addEventListener('click', applyScreenCalib);
@@ -5040,7 +4713,6 @@ function init() {
     document.getElementById('book-picker-detach')?.addEventListener('click', detachBookFromActiveNode);
     document.getElementById('book-picker-file')?.addEventListener('change', async e => { const f = e.target.files[0]; if (f) await handleBookPickerFileUpload(f); e.target.value = ''; });
     document.getElementById('book-picker-modal')?.addEventListener('click', e => { if (e.target.id === 'book-picker-modal') closeBookPicker(); });
-
     document.getElementById('reading-prev')?.addEventListener('click', prevReadingPage);
     document.getElementById('reading-next')?.addEventListener('click', nextReadingPage);
     document.getElementById('reading-play-pause')?.addEventListener('click', toggleReadingPause);
@@ -5116,15 +4788,13 @@ function init() {
         saveUserSettings();
         setTimeout(() => { setupReadingColumns(); readingTotalPages = calcReadingTotalPages(); scrollReadingToPage(0); }, 60);
     });
-
     if (readingViewportEl) {
         let t = null;
         readingViewportEl.addEventListener('scroll', () => {
             if (readingViewportEl.style.display === 'none' || t) return;
             t = setTimeout(() => {
                 t = null;
-                const W = readingViewportEl.clientWidth;
-                if (W <= 0) return;
+                const W = readingViewportEl.clientWidth; if (W <= 0) return;
                 const np = Math.round(readingViewportEl.scrollLeft / W);
                 if (np !== readingPage) {
                     readingPage = Math.max(0, Math.min(np, readingTotalPages - 1));
@@ -5146,24 +4816,17 @@ function init() {
                 const t = await parseReadingFile(f);
                 const clean = (t || '').replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
                 if (!clean) { alert('Файл пуст'); return; }
-                const ta = document.getElementById('gen-reading-text');
-                if (ta) ta.value = clean;
+                const ta = document.getElementById('gen-reading-text'); if (ta) ta.value = clean;
                 if (readingFileName) readingFileName.textContent = `✅ ${f.name} (${clean.length} символов)`;
             } catch (err) { alert('Ошибка: ' + err.message); }
             readingFileInput.value = '';
         });
     }
-
     btnGenerator.addEventListener('click', () => {
         modal.style.display = 'flex';
         selectedCells = [];
-        const dgX = parseInt(document.getElementById('gen-grid-x').value) || 3;
-        const dgY = parseInt(document.getElementById('gen-grid-y').value) || 3;
-        if (dgX * dgY >= 2) {
-            selectedCells.push({ row: 0, col: 0 });
-            if (dgX > 1) selectedCells.push({ row: 0, col: 1 });
-            else selectedCells.push({ row: 1, col: 0 });
-        }
+        const dgX = parseInt(document.getElementById('gen-grid-x').value) || 3, dgY = parseInt(document.getElementById('gen-grid-y').value) || 3;
+        if (dgX * dgY >= 2) { selectedCells.push({ row: 0, col: 0 }); if (dgX > 1) selectedCells.push({ row: 0, col: 1 }); else selectedCells.push({ row: 1, col: 0 }); }
         renderGridPreview(); generateCellParamsFields();
         document.getElementById('gen-threshold').value = getThreshold(parseInt(document.getElementById('gen-series-size').value));
         const p = document.getElementById('gen-ppi'); if (p) p.value = screenPPI;
@@ -5177,21 +4840,13 @@ function init() {
         const bmrEl = document.getElementById('gen-blink-min-rate'); if (bmrEl) bmrEl.value = blinkMinRate;
         const bwEl = document.getElementById('gen-blink-window'); if (bwEl) bwEl.value = blinkWindowSec;
         const blsEl = document.getElementById('gen-blink-lock-show'); if (blsEl) blsEl.checked = blinkLockShow;
-        updateGeneratorVisibility();
-        updateBgModeVisibility();
-        updateGradientMidVisibility();
-        updateDynamicMidVisibility();
-        updateDynamicModeVisibility();
-        updatePhysioListHint();
-        updateSingleStimDynamicVisibility();
-        updateSingleStimMidVisibility();
-        updateSingleBgDynamicVisibility();
-        updateSingleBgMidVisibility();
+        updateGeneratorVisibility(); updateBgModeVisibility(); updateGradientMidVisibility();
+        updateDynamicMidVisibility(); updateDynamicModeVisibility(); updatePhysioListHint();
+        updateSingleStimDynamicVisibility(); updateSingleStimMidVisibility();
+        updateSingleBgDynamicVisibility(); updateSingleBgMidVisibility();
     });
     document.getElementById('gen-cancel').addEventListener('click', () => { modal.style.display = 'none'; });
-    document.getElementById('gen-series-size').addEventListener('change', function () {
-        document.getElementById('gen-threshold').value = getThreshold(parseInt(this.value));
-    });
+    document.getElementById('gen-series-size').addEventListener('change', function () { document.getElementById('gen-threshold').value = getThreshold(parseInt(this.value)); });
     document.getElementById('gen-to-node').addEventListener('click', () => {
         const tt = document.getElementById('gen-training-type').value;
         const mp = buildModeParamsFromUI();
@@ -5206,10 +4861,7 @@ function init() {
         window._pendingGeneratorMode = true;
         alert('Тренировка готова. Нажмите «Плеер».');
     });
-    document.getElementById('gen-training-type').addEventListener('change', function () {
-        updateGeneratorVisibility();
-        if (this.value === 'compare') { renderGridPreview(); generateCellParamsFields(); }
-    });
+    document.getElementById('gen-training-type').addEventListener('change', function () { updateGeneratorVisibility(); if (this.value === 'compare') { renderGridPreview(); generateCellParamsFields(); } });
     document.getElementById('gen-reading-bg-mode')?.addEventListener('change', updateBgModeVisibility);
     document.getElementById('gen-reading-gradient-mid-enabled')?.addEventListener('change', updateGradientMidVisibility);
     document.getElementById('gen-reading-dynamic-mid-enabled')?.addEventListener('change', updateDynamicMidVisibility);
@@ -5219,106 +4871,25 @@ function init() {
     document.getElementById('gen-single-stim-mid-enabled')?.addEventListener('change', updateSingleStimMidVisibility);
     document.getElementById('gen-single-bg-dynamic-enabled')?.addEventListener('change', updateSingleBgDynamicVisibility);
     document.getElementById('gen-single-bg-mid-enabled')?.addEventListener('change', updateSingleBgMidVisibility);
-
-    function updateGeneratorVisibility() {
-        const t = document.getElementById('gen-training-type').value;
-        document.getElementById('single-grid-settings').style.display = t === 'single' ? 'block' : 'none';
-        document.getElementById('compare-settings').style.display = t === 'compare' ? 'block' : 'none';
-        document.getElementById('reading-settings').style.display = t === 'reading' ? 'block' : 'none';
-    }
-    function updateBgModeVisibility() {
-        const m = document.getElementById('gen-reading-bg-mode')?.value || 'solid';
-        const s = document.getElementById('reading-solid-settings'), sp = document.getElementById('reading-split-settings');
-        const g = document.getElementById('reading-gradient-settings'), d = document.getElementById('reading-dynamic-settings');
-        if (s) s.style.display = m === 'solid' ? 'block' : 'none';
-        if (sp) sp.style.display = m === 'split' ? 'block' : 'none';
-        if (g) g.style.display = m === 'gradient' ? 'block' : 'none';
-        if (d) d.style.display = m === 'dynamic' ? 'block' : 'none';
-    }
-    function updateGradientMidVisibility() {
-        const cb = document.getElementById('gen-reading-gradient-mid-enabled');
-        const show = cb ? cb.checked : true;
-        const r = document.getElementById('gradient-mid-row');
-        const l = document.getElementById('gradient-mid-pos-label');
-        const i = document.getElementById('gen-reading-gradient-mid-position');
-        if (r) r.style.display = show ? 'flex' : 'none';
-        if (l) l.style.display = show ? 'block' : 'none';
-        if (i) i.style.display = show ? 'block' : 'none';
-    }
-    function updateDynamicMidVisibility() {
-        const cb = document.getElementById('gen-reading-dynamic-mid-enabled');
-        const s = cb ? cb.checked : false;
-        const r = document.getElementById('dynamic-mid-row');
-        if (r) r.style.display = s ? 'flex' : 'none';
-    }
-    function updateDynamicModeVisibility() {
-        const m = document.getElementById('gen-reading-dynamic-mode')?.value || 'simple';
-        const sc = document.getElementById('reading-dynamic-simple-colors');
-        const ps = document.getElementById('reading-dynamic-physio-settings');
-        const ds = document.getElementById('reading-dynamic-duration-settings');
-        if (sc) sc.style.display = m === 'simple' ? 'block' : 'none';
-        if (ps) ps.style.display = m === 'physiological' ? 'block' : 'none';
-        if (ds) ds.style.display = m === 'physiological' ? 'none' : 'block';
-        if (m === 'simple') updateDynamicMidVisibility();
-        if (m === 'physiological') updatePhysioListHint();
-    }
-    function updatePhysioListHint() {
-        const h = document.getElementById('physio-list-hint');
-        const ss = document.getElementById('gen-reading-dynamic-step');
-        const sd = ss ? Math.max(0.1, parseFloat(ss.value) || 0.1) : 0.1;
-        const l = document.getElementById('gen-reading-dynamic-step-duration-label');
-        if (l) l.textContent = `Длительность шага (${sd.toFixed(1)} дптр)`;
-        if (!h) return;
-        let c = 0;
-        for (const p of PHYSIOLOGICAL_PHASES) { const r = p.diopters / sd; if (Math.abs(r - Math.round(r)) < 1e-6) c++; }
-        const last = PHYSIOLOGICAL_PHASES[PHYSIOLOGICAL_PHASES.length - 1];
-        const lr = last.diopters / sd;
-        if (Math.abs(lr - Math.round(lr)) > 1e-6) c++;
-        h.textContent = `0.0 → +1.6 дптр • ${c} точек • шаг ${sd.toFixed(1)} • Thibos et al.`;
-    }
-    function updateSingleStimDynamicVisibility() {
-        const cb = document.getElementById('gen-single-stim-dynamic-enabled');
-        const s = cb ? cb.checked : false;
-        const p = document.getElementById('single-stim-dynamic-settings');
-        if (p) p.style.display = s ? 'block' : 'none';
-        if (s) updateSingleStimMidVisibility();
-    }
-    function updateSingleStimMidVisibility() {
-        const cb = document.getElementById('gen-single-stim-mid-enabled');
-        const s = cb ? cb.checked : false;
-        const r = document.getElementById('single-stim-mid-row');
-        if (r) r.style.display = s ? 'flex' : 'none';
-    }
-    function updateSingleBgDynamicVisibility() {
-        const cb = document.getElementById('gen-single-bg-dynamic-enabled');
-        const s = cb ? cb.checked : false;
-        const p = document.getElementById('single-bg-dynamic-settings');
-        if (p) p.style.display = s ? 'block' : 'none';
-        if (s) updateSingleBgMidVisibility();
-    }
-    function updateSingleBgMidVisibility() {
-        const cb = document.getElementById('gen-single-bg-mid-enabled');
-        const s = cb ? cb.checked : false;
-        const r = document.getElementById('single-bg-mid-row');
-        if (r) r.style.display = s ? 'flex' : 'none';
-    }
-
+    function updateGeneratorVisibility() { const t = document.getElementById('gen-training-type').value; document.getElementById('single-grid-settings').style.display = t === 'single' ? 'block' : 'none'; document.getElementById('compare-settings').style.display = t === 'compare' ? 'block' : 'none'; document.getElementById('reading-settings').style.display = t === 'reading' ? 'block' : 'none'; }
+    function updateBgModeVisibility() { const m = document.getElementById('gen-reading-bg-mode')?.value || 'solid'; const s = document.getElementById('reading-solid-settings'), sp = document.getElementById('reading-split-settings'); const g = document.getElementById('reading-gradient-settings'), d = document.getElementById('reading-dynamic-settings'); if (s) s.style.display = m === 'solid' ? 'block' : 'none'; if (sp) sp.style.display = m === 'split' ? 'block' : 'none'; if (g) g.style.display = m === 'gradient' ? 'block' : 'none'; if (d) d.style.display = m === 'dynamic' ? 'block' : 'none'; }
+    function updateGradientMidVisibility() { const cb = document.getElementById('gen-reading-gradient-mid-enabled'); const show = cb ? cb.checked : true; const r = document.getElementById('gradient-mid-row'); const l = document.getElementById('gradient-mid-pos-label'); const i = document.getElementById('gen-reading-gradient-mid-position'); if (r) r.style.display = show ? 'flex' : 'none'; if (l) l.style.display = show ? 'block' : 'none'; if (i) i.style.display = show ? 'block' : 'none'; }
+    function updateDynamicMidVisibility() { const cb = document.getElementById('gen-reading-dynamic-mid-enabled'); const s = cb ? cb.checked : false; const r = document.getElementById('dynamic-mid-row'); if (r) r.style.display = s ? 'flex' : 'none'; }
+    function updateDynamicModeVisibility() { const m = document.getElementById('gen-reading-dynamic-mode')?.value || 'simple'; const sc = document.getElementById('reading-dynamic-simple-colors'); const ps = document.getElementById('reading-dynamic-physio-settings'); const ds = document.getElementById('reading-dynamic-duration-settings'); if (sc) sc.style.display = m === 'simple' ? 'block' : 'none'; if (ps) ps.style.display = m === 'physiological' ? 'block' : 'none'; if (ds) ds.style.display = m === 'physiological' ? 'none' : 'block'; if (m === 'simple') updateDynamicMidVisibility(); if (m === 'physiological') updatePhysioListHint(); }
+    function updatePhysioListHint() { const h = document.getElementById('physio-list-hint'); const ss = document.getElementById('gen-reading-dynamic-step'); const sd = ss ? Math.max(0.1, parseFloat(ss.value) || 0.1) : 0.1; const l = document.getElementById('gen-reading-dynamic-step-duration-label'); if (l) l.textContent = `Длительность шага (${sd.toFixed(1)} дптр)`; if (!h) return; let c = 0; for (const p of PHYSIOLOGICAL_PHASES) { const r = p.diopters / sd; if (Math.abs(r - Math.round(r)) < 1e-6) c++; } const last = PHYSIOLOGICAL_PHASES[PHYSIOLOGICAL_PHASES.length - 1]; const lr = last.diopters / sd; if (Math.abs(lr - Math.round(lr)) > 1e-6) c++; h.textContent = `0.0 → +1.6 дптр • ${c} точек • шаг ${sd.toFixed(1)} • Thibos et al.`; }
+    function updateSingleStimDynamicVisibility() { const cb = document.getElementById('gen-single-stim-dynamic-enabled'); const s = cb ? cb.checked : false; const p = document.getElementById('single-stim-dynamic-settings'); if (p) p.style.display = s ? 'block' : 'none'; if (s) updateSingleStimMidVisibility(); }
+    function updateSingleStimMidVisibility() { const cb = document.getElementById('gen-single-stim-mid-enabled'); const s = cb ? cb.checked : false; const r = document.getElementById('single-stim-mid-row'); if (r) r.style.display = s ? 'flex' : 'none'; }
+    function updateSingleBgDynamicVisibility() { const cb = document.getElementById('gen-single-bg-dynamic-enabled'); const s = cb ? cb.checked : false; const p = document.getElementById('single-bg-dynamic-settings'); if (p) p.style.display = s ? 'block' : 'none'; if (s) updateSingleBgMidVisibility(); }
+    function updateSingleBgMidVisibility() { const cb = document.getElementById('gen-single-bg-mid-enabled'); const s = cb ? cb.checked : false; const r = document.getElementById('single-bg-mid-row'); if (r) r.style.display = s ? 'flex' : 'none'; }
     btnEnableCamera.addEventListener('click', enableCamera);
     btnDisableCamera.addEventListener('click', disableCamera);
     btnCalibrate.addEventListener('click', openCalibrationModal);
     document.getElementById('calibrate-confirm').addEventListener('click', calibrateFocalLength);
     document.getElementById('calibrate-cancel').addEventListener('click', () => document.getElementById('calibration-modal').style.display = 'none');
-    btnInspector.addEventListener('click', () => {
-        const h = !inspectorEl.style.display || inspectorEl.style.display === 'none';
-        inspectorEl.style.display = h ? 'block' : 'none';
-    });
-
+    btnInspector.addEventListener('click', () => { const h = !inspectorEl.style.display || inspectorEl.style.display === 'none'; inspectorEl.style.display = h ? 'block' : 'none'; });
     btnSave.addEventListener('click', saveGraph);
     btnOpen.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', e => {
-        if (e.target.files[0]) loadGraph(e.target.files[0]);
-        e.target.value = '';
-    });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) loadGraph(e.target.files[0]); e.target.value = ''; });
     if (folderInput) {
         folderInput.addEventListener('change', async (e) => {
             const files = e.target.files;
@@ -5334,15 +4905,7 @@ function init() {
                         if (!data || !Array.isArray(data.nodes)) continue;
                         const key = parsed.scenarioKey || generateScenarioKey();
                         const id = 'local_' + key;
-                        await window.Data.saveScenario({
-                            id,
-                            name: f.name.replace(/\.json$/i, ''),
-                            training_type: parsed.trainingType || 'single',
-                            params: {
-                                graph: { nodes: data.nodes, connections: data.connections || [], books: data.books || {} },
-                                scenarioKey: key
-                            }
-                        });
+                        await window.Data.saveScenario({ id, name: f.name.replace(/\.json$/i, ''), training_type: parsed.trainingType || 'single', params: { graph: { nodes: data.nodes, connections: data.connections || [], books: data.books || {} }, scenarioKey: key } });
                         imported++;
                     } catch (_) {}
                 }
@@ -5353,34 +4916,18 @@ function init() {
         });
     }
     if (templatesFolderInput) {
-        templatesFolderInput.addEventListener('change', async (e) => {
-            const files = e.target.files;
-            if (files && files.length) await importTemplatesFromFileList(files);
-            templatesFolderInput.value = '';
-        });
+        templatesFolderInput.addEventListener('change', async (e) => { const files = e.target.files; if (files && files.length) await importTemplatesFromFileList(files); templatesFolderInput.value = ''; });
     }
-
     btnAddBlock.addEventListener('click', addBlock);
     btnClearBlocks.addEventListener('click', clearBlocks);
     btnGenerateSequence.addEventListener('click', generateSequenceFromBlocks);
-
-    btnLibrary.addEventListener('click', () => {
-        document.getElementById('library-modal').style.display = 'flex';
-        loadScenarioList();
-    });
+    btnLibrary.addEventListener('click', () => { document.getElementById('library-modal').style.display = 'flex'; loadScenarioList(); });
     document.getElementById('btn-library-close').addEventListener('click', () => document.getElementById('library-modal').style.display = 'none');
     document.getElementById('btn-save-current-scenario').addEventListener('click', saveCurrentScenario);
-    btnUsers.addEventListener('click', () => {
-        document.getElementById('users-modal').style.display = 'flex';
-        loadUsers();
-    });
+    btnUsers.addEventListener('click', () => { document.getElementById('users-modal').style.display = 'flex'; loadUsers(); });
     document.getElementById('btn-users-close').addEventListener('click', () => document.getElementById('users-modal').style.display = 'none');
     document.getElementById('btn-assign-scenario').addEventListener('click', assignScenario);
-
-    document.addEventListener('click', e => {
-        const m = document.getElementById('connection-menu');
-        if (m.style.display === 'block' && !m.contains(e.target)) hideConnectionMenu();
-    });
+    document.addEventListener('click', e => { const m = document.getElementById('connection-menu'); if (m.style.display === 'block' && !m.contains(e.target)) hideConnectionMenu(); });
     canvas.addEventListener('contextmenu', e => e.preventDefault());
     canvas.addEventListener('mousedown', e => {
         if (e.target === canvas) {
@@ -5391,10 +4938,8 @@ function init() {
             if (window._pendingConnectionHandler) cancelConnection();
         }
     });
-
     document.getElementById('pause-continue').addEventListener('click', resumeTraining);
     document.getElementById('pause-exit').addEventListener('click', exitTrainingFromPause);
-
     btnAuth.addEventListener('click', () => { if (currentUser) signOut(); else showAuthModal('signin'); });
     document.getElementById('auth-toggle').addEventListener('click', () => showAuthModal(authMode === 'signin' ? 'signup' : 'signin'));
     document.getElementById('auth-submit').addEventListener('click', async () => {
@@ -5405,33 +4950,21 @@ function init() {
         else { if (!n) return alert('Введите имя'); await signUp(e, p, n); }
         document.getElementById('auth-modal').style.display = 'none';
     });
-
     window.addEventListener('resize', () => {
         if (readingViewportEl && readingViewportEl.style.display !== 'none') {
             const sp = readingPage;
             setupReadingColumns();
-            setTimeout(() => {
-                readingTotalPages = calcReadingTotalPages();
-                scrollReadingToPage(Math.min(sp, readingTotalPages - 1));
-            }, 60);
+            setTimeout(() => { readingTotalPages = calcReadingTotalPages(); scrollReadingToPage(Math.min(sp, readingTotalPages - 1)); }, 60);
         }
     });
-    window.addEventListener('beforeunload', () => {
-        saveCurrentReadingBookmarkSilently();
-        window.Voice?.stopReading();
-    });
-
+    window.addEventListener('beforeunload', () => { saveCurrentReadingBookmarkSilently(); window.Voice?.stopReading(); });
     createNewNode('STIMULUS', 200, 150);
     switchMode('nodes');
-
     (async () => {
         await restoreFolderHandle();
         await restoreTemplatesFolderHandle();
-        if (templatesFolderHandle) {
-            try { await importTemplatesFromFolder(templatesFolderHandle); } catch (_) {}
-        }
+        if (templatesFolderHandle) { try { await importTemplatesFromFolder(templatesFolderHandle); } catch (_) {} }
     })();
-
     registerServiceWorker();
 }
 
