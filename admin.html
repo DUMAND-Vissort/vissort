@@ -832,7 +832,8 @@ header.stimuli-mode .header-right > *:not(#counters){display:none !important}
                 refreshQueueModal();
             }
         });
-
+// Ждём открытия IndexedDB
+await Data.ready;
         // Периодическое обновление (раз в 5 сек — на случай пропущенных событий)
         setInterval(updateAll, 5000);
         setInterval(refreshQueueModal, 5000);
