@@ -245,7 +245,47 @@
             this.readText(text, 0);
         }
     };
-
+Voice.sayKey = function(key, opts) {
+    const phrases = {
+        ready:          'Приготовьтесь',
+        look:           'Смотрите',
+        correct:        'Правильно',
+        wrong:          'Ошибка',
+        timeout:        'Время вышло',
+        blink:          'Поморгайте',
+        moveBack:       'Не приближайтесь',
+        moveUp:         'Не отклоняйтесь',
+        countdown5:     'Осталось пять секунд',
+        countdown4:     'Четыре',
+        countdown3:     'Три',
+        countdown2:     'Два',
+        countdown1:     'Один',
+        paused:         'Пауза',
+        resumed:        'Продолжаем',
+        finished:       'Тренировка завершена',
+        readingStart:   'Начинаем чтение',
+        readingPause:   'Пауза',
+        readingResume:  'Продолжаем',
+        readingEnd:     'Чтение завершено',
+        nextNode:       'Следующее задание',
+        seriesDone:     'Серия завершена',
+        seriesFailed:   'Серия не пройдена',
+        camOff:         'Камера выключена',
+        camOn:          'Камера включена',
+        faceLost:       'Лицо не найдено',
+        faceFound:      'Лицо найдено',
+        voiceOn:        'Озвучивание включено',
+        voiceOff:       'Озвучивание выключено',
+        voiceSelected:  'Голос выбран',
+        voiceTest:      'Правильно. Не отклоняйтесь. Осталось пять секунд.'
+    };
+    const text = phrases[key];
+    if (!text) {
+        console.warn('[voice] нет фразы для ключа:', key);
+        return;
+    }
+    this.say(text, opts);
+};
     window.Voice = Voice;
 
     function ensureStyle() {
