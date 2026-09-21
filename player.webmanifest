@@ -1,0 +1,21 @@
+{
+  "name": "Vissort — Тренировка зрения",
+  "short_name": "Vissort",
+  "description": "Тренажёр зрения: острота, чтение, периферия.",
+  "start_url": "/player.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0b12",
+  "theme_color": "#6366f1",
+  "lang": "ru",
+  "categories": ["health", "medical"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
