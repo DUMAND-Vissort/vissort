@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0b0b12">
+<title>Vissort Studio — Все возможности редактора</title>
+<style>
+:root{--bg:#0b0b12;--bg-2:#121220;--bg-3:#1a1a2e;--line:#252540;--txt:#e8e8f0;--muted:#9494a8;--accent:#6366f1;--accent-2:#8b5cf6;--green:#10b981;--red:#ef4444;--orange:#f97316;--pink:#ec4899;--cyan:#06b6d4;--yellow:#eab308}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,Tahoma,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;line-height:1.5}
+
+header{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.08));border-bottom:1px solid var(--line);padding:14px 22px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.hdr{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;font-size:16px}
+.badge{background:rgba(16,185,129,.15);color:#6ee7b7;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.3px;display:inline-flex;align-items:center;gap:6px}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hdr-hint{font-size:12px;color:var(--muted)}
+
+main{max-width:1400px;margin:0 auto;padding:30px 22px 60px}
+
+.section{margin-bottom:48px}
+.section-head{margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.section-head h2{font-size:22px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:10px}
+.section-head h2 .ico{font-size:26px}
+.section-head p{color:var(--muted);font-size:13px;margin-top:6px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px;transition:.15s}
+.card:hover{border-color:#3a3a5a;background:var(--bg-3)}
+.card h3{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:#a5b4fc}
+.card h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+.params-table{width:100%;font-size:12px;border-collapse:collapse}
+.params-table tr{border-bottom:1px solid rgba(37,37,64,.4)}
+.params-table tr:last-child{border-bottom:none}
+.params-table td{padding:7px 4px;vertical-align:top}
+.params-table td:first-child{color:var(--muted);width:42%}
+.params-table td:nth-child(2){color:#a5b4fc;font-weight:600;width:22%;font-family:Consolas,monospace;font-size:11px}
+.params-table td:last-child{color:#cbd5e1}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.tag-green{background:rgba(16,185,129,.15);color:#6ee7b7}
+.tag-blue{background:rgba(99,102,241,.15);color:#a5b4fc}
+.tag-orange{background:rgba(249,115,22,.15);color:#fdba74}
+.tag-pink{background:rgba(236,72,153,.15);color:#f9a8d4}
+.tag-cyan{background:rgba(6,182,212,.15);color:#67e8f9}
+.tag-purple{background:rgba(139,92,246,.15);color:#c4b5fd}
+.tag-yellow{background:rgba(234,179,8,.15);color:#fde047}
+
+.example{background:#0a0a0f;border-radius:8px;padding:10px;font-size:11px;font-family:Consolas,monospace;color:#94a3b8;margin-top:8px;overflow-x:auto;white-space:pre}
+.example b{color:#22c55e}
+.example i{color:#f472b6;font-style:normal}
+
+.preview-box{background:#000;border-radius:8px;padding:14px;display:grid;place-items:center;margin-top:10px;min-height:90px;position:relative}
+.preview-box .label{position:absolute;top:6px;left:8px;font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px}
+
+.footer{text-align:center;padding:30px 0 20px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;margin-top:40px}
+
+.toc{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.toc a{padding:7px 14px;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:12px;font-weight:600;text-decoration:none;transition:.15s}
+.toc a:hover{background:var(--bg-3);color:#fff;border-color:var(--accent)}
+
+@media (max-width:600px){
+.params-table td:first-child{width:auto}
+.params-table td:nth-child(2){width:auto}
+.grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="hdr">
+<div class="logo"><span class="logo-mark">👁</span> Vissort Studio</div>
+<span class="badge"><span class="dot"></span> Полный каталог возможностей</span>
+<span class="hdr-hint">Все параметры, которые можно задать в редакторе сценариев</span>
+</div>
+</header>
+
+<main>
+
+<div class="toc">
+<a href="#node-types">Узлы</a>
+<a href="#acuity">Острота зрения</a>
+<a href="#series">Серии</a>
+<a href="#stim">Стимулы</a>
+<a href="#colors">Цвета</a>
+<a href="#grid">Сетка</a>
+<a href="#circle">Динамика Круг</a>
+<a href="#dynamic">Динамика цвета</a>
+<a href="#blink">Моргание</a>
+<a href="#peri">Периферия</a>
+<a href="#defocus">Дефокус</a>
+<a href="#reading">Чтение</a>
+<a href="#compare">Сравнение</a>
+<a href="#time">Время</a>
+<a href="#blink-control">Контроль морганий</a>
+<a href="#camera">Камера</a>
+<a href="#connections">Связи</a>
+<a href="#generator">Генератор</a>
+</div>
+
+<section class="section" id="node-types">
+<div class="section-head">
+<h2><span class="ico">🧩</span> Типы узлов</h2>
+<p>Пять типов узлов покрывают все тренировочные сценарии</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3><span class="dot" style="background:#10b981"></span> 🎯 Стимул (STIMULUS)</h3>
+<table class="params-table">
+<tr><td>Назначение</td><td>single</td><td>Одна буква Е / кольцо Ландольта / круг</td></tr>
+<tr><td>Адаптация</td><td>V-шкала</td><td>Плавно или ступенчато по сериям</td></tr>
+<tr><td>Ответ</td><td>направление</td><td>▲▼◀▶ или стрелки клавиатуры</td></tr>
+</table>
+</div>
+<div class="card">
+<h3><span class="dot" style="background:#a855f7"></span> 🎬 Динамика (DYNAMIC)</h3>
+<table class="params-table">
+<tr><td>Назначение</td><td>dynamic</td><td>Плавная смена цвета + стимул</td></tr>
+<tr><td>Отличие</td><td>2–3 цвета</td><td>С пинг-понгом и повтором</td></tr>
+</table>
+</div>
+<div class="card">
+<h3><span class="dot" style="background:#0ea5e9"></span> 📖 Чтение (READING)</h3>
+<table class="params-table">
+<tr><td>Назначение</td><td>reading</td><td>Книги FB2 / EPUB / TXT</td></tr>
+<tr><td>Особенность</td><td>колонки</td><td>Адаптивный шрифт под V</td></tr>
+</table>
+</div>
+<div class="card">
+<h3><span class="dot" style="background:#f97316"></span> ⚖️ Сравнение (COMPARE)</h3>
+<table class="params-table">
+<tr><td>Назначение</td><td>compare</td><td>Да/Нет или найди пары</td></tr>
+<tr><td>Ответ</td><td>да/нет</td><td>Клик по паре или кнопки</td></tr>
+</table>
+</div>
+<div class="card">
+<h3><span class="dot" style="background:#6b7280"></span> 🧠 Логика (LOGIC_IF)</h3>
+<table class="params-table">
+<tr><td>Назначение</td><td>logic</td><td>Условные переходы (зарезервировано)</td></tr>
+<tr><td>Статус</td><td>в разработке</td><td>Пока не влияет на граф</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="acuity">
+<div class="section-head">
+<h2><span class="ico">👁️</span> Острота зрения (V)</h2>
+<p>Главный параметр — связан с размером стимула, дистанцией и PPI</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Основные параметры</h3>
+<table class="params-table">
+<tr><td>V старт</td><td>stimAcuity</td><td>0.1 – 2.0 (шаг 0.1)</td></tr>
+<tr><td>V цель</td><td>endAcuity</td><td>0.1 – 2.0</td></tr>
+<tr><td>Шаг V</td><td>acuityStep</td><td>0.05 / 0.1 / 0.2 / 0.5</td></tr>
+<tr><td>Дистанция</td><td>stimDistance</td><td>0.1 – 20 м</td></tr>
+<tr><td>PPI экрана</td><td>stimPPI</td><td>20 – 1200</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Формулы</h3>
+<div class="example">мм = <b>dist × 1.454 / V</b>
+px = мм × ppi / 25.4 / dpr
+шрифт = мм / 0.5 × ppi / 25.4</div>
+</div>
+<div class="card">
+<h3>Примеры размеров (1 м, 96 PPI)</h3>
+<table class="params-table">
+<tr><td>V = 0.5</td><td>2.91 мм</td><td>≈11 px</td></tr>
+<tr><td>V = 1.0</td><td>1.45 мм</td><td>≈5 px</td></tr>
+<tr><td>V = 1.5</td><td>0.97 мм</td><td>≈4 px</td></tr>
+<tr><td>V = 2.0</td><td>0.73 мм</td><td>≈3 px</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="series">
+<div class="section-head">
+<h2><span class="ico">📊</span> Серии</h2>
+<p>Разбиение тренировки на порции с порогом успеха</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Параметры серий</h3>
+<table class="params-table">
+<tr><td>Всего серий</td><td>seriesCount</td><td>1 – 50</td></tr>
+<tr><td>Размер серии</td><td>seriesSize</td><td>4 / 5 / 6 / 7 / 8</td></tr>
+<tr><td>Порог</td><td>seriesThreshold</td><td>1 – 8 правильных</td></tr>
+</table>
+<div class="example">Серия считается <b>успешной</b>, если
+правильных ≥ порог.
+Успех → V растёт.
+Провал → V падает.</div>
+</div>
+<div class="card">
+<h3>Автопауза</h3>
+<table class="params-table">
+<tr><td>Порог без ответов</td><td>noAnswerStreak</td><td>3 серии подряд → пауза</td></tr>
+<tr><td>Восстановление</td><td>resumeTraining</td><td>Кнопка «Продолжить»</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="stim">
+<div class="section-head">
+<h2><span class="ico">🎯</span> Тип стимула</h2>
+<p>Форма, направление, поведение</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Форма</h3>
+<table class="params-table">
+<tr><td>Буква Е</td><td>LETTER_E</td><td>Классический знак Сивцева</td></tr>
+<tr><td>Кольцо Ландольта</td><td>LANDOLT</td><td>Разрыв в одну из 4 сторон</td></tr>
+<tr><td>Динамика Круг</td><td>singleCircleEnabled</td><td>Двухслойный радиальный градиент</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Направление и активность</h3>
+<table class="params-table">
+<tr><td>Случайное направление</td><td>isActive</td><td>Каждый показ новое</td></tr>
+<tr><td>Фиксированное</td><td>stimDirectionFixed</td><td>вверх / вниз / влево / вправо</td></tr>
+<tr><td>Случайное положение</td><td>singleRandomPos</td><td>Стимул появляется в случайной точке</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="colors">
+<div class="section-head">
+<h2><span class="ico">🎨</span> Цвета</h2>
+<p>Стимул, фон, промежуточные цвета</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Базовые цвета</h3>
+<table class="params-table">
+<tr><td>Цвет стимула</td><td>stimR/G/B</td><td>Любой RGB</td></tr>
+<tr><td>Цвет фона</td><td>bgR/G/B</td><td>Любой RGB</td></tr>
+</table>
+<div class="preview-box" style="background:#000;margin-top:12px">
+<span class="label">Стимул на фоне</span>
+<svg width="60" height="60" viewBox="0 0 60 60" style="shape-rendering:crispEdges">
+<path d="M 5 5 H 55 V 15 H 15 V 25 H 55 V 35 H 15 V 45 H 55 V 55 H 5 Z" fill="#00ff88"/>
+</svg>
+</div>
+</div>
+<div class="card">
+<h3>Наследование по связям</h3>
+<table class="params-table">
+<tr><td>Острота (размер)</td><td>inheritSize</td><td>Следующий узел берёт V предыдущего</td></tr>
+<tr><td>Скорость</td><td>inheritSpeed</td><td>Следующий узел берёт время показа</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="grid">
+<div class="section-head">
+<h2><span class="ico">🔲</span> Сетка положения</h2>
+<p>Стимул появляется в заданной части экрана</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Параметры</h3>
+<table class="params-table">
+<tr><td>Включить сетку</td><td>singleGridEnabled</td><td>true / false</td></tr>
+<tr><td>Столбцов (X)</td><td>singleGridX</td><td>1 – 10</td></tr>
+<tr><td>Строк (Y)</td><td>singleGridY</td><td>1 – 10</td></tr>
+<tr><td>Показывать линии</td><td>singleGridShowLines</td><td>Визуальная подсказка</td></tr>
+<tr><td>Случайная клетка</td><td>singleGridRandomCell</td><td>Или фиксированная</td></tr>
+<tr><td>Избегать повтора</td><td>singleGridAvoidRepeat</td><td>Не та же клетка дважды</td></tr>
+<tr><td>Активные клетки</td><td>singleGridCells</td><td>Вручную выбрать подмножество</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Пример: 3×3, активны 4 клетки</h3>
+<div class="preview-box" style="background:#111">
+<span class="label">Сетка 3×3</span>
+<div style="display:grid;grid-template-columns:repeat(3,32px);gap:2px">
+<div style="width:32px;height:32px;background:#22c55e;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#1a1a1a;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#22c55e;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#1a1a1a;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#22c55e;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#1a1a1a;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#22c55e;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#1a1a1a;border-radius:4px"></div>
+<div style="width:32px;height:32px;background:#1a1a1a;border-radius:4px"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="circle">
+<div class="section-head">
+<h2><span class="ico">🎯</span> Динамика Круг</h2>
+<p>Двухслойный радиальный градиент с независимыми анимациями</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Внутренний диск</h3>
+<table class="params-table">
+<tr><td>Показывать</td><td>circleInnerEnabled</td><td>true / false</td></tr>
+<tr><td>Радиус</td><td>circleInnerRadiusPct</td><td>5 – 95 %</td></tr>
+<tr><td>Цвет 1 (центр)</td><td>circleInnerColor1</td><td>Любой RGB</td></tr>
+<tr><td>Цвет 3 (середина)</td><td>circleInnerColor3</td><td>Опционально</td></tr>
+<tr><td>Цвет 2 (край)</td><td>circleInnerColor2</td><td>Любой RGB</td></tr>
+<tr><td>Время цикла</td><td>circleInnerDuration</td><td>от 0.2 с</td></tr>
+<tr><td>Повторять</td><td>circleInnerLoop</td><td>true / false</td></tr>
+<tr><td>Пинг-понг</td><td>circleInnerReverse</td><td>A→B→A</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Внешнее кольцо</h3>
+<table class="params-table">
+<tr><td>Показывать</td><td>circleOuterEnabled</td><td>true / false</td></tr>
+<tr><td>Цвет 1 (у диска)</td><td>circleOuterColor1</td><td>Прозрачный у центра</td></tr>
+<tr><td>Цвет 3 (середина)</td><td>circleOuterColor3</td><td>Опционально</td></tr>
+<tr><td>Цвет 2 (край)</td><td>circleOuterColor2</td><td>Любой RGB</td></tr>
+<tr><td>Время цикла</td><td>circleOuterDuration</td><td>от 0.2 с</td></tr>
+<tr><td>Повторять</td><td>circleOuterLoop</td><td>true / false</td></tr>
+<tr><td>Пинг-понг</td><td>circleOuterReverse</td><td>A→B→A</td></tr>
+</table>
+<div class="preview-box" style="background:#000;margin-top:12px">
+<span class="label">Круг с кольцом</span>
+<div style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#ff0000 0%,#ff0000 40%,#ffff00 42%,#00ff00 55%,#0080ff 100%)"></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="dynamic">
+<div class="section-head">
+<h2><span class="ico">🎨</span> Динамика цвета (плавная)</h2>
+<p>Постепенный переход A → B за заданное время</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Динамика стимула</h3>
+<table class="params-table">
+<tr><td>Включить</td><td>singleStimDynamicEnabled</td><td>true / false</td></tr>
+<tr><td>Цвет 1</td><td>singleStimColor1</td><td>Стартовый</td></tr>
+<tr><td>Цвет 3 (опц.)</td><td>singleStimColor3</td><td>Промежуточный</td></tr>
+<tr><td>Цвет 2</td><td>singleStimColor2</td><td>Конечный</td></tr>
+<tr><td>Время</td><td>singleStimDuration</td><td>от 0.2 с</td></tr>
+<tr><td>Повторять</td><td>singleStimLoop</td><td>true / false</td></tr>
+<tr><td>Пинг-понг</td><td>singleStimReverse</td><td>A→B→A</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Динамика фона</h3>
+<table class="params-table">
+<tr><td>Включить</td><td>singleBgDynamicEnabled</td><td>true / false</td></tr>
+<tr><td>Цвет 1</td><td>singleBgColor1</td><td>Стартовый</td></tr>
+<tr><td>Цвет 3 (опц.)</td><td>singleBgColor3</td><td>Промежуточный</td></tr>
+<tr><td>Цвет 2</td><td>singleBgColor2</td><td>Конечный</td></tr>
+<tr><td>Время</td><td>singleBgDuration</td><td>от 0.2 с</td></tr>
+<tr><td>Повторять</td><td>singleBgLoop</td><td>true / false</td></tr>
+<tr><td>Пинг-понг</td><td>singleBgReverse</td><td>A→B→A</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="blink">
+<div class="section-head">
+<h2><span class="ico">🔦</span> Моргание (резкая смена цвета)</h2>
+<p>Мгновенная смена цвета без плавного перехода — тренирует быстрое восприятие</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Параметры моргания</h3>
+<table class="params-table">
+<tr><td>Включить</td><td>blinkEnabled</td><td>true / false</td></tr>
+<tr><td>Цель</td><td>blinkTarget</td><td>stim / bg / both</td></tr>
+<tr><td>Цвет A</td><td>blinkColorA</td><td>Любой RGB</td></tr>
+<tr><td>Цвет B</td><td>blinkColorB</td><td>Любой RGB</td></tr>
+<tr><td>Период</td><td>blinkIntervalMs</td><td>50 – 5000 мс</td></tr>
+<tr><td>Доля A</td><td>blinkDuty</td><td>0.05 – 0.95</td></tr>
+<tr><td>Количество</td><td>blinkCount</td><td>0 = бесконечно</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Пример: 500 мс, доля 50%</h3>
+<div class="example"><b>t=0</b>    красный  ●
+<b>t=250</b>  синий    ●
+<b>t=500</b>  красный  ●
+<b>t=750</b>  синий    ●
+...</div>
+<p style="font-size:11px;color:var(--muted);margin-top:8px">Каждое переключение — мгновенное, без lerp.</p>
+</div>
+</div>
+</section>
+
+<section class="section" id="peri">
+<div class="section-head">
+<h2><span class="ico">🟢</span> Периферийные точки</h2>
+<p>Дополнительные стимулы на границе поля зрения</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Параметры</h3>
+<table class="params-table">
+<tr><td>Включить</td><td>periEnabled</td><td>true / false</td></tr>
+<tr><td>Количество</td><td>periCount</td><td>1 – 12</td></tr>
+<tr><td>Острота (V)</td><td>periAcuity</td><td>0.1 – 1.0</td></tr>
+<tr><td>Радиус min</td><td>periRadiusMinPct</td><td>20 – 100 %</td></tr>
+<tr><td>Радиус max</td><td>periRadiusMaxPct</td><td>20 – 100 %</td></tr>
+<tr><td>Цвет</td><td>periColor</td><td>Любой RGB</td></tr>
+<tr><td>Движение</td><td>periMotion</td><td>static / rotate / pulse</td></tr>
+<tr><td>Скорость</td><td>periSpeed</td><td>0.02 – 5</td></tr>
+<tr><td>Случайные углы</td><td>periRandomAngles</td><td>true / false</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Пример: 4 точки по кругу</h3>
+<div class="preview-box" style="background:#000;height:160px">
+<span class="label">Периферия</span>
+<div style="position:relative;width:120px;height:120px">
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:#00ff64;border-radius:50%"></div>
+<div style="position:absolute;top:10px;left:10px;width:8px;height:8px;background:#00ff64;border-radius:50%"></div>
+<div style="position:absolute;top:10px;right:10px;width:8px;height:8px;background:#00ff64;border-radius:50%"></div>
+<div style="position:absolute;bottom:10px;left:10px;width:8px;height:8px;background:#00ff64;border-radius:50%"></div>
+<div style="position:absolute;bottom:10px;right:10px;width:8px;height:8px;background:#00ff64;border-radius:50%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="defocus">
+<div class="section-head">
+<h2><span class="ico">🔴</span> Цифровой дефокус</h2>
+<p>Имитация периферического зрения с чёрным стимулом в центре</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Параметры</h3>
+<table class="params-table">
+<tr><td>Включить</td><td>dfEnabled</td><td>true / false</td></tr>
+<tr><td>Радиус центра</td><td>dfCenterRadiusMm</td><td>3 – 50 мм</td></tr>
+<tr><td>Фон центра</td><td>dfCenterBg</td><td>Обычно красный</td></tr>
+<tr><td>Цвет стимула</td><td>dfStimColor</td><td>Обычно чёрный</td></tr>
+<tr><td>Фон периферии</td><td>dfPeriBg</td><td>Обычно синий</td></tr>
+<tr><td>Размытие</td><td>dfPeriBlur</td><td>0 – 100 %</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Пример</h3>
+<div class="preview-box" style="background:#0047ab;height:140px">
+<span class="label">Дефокус</span>
+<div style="width:90px;height:90px;border-radius:50%;background:#cc0000;display:grid;place-items:center">
+<svg width="50" height="50" viewBox="0 0 50 50" style="shape-rendering:crispEdges">
+<path d="M 5 5 H 45 V 13 H 13 V 21 H 45 V 29 H 13 V 37 H 45 V 45 H 5 Z" fill="#000"/>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="reading">
+<div class="section-head">
+<h2><span class="ico">📖</span> Чтение</h2>
+<p>Книги с адаптивным шрифтом и физиологическим фоном</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Книга и шрифт</h3>
+<table class="params-table">
+<tr><td>Формат</td><td>bookFile</td><td>TXT / FB2 / EPUB</td></tr>
+<tr><td>Шрифт</td><td>readingFontFamily</td><td>Sivtsev / Segoe UI / любой</td></tr>
+<tr><td>Жирный</td><td>readingFontWeight</td><td>normal / bold</td></tr>
+<tr><td>Острота V</td><td>readingAcuity</td><td>0.1 – 2.0</td></tr>
+<tr><td>Дистанция</td><td>readingDistance</td><td>0.1 – 20 м</td></tr>
+<tr><td>Цвет текста</td><td>readingTextColor</td><td>Любой RGB</td></tr>
+<tr><td>Длительность</td><td>duration</td><td>мс / с / мин</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Фон: 4 режима</h3>
+<table class="params-table">
+<tr><td>Сплошной</td><td>solid</td><td>Один цвет</td></tr>
+<tr><td>Две половины</td><td>split</td><td>Резкая граница L/R</td></tr>
+<tr><td>Градиент</td><td>gradient</td><td>2 или 3 цвета</td></tr>
+<tr><td>Динамический</td><td>dynamic</td><td>Плавная смена</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Динамический фон</h3>
+<table class="params-table">
+<tr><td>Режим</td><td>readingDynamicMode</td><td>simple / rgb / physiological</td></tr>
+<tr><td>Цвет A</td><td>readingDynamicStartColor</td><td>Стартовый</td></tr>
+<tr><td>Цвет B</td><td>readingDynamicEndColor</td><td>Конечный</td></tr>
+<tr><td>Время</td><td>readingDynamicDuration</td><td>от 0.2 с</td></tr>
+<tr><td>Повторять</td><td>readingDynamicLoop</td><td>true / false</td></tr>
+<tr><td>Пинг-понг</td><td>readingDynamicReverse</td><td>A→B→A</td></tr>
+<tr><td>Шаг дптр</td><td>readingDynamicStep</td><td>0.1 – 1.6</td></tr>
+<tr><td>Длит. шага</td><td>readingDynamicStepDuration</td><td>от 0.1 с</td></tr>
+<tr><td>Показывать дптр</td><td>readingDynamicShowLabel</td><td>true / false</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Физиологическая шкала (17 точек)</h3>
+<div class="example">0.0 дптр → rgb(180,0,0)
+0.2 дптр → rgb(255,35,0)
+0.4 дптр → rgb(255,145,0)
+0.6 дптр → rgb(155,245,0)
+0.8 дптр → rgb(0,230,60)
+1.0 дптр → rgb(0,240,160)
+1.2 дптр → rgb(0,175,255)
+1.4 дптр → rgb(0,50,255)
+1.6 дптр → rgb(90,0,190)</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="compare">
+<div class="section-head">
+<h2><span class="ico">⚖️</span> Сравнение</h2>
+<p>Два подрежима: направление и «найди одинаковые»</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Основные параметры</h3>
+<table class="params-table">
+<tr><td>Режим</td><td>compareMode</td><td>direction / find_same</td></tr>
+<tr><td>Пар (для find_same)</td><td>pairsCount</td><td>1 – 20</td></tr>
+<tr><td>Столбцов</td><td>gridX</td><td>2 – 6</td></tr>
+<tr><td>Строк</td><td>gridY</td><td>1 – 6</td></tr>
+<tr><td>Активные клетки</td><td>activeCells</td><td>Минимум 2</td></tr>
+<tr><td>Параметры клеток</td><td>cellParams[]</td><td>V, цвета, время для каждой</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Параметры одной клетки</h3>
+<table class="params-table">
+<tr><td>V</td><td>acuity</td><td>0.1 – 2.0</td></tr>
+<tr><td>Размер</td><td>size</td><td>Расчётный px</td></tr>
+<tr><td>Цвет стимула</td><td>stimR/G/B</td><td>RGB</td></tr>
+<tr><td>Цвет фона</td><td>bgR/G/B</td><td>RGB</td></tr>
+<tr><td>Время</td><td>duration</td><td>200 – 5000 мс</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="time">
+<div class="section-head">
+<h2><span class="ico">⏱</span> Время</h2>
+<p>Четыре фазы на каждый показ + единицы измерения</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Четыре фазы</h3>
+<table class="params-table">
+<tr><td>Задержка 1</td><td>delay1</td><td>Пауза до показа</td></tr>
+<tr><td>Показ</td><td>duration</td><td>Стимул на экране</td></tr>
+<tr><td>Ожидание ответа</td><td>response</td><td>Запас на реакцию</td></tr>
+<tr><td>Задержка 2</td><td>delay2</td><td>Пауза после показа</td></tr>
+</table>
+<div class="example">┌─d1─┐┌─показ─┐┌─ответ─┐┌─d2─┐
+│    ││      ││       ││    │
+Стимул появляется
+Ответ засчитывается
+Следующий показ</div>
+</div>
+<div class="card">
+<h3>Единицы измерения</h3>
+<table class="params-table">
+<tr><td>миллисекунды</td><td>ms</td><td>× 1</td></tr>
+<tr><td>секунды</td><td>s</td><td>× 1000</td></tr>
+<tr><td>минуты</td><td>min</td><td>× 60000</td></tr>
+</table>
+<p style="font-size:11px;color:var(--muted);margin-top:8px">Единица определяется автоматически, но можно переключить вручную.</p>
+</div>
+</div>
+</section>
+
+<section class="section" id="blink-control">
+<div class="section-head">
+<h2><span class="ico">👁️</span> Контроль морганий (через камеру)</h2>
+<p>Автоматическое отслеживание частоты морганий через EAR</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Параметры</h3>
+<table class="params-table">
+<tr><td>Включить</td><td>blinkEnabled</td><td>true / false</td></tr>
+<tr><td>Порог EAR</td><td>blinkThreshold</td><td>0.05 – 0.5</td></tr>
+<tr><td>Минимум в минуту</td><td>blinkMinRate</td><td>0 – 60</td></tr>
+<tr><td>Окно подсчёта</td><td>blinkWindowSec</td><td>5 – 120 с</td></tr>
+<tr><td>Ждать открытых глаз</td><td>blinkLockShow</td><td>Блокировать показ</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Что отслеживается</h3>
+<table class="params-table">
+<tr><td>Общее количество</td><td>totalBlinks</td><td>За сессию</td></tr>
+<tr><td>Долгие</td><td>longBlinks</td><td>> 400 мс</td></tr>
+<tr><td>Асимметричные</td><td>asymBlinks</td><td>< 0.45 отношения</td></tr>
+<tr><td>Средняя частота</td><td>avgRate</td><td>Морганий/мин</td></tr>
+<tr><td>Минимум</td><td>minRateObserved</td><td>Худший момент</td></tr>
+</table>
+<p style="font-size:11px;color:var(--muted);margin-top:8px">Если частота падает ниже порога — показывается «Поморгайте».</p>
+</div>
+</div>
+</section>
+
+<section class="section" id="camera">
+<div class="section-head">
+<h2><span class="ico">📷</span> Камера и дистанция</h2>
+<p>Контроль расстояния до экрана через распознавание лица</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Общие дистанции</h3>
+<table class="params-table">
+<tr><td>Общая (стимулы)</td><td>generalDistance</td><td>0.1 – 20 м</td></tr>
+<tr><td>Чтение</td><td>readingDistance</td><td>0.1 – 20 м</td></tr>
+<tr><td>Увеличение</td><td>distanceToleranceIncreasePct</td><td>0 – 100 %</td></tr>
+<tr><td>Уменьшение</td><td>distanceToleranceDecreasePct</td><td>0 – 100 %</td></tr>
+<tr><td>Таймаут</td><td>distanceRestoreTimeoutSec</td><td>0 – 60 с</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Как работает</h3>
+<table class="params-table">
+<tr><td>Калибровка</td><td>focalLengthPx</td><td>Один раз по известной дистанции</td></tr>
+<tr><td>Мерило</td><td>IPD = 63 мм</td><td>Межзрачковое расстояние</td></tr>
+<tr><td>Формула</td><td>D = IPD × f / px</td><td>Дистанция в реальном времени</td></tr>
+<tr><td>Реакция</td><td>«Не отклоняйтесь» / «Не приближайтесь»</td><td>Голос + баннер</td></tr>
+<tr><td>Пересчёт</td><td>recalcSizesForNewDistance</td><td>После таймаута</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="connections">
+<div class="section-head">
+<h2><span class="ico">🔗</span> Связи между узлами</h2>
+<p>Обычные переходы и петли с наследованием параметров</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Типы связей</h3>
+<table class="params-table">
+<tr><td>Обычная</td><td>isLoop: false</td><td>Один раз туда и дальше</td></tr>
+<tr><td>Петля</td><td>isLoop: true</td><td>Вернуться к узлу N раз</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Параметры петли</h3>
+<table class="params-table">
+<tr><td>Количество циклов</td><td>loopLimit</td><td>1 – 9999</td></tr>
+<tr><td>Инициировать по ответу</td><td>initiateByAnswer</td><td>true / false</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Наследование</h3>
+<table class="params-table">
+<tr><td>Острота зрения</td><td>inheritSize</td><td>Следующий узел = V предыдущего</td></tr>
+<tr><td>Скорость</td><td>inheritSpeed</td><td>Следующий узел = duration</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="section" id="generator">
+<div class="section-head">
+<h2><span class="ico">⚙️</span> Генератор режимов</h2>
+<p>Быстрое создание узла или запуск тренировки без графа</p>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Что настраивается в генераторе</h3>
+<table class="params-table">
+<tr><td>Тип тренировки</td><td>single / compare / reading</td><td>Один стимул / сравнение / чтение</td></tr>
+<tr><td>Режим</td><td>близорукость / дальнозоркость / общая</td><td>Предустановка</td></tr>
+<tr><td>Активная тренировка</td><td>gen-active</td><td>Случайные направления</td></tr>
+<tr><td>Серий</td><td>gen-series</td><td>1 – 20</td></tr>
+<tr><td>Размер серии</td><td>gen-series-size</td><td>4 – 8</td></tr>
+<tr><td>Порог</td><td>gen-threshold</td><td>1 – 8</td></tr>
+<tr><td>Тип стимула</td><td>gen-type</td><td>LETTER_E / LANDOLT</td></tr>
+<tr><td>V старт / V цель</td><td>gen-start-acuity / end</td><td>0.1 – 2.0</td></tr>
+<tr><td>Шаг V</td><td>gen-acuity-step</td><td>0.05 / 0.1 / 0.2 / 0.5</td></tr>
+<tr><td>Цвета</td><td>gen-start-color / end</td><td>Любые</td></tr>
+<tr><td>Задержки</td><td>gen-delay1 / gen-delay2</td><td>мс / с / мин</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>Специфичные секции</h3>
+<table class="params-table">
+<tr><td>Сетка положения</td><td>gen-single-grid-*</td><td>X, Y, линии, случайность</td></tr>
+<tr><td>Динамика стимула</td><td>gen-single-stim-*</td><td>3 цвета, время, пинг-понг</td></tr>
+<tr><td>Динамика фона</td><td>gen-single-bg-*</td><td>3 цвета, время, пинг-понг</td></tr>
+<tr><td>Динамика Круг</td><td>gen-circle-*</td><td>Внутренний + внешний</td></tr>
+<tr><td>Периферия</td><td>gen-peri-*</td><td>Точки, движение</td></tr>
+<tr><td>Дефокус</td><td>gen-df-*</td><td>Радиус, цвета</td></tr>
+<tr><td>Моргание</td><td>gen-blink-anim-*</td><td>Резкая смена</td></tr>
+<tr><td>Контроль морганий</td><td>gen-blink-*</td><td>EAR-контроль</td></tr>
+<tr><td>Дистанции</td><td>gen-general-distance / gen-reading-distance</td><td>Общая / чтение</td></tr>
+<tr><td>Допуски</td><td>gen-tol-*</td><td>% и таймаут</td></tr>
+<tr><td>Чтение</td><td>gen-reading-*</td><td>Текст, шрифт, фоны</td></tr>
+<tr><td>Сравнение</td><td>gen-compare-mode</td><td>direction / find_same</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<div class="footer">
+Vissort Studio — все параметры редактора сценариев в одном справочнике. Данные актуальны для версии с поддержкой моргания и оценки времени.
+</div>
+
+</main>
+
+</body>
+</html>

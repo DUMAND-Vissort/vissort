@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="manifest" href="/site.webmanifest">
@@ -73,119 +77,118 @@ main{flex:1;position:relative;display:flex;overflow:hidden;background:#000}
 .games-menu a:hover{background:#1e1e28}
 .games-menu .g-icon{font-size:20px}
 @media (max-width:720px){
-  :root{--hdr-h:46px;--btn-h:28px}
-  .counter{font-size:11px;padding:3px 8px}
-  .btn{font-size:12px;padding:0 10px}
-  #hdr-scenario{max-width:120px}
+:root{--hdr-h:46px;--btn-h:28px}
+.counter{font-size:11px;padding:3px 8px}
+.btn{font-size:12px;padding:0 10px}
+#hdr-scenario{max-width:120px}
 }
 </style>
 </head>
 <body>
 <header>
-  <span class="chip" id="hdr-scenario" title="Выбрать сценарий">—</span>
-  <div class="counters">
-    <span class="counter">Серия <b id="cnt-series-progress">0/0</b></span>
-    <span class="counter">V <b id="cnt-acuity">—</b></span>
-    <span class="counter">✓ <b id="cnt-correct">0</b></span>
-    <span class="counter">✗ <b id="cnt-incorrect">0</b></span>
-    <span class="counter">∅ <b id="cnt-noanswer">0</b></span>
-  </div>
-  <div class="hdr-spacer"></div>
-  <button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
-  <button class="btn btn-ghost" id="btn-history">📊 История</button>
-  <button class="btn btn-primary" id="btn-player">▶ Начать</button>
-  <button class="btn btn-warn" id="btn-player-pause" disabled>⏸</button>
-  <button class="btn btn-danger" id="btn-player-stop" disabled>⏹</button>
-  <span class="chip" id="hdr-user">—</span>
-  <button class="btn btn-ghost" id="btn-logout">Выйти</button>
+<span class="chip" id="hdr-scenario" title="Выбрать сценарий">—</span>
+<div class="counters">
+<span class="counter">Серия <b id="cnt-series-progress">0/0</b></span>
+<span class="counter">V <b id="cnt-acuity">—</b></span>
+<span class="counter">✓ <b id="cnt-correct">0</b></span>
+<span class="counter">✗ <b id="cnt-incorrect">0</b></span>
+<span class="counter">∅ <b id="cnt-noanswer">0</b></span>
+</div>
+<div class="hdr-spacer"></div>
+<button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
+<button class="btn btn-ghost" id="btn-history">📊 История</button>
+<button class="btn btn-primary" id="btn-player">▶ Начать</button>
+<button class="btn btn-warn" id="btn-player-pause" disabled>⏸</button>
+<button class="btn btn-danger" id="btn-player-stop" disabled>⏹</button>
+<span class="chip" id="hdr-user">—</span>
+<button class="btn btn-ghost" id="btn-logout">Выйти</button>
 </header>
 
 <div class="games-menu" id="games-menu">
-  <a href="/pyatnashki.html"><span class="g-icon">🔢</span><span>Пятнашки</span></a>
-  <a href="/differences-wolf.html"><span class="g-icon">🐺</span><span>Найди 10 отличий — Волки</span></a>
+<a href="/pyatnashki.html"><span class="g-icon">🔢</span><span>Пятнашки</span></a>
+<a href="/differences-wolf.html"><span class="g-icon">🐺</span><span>Найди 10 отличий — Волки</span></a>
 </div>
 
 <main>
-  <div id="stim-display">
-    <div id="stim"></div>
-    <div id="reading-viewport"><div id="reading-content"></div></div>
-    <div id="physio-indicator"></div>
-    <div id="cam-indicator"></div>
-    <div id="reading-toolbar">
-      <button class="btn btn-ghost" id="reading-prev">◀ Назад</button>
-      <button class="btn btn-warn" id="reading-play-pause">⏸ Пауза</button>
-      <button class="btn btn-ghost" id="reading-next">Вперёд ▶</button>
-      <span id="reading-page-info">Стр. 1 / 1</span>
-      <button class="btn btn-danger" id="reading-not-see">🔻 Не вижу</button>
-      <button class="btn btn-success" id="reading-see-well">🔺 Вижу хорошо</button>
-      <button class="btn btn-primary" id="reading-finish">⏹ Закончить</button>
-    </div>
-    <div id="response-buttons">
-      <button class="btn-resp" data-dir="вверх">▲</button>
-      <button class="btn-resp" data-dir="вниз">▼</button>
-      <button class="btn-resp" data-dir="влево">◀</button>
-      <button class="btn-resp" data-dir="вправо">▶</button>
-      <button class="btn-resp wide" data-answer="да" style="display:none;">Да</button>
-      <button class="btn-resp wide" data-answer="нет" style="display:none;">Нет</button>
-    </div>
-  </div>
+<div id="stim-display">
+<div id="stim"></div>
+<div id="reading-viewport"><div id="reading-content"></div></div>
+<div id="physio-indicator"></div>
+<div id="cam-indicator"></div>
+<div id="reading-toolbar">
+<button class="btn btn-ghost" id="reading-prev">◀ Назад</button>
+<button class="btn btn-warn" id="reading-play-pause">⏸ Пауза</button>
+<button class="btn btn-ghost" id="reading-next">Вперёд ▶</button>
+<span id="reading-page-info">Стр. 1 / 1</span>
+<button class="btn btn-danger" id="reading-not-see">🔻 Не вижу</button>
+<button class="btn btn-success" id="reading-see-well">🔺 Вижу хорошо</button>
+<button class="btn btn-primary" id="reading-finish">⏹ Закончить</button>
+</div>
+<div id="response-buttons">
+<button class="btn-resp" data-dir="вверх">▲</button>
+<button class="btn-resp" data-dir="вниз">▼</button>
+<button class="btn-resp" data-dir="влево">◀</button>
+<button class="btn-resp" data-dir="вправо">▶</button>
+<button class="btn-resp wide" data-answer="да" style="display:none;">Да</button>
+<button class="btn-resp wide" data-answer="нет" style="display:none;">Нет</button>
+</div>
+</div>
 
-  <div id="status-overlay">
-    <div class="box">
-      <h2 id="status-title">Загрузка…</h2>
-      <p id="status-text">Проверяем авторизацию.</p>
-      <button class="btn btn-primary hidden" id="status-action">Войти</button>
-    </div>
-  </div>
+<div id="status-overlay">
+<div class="box">
+<h2 id="status-title">Загрузка…</h2>
+<p id="status-text">Проверяем авторизацию.</p>
+<button class="btn btn-primary hidden" id="status-action">Войти</button>
+</div>
+</div>
 </main>
 
 <div class="modal" id="scenario-modal">
-  <div class="modal-content">
-    <h3>Выберите сценарий</h3>
-    <div id="scenario-list"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" id="scenario-close">Закрыть</button>
-    </div>
-  </div>
+<div class="modal-content">
+<h3>Выберите сценарий</h3>
+<div id="scenario-list"></div>
+<div class="modal-footer">
+<button class="btn btn-ghost" id="scenario-close">Закрыть</button>
+</div>
+</div>
 </div>
 
 <div class="modal" id="history-modal">
-  <div class="modal-content" style="width:640px">
-    <h3>Мои результаты</h3>
-    <div id="history-body" style="font-size:13px;color:#9ca3af">Загрузка…</div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" id="history-close">Закрыть</button>
-    </div>
-  </div>
+<div class="modal-content" style="width:640px">
+<h3>Мои результаты</h3>
+<div id="history-body" style="font-size:13px;color:#9ca3af">Загрузка…</div>
+<div class="modal-footer">
+<button class="btn btn-ghost" id="history-close">Закрыть</button>
+</div>
+</div>
 </div>
 
 <div class="modal" id="auth-modal">
-  <div class="modal-content">
-    <h3 id="auth-title">Вход</h3>
-    <label>Email</label>
-    <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
-    <label>Пароль</label>
-    <input type="password" id="auth-password" autocomplete="current-password">
-    <div class="modal-footer">
-      <button class="btn btn-ghost" id="auth-toggle">Регистрация</button>
-      <button class="btn btn-primary" id="auth-submit">Войти</button>
-    </div>
-  </div>
+<div class="modal-content">
+<h3 id="auth-title">Вход</h3>
+<label>Email</label>
+<input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
+<label>Пароль</label>
+<input type="password" id="auth-password" autocomplete="current-password">
+<div class="modal-footer">
+<button class="btn btn-ghost" id="auth-toggle">Регистрация</button>
+<button class="btn btn-primary" id="auth-submit">Войти</button>
+</div>
+</div>
 </div>
 
 <div class="modal" id="pause-modal">
-  <div class="modal-content" style="text-align:center">
-    <h3>Пауза</h3>
-    <p style="color:#9ca3af;font-size:13px;margin-bottom:14px">Тренировка приостановлена.</p>
-    <button class="btn btn-success" id="pause-continue">▶ Продолжить</button>
-    <button class="btn btn-danger" id="pause-exit">✕ Выйти</button>
-  </div>
+<div class="modal-content" style="text-align:center">
+<h3>Пауза</h3>
+<p style="color:#9ca3af;font-size:13px;margin-bottom:14px">Тренировка приостановлена.</p>
+<button class="btn btn-success" id="pause-continue">▶ Продолжить</button>
+<button class="btn btn-danger" id="pause-exit">✕ Выйти</button>
+</div>
 </div>
 
 <script src="voice.js" defer></script>
 <script src="user.js" defer></script>
 <script>
-// ==================== МЕНЮ ИГР ====================
 (function(){
   'use strict';
   const btn = document.getElementById('btn-games');

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
+<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<link rel="manifest" href="/player.webmanifest">
+<meta name="theme-color" content="#0b0b12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vissort">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Vissort — Тренировка</title>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0b0b12;--bg-2:#12121a;--line:#252540;--txt:#e8e8f0;--muted:#9494a8;--accent:#6366f1;--accent-2:#8b5cf6;--green:#10b981;--red:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{font-family:-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+
+header{padding:env(safe-area-inset-top) 16px 0;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;min-height:52px;padding-top:max(env(safe-area-inset-top),12px);padding-bottom:10px;flex-shrink:0;z-index:100}
+.hdr-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px}
+.hdr-logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;font-size:14px}
+.hdr-spacer{flex:1}
+.hdr-user{font-size:12px;color:var(--muted);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--txt);font-size:16px;cursor:pointer;display:grid;place-items:center;transition:.15s;font-family:inherit}
+.icon-btn:active{background:var(--line);transform:scale(.95)}
+
+main{flex:1;position:relative;display:flex;flex-direction:column;overflow:hidden;background:#000;min-height:0}
+#screen{flex:1;position:relative;display:flex;overflow:hidden;min-height:0}
+
+#stim{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0}
+#stim svg{max-width:100%;max-height:100%}
+
+#reading-viewport{display:none;position:absolute;inset:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-behavior:smooth;z-index:10;user-select:text;-webkit-user-select:text}
+#reading-viewport::-webkit-scrollbar{display:none}
+#reading-content{height:100%;width:100%;box-sizing:border-box;padding:24px 28px 140px;font-size:22px;line-height:1.55;column-fill:auto;word-break:keep-all;overflow-wrap:normal;hyphens:none}
+#reading-content p{margin:0 0 1em 0}
+
+#reading-toolbar{display:none;position:absolute;bottom:0;left:0;right:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(15,15,22,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;z-index:25}
+.tb-btn{padding:8px 14px;border-radius:8px;border:none;background:var(--line);color:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:.15s}
+.tb-btn:active{transform:scale(.95);background:#3a3a55}
+.tb-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+.tb-btn.danger{background:var(--red)}
+.tb-btn.success{background:var(--green)}
+.tb-btn.warn{background:#eab308;color:#111}
+
+#response{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;gap:14px;z-index:20;padding:8px}
+.dir-btn{width:72px;height:72px;border-radius:18px;background:rgba(30,30,45,.92);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,.15);color:#fff;font-size:34px;cursor:pointer;display:grid;place-items:center;font-family:inherit;transition:.12s;touch-action:manipulation}
+.dir-btn:active{transform:scale(.9);background:var(--accent);border-color:var(--accent);box-shadow:0 0 30px var(--accent)}
+.dir-btn[data-answer]{width:auto;padding:0 28px;font-size:22px;height:72px;border-radius:18px}
+
+#cam-badge{position:absolute;top:12px;right:12px;padding:7px 14px;border-radius:8px;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);color:#fff;font-size:12px;font-weight:600;z-index:30;display:none;white-space:nowrap}
+#cam-badge.ok{color:#6ee7b7}
+#cam-badge.warn{color:#fdba74}
+
+#physio-badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:7px 16px;border-radius:8px;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);color:#fff;font-size:12px;z-index:30;display:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+
+#reading-page-info{background:var(--line);color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;min-width:90px;text-align:center;font-weight:600}
+
+.screen-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;background:var(--bg);z-index:50;overflow-y:auto}
+.screen-overlay.visible{display:flex}
+.screen-card{max-width:480px;width:100%;text-align:center}
+.screen-card h2{font-size:22px;margin-bottom:12px;font-weight:800;letter-spacing:-.3px}
+.screen-card p{color:var(--muted);font-size:15px;line-height:1.6;margin-bottom:22px}
+.screen-card .btn{padding:14px 28px;border-radius:12px;border:none;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:.15s;width:100%;margin-top:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.btn-ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn:active{transform:scale(.97)}
+
+.scenario-list{display:flex;flex-direction:column;gap:10px;margin:20px 0}
+.scenario-item{padding:16px 18px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;text-align:left;cursor:pointer;transition:.15s;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.scenario-item:active{background:#1a1a2e;transform:scale(.98)}
+.scenario-item.active{border-color:var(--accent);background:rgba(99,102,241,.1)}
+.scenario-item .s-name{font-weight:700;font-size:15px;margin-bottom:4px}
+.scenario-item .s-meta{font-size:12px;color:var(--muted)}
+.scenario-item .s-arrow{font-size:20px;color:var(--accent)}
+
+.field{text-align:left;margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.field input{width:100%;padding:14px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;color:#fff;font-size:16px;font-family:inherit;outline:none;transition:.15s}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+
+#hud{position:absolute;top:12px;left:12px;right:12px;display:none;justify-content:space-between;pointer-events:none;z-index:15;gap:10px}
+.hud-chip{padding:6px 12px;border-radius:8px;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);font-size:12px;color:#fff;font-weight:600}
+.hud-chip b{color:#a5b4fc;margin-left:4px}
+
+#pause-overlay{background:rgba(11,11,18,.96);backdrop-filter:blur(20px);z-index:60}
+
+@media (max-width:500px){
+.dir-btn{width:64px;height:64px;font-size:30px}
+.dir-btn[data-answer]{height:64px;padding:0 22px;font-size:20px}
+.hdr-user{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="hdr-logo"><span class="hdr-logo-mark">👁</span> Vissort</div>
+<div class="hdr-spacer"></div>
+<span class="hdr-user" id="hdr-user">—</span>
+<button class="icon-btn" id="btn-logout" title="Выйти">🚪</button>
+</header>
+
+<main>
+<div id="screen">
+<div id="stim"></div>
+
+<div id="reading-viewport"><div id="reading-content"></div></div>
+
+<div id="physio-badge"></div>
+<div id="cam-badge"></div>
+
+<div id="hud">
+<span class="hud-chip">Серия <b id="hud-series">0/0</b></span>
+<span class="hud-chip">V <b id="hud-acuity">—</b></span>
+<span class="hud-chip">✓ <b id="hud-correct">0</b> ✗ <b id="hud-wrong">0</b></span>
+</div>
+
+<div id="reading-toolbar">
+<button class="tb-btn" id="tb-prev">◀</button>
+<button class="tb-btn warn" id="tb-pause">⏸</button>
+<button class="tb-btn" id="tb-next">▶</button>
+<span id="reading-page-info">1 / 1</span>
+<button class="tb-btn danger" id="tb-finish">⏹</button>
+</div>
+
+<div id="response">
+<button class="dir-btn" data-dir="вверх">▲</button>
+<button class="dir-btn" data-dir="вниз">▼</button>
+<button class="dir-btn" data-dir="влево">◀</button>
+<button class="dir-btn" data-dir="вправо">▶</button>
+<button class="dir-btn" data-answer="да" style="display:none">Да</button>
+<button class="dir-btn" data-answer="нет" style="display:none">Нет</button>
+</div>
+</div>
+
+<div class="screen-overlay visible" id="scr-loading">
+<div class="screen-card">
+<h2>Загрузка…</h2>
+<p>Проверяем авторизацию</p>
+</div>
+</div>
+
+<div class="screen-overlay" id="scr-auth">
+<div class="screen-card">
+<h2>Вход в Vissort</h2>
+<p>Введите данные, выданные врачом или администратором</p>
+<div class="field"><label>Email</label><input type="email" id="auth-email" autocomplete="email" inputmode="email"></div>
+<div class="field"><label>Пароль</label><input type="password" id="auth-password" autocomplete="current-password"></div>
+<button class="btn btn-primary" id="auth-submit">Войти</button>
+</div>
+</div>
+
+<div class="screen-overlay" id="scr-noscenario">
+<div class="screen-card">
+<h2>Сценарий не назначен</h2>
+<p>Обратитесь к врачу или администратору для получения программы тренировок</p>
+<button class="btn btn-primary" id="btn-reload">Обновить</button>
+<button class="btn btn-ghost" id="btn-logout-2">Выйти</button>
+</div>
+</div>
+
+<div class="screen-overlay" id="scr-picker">
+<div class="screen-card">
+<h2>Выберите программу</h2>
+<p>У вас несколько назначенных тренировок</p>
+<div class="scenario-list" id="scenario-list"></div>
+</div>
+</div>
+
+<div class="screen-overlay" id="scr-start">
+<div class="screen-card">
+<h2 id="start-title">Готовы?</h2>
+<p id="start-desc">Тренировка займёт несколько минут. Расположитесь удобно.</p>
+<button class="btn btn-primary" id="btn-start">▶ Начать тренировку</button>
+<button class="btn btn-ghost" id="btn-change-scenario">Сменить программу</button>
+</div>
+</div>
+
+<div class="screen-overlay" id="scr-done">
+<div class="screen-card">
+<h2>🎉 Тренировка завершена</h2>
+<p id="done-text">Отличная работа!</p>
+<button class="btn btn-primary" id="btn-done-again">Ещё раз</button>
+<button class="btn btn-ghost" id="btn-done-home">На главную</button>
+</div>
+</div>
+
+<div class="screen-overlay" id="pause-overlay">
+<div class="screen-card">
+<h2>⏸ Пауза</h2>
+<p>Тренировка приостановлена</p>
+<button class="btn btn-primary" id="btn-resume">▶ Продолжить</button>
+<button class="btn btn-ghost" id="btn-exit">Выйти из тренировки</button>
+</div>
+</div>
+</main>
+
+<script src="voice.js" defer></script>
+<script src="player.js" defer></script>
+
+</body>
+</html>

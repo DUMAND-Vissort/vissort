@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="manifest" href="/site.webmanifest">
@@ -41,8 +45,8 @@ main{padding:20px;max-width:100%;margin:0 auto;display:flex;flex-direction:colum
 .cell.done::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:6px}
 
 .cell.ripple-correct::before,.cell.ripple-wrong::before{
-  content:'';position:absolute;inset:-6px;border-radius:10px;
-  animation:ripple .45s ease-out;
+content:'';position:absolute;inset:-6px;border-radius:10px;
+animation:ripple .45s ease-out;
 }
 .cell.ripple-correct::before{border:3px solid var(--green);box-shadow:0 0 20px var(--green)}
 .cell.ripple-wrong::before{border:3px solid var(--red);box-shadow:0 0 20px var(--red)}
@@ -64,81 +68,79 @@ main{padding:20px;max-width:100%;margin:0 auto;display:flex;flex-direction:colum
 <body>
 
 <header>
-  <div class="logo"><span class="logo-mark">👁</span> Vissort — Пятнашки</div>
-  <div class="controls">
-    <div class="control">V <input type="number" id="inp-v" value="1.0" min="0.1" max="2.0" step="0.1"></div>
-    <div class="control">м <input type="number" id="inp-dist" value="1.0" min="0.3" max="10" step="0.1"></div>
-    <div class="control">PPI <input type="number" id="inp-ppi" value="96" min="50" max="800" step="1"></div>
-    <div class="control">Сетка
-      <select id="inp-grid">
-        <option value="6">6 × 6</option>
-        <option value="8">8 × 8</option>
-        <option value="10" selected>10 × 10</option>
-        <option value="12">12 × 12</option>
-      </select>
-    </div>
-    <div class="control">Цвет 1 <input type="color" id="inp-c1" value="#e74c3c"></div>
-    <div class="control">Цвет 2 <input type="color" id="inp-c2" value="#3498db"></div>
-    <div class="control">Фон поля <input type="color" id="inp-field-bg" value="#f5f0e6"></div>
-    <button class="btn btn-primary" id="btn-restart">⟳ Заново</button>
-  </div>
+<div class="logo"><span class="logo-mark">👁</span> Vissort — Пятнашки</div>
+<div class="controls">
+<div class="control">V <input type="number" id="inp-v" value="1.0" min="0.1" max="2.0" step="0.1"></div>
+<div class="control">м <input type="number" id="inp-dist" value="1.0" min="0.3" max="10" step="0.1"></div>
+<div class="control">PPI <input type="number" id="inp-ppi" value="96" min="50" max="800" step="1"></div>
+<div class="control">Сетка
+<select id="inp-grid">
+<option value="6">6 × 6</option>
+<option value="8">8 × 8</option>
+<option value="10" selected>10 × 10</option>
+<option value="12">12 × 12</option>
+</select>
+</div>
+<div class="control">Цвет 1 <input type="color" id="inp-c1" value="#e74c3c"></div>
+<div class="control">Цвет 2 <input type="color" id="inp-c2" value="#3498db"></div>
+<div class="control">Фон поля <input type="color" id="inp-field-bg" value="#f5f0e6"></div>
+<button class="btn btn-primary" id="btn-restart">⟳ Заново</button>
+</div>
 </header>
 
 <main>
-  <div class="status-bar">
-    <div class="stat next">Следующее: <b id="next-num">1</b></div>
-    <div class="stat">Прогресс: <b><span id="done">0</span> / <span id="total">100</span></b></div>
-    <div class="stat">Ошибки: <b id="errors">0</b></div>
-    <div class="stat">Время: <b id="timer">0:00</b></div>
-    <div class="stat">Число: <b id="num-mm">—</b> мм / <b id="num-px">—</b> px</div>
-  </div>
+<div class="status-bar">
+<div class="stat next">Следующее: <b id="next-num">1</b></div>
+<div class="stat">Прогресс: <b><span id="done">0</span> / <span id="total">100</span></b></div>
+<div class="stat">Ошибки: <b id="errors">0</b></div>
+<div class="stat">Время: <b id="timer">0:00</b></div>
+<div class="stat">Число: <b id="num-mm">—</b> мм / <b id="num-px">—</b> px</div>
+</div>
 
-  <div class="board-wrap">
-    <div id="board"></div>
-  </div>
+<div class="board-wrap">
+<div id="board"></div>
+</div>
 
-  <p class="instructions">
-    Нажимай клетки в порядке <b style="color:#fff">1 → 2 → 3 → 4 …</b><br>
-    Числа расставлены по ходу коня: <b style="color:#fff">соседние числа никогда не соприкасаются</b> по вертикали и горизонтали, по диагонали — можно.<br>
-    Два цвета клеток чередуются в шахматном порядке — <b style="color:#fff">одинаковые цвета не соприкасаются</b>.<br>
-    Размер числа рассчитывается под остроту зрения: <kbd>V</kbd> · <kbd>дистанция</kbd> · <kbd>PPI</kbd>.
-  </p>
+<p class="instructions">
+Нажимай клетки в порядке <b style="color:#fff">1 → 2 → 3 → 4 …</b><br>
+Числа расставлены по ходу коня: <b style="color:#fff">соседние числа никогда не соприкасаются</b> по вертикали и горизонтали, по диагонали — можно.<br>
+Два цвета клеток чередуются в шахматном порядке — <b style="color:#fff">одинаковые цвета не соприкасаются</b>.<br>
+Размер числа рассчитывается под остроту зрения: <kbd>V</kbd> · <kbd>дистанция</kbd> · <kbd>PPI</kbd>.
+</p>
 </main>
 
 <div class="win-overlay" id="win-overlay">
-  <div class="win-card">
-    <h2>🎉 Все числа найдены!</h2>
-    <p>Отличная работа. Уменьшите V или увеличьте дистанцию — числа станут мельче.</p>
-    <div class="win-stats">
-      <div class="win-stat">Время<b id="win-time">—</b></div>
-      <div class="win-stat">Ошибки<b id="win-miss">—</b></div>
-      <div class="win-stat">Число<b id="win-size">—</b></div>
-    </div>
-    <button class="btn btn-primary" id="btn-again" style="width:100%;padding:12px">Играть снова</button>
-  </div>
+<div class="win-card">
+<h2>🎉 Все числа найдены!</h2>
+<p>Отличная работа. Уменьшите V или увеличьте дистанцию — числа станут мельче.</p>
+<div class="win-stats">
+<div class="win-stat">Время<b id="win-time">—</b></div>
+<div class="win-stat">Ошибки<b id="win-miss">—</b></div>
+<div class="win-stat">Число<b id="win-size">—</b></div>
+</div>
+<button class="btn btn-primary" id="btn-again" style="width:100%;padding:12px">Играть снова</button>
+</div>
 </div>
 
 <script>
 'use strict';
 
-// ==================== ФОРМУЛЫ ====================
 function acuityToSizeMm(a, d){
-  const dd = (d && d > 0) ? d : 1;
-  const V = Math.max(0.01, a || 1.0);
-  return dd * 1.454 / V;
+const dd = (d && d > 0) ? d : 1;
+const V = Math.max(0.01, a || 1.0);
+return dd * 1.454 / V;
 }
 function acuityToFontSizePx(a, d, ppi){
-  const xh = acuityToSizeMm(a, d);
-  const mm = xh / 0.5;
-  const dpr = window.devicePixelRatio || 1;
-  const p = mm * (ppi || 96) / 25.4;
-  return Math.round(Math.max(8, Math.min(2000, p / dpr)));
+const xh = acuityToSizeMm(a, d);
+const mm = xh / 0.5;
+const dpr = window.devicePixelRatio || 1;
+const p = mm * (ppi || 96) / 25.4;
+return Math.round(Math.max(8, Math.min(2000, p / dpr)));
 }
 
-// ==================== СОСТОЯНИЕ ====================
 let gridSize    = 10;
-let cellsData   = [];   // cellsData[pos] = number (1..N²), все клетки заполнены
-let colorsData  = [];   // colorsData[pos] = '#hex'
+let cellsData   = [];
+let colorsData  = [];
 let numCount    = 100;
 let nextNum     = 1;
 let errorCount  = 0;
@@ -151,245 +153,231 @@ let fieldBg     = '#f5f0e6';
 const INK = '#0a0a0a';
 const KNIGHT_MOVES = [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
 
-// ==================== ОБХОД КОНЯ (Warnsdorff) ====================
-// Возвращает массив из N*N индексов: path[i] = индекс клетки, в которую идёт число (i+1)
-// Соседние числа по пути отстоят на ход коня → никогда не соприкасаются ортогонально
 function knightTour(N){
-  const total = N * N;
-  for (let attempt = 0; attempt < 200; attempt++){
-    const visited = new Uint8Array(total);
-    const path = new Int32Array(total);
-    let idx = 0;
-    let start = Math.floor(Math.random() * total);
-    let r = Math.floor(start / N), c = start % N;
-    visited[start] = 1;
-    path[idx++] = start;
-    let ok = true;
+const total = N * N;
+for (let attempt = 0; attempt < 200; attempt++){
+const visited = new Uint8Array(total);
+const path = new Int32Array(total);
+let idx = 0;
+let start = Math.floor(Math.random() * total);
+let r = Math.floor(start / N), c = start % N;
+visited[start] = 1;
+path[idx++] = start;
+let ok = true;
 
-    while (idx < total){
-      let bestScore = Infinity;
-      const ties = [];
-      for (const [dr, dc] of KNIGHT_MOVES){
-        const nr = r + dr, nc = c + dc;
-        if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
-        const ni = nr * N + nc;
-        if (visited[ni]) continue;
-        let onward = 0;
-        for (const [dr2, dc2] of KNIGHT_MOVES){
-          const nr2 = nr + dr2, nc2 = nc + dc2;
-          if (nr2 < 0 || nr2 >= N || nc2 < 0 || nc2 >= N) continue;
-          if (!visited[nr2 * N + nc2]) onward++;
-        }
-        if (onward < bestScore){
-          bestScore = onward;
-          ties.length = 0;
-          ties.push({ r: nr, c: nc, idx: ni });
-        } else if (onward === bestScore){
-          ties.push({ r: nr, c: nc, idx: ni });
-        }
-      }
-      if (ties.length === 0){ ok = false; break; }
-      const pick = ties[Math.floor(Math.random() * ties.length)];
-      visited[pick.idx] = 1;
-      path[idx++] = pick.idx;
-      r = pick.r; c = pick.c;
-    }
-
-    if (ok) return Array.from(path);
-  }
-  return null;
+while (idx < total){
+let bestScore = Infinity;
+const ties = [];
+for (const [dr, dc] of KNIGHT_MOVES){
+const nr = r + dr, nc = c + dc;
+if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
+const ni = nr * N + nc;
+if (visited[ni]) continue;
+let onward = 0;
+for (const [dr2, dc2] of KNIGHT_MOVES){
+const nr2 = nr + dr2, nc2 = nc + dc2;
+if (nr2 < 0 || nr2 >= N || nc2 < 0 || nc2 >= N) continue;
+if (!visited[nr2 * N + nc2]) onward++;
+}
+if (onward < bestScore){
+bestScore = onward;
+ties.length = 0;
+ties.push({ r: nr, c: nc, idx: ni });
+} else if (onward === bestScore){
+ties.push({ r: nr, c: nc, idx: ni });
+}
+}
+if (ties.length === 0){ ok = false; break; }
+const pick = ties[Math.floor(Math.random() * ties.length)];
+visited[pick.idx] = 1;
+path[idx++] = pick.idx;
+r = pick.r; c = pick.c;
 }
 
-// ==================== ГЕНЕРАЦИЯ ПОЛЯ ====================
+if (ok) return Array.from(path);
+}
+return null;
+}
+
 function buildBoard(N){
-  const tour = knightTour(N);
-  if (!tour){
-    alert('Не удалось построить обход коня для сетки ' + N + '×' + N + '. Попробуйте другую сетку.');
-    return null;
-  }
-  // cellsData[position] = number
-  const cells = new Array(N * N);
-  for (let i = 0; i < tour.length; i++){
-    cells[tour[i]] = i + 1;
-  }
-  return cells;
+const tour = knightTour(N);
+if (!tour){
+alert('Не удалось построить обход коня для сетки ' + N + '×' + N + '. Попробуйте другую сетку.');
+return null;
+}
+const cells = new Array(N * N);
+for (let i = 0; i < tour.length; i++){
+cells[tour[i]] = i + 1;
+}
+return cells;
 }
 
 function buildColors(N, c1, c2){
-  // Шахматный порядок: одинаковая пара (r+c) — один цвет, разная — другой.
-  // Случайный сдвиг: какая чётность получает colorA
-  const flip = Math.random() < 0.5;
-  const colors = new Array(N * N);
-  for (let r = 0; r < N; r++){
-    for (let c = 0; c < N; c++){
-      const parity = (r + c) % 2;
-      const useA = flip ? (parity === 1) : (parity === 0);
-      colors[r * N + c] = useA ? c1 : c2;
-    }
-  }
-  return colors;
+const flip = Math.random() < 0.5;
+const colors = new Array(N * N);
+for (let r = 0; r < N; r++){
+for (let c = 0; c < N; c++){
+const parity = (r + c) % 2;
+const useA = flip ? (parity === 1) : (parity === 0);
+colors[r * N + c] = useA ? c1 : c2;
+}
+}
+return colors;
 }
 
-// ==================== РАЗМЕРЫ ====================
 function recalcSizes(){
-  const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
-  const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
-  const ppi  = parseInt(document.getElementById('inp-ppi').value) || 96;
+const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
+const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
+const ppi  = parseInt(document.getElementById('inp-ppi').value) || 96;
 
-  const fontPx = acuityToFontSizePx(V, dist, ppi);
-  cellSize = Math.max(28, Math.round(fontPx * 1.8));
+const fontPx = acuityToFontSizePx(V, dist, ppi);
+cellSize = Math.max(28, Math.round(fontPx * 1.8));
 
-  document.getElementById('num-mm').textContent = acuityToSizeMm(V, dist).toFixed(2);
-  document.getElementById('num-px').textContent = fontPx;
+document.getElementById('num-mm').textContent = acuityToSizeMm(V, dist).toFixed(2);
+document.getElementById('num-px').textContent = fontPx;
 }
 
-// ==================== РЕНДЕР ====================
 function render(){
-  recalcSizes();
+recalcSizes();
 
-  const board = document.getElementById('board');
-  board.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
-  board.style.gap = '2px';
-  board.style.background = fieldBg;
-  board.style.padding = '10px';
-  board.style.borderRadius = '12px';
-  board.innerHTML = '';
+const board = document.getElementById('board');
+board.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
+board.style.gap = '2px';
+board.style.background = fieldBg;
+board.style.padding = '10px';
+board.style.borderRadius = '12px';
+board.innerHTML = '';
 
-  const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
-  const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
-  const ppi  = parseInt(document.getElementById('inp-ppi').value) || 96;
-  const fontPx = acuityToFontSizePx(V, dist, ppi);
+const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
+const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
+const ppi  = parseInt(document.getElementById('inp-ppi').value) || 96;
+const fontPx = acuityToFontSizePx(V, dist, ppi);
 
-  for (let i = 0; i < cellsData.length; i++){
-    const num = cellsData[i];
-    const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.style.width  = cellSize + 'px';
-    cell.style.height = cellSize + 'px';
-    cell.style.background = colorsData[i];
-    cell.style.fontSize = fontPx + 'px';
-    cell.dataset.num = num;
-    cell.dataset.idx = i;
-    cell.textContent = num;
-    cell.addEventListener('click', handleCellClick);
-    board.appendChild(cell);
-  }
+for (let i = 0; i < cellsData.length; i++){
+const num = cellsData[i];
+const cell = document.createElement('div');
+cell.className = 'cell';
+cell.style.width  = cellSize + 'px';
+cell.style.height = cellSize + 'px';
+cell.style.background = colorsData[i];
+cell.style.fontSize = fontPx + 'px';
+cell.dataset.num = num;
+cell.dataset.idx = i;
+cell.textContent = num;
+cell.addEventListener('click', handleCellClick);
+board.appendChild(cell);
+}
 }
 
-// ==================== КЛИК ====================
 function handleCellClick(e){
-  const cell = e.currentTarget;
-  const num = parseInt(cell.dataset.num);
-  if (cell.classList.contains('done')) return;
+const cell = e.currentTarget;
+const num = parseInt(cell.dataset.num);
+if (cell.classList.contains('done')) return;
 
-  if (num === nextNum){
-    cell.classList.add('done');
-    cell.classList.remove('ripple-wrong');
-    void cell.offsetWidth;
-    cell.classList.add('ripple-correct');
-    setTimeout(() => cell.classList.remove('ripple-correct'), 500);
+if (num === nextNum){
+cell.classList.add('done');
+cell.classList.remove('ripple-wrong');
+void cell.offsetWidth;
+cell.classList.add('ripple-correct');
+setTimeout(() => cell.classList.remove('ripple-correct'), 500);
 
-    document.getElementById('done').textContent = nextNum;
-    nextNum++;
-    document.getElementById('next-num').textContent = (nextNum > numCount) ? '✓' : nextNum;
+document.getElementById('done').textContent = nextNum;
+nextNum++;
+document.getElementById('next-num').textContent = (nextNum > numCount) ? '✓' : nextNum;
 
-    if (nextNum > numCount){
-      setTimeout(showWin, 400);
-    }
-  } else {
-    errorCount++;
-    document.getElementById('errors').textContent = errorCount;
-    cell.classList.remove('ripple-correct');
-    void cell.offsetWidth;
-    cell.classList.add('ripple-wrong');
-    setTimeout(() => cell.classList.remove('ripple-wrong'), 500);
-  }
+if (nextNum > numCount){
+setTimeout(showWin, 400);
+}
+} else {
+errorCount++;
+document.getElementById('errors').textContent = errorCount;
+cell.classList.remove('ripple-correct');
+void cell.offsetWidth;
+cell.classList.add('ripple-wrong');
+setTimeout(() => cell.classList.remove('ripple-wrong'), 500);
+}
 }
 
-// ==================== ТАЙМЕР ====================
 function startTimer(){
-  startTime = Date.now();
-  elapsed = 0;
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const m = Math.floor(elapsed / 60);
-    const s = elapsed % 60;
-    document.getElementById('timer').textContent = `${m}:${String(s).padStart(2, '0')}`;
-  }, 250);
+startTime = Date.now();
+elapsed = 0;
+if (timerInterval) clearInterval(timerInterval);
+timerInterval = setInterval(() => {
+elapsed = Math.floor((Date.now() - startTime) / 1000);
+const m = Math.floor(elapsed / 60);
+const s = elapsed % 60;
+document.getElementById('timer').textContent = `${m}:${String(s).padStart(2, '0')}`;
+}, 250);
 }
 
-// ==================== НОВАЯ ИГРА ====================
 function newGame(){
-  document.getElementById('win-overlay').classList.remove('visible');
+document.getElementById('win-overlay').classList.remove('visible');
 
-  gridSize = parseInt(document.getElementById('inp-grid').value) || 10;
-  numCount = gridSize * gridSize;
+gridSize = parseInt(document.getElementById('inp-grid').value) || 10;
+numCount = gridSize * gridSize;
 
-  fieldBg = document.getElementById('inp-field-bg').value;
-  const c1 = document.getElementById('inp-c1').value;
-  const c2 = document.getElementById('inp-c2').value;
+fieldBg = document.getElementById('inp-field-bg').value;
+const c1 = document.getElementById('inp-c1').value;
+const c2 = document.getElementById('inp-c2').value;
 
-  const cells = buildBoard(gridSize);
-  if (!cells) return;
-  cellsData = cells;
+const cells = buildBoard(gridSize);
+if (!cells) return;
+cellsData = cells;
 
-  colorsData = buildColors(gridSize, c1, c2);
+colorsData = buildColors(gridSize, c1, c2);
 
-  nextNum = 1;
-  errorCount = 0;
-  document.getElementById('next-num').textContent = '1';
-  document.getElementById('done').textContent = '0';
-  document.getElementById('total').textContent = numCount;
-  document.getElementById('errors').textContent = '0';
-  document.getElementById('timer').textContent = '0:00';
+nextNum = 1;
+errorCount = 0;
+document.getElementById('next-num').textContent = '1';
+document.getElementById('done').textContent = '0';
+document.getElementById('total').textContent = numCount;
+document.getElementById('errors').textContent = '0';
+document.getElementById('timer').textContent = '0:00';
 
-  render();
-  startTimer();
+render();
+startTimer();
 }
 
-// ==================== ПОБЕДА ====================
 function showWin(){
-  if (timerInterval) clearInterval(timerInterval);
-  const m = Math.floor(elapsed / 60);
-  const s = elapsed % 60;
-  document.getElementById('win-time').textContent = `${m}:${String(s).padStart(2, '0')}`;
-  document.getElementById('win-miss').textContent = errorCount;
-  const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
-  const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
-  document.getElementById('win-size').textContent = `${acuityToSizeMm(V, dist).toFixed(2)} мм`;
-  document.getElementById('win-overlay').classList.add('visible');
+if (timerInterval) clearInterval(timerInterval);
+const m = Math.floor(elapsed / 60);
+const s = elapsed % 60;
+document.getElementById('win-time').textContent = `${m}:${String(s).padStart(2, '0')}`;
+document.getElementById('win-miss').textContent = errorCount;
+const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
+const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
+document.getElementById('win-size').textContent = `${acuityToSizeMm(V, dist).toFixed(2)} мм`;
+document.getElementById('win-overlay').classList.add('visible');
 }
 
-// ==================== INIT ====================
 function init(){
-  const params = new URLSearchParams(location.search);
-  if (params.has('v'))   document.getElementById('inp-v').value = params.get('v');
-  if (params.has('d'))   document.getElementById('inp-dist').value = params.get('d');
-  if (params.has('ppi')) document.getElementById('inp-ppi').value = params.get('ppi');
+const params = new URLSearchParams(location.search);
+if (params.has('v'))   document.getElementById('inp-v').value = params.get('v');
+if (params.has('d'))   document.getElementById('inp-dist').value = params.get('d');
+if (params.has('ppi')) document.getElementById('inp-ppi').value = params.get('ppi');
 
-  ['inp-v','inp-dist','inp-ppi','inp-grid','inp-c1','inp-c2','inp-field-bg'].forEach(id => {
-    document.getElementById(id).addEventListener('change', newGame);
-  });
-  document.getElementById('btn-restart').addEventListener('click', newGame);
-  document.getElementById('btn-again').addEventListener('click', newGame);
+['inp-v','inp-dist','inp-ppi','inp-grid','inp-c1','inp-c2','inp-field-bg'].forEach(id => {
+document.getElementById(id).addEventListener('change', newGame);
+});
+document.getElementById('btn-restart').addEventListener('click', newGame);
+document.getElementById('btn-again').addEventListener('click', newGame);
 
-  window.addEventListener('resize', () => {
-    recalcSizes();
-    const board = document.getElementById('board');
-    board.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
-    const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
-    const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
-    const ppi  = parseInt(document.getElementById('inp-ppi').value) || 96;
-    const fontPx = acuityToFontSizePx(V, dist, ppi);
-    for (const c of board.children){
-      c.style.width = cellSize + 'px';
-      c.style.height = cellSize + 'px';
-      c.style.fontSize = fontPx + 'px';
-    }
-  });
+window.addEventListener('resize', () => {
+recalcSizes();
+const board = document.getElementById('board');
+board.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
+const V    = parseFloat(document.getElementById('inp-v').value) || 1.0;
+const dist = parseFloat(document.getElementById('inp-dist').value) || 1.0;
+const ppi  = parseInt(document.getElementById('inp-ppi').value) || 96;
+const fontPx = acuityToFontSizePx(V, dist, ppi);
+for (const c of board.children){
+c.style.width = cellSize + 'px';
+c.style.height = cellSize + 'px';
+c.style.fontSize = fontPx + 'px';
+}
+});
 
-  setTimeout(newGame, 50);
+setTimeout(newGame, 50);
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
