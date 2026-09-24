@@ -7,7 +7,8 @@
 (function installOnboarding(global) {
     'use strict';
 
-    const Device = global.VissortDevice;
+    let Device = null;
+    function ensureDevice() { Device = global.VissortDevice; return Device; }
 
     let client = null;
     let userId = null;
@@ -216,6 +217,7 @@
     }
 
     async function start(opts) {
+        ensureDevice();
         client = opts.client;
         userId = opts.userId;
         onDone = opts.onDone;
