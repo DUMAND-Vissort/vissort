@@ -1,9 +1,9 @@
 // ==================== app.js ====================
-// Vissort Studio — редактор сценариев для админа
+// Vissort Studio вЂ” СЂРµРґР°РєС‚РѕСЂ СЃС†РµРЅР°СЂРёРµРІ РґР»СЏ Р°РґРјРёРЅР°
 // Data layer (IndexedDB + Supabase REST + syncQueue)
 // ====================
 
-// ==================== НАСТРОЙКИ ====================
+// ==================== РќРђРЎРўР РћР™РљР ====================
 const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
 const IS_DEV = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const HAS_FS_ACCESS = typeof window.showDirectoryPicker === 'function';
@@ -24,7 +24,7 @@ const LS_KEYS = {
 };
 const MAX_DISTANCE_LOG = 2000;
 
-// ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
+// ==================== Р“Р›РћР‘РђР›Р¬РќРћР• РЎРћРЎРўРћРЇРќРР• ====================
 let supabaseClient = null,
     currentUser = null,
     currentSessionId = null,
@@ -100,7 +100,7 @@ let _distanceBaseline = null,
 let _periAnimId = null;
 let _periAnimStart = null;
 
-// --- МОРГАНИЕ ---
+// --- РњРћР Р“РђРќРР• ---
 let _blinkTimerId = null;
 let _blinkStateLocal = { tick: 0, current: 'A' };
 
@@ -180,7 +180,7 @@ window._currentScenarioKey = window._currentScenarioKey || null;
 window._currentScenarioFileName = window._currentScenarioFileName || null;
 window._currentScenarioId = window._currentScenarioId || null;
 
-// ==================== DOM-ССЫЛКИ ====================
+// ==================== DOM-РЎРЎР«Р›РљР ====================
 const canvas = document.getElementById('canvas');
 const stimDisplay = document.getElementById('stim');
 const stimArea = document.getElementById('stim-display');
@@ -233,7 +233,7 @@ const templatesFolderStatus = document.getElementById('templates-folder-status')
 const readingFileInput = document.getElementById('reading-file-input');
 const readingFileName = document.getElementById('reading-file-name');
 
-// ==================== ФОРМУЛЫ ОСТРОТЫ ====================
+// ==================== Р¤РћР РњРЈР›Р« РћРЎРўР РћРўР« ====================
 function acuityToSizeMm(acuity, distanceMeters) {
     const d = distanceMeters && distanceMeters > 0 ? distanceMeters : 1;
     const V = Math.max(0.01, acuity || 1.0);
@@ -266,7 +266,7 @@ function acuityToFontSizePx(acuity, distanceMeters, ppi) {
     return Math.round(Math.max(8, Math.min(2000, physicalPx / dpr)));
 }
 
-// ==================== УТИЛИТЫ ====================
+// ==================== РЈРўРР›РРўР« ====================
 const TIME_UNITS = { ms: 1, s: 1000, min: 60000 };
 function msToUnit(ms, unit) {
     return ms / TIME_UNITS[unit];
@@ -350,7 +350,7 @@ function setLastBookId(id) {
     } catch (_) {}
 }
 
-// ==================== ПОЛЬЗОВАТЕЛЬСКИЕ НАСТРОЙКИ ====================
+// ==================== РџРћР›Р¬Р—РћР’РђРўР•Р›Р¬РЎРљРР• РќРђРЎРўР РћР™РљР ====================
 function loadUserSettings() {
     let ff = localStorage.getItem(LS_KEYS.readingFontFamily);
     if (ff && (ff.includes(',') || ff.includes('"'))) ff = ff.split(',')[0].trim().replace(/['"]/g, '');
@@ -400,7 +400,7 @@ function saveUserSettings() {
     }
 }
 
-// ==================== КОДИРОВКИ / ШРИФТ / ПАРСИНГ ====================
+// ==================== РљРћР”РР РћР’РљР / РЁР РР¤Рў / РџРђР РЎРРќР“ ====================
 function decodeTextBuffer(buf) {
     const b = new Uint8Array(buf);
     if (b.length >= 3 && b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf)
@@ -515,7 +515,7 @@ function extractFb2TextByRegex(xmlText) {
         .trim();
 }
 async function parseEpubFile(file) {
-    if (typeof JSZip === 'undefined') throw new Error('JSZip не загружен');
+    if (typeof JSZip === 'undefined') throw new Error('JSZip РЅРµ Р·Р°РіСЂСѓР¶РµРЅ');
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     let opfPath = null;
     const cf = zip.file('META-INF/container.xml');
@@ -600,7 +600,7 @@ async function extractAllHtmlFromZip(zip) {
     return result.join('\n\n');
 }
 
-// ==================== КАЛИБРОВКА ЭКРАНА ====================
+// ==================== РљРђР›РР‘Р РћР’РљРђ Р­РљР РђРќРђ ====================
 const CALIB_BAR_PX = 400;
 function detectDeviceType() {
     const ua = navigator.userAgent || '';
@@ -651,17 +651,17 @@ function openScreenCalibModal() {
     const autoEl = document.getElementById('screen-calib-auto');
     const update = () => {
         const ppi = ppiFromMeasuredMm(parseFloat(mmInput.value) || 0);
-        if (resultEl) resultEl.textContent = ppi ? ppi : '—';
+        if (resultEl) resultEl.textContent = ppi ? ppi : 'вЂ”';
         if (detailEl)
             detailEl.textContent = ppi
-                ? `${CALIB_BAR_PX * dpr} физ. px = ${(((CALIB_BAR_PX * dpr) / ppi) * 25.4).toFixed(1)} мм`
+                ? `${CALIB_BAR_PX * dpr} С„РёР·. px = ${(((CALIB_BAR_PX * dpr) / ppi) * 25.4).toFixed(1)} РјРј`
                 : '';
     };
     mmInput.oninput = update;
     update();
     if (autoEl) {
         const info = { w: Math.round(window.screen.width * dpr), h: Math.round(window.screen.height * dpr) };
-        autoEl.textContent = `${detectDeviceType()}, DPR: ${dpr}, ${info.w}×${info.h}, эвристика: ${detectPPIHeuristic()} PPI`;
+        autoEl.textContent = `${detectDeviceType()}, DPR: ${dpr}, ${info.w}Г—${info.h}, СЌРІСЂРёСЃС‚РёРєР°: ${detectPPIHeuristic()} PPI`;
     }
     modalEl.style.display = 'flex';
 }
@@ -671,12 +671,12 @@ function applyScreenCalib() {
     if (!mmInput || !modalEl) return;
     const mm = parseFloat(mmInput.value);
     if (!mm || mm < 5 || mm > 500) {
-        alert('Введите длину в мм (5..500)');
+        alert('Р’РІРµРґРёС‚Рµ РґР»РёРЅСѓ РІ РјРј (5..500)');
         return;
     }
     const ppi = ppiFromMeasuredMm(mm);
     if (!ppi || ppi < 20 || ppi > 2000) {
-        alert('PPI вне разумных пределов');
+        alert('PPI РІРЅРµ СЂР°Р·СѓРјРЅС‹С… РїСЂРµРґРµР»РѕРІ');
         return;
     }
     savePPI(ppi);
@@ -694,11 +694,11 @@ function applyScreenCalib() {
             updateInspector();
         }
     }
-    alert(`✅ PPI сохранён: ${ppi}`);
+    alert(`вњ… PPI СЃРѕС…СЂР°РЅС‘РЅ: ${ppi}`);
     modalEl.style.display = 'none';
 }
 
-// ==================== ОЦЕНКА ВРЕМЕНИ СЦЕНАРИЯ ====================
+// ==================== РћР¦Р•РќРљРђ Р’Р Р•РњР•РќР РЎР¦Р•РќРђР РРЇ ====================
 function estimateScenarioDurationMs() {
     if (!nodes || nodes.length === 0) return 0;
     const visited = new Set();
@@ -750,14 +750,14 @@ function estimateScenarioDurationMs() {
     return total;
 }
 function formatDurationMs(ms) {
-    if (!ms || ms <= 0) return '0 с';
+    if (!ms || ms <= 0) return '0 СЃ';
     const totalSec = Math.round(ms / 1000);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    if (h > 0) return `${h} ч ${m} мин ${s} с`;
-    if (m > 0) return `${m} мин ${s} с`;
-    return `${s} с`;
+    if (h > 0) return `${h} С‡ ${m} РјРёРЅ ${s} СЃ`;
+    if (m > 0) return `${m} РјРёРЅ ${s} СЃ`;
+    return `${s} СЃ`;
 }
 function showScenarioTimeReport() {
     const modalEl = document.getElementById('scenario-time-modal');
@@ -789,14 +789,14 @@ function showScenarioTimeReport() {
             };
         });
     let html = `<div style="margin-bottom:10px;">
-        <div>Узлов: <b>${nodes.length}</b> · Связей: <b>${connections.length}</b></div>
+        <div>РЈР·Р»РѕРІ: <b>${nodes.length}</b> В· РЎРІСЏР·РµР№: <b>${connections.length}</b></div>
         <div style="font-size:22px;color:#a5b4fc;font-weight:800;margin-top:6px;">${formatDurationMs(totalMs)}</div>
     </div><table style="width:100%;border-collapse:collapse;font-size:12px;">
         <thead><tr style="border-bottom:1px solid #3f3f46;color:#94a3b8;">
-        <th style="text-align:left;padding:6px 4px;">Узел</th>
-        <th style="text-align:right;padding:6px 4px;">Показов</th>
-        <th style="text-align:right;padding:6px 4px;">1 показ</th>
-        <th style="text-align:right;padding:6px 4px;">Всего</th></tr></thead><tbody>`;
+        <th style="text-align:left;padding:6px 4px;">РЈР·РµР»</th>
+        <th style="text-align:right;padding:6px 4px;">РџРѕРєР°Р·РѕРІ</th>
+        <th style="text-align:right;padding:6px 4px;">1 РїРѕРєР°Р·</th>
+        <th style="text-align:right;padding:6px 4px;">Р’СЃРµРіРѕ</th></tr></thead><tbody>`;
     rows.forEach((r) => {
         html += `<tr style="border-bottom:1px solid #1e1e24;"><td style="padding:6px 4px;">${r.name}</td>
         <td style="text-align:right;padding:6px 4px;">${r.shows}</td>
@@ -808,7 +808,7 @@ function showScenarioTimeReport() {
     modalEl.style.display = 'flex';
 }
 
-// ==================== ИНДИКАТОРЫ / ПРЕДУПРЕЖДЕНИЯ ====================
+// ==================== РРќР”РРљРђРўРћР Р« / РџР Р•Р”РЈРџР Р•Р–Р”Р•РќРРЇ ====================
 function updateLiveDistanceIndicator() {
     const indicator = document.getElementById('live-distance-indicator');
     if (!indicator) return;
@@ -816,7 +816,7 @@ function updateLiveDistanceIndicator() {
         indicator.style.display = 'none';
         return;
     }
-    indicator.textContent = `📏 ${currentDistanceMeters.toFixed(2)} м`;
+    indicator.textContent = `рџ“Џ ${currentDistanceMeters.toFixed(2)} Рј`;
     indicator.style.display = 'block';
 }
 function hideLiveDistanceIndicator() {
@@ -835,7 +835,7 @@ function getDistanceWarningEl() {
 }
 function showDistanceWarning(kind) {
     const el = getDistanceWarningEl();
-    el.textContent = kind === 'up' ? 'Не отклоняйтесь' : 'Не приближайтесь';
+    el.textContent = kind === 'up' ? 'РќРµ РѕС‚РєР»РѕРЅСЏР№С‚РµСЃСЊ' : 'РќРµ РїСЂРёР±Р»РёР¶Р°Р№С‚РµСЃСЊ';
     el.style.background = kind === 'up' ? 'rgba(220,38,38,0.92)' : 'rgba(234,88,12,0.92)';
     el.style.display = 'block';
     if (window.Voice) window.Voice.sayKey(kind === 'up' ? 'moveUp' : 'moveBack', { cancel: true });
@@ -865,7 +865,7 @@ function evaluateDistanceDeviation() {
     return 'ok';
 }
 
-// ==================== МОРГАНИЕ (анимация) ====================
+// ==================== РњРћР Р“РђРќРР• (Р°РЅРёРјР°С†РёСЏ) ====================
 function startBlinkAnimation(opts) {
     stopBlinkAnimation();
     if (!opts) return;
@@ -925,7 +925,7 @@ function getBlinkWarningEl() {
     el.id = 'blink-warning';
     el.style.cssText =
         'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 28px; background: rgba(14,165,233,0.92); color: #fff; font-size: 22px; font-weight: bold; border-radius: 10px; z-index: 99998; display: none; pointer-events: none; text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,0.5); font-family: "Segoe UI",Tahoma,sans-serif;';
-    el.textContent = 'Поморгайте';
+    el.textContent = 'РџРѕРјРѕСЂРіР°Р№С‚Рµ';
     document.body.appendChild(el);
     return el;
 }
@@ -1029,8 +1029,10 @@ function ensureBlinkCalibrationUI() {
             btn = document.createElement('button');
             btn.className = 'btn btn-warning';
             btn.id = 'btn-calibrate-blink';
+            btn.className = 'btn btn-warning btn-icon';
             btn.disabled = true;
-            btn.textContent = '👁️ Калибровка моргания';
+            btn.textContent = '👁️';
+            btn.title = 'Калибровка моргания';
             anchor.parentNode.insertBefore(btn, anchor.nextSibling);
             btn.addEventListener('click', startBlinkCalibration);
         }
@@ -1040,13 +1042,13 @@ function ensureBlinkCalibrationUI() {
         m.className = 'modal';
         m.id = 'blink-calibration-modal';
         m.innerHTML = `<div class="modal-content" style="width: 480px; text-align: center;">
-            <h3>👁️ Калибровка моргания</h3>
-            <p style="font-size: 13px; color: #ccc;">Смотрите прямо в камеру. Две фазы по 3 секунды.</p>
-            <div id="blink-calib-phase" style="font-size: 20px; font-weight: bold; color: #38bdf8; margin: 16px 0;">Приготовьтесь…</div>
-            <div id="blink-calib-countdown" style="font-size: 64px; font-weight: bold; color: #fff; margin: 16px 0;">—</div>
-            <div id="blink-calib-result" style="font-size: 13px; color: #94a3b8; margin-top: 10px;">Текущий порог EAR: ${blinkThreshold.toFixed(3)}</div>
+            <h3>рџ‘ЃпёЏ РљР°Р»РёР±СЂРѕРІРєР° РјРѕСЂРіР°РЅРёСЏ</h3>
+            <p style="font-size: 13px; color: #ccc;">РЎРјРѕС‚СЂРёС‚Рµ РїСЂСЏРјРѕ РІ РєР°РјРµСЂСѓ. Р”РІРµ С„Р°Р·С‹ РїРѕ 3 СЃРµРєСѓРЅРґС‹.</p>
+            <div id="blink-calib-phase" style="font-size: 20px; font-weight: bold; color: #38bdf8; margin: 16px 0;">РџСЂРёРіРѕС‚РѕРІСЊС‚РµСЃСЊвЂ¦</div>
+            <div id="blink-calib-countdown" style="font-size: 64px; font-weight: bold; color: #fff; margin: 16px 0;">вЂ”</div>
+            <div id="blink-calib-result" style="font-size: 13px; color: #94a3b8; margin-top: 10px;">РўРµРєСѓС‰РёР№ РїРѕСЂРѕРі EAR: ${blinkThreshold.toFixed(3)}</div>
             <div class="modal-footer" style="justify-content: center;">
-                <button class="btn btn-secondary" id="blink-calib-cancel">Отмена</button>
+                <button class="btn btn-secondary" id="blink-calib-cancel">РћС‚РјРµРЅР°</button>
             </div></div>`;
         document.body.appendChild(m);
         document.getElementById('blink-calib-cancel').addEventListener('click', cancelBlinkCalibration);
@@ -1054,7 +1056,7 @@ function ensureBlinkCalibrationUI() {
 }
 function startBlinkCalibration() {
     if (!cameraActive) {
-        alert('Включите камеру');
+        alert('Р’РєР»СЋС‡РёС‚Рµ РєР°РјРµСЂСѓ');
         return;
     }
     ensureBlinkCalibrationUI();
@@ -1065,7 +1067,7 @@ function startBlinkCalibration() {
         closedSamples: []
     };
     document.getElementById('blink-calibration-modal').style.display = 'flex';
-    document.getElementById('blink-calib-result').textContent = 'Собираем данные…';
+    document.getElementById('blink-calib-result').textContent = 'РЎРѕР±РёСЂР°РµРј РґР°РЅРЅС‹РµвЂ¦';
     runBlinkCalibrationPhase('open');
 }
 function runBlinkCalibrationPhase(phase) {
@@ -1075,10 +1077,10 @@ function runBlinkCalibrationPhase(phase) {
     const startMs = performance.now();
     _blinkCalibration.phase = phase;
     if (phase === 'open') {
-        phaseEl.textContent = 'Смотрите прямо, глаза ОТКРЫТЫ';
+        phaseEl.textContent = 'РЎРјРѕС‚СЂРёС‚Рµ РїСЂСЏРјРѕ, РіР»Р°Р·Р° РћРўРљР Р«РўР«';
         phaseEl.style.color = '#22c55e';
     } else {
-        phaseEl.textContent = 'Закройте глаза (как при моргании)';
+        phaseEl.textContent = 'Р—Р°РєСЂРѕР№С‚Рµ РіР»Р°Р·Р° (РєР°Рє РїСЂРё РјРѕСЂРіР°РЅРёРё)';
         phaseEl.style.color = '#ef4444';
     }
     function tick() {
@@ -1098,14 +1100,14 @@ function finishBlinkCalibration() {
     if (!_blinkCalibration) return;
     const { openSamples, closedSamples } = _blinkCalibration;
     if (openSamples.length < 5 || closedSamples.length < 5) {
-        alert('Недостаточно данных с камеры. Убедитесь, что лицо видно, и повторите.');
+        alert('РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РґР°РЅРЅС‹С… СЃ РєР°РјРµСЂС‹. РЈР±РµРґРёС‚РµСЃСЊ, С‡С‚Рѕ Р»РёС†Рѕ РІРёРґРЅРѕ, Рё РїРѕРІС‚РѕСЂРёС‚Рµ.');
         cancelBlinkCalibration();
         return;
     }
     const meanOpen = openSamples.reduce((a, b) => a + b, 0) / openSamples.length;
     const meanClosed = closedSamples.reduce((a, b) => a + b, 0) / closedSamples.length;
     if (meanOpen <= meanClosed) {
-        alert('Значения нелогичны. Повторите калибровку.');
+        alert('Р—РЅР°С‡РµРЅРёСЏ РЅРµР»РѕРіРёС‡РЅС‹. РџРѕРІС‚РѕСЂРёС‚Рµ РєР°Р»РёР±СЂРѕРІРєСѓ.');
         cancelBlinkCalibration();
         return;
     }
@@ -1115,7 +1117,7 @@ function finishBlinkCalibration() {
     saveUserSettings();
     const r = document.getElementById('blink-calib-result');
     if (r)
-        r.innerHTML = `Открытые: <b>${meanOpen.toFixed(3)}</b> · Закрытые: <b>${meanClosed.toFixed(3)}</b><br>Новый порог EAR: <b style="color:#22c55e;">${blinkThreshold.toFixed(3)}</b>`;
+        r.innerHTML = `РћС‚РєСЂС‹С‚С‹Рµ: <b>${meanOpen.toFixed(3)}</b> В· Р—Р°РєСЂС‹С‚С‹Рµ: <b>${meanClosed.toFixed(3)}</b><br>РќРѕРІС‹Р№ РїРѕСЂРѕРі EAR: <b style="color:#22c55e;">${blinkThreshold.toFixed(3)}</b>`;
     _blinkCalibration = null;
     setTimeout(() => {
         document.getElementById('blink-calibration-modal').style.display = 'none';
@@ -1133,13 +1135,13 @@ function buildBlinkReport() {
     const avgRate = (s.totalBlinks / durSec) * 60;
     const avgDur = s.blinks.length > 0 ? s.blinks.reduce((a, b) => a + b.durationMs, 0) / s.blinks.length : 0;
     const lines = [
-        `👁️ Моргания: всего ${s.totalBlinks}`,
-        `Средняя частота: ${avgRate.toFixed(1)}/мин`,
-        `Минимум: ${s.minRateObserved != null ? s.minRateObserved.toFixed(1) : '—'}/мин`
+        `рџ‘ЃпёЏ РњРѕСЂРіР°РЅРёСЏ: РІСЃРµРіРѕ ${s.totalBlinks}`,
+        `РЎСЂРµРґРЅСЏСЏ С‡Р°СЃС‚РѕС‚Р°: ${avgRate.toFixed(1)}/РјРёРЅ`,
+        `РњРёРЅРёРјСѓРј: ${s.minRateObserved != null ? s.minRateObserved.toFixed(1) : 'вЂ”'}/РјРёРЅ`
     ];
-    if (s.longBlinks > 0) lines.push(`Долгих (>${BLINK_LONG_MS} мс): ${s.longBlinks}`);
-    if (s.asymBlinks > 0) lines.push(`Асимметричных: ${s.asymBlinks}`);
-    if (avgDur > 0) lines.push(`Средняя длительность: ${avgDur.toFixed(0)} мс`);
+    if (s.longBlinks > 0) lines.push(`Р”РѕР»РіРёС… (>${BLINK_LONG_MS} РјСЃ): ${s.longBlinks}`);
+    if (s.asymBlinks > 0) lines.push(`РђСЃРёРјРјРµС‚СЂРёС‡РЅС‹С…: ${s.asymBlinks}`);
+    if (avgDur > 0) lines.push(`РЎСЂРµРґРЅСЏСЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ: ${avgDur.toFixed(0)} РјСЃ`);
     return '\n\n' + lines.join('\n');
 }
 function scheduleVoiceCountdown(durationMs, p) {
@@ -1172,7 +1174,7 @@ function scheduleVoiceCountdown(durationMs, p) {
     }, 200);
 }
 
-// ==================== КАМЕРА ====================
+// ==================== РљРђРњР•Р Рђ ====================
 async function loadFaceApiModels() {
     if (faceapi.tf) {
         try { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch (e) {}
@@ -1192,7 +1194,7 @@ async function enableCamera() {
         await h.play();
         cameraActive = true;
         await loadFaceApiModels();
-        document.getElementById('camera-status').textContent = 'Камера включена';
+        document.getElementById('camera-status').textContent = 'РљР°РјРµСЂР° РІРєР»СЋС‡РµРЅР°';
         btnCalibrate.disabled = false;
         const bc = document.getElementById('btn-calibrate-blink');
         if (bc) bc.disabled = false;
@@ -1201,7 +1203,7 @@ async function enableCamera() {
         if (videoFrameId) cancelAnimationFrame(videoFrameId);
         videoFrameId = requestAnimationFrame(processVideoFrame);
     } catch (err) {
-        alert('Ошибка камеры: ' + err.message);
+        alert('РћС€РёР±РєР° РєР°РјРµСЂС‹: ' + err.message);
     }
 }
 async function disableCamera() {
@@ -1215,11 +1217,11 @@ async function disableCamera() {
     }
     document.getElementById('hidden-video').srcObject = null;
     cameraActive = false;
-    document.getElementById('camera-status').textContent = 'Камера выключена';
+    document.getElementById('camera-status').textContent = 'РљР°РјРµСЂР° РІС‹РєР»СЋС‡РµРЅР°';
     const fs = document.getElementById('face-status');
-    fs.textContent = '—';
+    fs.textContent = 'вЂ”';
     fs.className = 'face-missing';
-    document.getElementById('distance-display').textContent = '—';
+    document.getElementById('distance-display').textContent = 'вЂ”';
     btnCalibrate.disabled = true;
     const bc = document.getElementById('btn-calibrate-blink');
     if (bc) bc.disabled = true;
@@ -1297,10 +1299,10 @@ async function processVideoFrame() {
                 const rc = { x: (re[0].x + re[3].x) / 2, y: (re[0].y + re[3].y) / 2 };
                 const ipd = Math.sqrt((rc.x - lc.x) ** 2 + (rc.y - lc.y) ** 2);
                 lastEyeDistancePx = ipd;
-                faceStatus.textContent = '✅ Лицо';
+                faceStatus.textContent = 'вњ… Р›РёС†Рѕ';
                 faceStatus.className = 'face-detected';
                 if (calibInd) {
-                    calibInd.textContent = '✅ Лицо';
+                    calibInd.textContent = 'вњ… Р›РёС†Рѕ';
                     calibInd.className = 'calib-face-indicator detected';
                 }
                 const earL = computeEAR(le),
@@ -1309,7 +1311,7 @@ async function processVideoFrame() {
                 if (ipd > 0 && focalLengthPx) {
                     currentDistanceMeters = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     document.getElementById('distance-display').textContent =
-                        currentDistanceMeters.toFixed(2) + ' м';
+                        currentDistanceMeters.toFixed(2) + ' Рј';
                     if (distanceMin === null || currentDistanceMeters < distanceMin)
                         distanceMin = currentDistanceMeters;
                     if (distanceMax === null || currentDistanceMeters > distanceMax)
@@ -1351,17 +1353,17 @@ async function processVideoFrame() {
                     }
                 } else {
                     document.getElementById('distance-display').textContent = focalLengthPx
-                        ? '—'
-                        : 'Требуется калибровка';
+                        ? 'вЂ”'
+                        : 'РўСЂРµР±СѓРµС‚СЃСЏ РєР°Р»РёР±СЂРѕРІРєР°';
                 }
             } else {
-                faceStatus.textContent = '❌ Нет лица';
+                faceStatus.textContent = 'вќЊ РќРµС‚ Р»РёС†Р°';
                 faceStatus.className = 'face-missing';
                 if (calibInd) {
-                    calibInd.textContent = '❌ Нет лица';
+                    calibInd.textContent = 'вќЊ РќРµС‚ Р»РёС†Р°';
                     calibInd.className = 'calib-face-indicator missing';
                 }
-                document.getElementById('distance-display').textContent = '—';
+                document.getElementById('distance-display').textContent = 'вЂ”';
                 _blinkState.isClosed = false;
                 _blinkState.closeStartMs = 0;
             }
@@ -1374,7 +1376,7 @@ async function processVideoFrame() {
 }
 function openCalibrationModal() {
     if (!cameraActive) {
-        alert('Включите камеру');
+        alert('Р’РєР»СЋС‡РёС‚Рµ РєР°РјРµСЂСѓ');
         return;
     }
     document.getElementById('calibration-video').srcObject = videoStream;
@@ -1382,25 +1384,25 @@ function openCalibrationModal() {
 }
 function calibrateFocalLength() {
     if (!cameraActive) {
-        alert('Камера не включена');
+        alert('РљР°РјРµСЂР° РЅРµ РІРєР»СЋС‡РµРЅР°');
         return;
     }
     if (!lastEyeDistancePx) {
-        alert('Лицо не найдено');
+        alert('Р›РёС†Рѕ РЅРµ РЅР°Р№РґРµРЅРѕ');
         return;
     }
     const cm = parseFloat(document.getElementById('calib-distance').value);
     if (isNaN(cm) || cm <= 0) {
-        alert('Неверное расстояние');
+        alert('РќРµРІРµСЂРЅРѕРµ СЂР°СЃСЃС‚РѕСЏРЅРёРµ');
         return;
     }
     focalLengthPx = (lastEyeDistancePx * cm * 10) / realIPD_MM;
     localStorage.setItem('focalLengthPx', focalLengthPx);
-    alert('Калибровка камеры завершена!');
+    alert('РљР°Р»РёР±СЂРѕРІРєР° РєР°РјРµСЂС‹ Р·Р°РІРµСЂС€РµРЅР°!');
     document.getElementById('calibration-modal').style.display = 'none';
 }
 
-// ==================== SVG-СТИМУЛЫ ====================
+// ==================== SVG-РЎРўРРњРЈР›Р« ====================
 function generateLetterE(size, r, g, b, angle = 0) {
     const t = size / 5;
     const path = `M 0 0 H ${size} V ${t} H ${t} V ${2 * t} H ${size - t} V ${3 * t} H ${t} V ${4 * t} H ${size} V ${size} H 0 Z`;
@@ -1415,16 +1417,16 @@ function generateLandoltRing(diameter, gapDirection, r, g, b, bgR, bgG, bgB) {
         cx = diameter / 2,
         cy = diameter / 2;
     let rx, ry, rw, rh;
-    if (gapDirection === 'вверх' || gapDirection === 'вниз') {
+    if (gapDirection === 'РІРІРµСЂС…' || gapDirection === 'РІРЅРёР·') {
         rw = gw;
         rh = gl + sm;
         rx = cx - rw / 2;
-        ry = gapDirection === 'вверх' ? cy - or_ - sm : cy + or_ - rh + sm;
+        ry = gapDirection === 'РІРІРµСЂС…' ? cy - or_ - sm : cy + or_ - rh + sm;
     } else {
         rw = gl + sm;
         rh = gw;
         ry = cy - rh / 2;
-        rx = gapDirection === 'вправо' ? cx + or_ - rw + sm : cx - or_ - sm;
+        rx = gapDirection === 'РІРїСЂР°РІРѕ' ? cx + or_ - rw + sm : cx - or_ - sm;
     }
     return `<svg width="${diameter}" height="${diameter}" viewBox="0 0 ${diameter} ${diameter}" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${or_ - sw / 2}" fill="none" stroke="rgb(${r},${g},${b})" stroke-width="${sw}"/><rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="rgb(${bgR},${bgG},${bgB})"/></svg>`;
 }
@@ -1484,7 +1486,7 @@ function getStimulusSVG(node, size) {
     if (node.stimType === 'LANDOLT')
         html = generateLandoltRing(
             size,
-            node.stimDirection || 'вверх',
+            node.stimDirection || 'РІРІРµСЂС…',
             r,
             g,
             b,
@@ -1493,7 +1495,7 @@ function getStimulusSVG(node, size) {
             node.bgB || 0
         );
     else {
-        const am = { вверх: 270, вправо: 0, вниз: 90, влево: 180 };
+        const am = { РІРІРµСЂС…: 270, РІРїСЂР°РІРѕ: 0, РІРЅРёР·: 90, РІР»РµРІРѕ: 180 };
         html = generateLetterE(size, r, g, b, am[node.stimDirection] || 0);
     }
     return { html, bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`, size };
@@ -1508,7 +1510,7 @@ function setStimColorRGB(r, g, b) {
     const c = svg.querySelector('circle');
     if (c) c.setAttribute('stroke', color);
 }
-// ==================== АНИМАЦИЯ КРУГА ====================
+// ==================== РђРќРРњРђР¦РРЇ РљР РЈР“Рђ ====================
 let _circleAnimId = null,
     _circleAnimStart = null;
 let _circleInnerPhases = null,
@@ -1611,7 +1613,7 @@ function stopCircleAnimation() {
     _circleOuterPhases = null;
 }
 
-// ==================== ПЕРИФЕРИЯ ====================
+// ==================== РџР•Р РР¤Р•Р РРЇ ====================
 function getPeripheralLayer() {
     let layer = document.getElementById('peri-layer');
     if (!layer) {
@@ -1692,7 +1694,7 @@ function buildPeripheralDots(node, stimSize) {
     _periAnimId = requestAnimationFrame(tick);
 }
 
-// ==================== ДЕФОКУС ====================
+// ==================== Р”Р•Р¤РћРљРЈРЎ ====================
 function buildDefocusFrame(node, stimSize, stimHtml, stimDirection) {
     if (!node.dfEnabled) return null;
     const aw = stimArea.clientWidth,
@@ -1723,7 +1725,7 @@ function buildDefocusFrame(node, stimSize, stimHtml, stimDirection) {
     return { html: frame, diameter };
 }
 
-// ==================== СЕТКА ОДИНОЧНОГО СТИМУЛА ====================
+// ==================== РЎР•РўРљРђ РћР”РРќРћР§РќРћР“Рћ РЎРўРРњРЈР›Рђ ====================
 function removeSingleGridLines() {
     if (!stimArea) return;
     stimArea.querySelectorAll('.single-grid-overlay').forEach((el) => el.remove());
@@ -1825,7 +1827,7 @@ function applyRandomStimulusPosition(size) {
     if (svg) svg.style.transform = `translate(${dx}px, ${dy}px)`;
 }
 
-// ==================== ДИНАМИКА ЦВЕТА ====================
+// ==================== Р”РРќРђРњРРљРђ Р¦Р’Р•РўРђ ====================
 function buildGenericDynamicPhases(color1, midEnabled, color3, color2, reverse) {
     const A = color1 || { r: 255, g: 0, b: 0 },
         B = color2 || { r: 0, g: 0, b: 255 };
@@ -1964,28 +1966,28 @@ function stopSingleBgAnimation() {
     }
 }
 
-// ==================== ФИЗИОЛОГИЧЕСКАЯ ШКАЛА ====================
+// ==================== Р¤РР—РРћР›РћР“РР§Р•РЎРљРђРЇ РЁРљРђР›Рђ ====================
 const PHYSIOLOGICAL_PHASES = [
-    { diopters: 0.0, wavelength_nm: 670, name: 'Глубокий карминно-красный', rgb: [180, 0, 0] },
-    { diopters: 0.1, wavelength_nm: 648, name: 'Классический красный', rgb: [235, 0, 0] },
-    { diopters: 0.2, wavelength_nm: 627, name: 'Алый / насыщенный красный', rgb: [255, 35, 0] },
-    { diopters: 0.3, wavelength_nm: 610, name: 'Огненно-оранжевый', rgb: [255, 90, 0] },
-    { diopters: 0.4, wavelength_nm: 593, name: 'Оранжево-жёлтый', rgb: [255, 145, 0] },
-    { diopters: 0.5, wavelength_nm: 578, name: 'Янтарно-жёлтый', rgb: [215, 215, 0] },
-    { diopters: 0.6, wavelength_nm: 564, name: 'Жёлто-зелёный (лайм)', rgb: [155, 245, 0] },
-    { diopters: 0.7, wavelength_nm: 551, name: 'Салатовый', rgb: [90, 240, 0] },
-    { diopters: 0.8, wavelength_nm: 538, name: 'Изумрудно-зелёный', rgb: [0, 230, 60] },
-    { diopters: 0.9, wavelength_nm: 525, name: 'Ярко-зелёный (мятный)', rgb: [0, 235, 110] },
-    { diopters: 1.0, wavelength_nm: 511, name: 'Мятно-бирюзовый', rgb: [0, 240, 160] },
-    { diopters: 1.1, wavelength_nm: 498, name: 'Морская волна', rgb: [0, 210, 210] },
-    { diopters: 1.2, wavelength_nm: 484, name: 'Яркий голубой', rgb: [0, 175, 255] },
-    { diopters: 1.3, wavelength_nm: 469, name: 'Васильково-голубой', rgb: [0, 115, 255] },
-    { diopters: 1.4, wavelength_nm: 454, name: 'Королевский синий', rgb: [0, 50, 255] },
-    { diopters: 1.5, wavelength_nm: 438, name: 'Ультрамарин / тёмно-синий', rgb: [35, 0, 230] },
-    { diopters: 1.6, wavelength_nm: 421, name: 'Фиолетово-синий', rgb: [90, 0, 190] }
+    { diopters: 0.0, wavelength_nm: 670, name: 'Р“Р»СѓР±РѕРєРёР№ РєР°СЂРјРёРЅРЅРѕ-РєСЂР°СЃРЅС‹Р№', rgb: [180, 0, 0] },
+    { diopters: 0.1, wavelength_nm: 648, name: 'РљР»Р°СЃСЃРёС‡РµСЃРєРёР№ РєСЂР°СЃРЅС‹Р№', rgb: [235, 0, 0] },
+    { diopters: 0.2, wavelength_nm: 627, name: 'РђР»С‹Р№ / РЅР°СЃС‹С‰РµРЅРЅС‹Р№ РєСЂР°СЃРЅС‹Р№', rgb: [255, 35, 0] },
+    { diopters: 0.3, wavelength_nm: 610, name: 'РћРіРЅРµРЅРЅРѕ-РѕСЂР°РЅР¶РµРІС‹Р№', rgb: [255, 90, 0] },
+    { diopters: 0.4, wavelength_nm: 593, name: 'РћСЂР°РЅР¶РµРІРѕ-Р¶С‘Р»С‚С‹Р№', rgb: [255, 145, 0] },
+    { diopters: 0.5, wavelength_nm: 578, name: 'РЇРЅС‚Р°СЂРЅРѕ-Р¶С‘Р»С‚С‹Р№', rgb: [215, 215, 0] },
+    { diopters: 0.6, wavelength_nm: 564, name: 'Р–С‘Р»С‚Рѕ-Р·РµР»С‘РЅС‹Р№ (Р»Р°Р№Рј)', rgb: [155, 245, 0] },
+    { diopters: 0.7, wavelength_nm: 551, name: 'РЎР°Р»Р°С‚РѕРІС‹Р№', rgb: [90, 240, 0] },
+    { diopters: 0.8, wavelength_nm: 538, name: 'РР·СѓРјСЂСѓРґРЅРѕ-Р·РµР»С‘РЅС‹Р№', rgb: [0, 230, 60] },
+    { diopters: 0.9, wavelength_nm: 525, name: 'РЇСЂРєРѕ-Р·РµР»С‘РЅС‹Р№ (РјСЏС‚РЅС‹Р№)', rgb: [0, 235, 110] },
+    { diopters: 1.0, wavelength_nm: 511, name: 'РњСЏС‚РЅРѕ-Р±РёСЂСЋР·РѕРІС‹Р№', rgb: [0, 240, 160] },
+    { diopters: 1.1, wavelength_nm: 498, name: 'РњРѕСЂСЃРєР°СЏ РІРѕР»РЅР°', rgb: [0, 210, 210] },
+    { diopters: 1.2, wavelength_nm: 484, name: 'РЇСЂРєРёР№ РіРѕР»СѓР±РѕР№', rgb: [0, 175, 255] },
+    { diopters: 1.3, wavelength_nm: 469, name: 'Р’Р°СЃРёР»СЊРєРѕРІРѕ-РіРѕР»СѓР±РѕР№', rgb: [0, 115, 255] },
+    { diopters: 1.4, wavelength_nm: 454, name: 'РљРѕСЂРѕР»РµРІСЃРєРёР№ СЃРёРЅРёР№', rgb: [0, 50, 255] },
+    { diopters: 1.5, wavelength_nm: 438, name: 'РЈР»СЊС‚СЂР°РјР°СЂРёРЅ / С‚С‘РјРЅРѕ-СЃРёРЅРёР№', rgb: [35, 0, 230] },
+    { diopters: 1.6, wavelength_nm: 421, name: 'Р¤РёРѕР»РµС‚РѕРІРѕ-СЃРёРЅРёР№', rgb: [90, 0, 190] }
 ];
 
-// ==================== УТИЛИТЫ ГРАФА ====================
+// ==================== РЈРўРР›РРўР« Р“Р РђР¤Рђ ====================
 function generateId() {
     return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
 }
@@ -2009,7 +2011,7 @@ function getThreshold(size) {
     }
 }
 function randomDirection() {
-    const d = ['вверх', 'вниз', 'влево', 'вправо'];
+    const d = ['РІРІРµСЂС…', 'РІРЅРёР·', 'РІР»РµРІРѕ', 'РІРїСЂР°РІРѕ'];
     return d[Math.floor(Math.random() * d.length)];
 }
 function canAddConnection(fromId, toId, isLoop) {
@@ -2047,7 +2049,7 @@ function buildPlayQueue() {
     visit(startNode.id, null, null);
 }
 
-// ==================== КНИГИ ====================
+// ==================== РљРќРР“Р ====================
 function nodeToReadingParams(node) {
     return {
         bgMode: node.readingBgMode || 'solid',
@@ -2074,7 +2076,7 @@ function nodeToReadingParams(node) {
     };
 }
 
-// ==================== СОЗДАНИЕ УЗЛА ====================
+// ==================== РЎРћР—Р”РђРќРР• РЈР—Р›Рђ ====================
 function defaultCompareCellParams() {
     const d = trainingNode?.params?.distanceMeters || generalDistance || 1;
     const ppi = trainingNode?.params?.ppi || screenPPI || 96;
@@ -2105,7 +2107,7 @@ function createNewNode(type, x, y) {
             y: y || 100 + Math.random() * 200,
             width: 300,
             height: 260,
-            name: 'Чтение',
+            name: 'Р§С‚РµРЅРёРµ',
             bookId: null,
             bookName: '',
             continueFromBookmark: true,
@@ -2149,7 +2151,7 @@ function createNewNode(type, x, y) {
             y: y || 100 + Math.random() * 200,
             width: 340,
             height: 320,
-            name: 'Сравнение',
+            name: 'РЎСЂР°РІРЅРµРЅРёРµ',
             compareMode: 'direction',
             pairsCount: 2,
             gridX: 3,
@@ -2176,9 +2178,9 @@ function createNewNode(type, x, y) {
             y: y || 100 + Math.random() * 200,
             width: 300,
             height: 300,
-            name: type === 'STIMULUS' ? 'Стимул' : type === 'LOGIC_IF' ? 'Логика' : 'Динамика',
+            name: type === 'STIMULUS' ? 'РЎС‚РёРјСѓР»' : type === 'LOGIC_IF' ? 'Р›РѕРіРёРєР°' : 'Р”РёРЅР°РјРёРєР°',
             stimType: 'LETTER_E',
-            stimDirection: 'вверх',
+            stimDirection: 'РІРІРµСЂС…',
             stimR: 255,
             stimG: 255,
             stimB: 255,
@@ -2191,7 +2193,7 @@ function createNewNode(type, x, y) {
             stimDistance: dd,
             stimPPI: dp,
             stimSize: 40,
-            stimDirectionFixed: 'вверх',
+            stimDirectionFixed: 'РІРІРµСЂС…',
             seriesCount: 5,
             seriesSize: 6,
             seriesThreshold: 4,
@@ -2311,7 +2313,7 @@ function selectNode(id) {
     updateInspector();
 }
 
-// ==================== РЕНДЕР ГРАФА ====================
+// ==================== Р Р•РќР”Р•Р  Р“Р РђР¤Рђ ====================
 function requestRenderGraph() {
     if (renderScheduled) return;
     renderScheduled = true;
@@ -2367,7 +2369,7 @@ function clearTempLine() {
     }
 }
 
-// ==================== РЕНДЕР УЗЛА ====================
+// ==================== Р Р•РќР”Р•Р  РЈР—Р›Рђ ====================
 function createNodeElement(node) {
     const el = document.createElement('div');
     el.className = 'scenario-node';
@@ -2406,7 +2408,7 @@ function createNodeElement(node) {
         const p = document.createElement('div');
         p.className = 'node-preview-area';
         p.style.background = '#0b0b14';
-        p.innerHTML = '<div style="text-align:center;"><div class="node-reading-icon">📖</div></div>';
+        p.innerHTML = '<div style="text-align:center;"><div class="node-reading-icon">рџ“–</div></div>';
         content.appendChild(p);
         const info = document.createElement('div');
         info.className = 'node-info';
@@ -2428,7 +2430,7 @@ function createNodeElement(node) {
         const p = document.createElement('div');
         p.className = 'node-preview-area';
         p.style.background = '#1a0a02';
-        p.innerHTML = '<div class="node-compare-icon">⚖️</div>';
+        p.innerHTML = '<div class="node-compare-icon">вљ–пёЏ</div>';
         content.appendChild(p);
         const info = document.createElement('div');
         info.className = 'node-info';
@@ -2487,14 +2489,14 @@ function createNodeElement(node) {
     body.className = 'node-body';
     const cb = document.createElement('button');
     cb.className = 'node-btn btn-node-connect';
-    cb.textContent = '🔗 Связать';
+    cb.textContent = 'рџ”— РЎРІСЏР·Р°С‚СЊ';
     cb.addEventListener('click', (e) => {
         e.stopPropagation();
         startConnection(node.id, false);
     });
     const lb = document.createElement('button');
     lb.className = 'node-btn btn-node-loop';
-    lb.textContent = '🔄 Петля';
+    lb.textContent = 'рџ”„ РџРµС‚Р»СЏ';
     lb.addEventListener('click', (e) => {
         e.stopPropagation();
         startConnection(node.id, true);
@@ -2502,15 +2504,15 @@ function createNodeElement(node) {
     const tb = document.createElement('button');
     tb.className = 'node-btn';
     tb.style.background = '#0ea5e9';
-    tb.textContent = '💾 В заготовки';
-    tb.title = 'Сохранить этот узел как заготовку';
+    tb.textContent = 'рџ’ѕ Р’ Р·Р°РіРѕС‚РѕРІРєРё';
+    tb.title = 'РЎРѕС…СЂР°РЅРёС‚СЊ СЌС‚РѕС‚ СѓР·РµР» РєР°Рє Р·Р°РіРѕС‚РѕРІРєСѓ';
     tb.addEventListener('click', (e) => {
         e.stopPropagation();
         saveNodeAsTemplate(node.id);
     });
     const db = document.createElement('button');
     db.className = 'node-btn btn-node-del';
-    db.textContent = '✕ Удалить';
+    db.textContent = 'вњ• РЈРґР°Р»РёС‚СЊ';
     db.addEventListener('click', (e) => {
         e.stopPropagation();
         deleteNode(node.id);
@@ -2561,18 +2563,18 @@ function createNodeElement(node) {
 function fillReadingNodeInfo(b, d, v, f, node) {
     if (b) {
         if (node.bookId && window._books[node.bookId]) {
-            b.textContent = `📖 ${node.bookName || '(без имени)'}`;
+            b.textContent = `рџ“– ${node.bookName || '(Р±РµР· РёРјРµРЅРё)'}`;
             b.style.color = '#7dd3fc';
         } else if (node.bookName) {
-            b.textContent = `📖 ${node.bookName} ⚠`;
+            b.textContent = `рџ“– ${node.bookName} вљ `;
             b.style.color = '#f59e0b';
         } else {
-            b.textContent = '📖 книга из сессии';
+            b.textContent = 'рџ“– РєРЅРёРіР° РёР· СЃРµСЃСЃРёРё';
             b.style.color = '#94a3b8';
         }
     }
     if (d) {
-        d.textContent = node.duration > 0 ? `⏱ ${(node.duration / 1000).toFixed(0)} с` : '⏱ до кнопки';
+        d.textContent = node.duration > 0 ? `вЏ± ${(node.duration / 1000).toFixed(0)} СЃ` : 'вЏ± РґРѕ РєРЅРѕРїРєРё';
         d.style.color = '#64748b';
     }
     if (v) {
@@ -2588,28 +2590,28 @@ function fillStimulusNodeInfo(a, mm, px, dst, srs, dyn, node) {
     if (a) {
         a.textContent = `V = ${(node.stimAcuity || 1.0).toFixed(1)}`;
         if (node.endAcuity != null && Math.abs(node.endAcuity - node.stimAcuity) > 0.001)
-            a.textContent += `→${node.endAcuity.toFixed(1)}`;
+            a.textContent += `в†’${node.endAcuity.toFixed(1)}`;
     }
-    if (mm) mm.textContent = `${getNodeComputedSizeMm(node).toFixed(2)} мм`;
-    if (px) px.textContent = `≈ ${getNodeComputedSize(node)}px @ ${node.stimPPI || screenPPI || 96} PPI`;
-    if (dst) dst.textContent = `📏 ${(node.stimDistance || 1).toFixed(2)} м`;
-    if (srs) srs.textContent = `📊 ${node.seriesCount || 5}×${node.seriesSize || 6}`;
+    if (mm) mm.textContent = `${getNodeComputedSizeMm(node).toFixed(2)} РјРј`;
+    if (px) px.textContent = `в‰€ ${getNodeComputedSize(node)}px @ ${node.stimPPI || screenPPI || 96} PPI`;
+    if (dst) dst.textContent = `рџ“Џ ${(node.stimDistance || 1).toFixed(2)} Рј`;
+    if (srs) srs.textContent = `рџ“Љ ${node.seriesCount || 5}Г—${node.seriesSize || 6}`;
     if (dyn) {
         const parts = [];
-        if (node.singleCircleEnabled) parts.push('🎯 Круги');
-        if (node.periEnabled) parts.push('🟢 Точки');
-        if (node.dfEnabled) parts.push('🔴 Дефокус');
-        if (node.blinkEnabled) parts.push('🔦 Моргание');
+        if (node.singleCircleEnabled) parts.push('рџЋЇ РљСЂСѓРіРё');
+        if (node.periEnabled) parts.push('рџџў РўРѕС‡РєРё');
+        if (node.dfEnabled) parts.push('рџ”ґ Р”РµС„РѕРєСѓСЃ');
+        if (node.blinkEnabled) parts.push('рџ”¦ РњРѕСЂРіР°РЅРёРµ');
         if (node.singleGridEnabled && !node.singleCircleEnabled) {
             const cnt =
                 Array.isArray(node.singleGridCells) && node.singleGridCells.length > 0
                     ? node.singleGridCells.length
                     : (node.singleGridX || 1) * (node.singleGridY || 1);
-            parts.push(`🔲${node.singleGridX || 1}×${node.singleGridY || 1}(${cnt})`);
+            parts.push(`рџ”І${node.singleGridX || 1}Г—${node.singleGridY || 1}(${cnt})`);
         }
-        if (node.singleStimDynamicEnabled && !node.singleCircleEnabled) parts.push('🎨');
-        if (node.singleBgDynamicEnabled) parts.push('🖼️');
-        if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled) parts.push('🎲');
+        if (node.singleStimDynamicEnabled && !node.singleCircleEnabled) parts.push('рџЋЁ');
+        if (node.singleBgDynamicEnabled) parts.push('рџ–јпёЏ');
+        if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled) parts.push('рџЋІ');
         dyn.textContent = parts.join(' ');
     }
 }
@@ -2617,17 +2619,17 @@ function fillCompareNodeInfo(m, g, s, t, node) {
     if (m) {
         m.textContent =
             node.compareMode === 'find_same'
-                ? `🔍 Найти пары ×${node.pairsCount || 2}`
-                : '↔️ Сравнить направления';
+                ? `рџ”Ќ РќР°Р№С‚Рё РїР°СЂС‹ Г—${node.pairsCount || 2}`
+                : 'в†”пёЏ РЎСЂР°РІРЅРёС‚СЊ РЅР°РїСЂР°РІР»РµРЅРёСЏ';
         m.style.color = '#f97316';
         m.style.fontWeight = 'bold';
     }
     if (g) {
         const n = (node.activeCells || []).length;
-        g.textContent = `🔲 ${node.gridX || 3}×${node.gridY || 3} (${n} кл.)`;
+        g.textContent = `рџ”І ${node.gridX || 3}Г—${node.gridY || 3} (${n} РєР».)`;
     }
-    if (s) s.textContent = `📊 ${node.seriesCount || 5}×${node.seriesSize || 6}`;
-    if (t) t.textContent = `⏱ ${((node.duration || 0) / 1000).toFixed(1)} с`;
+    if (s) s.textContent = `рџ“Љ ${node.seriesCount || 5}Г—${node.seriesSize || 6}`;
+    if (t) t.textContent = `вЏ± ${((node.duration || 0) / 1000).toFixed(1)} СЃ`;
 }
 function updateNodeElement(el, node) {
     el.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.width}px;height:${node.height}px;`;
@@ -2669,7 +2671,7 @@ function updateNodeElement(el, node) {
     fillStimulusNodeInfo(a, mm, px, dst, inh[0], inh[1], node);
 }
 
-// ==================== СОЗДАНИЕ СВЯЗИ ====================
+// ==================== РЎРћР—Р”РђРќРР• РЎР’РЇР—Р ====================
 function startConnection(sourceId, isLoop) {
     if (window._pendingConnectionHandler) {
         canvas.removeEventListener('click', window._pendingConnectionHandler);
@@ -2717,7 +2719,7 @@ function startConnection(sourceId, isLoop) {
                 100
             );
         } else {
-            alert('Такая связь уже существует или превышен лимит.');
+            alert('РўР°РєР°СЏ СЃРІСЏР·СЊ СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚ РёР»Рё РїСЂРµРІС‹С€РµРЅ Р»РёРјРёС‚.');
             cancelConnection();
         }
     };
@@ -2761,7 +2763,7 @@ function cancelConnection() {
     requestRenderGraph();
 }
 
-// ==================== РЕНДЕР СВЯЗЕЙ ====================
+// ==================== Р Р•РќР”Р•Р  РЎР’РЇР—Р•Р™ ====================
 function getNodeEdgePoint(node, tx, ty) {
     const cx = node.x + node.width / 2,
         cy = node.y + node.height / 2;
@@ -2789,7 +2791,7 @@ function createConnectionElements(conn) {
         });
         const arrow = document.createElement('div');
         arrow.className = 'line-arrow loop-arrow';
-        arrow.textContent = '↻';
+        arrow.textContent = 'в†»';
         arrow.style.cssText = `left:${cx + ls / 2 - 5}px;top:${cy + ls / 2 - 10}px;color:#a855f7;z-index:1000;cursor:pointer;`;
         arrow.addEventListener('contextmenu', (e) => {
             e.preventDefault();
@@ -2821,7 +2823,7 @@ function createConnectionElements(conn) {
         ay = fp.y + (dy / len) * 35 - 10;
     const arrow = document.createElement('div');
     arrow.className = 'line-arrow' + (isLoop ? ' loop-arrow' : '');
-    arrow.textContent = '▶';
+    arrow.textContent = 'в–¶';
     arrow.style.cssText = `left:${ax}px;top:${ay}px;color:${color};transform:rotate(${ang}deg);position:absolute;display:flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:16px;z-index:1000;cursor:pointer;pointer-events:auto;`;
     arrow.addEventListener('contextmenu', (e) => {
         e.preventDefault();
@@ -2910,7 +2912,7 @@ function onResizeEnd() {
     document.removeEventListener('mouseup', onResizeEnd);
 }
 
-// ==================== МЕНЮ СВЯЗИ ====================
+// ==================== РњР•РќР® РЎР’РЇР—Р ====================
 function showConnectionMenu(e, conn) {
     e.preventDefault();
     e.stopPropagation();
@@ -2921,7 +2923,7 @@ function showConnectionMenu(e, conn) {
     menu.style.top = e.clientY + 'px';
     menu.innerHTML = '';
     const title = document.createElement('div');
-    title.textContent = 'Наследование';
+    title.textContent = 'РќР°СЃР»РµРґРѕРІР°РЅРёРµ';
     title.style.cssText = 'font-weight:bold;margin-bottom:4px;';
     menu.appendChild(title);
     const sL = document.createElement('label');
@@ -2934,7 +2936,7 @@ function showConnectionMenu(e, conn) {
         requestRenderGraph();
     });
     sL.appendChild(sC);
-    sL.appendChild(document.createTextNode('Острота зрения (размер)'));
+    sL.appendChild(document.createTextNode('РћСЃС‚СЂРѕС‚Р° Р·СЂРµРЅРёСЏ (СЂР°Р·РјРµСЂ)'));
     menu.appendChild(sL);
     const spL = document.createElement('label');
     spL.style.cssText = 'display:flex;align-items:center;gap:5px;margin-bottom:4px;';
@@ -2946,24 +2948,24 @@ function showConnectionMenu(e, conn) {
         requestRenderGraph();
     });
     spL.appendChild(spC);
-    spL.appendChild(document.createTextNode('Скорость'));
+    spL.appendChild(document.createTextNode('РЎРєРѕСЂРѕСЃС‚СЊ'));
     menu.appendChild(spL);
     const hint = document.createElement('div');
     hint.style.cssText =
         'font-size:10px;color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px solid #3f3f46;line-height:1.3;';
-    hint.textContent = 'Книга в узлах чтения наследуется автоматически.';
+    hint.textContent = 'РљРЅРёРіР° РІ СѓР·Р»Р°С… С‡С‚РµРЅРёСЏ РЅР°СЃР»РµРґСѓРµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.';
     menu.appendChild(hint);
     if (conn.isLoop) {
         const sep = document.createElement('hr');
         sep.style.margin = '4px 0';
         menu.appendChild(sep);
         const lt = document.createElement('div');
-        lt.textContent = 'Параметры петли';
+        lt.textContent = 'РџР°СЂР°РјРµС‚СЂС‹ РїРµС‚Р»Рё';
         lt.style.cssText = 'font-weight:bold;margin-bottom:4px;';
         menu.appendChild(lt);
         const lcl = document.createElement('label');
         lcl.style.cssText = 'display:block;margin-bottom:4px;';
-        lcl.textContent = 'Кол-во циклов';
+        lcl.textContent = 'РљРѕР»-РІРѕ С†РёРєР»РѕРІ';
         const lci = document.createElement('input');
         lci.type = 'number';
         lci.min = '1';
@@ -2982,7 +2984,7 @@ function showConnectionMenu(e, conn) {
     const db = document.createElement('button');
     db.className = 'btn btn-danger';
     db.style.width = '100%';
-    db.textContent = '✕ Удалить связь';
+    db.textContent = 'вњ• РЈРґР°Р»РёС‚СЊ СЃРІСЏР·СЊ';
     db.addEventListener('click', () => {
         connections = connections.filter((c) => c !== conn);
         hideConnectionMenu();
@@ -2994,14 +2996,14 @@ function hideConnectionMenu() {
     document.getElementById('connection-menu').style.display = 'none';
     currentConnectionForMenu = null;
 }
-// ==================== ЗАГОТОВКИ (TEMPLATES) ====================
+// ==================== Р—РђР“РћРўРћР’РљР (TEMPLATES) ====================
 async function saveNodeAsTemplate(nodeId) {
     const node = getNode(nodeId);
     if (!node) return;
-    const defaultName = node.name || 'Заготовка';
-    const name = prompt('Название заготовки:', defaultName);
+    const defaultName = node.name || 'Р—Р°РіРѕС‚РѕРІРєР°';
+    const name = prompt('РќР°Р·РІР°РЅРёРµ Р·Р°РіРѕС‚РѕРІРєРё:', defaultName);
     if (!name) return;
-    const description = prompt('Описание (необязательно):', '') || '';
+    const description = prompt('РћРїРёСЃР°РЅРёРµ (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ):', '') || '';
     const payload = JSON.parse(JSON.stringify(node));
     delete payload.x;
     delete payload.y;
@@ -3010,18 +3012,18 @@ async function saveNodeAsTemplate(nodeId) {
     try {
         await window.Data.saveTemplate({ name, description, kind: 'node', payload });
         alert(
-            `✅ Заготовка «${name}» сохранена${window.Data.isOnline() ? ' и отправляется в облако' : ' локально (отправится при появлении интернета)'}.`
+            `вњ… Р—Р°РіРѕС‚РѕРІРєР° В«${name}В» СЃРѕС…СЂР°РЅРµРЅР°${window.Data.isOnline() ? ' Рё РѕС‚РїСЂР°РІР»СЏРµС‚СЃСЏ РІ РѕР±Р»Р°РєРѕ' : ' Р»РѕРєР°Р»СЊРЅРѕ (РѕС‚РїСЂР°РІРёС‚СЃСЏ РїСЂРё РїРѕСЏРІР»РµРЅРёРё РёРЅС‚РµСЂРЅРµС‚Р°)'}.`
         );
         refreshTemplatesIfOpen();
     } catch (e) {
-        alert('Ошибка сохранения заготовки: ' + e.message);
+        alert('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ Р·Р°РіРѕС‚РѕРІРєРё: ' + e.message);
     }
 }
 async function applyTemplateToCanvas(templateId, position) {
     const templates = await window.Data.getTemplatesLocal();
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) {
-        alert('Заготовка не найдена');
+        alert('Р—Р°РіРѕС‚РѕРІРєР° РЅРµ РЅР°Р№РґРµРЅР°');
         return;
     }
     const x = position?.x ?? canvas.scrollLeft + 200 + Math.random() * 200;
@@ -3044,7 +3046,7 @@ async function applyTemplateToCanvas(templateId, position) {
             const toId = idMap.get(c.toId);
             if (fromId && toId) connections.push({ ...c, fromId, toId });
         });
-        alert(`✅ Импортировано ${newNodes.length} узлов из заготовки «${tpl.name}»`);
+        alert(`вњ… РРјРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ ${newNodes.length} СѓР·Р»РѕРІ РёР· Р·Р°РіРѕС‚РѕРІРєРё В«${tpl.name}В»`);
     } else if (tpl.payload) {
         const clone = JSON.parse(JSON.stringify(tpl.payload));
         clone.id = generateId();
@@ -3053,7 +3055,7 @@ async function applyTemplateToCanvas(templateId, position) {
         clone.isStart = false;
         nodes.push(clone);
         activeNodeId = clone.id;
-        alert(`✅ Узел «${tpl.name}» добавлен на холст`);
+        alert(`вњ… РЈР·РµР» В«${tpl.name}В» РґРѕР±Р°РІР»РµРЅ РЅР° С…РѕР»СЃС‚`);
     }
     requestRenderGraph();
     updateInspector();
@@ -3071,12 +3073,12 @@ async function loadTemplatesFolder() {
         const handle = await window.showDirectoryPicker();
         templatesFolderHandle = handle;
         await window.Data.saveFolderHandle('templatesFolderHandle', handle);
-        if (templatesFolderStatus) templatesFolderStatus.textContent = '📋 ' + handle.name;
+        if (templatesFolderStatus) templatesFolderStatus.textContent = 'рџ“‹ ' + handle.name;
         await importTemplatesFromFolder(handle);
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error(err);
-            alert('Ошибка выбора папки заготовок: ' + err.message);
+            alert('РћС€РёР±РєР° РІС‹Р±РѕСЂР° РїР°РїРєРё Р·Р°РіРѕС‚РѕРІРѕРє: ' + err.message);
         }
     }
 }
@@ -3084,29 +3086,29 @@ async function importTemplatesFromFolder(handle) {
     if (!handle) return;
     const ok = await window.Data.ensurePermission(handle, 'read');
     if (!ok) {
-        alert('Нет доступа к папке заготовок');
+        alert('РќРµС‚ РґРѕСЃС‚СѓРїР° Рє РїР°РїРєРµ Р·Р°РіРѕС‚РѕРІРѕРє');
         return;
     }
     const files = await window.Data.scanFolder(handle, '.json');
     if (files.length === 0) {
-        alert('В папке заготовок нет .json файлов');
+        alert('Р’ РїР°РїРєРµ Р·Р°РіРѕС‚РѕРІРѕРє РЅРµС‚ .json С„Р°Р№Р»РѕРІ');
         return;
     }
     const res = await window.Data.bulkImportTemplates(files, { source: 'folder' });
     if (res.added + res.updated > 0) {
-        alert(`📋 Заготовки:\nДобавлено: ${res.added}\nОбновлено: ${res.updated}\nПропущено: ${res.skipped}`);
+        alert(`рџ“‹ Р—Р°РіРѕС‚РѕРІРєРё:\nР”РѕР±Р°РІР»РµРЅРѕ: ${res.added}\nРћР±РЅРѕРІР»РµРЅРѕ: ${res.updated}\nРџСЂРѕРїСѓС‰РµРЅРѕ: ${res.skipped}`);
     }
     refreshTemplatesIfOpen();
 }
 async function importTemplatesFromFileList(fileList) {
     const files = Array.from(fileList || []).filter((f) => /\.json$/i.test(f.name));
     if (!files.length) {
-        alert('Не выбрано ни одного .json');
+        alert('РќРµ РІС‹Р±СЂР°РЅРѕ РЅРё РѕРґРЅРѕРіРѕ .json');
         return;
     }
     const entries = await Promise.all(files.map(async (f) => ({ name: f.name, text: await f.text() })));
     const res = await window.Data.bulkImportTemplates(entries, { source: 'files' });
-    alert(`📋 Заготовки:\nДобавлено: ${res.added}\nОбновлено: ${res.updated}\nПропущено: ${res.skipped}`);
+    alert(`рџ“‹ Р—Р°РіРѕС‚РѕРІРєРё:\nР”РѕР±Р°РІР»РµРЅРѕ: ${res.added}\nРћР±РЅРѕРІР»РµРЅРѕ: ${res.updated}\nРџСЂРѕРїСѓС‰РµРЅРѕ: ${res.skipped}`);
     refreshTemplatesIfOpen();
 }
 async function refreshTemplatesIfOpen() {
@@ -3127,7 +3129,7 @@ async function renderTemplatesList(filter = '') {
     container.innerHTML = '';
     if (filtered.length === 0) {
         container.innerHTML =
-            '<div style="padding:20px;color:#666;text-align:center;font-style:italic;">Пока нет заготовок. Сохраните узел через 💾 или импортируйте папку.</div>';
+            '<div style="padding:20px;color:#666;text-align:center;font-style:italic;">РџРѕРєР° РЅРµС‚ Р·Р°РіРѕС‚РѕРІРѕРє. РЎРѕС…СЂР°РЅРёС‚Рµ СѓР·РµР» С‡РµСЂРµР· рџ’ѕ РёР»Рё РёРјРїРѕСЂС‚РёСЂСѓР№С‚Рµ РїР°РїРєСѓ.</div>';
         return;
     }
     filtered.forEach((tpl) => {
@@ -3135,8 +3137,8 @@ async function renderTemplatesList(filter = '') {
         item.style.cssText =
             'padding:10px 12px;background:#16161a;border:1px solid #2a2a3a;border-radius:6px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;';
         const kindLabel =
-            tpl.kind === 'group' ? `👥 группа (${(tpl.payload?.nodes || []).length} узлов)` : '🎯 узел';
-        const dirty = tpl._dirty ? ' <span style="color:#f59e0b;font-size:10px;">● локально</span>' : '';
+            tpl.kind === 'group' ? `рџ‘Ґ РіСЂСѓРїРїР° (${(tpl.payload?.nodes || []).length} СѓР·Р»РѕРІ)` : 'рџЋЇ СѓР·РµР»';
+        const dirty = tpl._dirty ? ' <span style="color:#f59e0b;font-size:10px;">в—Џ Р»РѕРєР°Р»СЊРЅРѕ</span>' : '';
         item.innerHTML = `
             <div style="flex:1;min-width:0;">
                 <div style="font-weight:600;color:#7dd3fc;margin-bottom:2px;">${escapeHtml(tpl.name)}${dirty}</div>
@@ -3144,13 +3146,13 @@ async function renderTemplatesList(filter = '') {
                 ${tpl.description ? `<div style="font-size:11px;color:#64748b;">${escapeHtml(tpl.description)}</div>` : ''}
             </div>
             <div style="display:flex;gap:4px;flex-shrink:0;">
-                <button class="tpl-apply" style="background:#10b981;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;">➕ На холст</button>
-                <button class="tpl-del" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:600;">✕</button>
+                <button class="tpl-apply" style="background:#10b981;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;">вћ• РќР° С…РѕР»СЃС‚</button>
+                <button class="tpl-del" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:600;">вњ•</button>
             </div>
         `;
         item.querySelector('.tpl-apply').addEventListener('click', () => applyTemplateToCanvas(tpl.id));
         item.querySelector('.tpl-del').addEventListener('click', async () => {
-            if (!confirm(`Удалить заготовку «${tpl.name}»?`)) return;
+            if (!confirm(`РЈРґР°Р»РёС‚СЊ Р·Р°РіРѕС‚РѕРІРєСѓ В«${tpl.name}В»?`)) return;
             await window.Data.deleteTemplate(tpl.id);
             await renderTemplatesList(filter);
         });
@@ -3165,16 +3167,16 @@ function openTemplatesModal() {
         modalEl.id = 'templates-modal';
         modalEl.innerHTML = `
             <div class="modal-content" style="width:560px;">
-                <h3>📋 Заготовки элементов</h3>
-                <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">Готовые узлы и группы узлов. Сохраните узел через кнопку 💾 на узле — он появится здесь.</p>
-                <input type="text" id="templates-search" placeholder="Поиск…" style="width:100%;padding:8px 10px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;font-size:13px;margin-bottom:10px;">
+                <h3>рџ“‹ Р—Р°РіРѕС‚РѕРІРєРё СЌР»РµРјРµРЅС‚РѕРІ</h3>
+                <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">Р“РѕС‚РѕРІС‹Рµ СѓР·Р»С‹ Рё РіСЂСѓРїРїС‹ СѓР·Р»РѕРІ. РЎРѕС…СЂР°РЅРёС‚Рµ СѓР·РµР» С‡РµСЂРµР· РєРЅРѕРїРєСѓ рџ’ѕ РЅР° СѓР·Р»Рµ вЂ” РѕРЅ РїРѕСЏРІРёС‚СЃСЏ Р·РґРµСЃСЊ.</p>
+                <input type="text" id="templates-search" placeholder="РџРѕРёСЃРєвЂ¦" style="width:100%;padding:8px 10px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;font-size:13px;margin-bottom:10px;">
                 <div id="templates-list" style="max-height:400px;overflow-y:auto;"></div>
                 <div class="modal-footer" style="justify-content:space-between;">
                     <div>
-                        <button class="btn btn-secondary" id="templates-import-folder">📁 Импорт из папки</button>
-                        <button class="btn btn-secondary" id="templates-export-all">💾 Экспорт всех</button>
+                        <button class="btn btn-secondary" id="templates-import-folder">рџ“Ѓ РРјРїРѕСЂС‚ РёР· РїР°РїРєРё</button>
+                        <button class="btn btn-secondary" id="templates-export-all">рџ’ѕ Р­РєСЃРїРѕСЂС‚ РІСЃРµС…</button>
                     </div>
-                    <button class="btn btn-secondary" id="templates-close">Закрыть</button>
+                    <button class="btn btn-secondary" id="templates-close">Р—Р°РєСЂС‹С‚СЊ</button>
                 </div>
             </div>`;
         document.body.appendChild(modalEl);
@@ -3196,7 +3198,7 @@ function openTemplatesModal() {
 async function exportAllTemplates() {
     const list = await window.Data.getTemplatesLocal();
     if (!list.length) {
-        alert('Нет заготовок для экспорта');
+        alert('РќРµС‚ Р·Р°РіРѕС‚РѕРІРѕРє РґР»СЏ СЌРєСЃРїРѕСЂС‚Р°');
         return;
     }
     const blob = new Blob([JSON.stringify({ templates: list }, null, 2)], { type: 'application/json' });
@@ -3210,11 +3212,11 @@ async function exportAllTemplates() {
     URL.revokeObjectURL(url);
 }
 
-// ==================== ИНСПЕКТОР: ДИСПЕТЧЕР ====================
+// ==================== РРќРЎРџР•РљРўРћР : Р”РРЎРџР•РўР§Р•Р  ====================
 function updateInspector() {
     const node = getNode(activeNodeId);
     if (!node) {
-        inspectorEl.innerHTML = '<h2>Инспектор</h2><p>Нет выбранного узла</p>';
+        inspectorEl.innerHTML = '<h2>РРЅСЃРїРµРєС‚РѕСЂ</h2><p>РќРµС‚ РІС‹Р±СЂР°РЅРЅРѕРіРѕ СѓР·Р»Р°</p>';
         return;
     }
     if (node.nodeType === 'READING') {
@@ -3263,185 +3265,185 @@ function renderInspectorGridPreview() {
                 );
                 p.dataset.selected = JSON.stringify(list);
                 const h = document.getElementById('insp-grid-preview-hint');
-                if (h) h.textContent = list.length === 0 ? 'Пусто = все клетки.' : `Выбрано: ${list.length}`;
+                if (h) h.textContent = list.length === 0 ? 'РџСѓСЃС‚Рѕ = РІСЃРµ РєР»РµС‚РєРё.' : `Р’С‹Р±СЂР°РЅРѕ: ${list.length}`;
             });
             p.appendChild(cell);
         }
 }
 function renderPeriInspectorSection(node) {
     return `<div class="panel-section" style="background:#0a1a15;border-color:#10b981;">
-        <h3 style="color:#34d399;border-color:#10b981;">🟢 Периферийные точки</h3>
-        <label><input type="checkbox" id="inp-peri-enabled" ${node.periEnabled ? 'checked' : ''}> Включить точки</label>
+        <h3 style="color:#34d399;border-color:#10b981;">рџџў РџРµСЂРёС„РµСЂРёР№РЅС‹Рµ С‚РѕС‡РєРё</h3>
+        <label><input type="checkbox" id="inp-peri-enabled" ${node.periEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ С‚РѕС‡РєРё</label>
         <div id="insp-peri-settings" style="display:${node.periEnabled ? 'block' : 'none'};margin-top:6px;">
-            <label>Количество (1–12)</label><input type="number" id="inp-peri-count" value="${node.periCount || 4}" min="1" max="12">
-            <label>V размера</label><input type="number" id="inp-peri-acuity" value="${node.periAcuity ?? 0.3}" min="0.1" max="1.0" step="0.1">
-            <label>Радиус min (%)</label><input type="number" id="inp-peri-rmin" value="${node.periRadiusMinPct ?? 60}" min="20" max="100">
-            <label>Радиус max (%)</label><input type="number" id="inp-peri-rmax" value="${node.periRadiusMaxPct ?? 90}" min="20" max="100">
-            <label>Цвет точки</label><input type="color" id="inp-peri-color" value="${rgbToHex(node.periColor?.r, node.periColor?.g, node.periColor?.b)}">
-            <label>Движение</label><select id="inp-peri-motion">
-                <option value="static" ${(node.periMotion || 'static') === 'static' ? 'selected' : ''}>Статично</option>
-                <option value="rotate" ${node.periMotion === 'rotate' ? 'selected' : ''}>Вращение</option>
-                <option value="pulse" ${node.periMotion === 'pulse' ? 'selected' : ''}>Пульс</option></select>
-            <label>Скорость</label><input type="number" id="inp-peri-speed" value="${node.periSpeed ?? 0.3}" min="0.02" max="5" step="0.05">
-            <label><input type="checkbox" id="inp-peri-random" ${node.periRandomAngles !== false ? 'checked' : ''}> Случайные углы</label>
+            <label>РљРѕР»РёС‡РµСЃС‚РІРѕ (1вЂ“12)</label><input type="number" id="inp-peri-count" value="${node.periCount || 4}" min="1" max="12">
+            <label>V СЂР°Р·РјРµСЂР°</label><input type="number" id="inp-peri-acuity" value="${node.periAcuity ?? 0.3}" min="0.1" max="1.0" step="0.1">
+            <label>Р Р°РґРёСѓСЃ min (%)</label><input type="number" id="inp-peri-rmin" value="${node.periRadiusMinPct ?? 60}" min="20" max="100">
+            <label>Р Р°РґРёСѓСЃ max (%)</label><input type="number" id="inp-peri-rmax" value="${node.periRadiusMaxPct ?? 90}" min="20" max="100">
+            <label>Р¦РІРµС‚ С‚РѕС‡РєРё</label><input type="color" id="inp-peri-color" value="${rgbToHex(node.periColor?.r, node.periColor?.g, node.periColor?.b)}">
+            <label>Р”РІРёР¶РµРЅРёРµ</label><select id="inp-peri-motion">
+                <option value="static" ${(node.periMotion || 'static') === 'static' ? 'selected' : ''}>РЎС‚Р°С‚РёС‡РЅРѕ</option>
+                <option value="rotate" ${node.periMotion === 'rotate' ? 'selected' : ''}>Р’СЂР°С‰РµРЅРёРµ</option>
+                <option value="pulse" ${node.periMotion === 'pulse' ? 'selected' : ''}>РџСѓР»СЊСЃ</option></select>
+            <label>РЎРєРѕСЂРѕСЃС‚СЊ</label><input type="number" id="inp-peri-speed" value="${node.periSpeed ?? 0.3}" min="0.02" max="5" step="0.05">
+            <label><input type="checkbox" id="inp-peri-random" ${node.periRandomAngles !== false ? 'checked' : ''}> РЎР»СѓС‡Р°Р№РЅС‹Рµ СѓРіР»С‹</label>
         </div></div>`;
 }
 function renderDefocusInspectorSection(node) {
     return `<div class="panel-section" style="background:#1a0a0a;border-color:#dc2626;">
-        <h3 style="color:#f87171;border-color:#dc2626;">🔴 Цифровой дефокус</h3>
-        <label><input type="checkbox" id="inp-df-enabled" ${node.dfEnabled ? 'checked' : ''}> Включить дефокус</label>
+        <h3 style="color:#f87171;border-color:#dc2626;">рџ”ґ Р¦РёС„СЂРѕРІРѕР№ РґРµС„РѕРєСѓСЃ</h3>
+        <label><input type="checkbox" id="inp-df-enabled" ${node.dfEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ РґРµС„РѕРєСѓСЃ</label>
         <div id="insp-df-settings" style="display:${node.dfEnabled ? 'block' : 'none'};margin-top:6px;">
-            <label>Радиус центра (мм)</label><input type="number" id="inp-df-radius-mm" value="${node.dfCenterRadiusMm || 13}" min="3" max="50" step="1">
-            <label>Фон центра</label><input type="color" id="inp-df-center-bg" value="${rgbToHex(node.dfCenterBg?.r, node.dfCenterBg?.g, node.dfCenterBg?.b)}">
-            <label>Цвет стимула</label><input type="color" id="inp-df-stim-color" value="${rgbToHex(node.dfStimColor?.r, node.dfStimColor?.g, node.dfStimColor?.b)}">
-            <label>Фон периферии</label><input type="color" id="inp-df-peri-bg" value="${rgbToHex(node.dfPeriBg?.r, node.dfPeriBg?.g, node.dfPeriBg?.b)}">
-            <label>Размытие к краю (%)</label><input type="number" id="inp-df-blur" value="${node.dfPeriBlur || 0}" min="0" max="100" step="5">
-            <div class="acuity-hint">Центр — красный диск с чёрным стимулом; периферия — синяя заливка.</div>
+            <label>Р Р°РґРёСѓСЃ С†РµРЅС‚СЂР° (РјРј)</label><input type="number" id="inp-df-radius-mm" value="${node.dfCenterRadiusMm || 13}" min="3" max="50" step="1">
+            <label>Р¤РѕРЅ С†РµРЅС‚СЂР°</label><input type="color" id="inp-df-center-bg" value="${rgbToHex(node.dfCenterBg?.r, node.dfCenterBg?.g, node.dfCenterBg?.b)}">
+            <label>Р¦РІРµС‚ СЃС‚РёРјСѓР»Р°</label><input type="color" id="inp-df-stim-color" value="${rgbToHex(node.dfStimColor?.r, node.dfStimColor?.g, node.dfStimColor?.b)}">
+            <label>Р¤РѕРЅ РїРµСЂРёС„РµСЂРёРё</label><input type="color" id="inp-df-peri-bg" value="${rgbToHex(node.dfPeriBg?.r, node.dfPeriBg?.g, node.dfPeriBg?.b)}">
+            <label>Р Р°Р·РјС‹С‚РёРµ Рє РєСЂР°СЋ (%)</label><input type="number" id="inp-df-blur" value="${node.dfPeriBlur || 0}" min="0" max="100" step="5">
+            <div class="acuity-hint">Р¦РµРЅС‚СЂ вЂ” РєСЂР°СЃРЅС‹Р№ РґРёСЃРє СЃ С‡С‘СЂРЅС‹Рј СЃС‚РёРјСѓР»РѕРј; РїРµСЂРёС„РµСЂРёСЏ вЂ” СЃРёРЅСЏСЏ Р·Р°Р»РёРІРєР°.</div>
         </div></div>`;
 }
 function renderBlinkAnimationInspectorSection(node) {
     return `<div class="panel-section" style="background:#1a0a05;border-color:#f97316;">
-        <h3 style="color:#fb923c;border-color:#f97316;">🔦 Моргание</h3>
-        <div class="acuity-hint">Резкая смена цвета без плавного перехода. Отличается от «Динамики».</div>
-        <label><input type="checkbox" id="inp-blink-enabled" ${node.blinkEnabled ? 'checked' : ''}> Включить моргание</label>
+        <h3 style="color:#fb923c;border-color:#f97316;">рџ”¦ РњРѕСЂРіР°РЅРёРµ</h3>
+        <div class="acuity-hint">Р РµР·РєР°СЏ СЃРјРµРЅР° С†РІРµС‚Р° Р±РµР· РїР»Р°РІРЅРѕРіРѕ РїРµСЂРµС…РѕРґР°. РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ В«Р”РёРЅР°РјРёРєРёВ».</div>
+        <label><input type="checkbox" id="inp-blink-enabled" ${node.blinkEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ РјРѕСЂРіР°РЅРёРµ</label>
         <div id="insp-blink-settings" style="display:${node.blinkEnabled ? 'block' : 'none'};margin-top:6px;">
-            <label>Цель</label><select id="inp-blink-target">
-                <option value="stim" ${(node.blinkTarget || 'stim') === 'stim' ? 'selected' : ''}>Только стимул</option>
-                <option value="bg" ${node.blinkTarget === 'bg' ? 'selected' : ''}>Только фон</option>
-                <option value="both" ${node.blinkTarget === 'both' ? 'selected' : ''}>Стимул + фон</option></select>
-            <label>Цвет A</label><input type="color" id="inp-blink-cA" value="${rgbToHex(node.blinkColorA?.r, node.blinkColorA?.g, node.blinkColorA?.b)}">
-            <label>Цвет B</label><input type="color" id="inp-blink-cB" value="${rgbToHex(node.blinkColorB?.r, node.blinkColorB?.g, node.blinkColorB?.b)}">
-            <label>Период (мс)</label><input type="number" id="inp-blink-interval" value="${node.blinkIntervalMs || 500}" min="50" max="5000" step="50">
-            <label>Доля A (0.05–0.95)</label><input type="number" id="inp-blink-duty" value="${node.blinkDuty ?? 0.5}" min="0.05" max="0.95" step="0.05">
-            <label>Количество морганий (0 = ∞)</label><input type="number" id="inp-blink-count" value="${node.blinkCount || 0}" min="0" max="9999" step="1">
+            <label>Р¦РµР»СЊ</label><select id="inp-blink-target">
+                <option value="stim" ${(node.blinkTarget || 'stim') === 'stim' ? 'selected' : ''}>РўРѕР»СЊРєРѕ СЃС‚РёРјСѓР»</option>
+                <option value="bg" ${node.blinkTarget === 'bg' ? 'selected' : ''}>РўРѕР»СЊРєРѕ С„РѕРЅ</option>
+                <option value="both" ${node.blinkTarget === 'both' ? 'selected' : ''}>РЎС‚РёРјСѓР» + С„РѕРЅ</option></select>
+            <label>Р¦РІРµС‚ A</label><input type="color" id="inp-blink-cA" value="${rgbToHex(node.blinkColorA?.r, node.blinkColorA?.g, node.blinkColorA?.b)}">
+            <label>Р¦РІРµС‚ B</label><input type="color" id="inp-blink-cB" value="${rgbToHex(node.blinkColorB?.r, node.blinkColorB?.g, node.blinkColorB?.b)}">
+            <label>РџРµСЂРёРѕРґ (РјСЃ)</label><input type="number" id="inp-blink-interval" value="${node.blinkIntervalMs || 500}" min="50" max="5000" step="50">
+            <label>Р”РѕР»СЏ A (0.05вЂ“0.95)</label><input type="number" id="inp-blink-duty" value="${node.blinkDuty ?? 0.5}" min="0.05" max="0.95" step="0.05">
+            <label>РљРѕР»РёС‡РµСЃС‚РІРѕ РјРѕСЂРіР°РЅРёР№ (0 = в€ћ)</label><input type="number" id="inp-blink-count" value="${node.blinkCount || 0}" min="0" max="9999" step="1">
         </div></div>`;
 }
 
-// ==================== ИНСПЕКТОР: СТИМУЛ ====================
+// ==================== РРќРЎРџР•РљРўРћР : РЎРўРРњРЈР› ====================
 function updateStimulusInspector(node) {
     const mm = getNodeComputedSizeMm(node),
         px = getNodeComputedSize(node);
     const cir = !!node.singleCircleEnabled;
-    let html = '<h2>Инспектор</h2><div class="insp-cols">';
-    html += '<div class="panel-section"><h3>📋 Информация</h3>';
-    html += `<label>Название узла</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
-    html += `<label>Тип стимула</label><select id="inp-type">
-        <option value="LETTER_E" ${node.stimType === 'LETTER_E' ? 'selected' : ''}>Буква Е</option>
-        <option value="LANDOLT" ${node.stimType === 'LANDOLT' ? 'selected' : ''}>Кольцо Ландольта</option></select>`;
-    html += `<label><input type="checkbox" id="inp-circle-enabled" ${cir ? 'checked' : ''}> 🎯 Режим «Динамика Круг»</label>`;
-    html += `<label><input type="checkbox" id="inp-active" ${node.isActive ? 'checked' : ''}> Активная тренировка</label></div>`;
+    let html = '<h2>РРЅСЃРїРµРєС‚РѕСЂ</h2><div class="insp-cols">';
+    html += '<div class="panel-section"><h3>рџ“‹ РРЅС„РѕСЂРјР°С†РёСЏ</h3>';
+    html += `<label>РќР°Р·РІР°РЅРёРµ СѓР·Р»Р°</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
+    html += `<label>РўРёРї СЃС‚РёРјСѓР»Р°</label><select id="inp-type">
+        <option value="LETTER_E" ${node.stimType === 'LETTER_E' ? 'selected' : ''}>Р‘СѓРєРІР° Р•</option>
+        <option value="LANDOLT" ${node.stimType === 'LANDOLT' ? 'selected' : ''}>РљРѕР»СЊС†Рѕ Р›Р°РЅРґРѕР»СЊС‚Р°</option></select>`;
+    html += `<label><input type="checkbox" id="inp-circle-enabled" ${cir ? 'checked' : ''}> рџЋЇ Р РµР¶РёРј В«Р”РёРЅР°РјРёРєР° РљСЂСѓРіВ»</label>`;
+    html += `<label><input type="checkbox" id="inp-active" ${node.isActive ? 'checked' : ''}> РђРєС‚РёРІРЅР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°</label></div>`;
     let acOpts = '';
     for (let i = 1; i <= 20; i++) {
         const v = i / 10;
         const m = acuityToSizeMm(v, 1);
-        acOpts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} — ${m.toFixed(2)} мм</option>`;
+        acOpts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} вЂ” ${m.toFixed(2)} РјРј</option>`;
     }
     const sV = (node.stimAcuity || 1.0).toFixed(1);
     const eV = (node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0).toFixed(1);
     html += '<div class="panel-section" style="background:#101a10;border-color:#00aa55;">';
-    html += '<h3 style="color:#00ff88;border-color:#00aa55;">👁️ Острота зрения</h3>';
-    html += `<label>V старт</label><select id="inp-acuity">${acOpts.replace(`value="${sV}"`, `value="${sV}" selected`)}</select>`;
-    html += `<label>V цель</label><select id="inp-end-acuity">${acOpts.replace(`value="${eV}"`, `value="${eV}" selected`)}</select>`;
-    html += `<label>Шаг V за успешную серию</label><input type="number" id="inp-acuity-step" value="${node.acuityStep || 0.1}" min="0.05" max="1" step="0.05">`;
-    html += `<label>Дистанция (м)</label><input type="number" id="inp-distance" value="${(node.stimDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
-    html += `<label>PPI экрана (авто: ${screenPPI})</label><input type="number" id="inp-ppi" value="${node.stimPPI || screenPPI || 96}" min="20" max="1200" step="1">`;
+    html += '<h3 style="color:#00ff88;border-color:#00aa55;">рџ‘ЃпёЏ РћСЃС‚СЂРѕС‚Р° Р·СЂРµРЅРёСЏ</h3>';
+    html += `<label>V СЃС‚Р°СЂС‚</label><select id="inp-acuity">${acOpts.replace(`value="${sV}"`, `value="${sV}" selected`)}</select>`;
+    html += `<label>V С†РµР»СЊ</label><select id="inp-end-acuity">${acOpts.replace(`value="${eV}"`, `value="${eV}" selected`)}</select>`;
+    html += `<label>РЁР°Рі V Р·Р° СѓСЃРїРµС€РЅСѓСЋ СЃРµСЂРёСЋ</label><input type="number" id="inp-acuity-step" value="${node.acuityStep || 0.1}" min="0.05" max="1" step="0.05">`;
+    html += `<label>Р”РёСЃС‚Р°РЅС†РёСЏ (Рј)</label><input type="number" id="inp-distance" value="${(node.stimDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
+    html += `<label>PPI СЌРєСЂР°РЅР° (Р°РІС‚Рѕ: ${screenPPI})</label><input type="number" id="inp-ppi" value="${node.stimPPI || screenPPI || 96}" min="20" max="1200" step="1">`;
     html += `<div style="margin-top:6px;padding:6px;background:#000;border-radius:3px;text-align:center;">
-        <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">📐 ${mm.toFixed(2)} мм</div>
-        <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div></div></div>`;
+        <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">рџ“ђ ${mm.toFixed(2)} РјРј</div>
+        <div style="color:#888;font-size:10px;" id="preview-px">в‰€ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div></div></div>`;
     html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
-    html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серии</h3>';
-    html += `<label>Серий</label><input type="number" id="inp-series-count" value="${node.seriesCount || 5}" min="1" max="50">`;
-    html += `<label>Размер серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`;
-    html += `<label>Порог правильных</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20"></div>`;
+    html += '<h3 style="color:#c084fc;border-color:#a855f7;">рџ“Љ РЎРµСЂРёРё</h3>';
+    html += `<label>РЎРµСЂРёР№</label><input type="number" id="inp-series-count" value="${node.seriesCount || 5}" min="1" max="50">`;
+    html += `<label>Р Р°Р·РјРµСЂ СЃРµСЂРёРё</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`;
+    html += `<label>РџРѕСЂРѕРі РїСЂР°РІРёР»СЊРЅС‹С…</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20"></div>`;
     html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
-    html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета</h3>';
-    html += `<label>Цвет стимула (для буквы)</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
-    html += `<label>Цвет фона</label><input type="color" id="inp-bg" value="${rgbToHex(node.bgR, node.bgG, node.bgB)}"></div>`;
+    html += '<h3 style="color:#fde047;border-color:#eab308;">рџЋЁ Р¦РІРµС‚Р°</h3>';
+    html += `<label>Р¦РІРµС‚ СЃС‚РёРјСѓР»Р° (РґР»СЏ Р±СѓРєРІС‹)</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
+    html += `<label>Р¦РІРµС‚ С„РѕРЅР°</label><input type="color" id="inp-bg" value="${rgbToHex(node.bgR, node.bgG, node.bgB)}"></div>`;
     html += '<div class="panel-section" style="background:#0a1a20;border-color:#0ea5e9;">';
-    html += '<h3 style="color:#38bdf8;border-color:#0ea5e9;">🎲 Случайность</h3>';
-    html += `<label><input type="checkbox" id="inp-random-pos" ${node.singleRandomPos ? 'checked' : ''}> Случайное положение</label></div>`;
+    html += '<h3 style="color:#38bdf8;border-color:#0ea5e9;">рџЋІ РЎР»СѓС‡Р°Р№РЅРѕСЃС‚СЊ</h3>';
+    html += `<label><input type="checkbox" id="inp-random-pos" ${node.singleRandomPos ? 'checked' : ''}> РЎР»СѓС‡Р°Р№РЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ</label></div>`;
     html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
-    html += '<h3 style="color:#4ade80;border-color:#22c55e;">🔲 Сетка положения</h3>';
-    html += `<label><input type="checkbox" id="inp-grid-enabled" ${node.singleGridEnabled ? 'checked' : ''}> Включить сетку</label>`;
+    html += '<h3 style="color:#4ade80;border-color:#22c55e;">рџ”І РЎРµС‚РєР° РїРѕР»РѕР¶РµРЅРёСЏ</h3>';
+    html += `<label><input type="checkbox" id="inp-grid-enabled" ${node.singleGridEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ СЃРµС‚РєСѓ</label>`;
     html += `<div id="insp-grid-settings" style="display:${node.singleGridEnabled ? 'block' : 'none'};margin-top:6px;">`;
-    html += `<label>Столбцов (X)</label><input type="number" id="inp-grid-x" value="${node.singleGridX || 3}" min="1" max="10" step="1">`;
-    html += `<label>Строк (Y)</label><input type="number" id="inp-grid-y" value="${node.singleGridY || 3}" min="1" max="10" step="1">`;
-    html += `<label><input type="checkbox" id="inp-grid-show-lines" ${node.singleGridShowLines ? 'checked' : ''}> Показывать линии</label>`;
-    html += `<label><input type="checkbox" id="inp-grid-random" ${node.singleGridRandomCell !== false ? 'checked' : ''}> Случайная клетка</label>`;
-    html += `<label><input type="checkbox" id="inp-grid-avoid-repeat" ${node.singleGridAvoidRepeat !== false ? 'checked' : ''}> Избегать повтора</label>`;
+    html += `<label>РЎС‚РѕР»Р±С†РѕРІ (X)</label><input type="number" id="inp-grid-x" value="${node.singleGridX || 3}" min="1" max="10" step="1">`;
+    html += `<label>РЎС‚СЂРѕРє (Y)</label><input type="number" id="inp-grid-y" value="${node.singleGridY || 3}" min="1" max="10" step="1">`;
+    html += `<label><input type="checkbox" id="inp-grid-show-lines" ${node.singleGridShowLines ? 'checked' : ''}> РџРѕРєР°Р·С‹РІР°С‚СЊ Р»РёРЅРёРё</label>`;
+    html += `<label><input type="checkbox" id="inp-grid-random" ${node.singleGridRandomCell !== false ? 'checked' : ''}> РЎР»СѓС‡Р°Р№РЅР°СЏ РєР»РµС‚РєР°</label>`;
+    html += `<label><input type="checkbox" id="inp-grid-avoid-repeat" ${node.singleGridAvoidRepeat !== false ? 'checked' : ''}> РР·Р±РµРіР°С‚СЊ РїРѕРІС‚РѕСЂР°</label>`;
     const cells = Array.isArray(node.singleGridCells) ? node.singleGridCells : [];
     html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #22c55e;">`;
-    html += `<label style="color:#4ade80;">Активные клетки</label>`;
-    html += `<div style="font-size:10px;color:#94a3b8;margin-bottom:6px;" id="insp-grid-preview-hint">${cells.length === 0 ? 'Пусто = все клетки.' : `Выбрано: ${cells.length}`}</div>`;
+    html += `<label style="color:#4ade80;">РђРєС‚РёРІРЅС‹Рµ РєР»РµС‚РєРё</label>`;
+    html += `<div style="font-size:10px;color:#94a3b8;margin-bottom:6px;" id="insp-grid-preview-hint">${cells.length === 0 ? 'РџСѓСЃС‚Рѕ = РІСЃРµ РєР»РµС‚РєРё.' : `Р’С‹Р±СЂР°РЅРѕ: ${cells.length}`}</div>`;
     html += `<div id="insp-grid-preview" style="display:grid;gap:3px;"></div></div></div></div>`;
     html += '<div class="panel-section" style="background:#1a0a15;border-color:#ec4899;">';
-    html += '<h3 style="color:#f472b6;border-color:#ec4899;">🎯 Динамика Круг</h3>';
+    html += '<h3 style="color:#f472b6;border-color:#ec4899;">рџЋЇ Р”РёРЅР°РјРёРєР° РљСЂСѓРі</h3>';
     html += `<div id="insp-circle-settings" style="display:${cir ? 'block' : 'none'};margin-top:6px;">`;
     html +=
-        '<div style="border-top:1px dashed #ec4899;padding-top:6px;"><label style="color:#f9a8d4;font-weight:bold;">Внутренний круг</label>';
-    html += `<label><input type="checkbox" id="inp-ci-enabled" ${node.circleInnerEnabled !== false ? 'checked' : ''}> Показывать</label>`;
-    html += `<label>Радиус (% от общего)</label><input type="number" id="inp-ci-radius" value="${node.circleInnerRadiusPct ?? 40}" min="5" max="95" step="1">`;
-    html += `<label>Цвет 1 (центр)</label><input type="color" id="inp-ci-c1" value="${rgbToHex(node.circleInnerColor1?.r, node.circleInnerColor1?.g, node.circleInnerColor1?.b)}">`;
-    html += `<label><input type="checkbox" id="inp-ci-mid-enabled" ${node.circleInnerMidEnabled ? 'checked' : ''}> Цвет 3</label>`;
-    html += `<div id="insp-ci-mid-row" style="display:${node.circleInnerMidEnabled ? 'block' : 'none'};"><label>Цвет 3</label><input type="color" id="inp-ci-c3" value="${rgbToHex(node.circleInnerColor3?.r, node.circleInnerColor3?.g, node.circleInnerColor3?.b)}"></div>`;
-    html += `<label>Цвет 2 (край)</label><input type="color" id="inp-ci-c2" value="${rgbToHex(node.circleInnerColor2?.r, node.circleInnerColor2?.g, node.circleInnerColor2?.b)}">`;
-    html += `<label>Время (с)</label><input type="number" id="inp-ci-duration" value="${(node.circleInnerDuration || 10000) / 1000}" min="0.1" step="0.1">`;
-    html += `<label><input type="checkbox" id="inp-ci-loop" ${node.circleInnerLoop !== false ? 'checked' : ''}> Повторять</label>`;
-    html += `<label><input type="checkbox" id="inp-ci-reverse" ${node.circleInnerReverse ? 'checked' : ''}> Пинг-понг</label></div>`;
+        '<div style="border-top:1px dashed #ec4899;padding-top:6px;"><label style="color:#f9a8d4;font-weight:bold;">Р’РЅСѓС‚СЂРµРЅРЅРёР№ РєСЂСѓРі</label>';
+    html += `<label><input type="checkbox" id="inp-ci-enabled" ${node.circleInnerEnabled !== false ? 'checked' : ''}> РџРѕРєР°Р·С‹РІР°С‚СЊ</label>`;
+    html += `<label>Р Р°РґРёСѓСЃ (% РѕС‚ РѕР±С‰РµРіРѕ)</label><input type="number" id="inp-ci-radius" value="${node.circleInnerRadiusPct ?? 40}" min="5" max="95" step="1">`;
+    html += `<label>Р¦РІРµС‚ 1 (С†РµРЅС‚СЂ)</label><input type="color" id="inp-ci-c1" value="${rgbToHex(node.circleInnerColor1?.r, node.circleInnerColor1?.g, node.circleInnerColor1?.b)}">`;
+    html += `<label><input type="checkbox" id="inp-ci-mid-enabled" ${node.circleInnerMidEnabled ? 'checked' : ''}> Р¦РІРµС‚ 3</label>`;
+    html += `<div id="insp-ci-mid-row" style="display:${node.circleInnerMidEnabled ? 'block' : 'none'};"><label>Р¦РІРµС‚ 3</label><input type="color" id="inp-ci-c3" value="${rgbToHex(node.circleInnerColor3?.r, node.circleInnerColor3?.g, node.circleInnerColor3?.b)}"></div>`;
+    html += `<label>Р¦РІРµС‚ 2 (РєСЂР°Р№)</label><input type="color" id="inp-ci-c2" value="${rgbToHex(node.circleInnerColor2?.r, node.circleInnerColor2?.g, node.circleInnerColor2?.b)}">`;
+    html += `<label>Р’СЂРµРјСЏ (СЃ)</label><input type="number" id="inp-ci-duration" value="${(node.circleInnerDuration || 10000) / 1000}" min="0.1" step="0.1">`;
+    html += `<label><input type="checkbox" id="inp-ci-loop" ${node.circleInnerLoop !== false ? 'checked' : ''}> РџРѕРІС‚РѕСЂСЏС‚СЊ</label>`;
+    html += `<label><input type="checkbox" id="inp-ci-reverse" ${node.circleInnerReverse ? 'checked' : ''}> РџРёРЅРі-РїРѕРЅРі</label></div>`;
     html +=
-        '<div style="border-top:1px dashed #ec4899;margin-top:8px;padding-top:8px;"><label style="color:#f9a8d4;font-weight:bold;">Внешнее кольцо</label>';
-    html += `<label><input type="checkbox" id="inp-co-enabled" ${node.circleOuterEnabled !== false ? 'checked' : ''}> Показывать</label>`;
-    html += `<label>Цвет 1 (у диска)</label><input type="color" id="inp-co-c1" value="${rgbToHex(node.circleOuterColor1?.r, node.circleOuterColor1?.g, node.circleOuterColor1?.b)}">`;
-    html += `<label><input type="checkbox" id="inp-co-mid-enabled" ${node.circleOuterMidEnabled ? 'checked' : ''}> Цвет 3</label>`;
-    html += `<div id="insp-co-mid-row" style="display:${node.circleOuterMidEnabled ? 'block' : 'none'};"><label>Цвет 3</label><input type="color" id="inp-co-c3" value="${rgbToHex(node.circleOuterColor3?.r, node.circleOuterColor3?.g, node.circleOuterColor3?.b)}"></div>`;
-    html += `<label>Цвет 2 (край)</label><input type="color" id="inp-co-c2" value="${rgbToHex(node.circleOuterColor2?.r, node.circleOuterColor2?.g, node.circleOuterColor2?.b)}">`;
-    html += `<label>Время (с)</label><input type="number" id="inp-co-duration" value="${(node.circleOuterDuration || 10000) / 1000}" min="0.1" step="0.1">`;
-    html += `<label><input type="checkbox" id="inp-co-loop" ${node.circleOuterLoop !== false ? 'checked' : ''}> Повторять</label>`;
-    html += `<label><input type="checkbox" id="inp-co-reverse" ${node.circleOuterReverse ? 'checked' : ''}> Пинг-понг</label></div></div></div>`;
+        '<div style="border-top:1px dashed #ec4899;margin-top:8px;padding-top:8px;"><label style="color:#f9a8d4;font-weight:bold;">Р’РЅРµС€РЅРµРµ РєРѕР»СЊС†Рѕ</label>';
+    html += `<label><input type="checkbox" id="inp-co-enabled" ${node.circleOuterEnabled !== false ? 'checked' : ''}> РџРѕРєР°Р·С‹РІР°С‚СЊ</label>`;
+    html += `<label>Р¦РІРµС‚ 1 (Сѓ РґРёСЃРєР°)</label><input type="color" id="inp-co-c1" value="${rgbToHex(node.circleOuterColor1?.r, node.circleOuterColor1?.g, node.circleOuterColor1?.b)}">`;
+    html += `<label><input type="checkbox" id="inp-co-mid-enabled" ${node.circleOuterMidEnabled ? 'checked' : ''}> Р¦РІРµС‚ 3</label>`;
+    html += `<div id="insp-co-mid-row" style="display:${node.circleOuterMidEnabled ? 'block' : 'none'};"><label>Р¦РІРµС‚ 3</label><input type="color" id="inp-co-c3" value="${rgbToHex(node.circleOuterColor3?.r, node.circleOuterColor3?.g, node.circleOuterColor3?.b)}"></div>`;
+    html += `<label>Р¦РІРµС‚ 2 (РєСЂР°Р№)</label><input type="color" id="inp-co-c2" value="${rgbToHex(node.circleOuterColor2?.r, node.circleOuterColor2?.g, node.circleOuterColor2?.b)}">`;
+    html += `<label>Р’СЂРµРјСЏ (СЃ)</label><input type="number" id="inp-co-duration" value="${(node.circleOuterDuration || 10000) / 1000}" min="0.1" step="0.1">`;
+    html += `<label><input type="checkbox" id="inp-co-loop" ${node.circleOuterLoop !== false ? 'checked' : ''}> РџРѕРІС‚РѕСЂСЏС‚СЊ</label>`;
+    html += `<label><input type="checkbox" id="inp-co-reverse" ${node.circleOuterReverse ? 'checked' : ''}> РџРёРЅРі-РїРѕРЅРі</label></div></div></div>`;
     html += renderPeriInspectorSection(node);
     html += renderDefocusInspectorSection(node);
     html += renderBlinkAnimationInspectorSection(node);
     const tf = [
-        { id: 'delay1', label: 'Задержка 1', value: node.delay1 || 0 },
-        { id: 'duration', label: 'Время показа', value: node.duration || 0 },
-        { id: 'response', label: 'Ожидание ответа', value: node.response || 0 },
-        { id: 'delay2', label: 'Задержка 2', value: node.delay2 || 0 }
+        { id: 'delay1', label: 'Р—Р°РґРµСЂР¶РєР° 1', value: node.delay1 || 0 },
+        { id: 'duration', label: 'Р’СЂРµРјСЏ РїРѕРєР°Р·Р°', value: node.duration || 0 },
+        { id: 'response', label: 'РћР¶РёРґР°РЅРёРµ РѕС‚РІРµС‚Р°', value: node.response || 0 },
+        { id: 'delay2', label: 'Р—Р°РґРµСЂР¶РєР° 2', value: node.delay2 || 0 }
     ];
     html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
-    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">⏱ Время</h3>';
+    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">вЏ± Р’СЂРµРјСЏ</h3>';
     tf.forEach((f) => {
         const u = detectUnit(f.value),
             dv = msToUnit(f.value, u);
         html += `<label>${f.label}</label><div class="time-group">
             <input type="number" id="inp-${f.id}" value="${dv}" step="any" min="0">
-            <select id="inp-${f.id}-unit"><option value="ms" ${u === 'ms' ? 'selected' : ''}>мс</option><option value="s" ${u === 's' ? 'selected' : ''}>с</option><option value="min" ${u === 'min' ? 'selected' : ''}>мин</option></select></div>`;
+            <select id="inp-${f.id}-unit"><option value="ms" ${u === 'ms' ? 'selected' : ''}>РјСЃ</option><option value="s" ${u === 's' ? 'selected' : ''}>СЃ</option><option value="min" ${u === 'min' ? 'selected' : ''}>РјРёРЅ</option></select></div>`;
     });
     html += '</div>';
     html += '<div class="panel-section" style="background:#100a1a;border-color:#8b5cf6;">';
-    html += '<h3 style="color:#a78bfa;border-color:#8b5cf6;">🎨 Динамика буквы</h3>';
-    html += `<label><input type="checkbox" id="inp-stim-dyn-enabled" ${node.singleStimDynamicEnabled ? 'checked' : ''}> Включить</label>`;
+    html += '<h3 style="color:#a78bfa;border-color:#8b5cf6;">рџЋЁ Р”РёРЅР°РјРёРєР° Р±СѓРєРІС‹</h3>';
+    html += `<label><input type="checkbox" id="inp-stim-dyn-enabled" ${node.singleStimDynamicEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ</label>`;
     html += `<div id="insp-sti-dyn-settings" style="display:${node.singleStimDynamicEnabled ? 'block' : 'none'};margin-top:6px;">`;
-    html += `<label>Цвет 1</label><input type="color" id="inp-sti-color1" value="${rgbToHex(node.singleStimColor1?.r, node.singleStimColor1?.g, node.singleStimColor1?.b)}">`;
-    html += `<label><input type="checkbox" id="inp-sti-mid-enabled" ${node.singleStimMidEnabled ? 'checked' : ''}> Цвет 3</label>`;
-    html += `<div id="insp-sti-mid-row" style="display:${node.singleStimMidEnabled ? 'block' : 'none'};"><label>Цвет 3</label><input type="color" id="inp-sti-color3" value="${rgbToHex(node.singleStimColor3?.r, node.singleStimColor3?.g, node.singleStimColor3?.b)}"></div>`;
-    html += `<label>Цвет 2</label><input type="color" id="inp-sti-color2" value="${rgbToHex(node.singleStimColor2?.r, node.singleStimColor2?.g, node.singleStimColor2?.b)}">`;
-    html += `<label>Время (с)</label><input type="number" id="inp-sti-duration" value="${(node.singleStimDuration || 10000) / 1000}" min="0.1" step="0.1">`;
-    html += `<label><input type="checkbox" id="inp-sti-loop" ${node.singleStimLoop ? 'checked' : ''}> Повторять</label>`;
-    html += `<label><input type="checkbox" id="inp-sti-reverse" ${node.singleStimReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
+    html += `<label>Р¦РІРµС‚ 1</label><input type="color" id="inp-sti-color1" value="${rgbToHex(node.singleStimColor1?.r, node.singleStimColor1?.g, node.singleStimColor1?.b)}">`;
+    html += `<label><input type="checkbox" id="inp-sti-mid-enabled" ${node.singleStimMidEnabled ? 'checked' : ''}> Р¦РІРµС‚ 3</label>`;
+    html += `<div id="insp-sti-mid-row" style="display:${node.singleStimMidEnabled ? 'block' : 'none'};"><label>Р¦РІРµС‚ 3</label><input type="color" id="inp-sti-color3" value="${rgbToHex(node.singleStimColor3?.r, node.singleStimColor3?.g, node.singleStimColor3?.b)}"></div>`;
+    html += `<label>Р¦РІРµС‚ 2</label><input type="color" id="inp-sti-color2" value="${rgbToHex(node.singleStimColor2?.r, node.singleStimColor2?.g, node.singleStimColor2?.b)}">`;
+    html += `<label>Р’СЂРµРјСЏ (СЃ)</label><input type="number" id="inp-sti-duration" value="${(node.singleStimDuration || 10000) / 1000}" min="0.1" step="0.1">`;
+    html += `<label><input type="checkbox" id="inp-sti-loop" ${node.singleStimLoop ? 'checked' : ''}> РџРѕРІС‚РѕСЂСЏС‚СЊ</label>`;
+    html += `<label><input type="checkbox" id="inp-sti-reverse" ${node.singleStimReverse ? 'checked' : ''}> РџРёРЅРі-РїРѕРЅРі</label></div></div>`;
     html += '<div class="panel-section" style="background:#1a0a10;border-color:#ec4899;">';
-    html += '<h3 style="color:#f472b6;border-color:#ec4899;">🖼️ Динамика фона</h3>';
-    html += `<label><input type="checkbox" id="inp-bg-dyn-enabled" ${node.singleBgDynamicEnabled ? 'checked' : ''}> Включить</label>`;
+    html += '<h3 style="color:#f472b6;border-color:#ec4899;">рџ–јпёЏ Р”РёРЅР°РјРёРєР° С„РѕРЅР°</h3>';
+    html += `<label><input type="checkbox" id="inp-bg-dyn-enabled" ${node.singleBgDynamicEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ</label>`;
     html += `<div id="insp-bg-dyn-settings" style="display:${node.singleBgDynamicEnabled ? 'block' : 'none'};margin-top:6px;">`;
-    html += `<label>Цвет 1</label><input type="color" id="inp-bg-color1" value="${rgbToHex(node.singleBgColor1?.r, node.singleBgColor1?.g, node.singleBgColor1?.b)}">`;
-    html += `<label><input type="checkbox" id="inp-bg-mid-enabled" ${node.singleBgMidEnabled ? 'checked' : ''}> Цвет 3</label>`;
-    html += `<div id="insp-bg-mid-row" style="display:${node.singleBgMidEnabled ? 'block' : 'none'};"><label>Цвет 3</label><input type="color" id="inp-bg-color3" value="${rgbToHex(node.singleBgColor3?.r, node.singleBgColor3?.g, node.singleBgColor3?.b)}"></div>`;
-    html += `<label>Цвет 2</label><input type="color" id="inp-bg-color2" value="${rgbToHex(node.singleBgColor2?.r, node.singleBgColor2?.g, node.singleBgColor2?.b)}">`;
-    html += `<label>Время (с)</label><input type="number" id="inp-bg-duration" value="${(node.singleBgDuration || 10000) / 1000}" min="0.1" step="0.1">`;
-    html += `<label><input type="checkbox" id="inp-bg-loop" ${node.singleBgLoop ? 'checked' : ''}> Повторять</label>`;
-    html += `<label><input type="checkbox" id="inp-bg-reverse" ${node.singleBgReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
+    html += `<label>Р¦РІРµС‚ 1</label><input type="color" id="inp-bg-color1" value="${rgbToHex(node.singleBgColor1?.r, node.singleBgColor1?.g, node.singleBgColor1?.b)}">`;
+    html += `<label><input type="checkbox" id="inp-bg-mid-enabled" ${node.singleBgMidEnabled ? 'checked' : ''}> Р¦РІРµС‚ 3</label>`;
+    html += `<div id="insp-bg-mid-row" style="display:${node.singleBgMidEnabled ? 'block' : 'none'};"><label>Р¦РІРµС‚ 3</label><input type="color" id="inp-bg-color3" value="${rgbToHex(node.singleBgColor3?.r, node.singleBgColor3?.g, node.singleBgColor3?.b)}"></div>`;
+    html += `<label>Р¦РІРµС‚ 2</label><input type="color" id="inp-bg-color2" value="${rgbToHex(node.singleBgColor2?.r, node.singleBgColor2?.g, node.singleBgColor2?.b)}">`;
+    html += `<label>Р’СЂРµРјСЏ (СЃ)</label><input type="number" id="inp-bg-duration" value="${(node.singleBgDuration || 10000) / 1000}" min="0.1" step="0.1">`;
+    html += `<label><input type="checkbox" id="inp-bg-loop" ${node.singleBgLoop ? 'checked' : ''}> РџРѕРІС‚РѕСЂСЏС‚СЊ</label>`;
+    html += `<label><input type="checkbox" id="inp-bg-reverse" ${node.singleBgReverse ? 'checked' : ''}> РџРёРЅРі-РїРѕРЅРі</label></div></div>`;
     html += '</div>';
     html +=
-        '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
+        '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">рџ’ѕ РџСЂРёРјРµРЅРёС‚СЊ</button>';
     inspectorEl.innerHTML = html;
     const p = document.getElementById('insp-grid-preview');
     if (p) {
@@ -3456,9 +3458,9 @@ function updateStimulusInspector(node) {
             d = parseFloat(di?.value) || 1,
             ppi = parseInt(pp?.value) || screenPPI || 96;
         const m = document.getElementById('preview-mm');
-        if (m) m.textContent = `📐 ${acuityToSizeMm(v, d).toFixed(2)} мм`;
+        if (m) m.textContent = `рџ“ђ ${acuityToSizeMm(v, d).toFixed(2)} РјРј`;
         const x = document.getElementById('preview-px');
-        if (x) x.textContent = `≈ ${acuityToSizePx(v, d, ppi)}px @ ${ppi} PPI`;
+        if (x) x.textContent = `в‰€ ${acuityToSizePx(v, d, ppi)}px @ ${ppi} PPI`;
     };
     if (ai) ai.addEventListener('change', upd);
     if (di) di.addEventListener('input', upd);
@@ -3498,46 +3500,46 @@ function updateStimulusInspector(node) {
     if (gyI) gyI.addEventListener('input', renderInspectorGridPreview);
 }
 
-// ==================== ИНСПЕКТОР: ЛОГИКА ====================
+// ==================== РРќРЎРџР•РљРўРћР : Р›РћР“РРљРђ ====================
 function updateLogicInspector(node) {
-    let html = '<h2>Инспектор</h2><div class="panel-section"><h3>🧠 Логика</h3>';
-    html += `<label>Название узла</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
-    html += '<div class="acuity-hint">Логика условных переходов появится позже.</div></div>';
-    html += '<button class="btn btn-success" id="inp-apply" style="width:100%;">💾 Применить</button>';
+    let html = '<h2>РРЅСЃРїРµРєС‚РѕСЂ</h2><div class="panel-section"><h3>рџ§  Р›РѕРіРёРєР°</h3>';
+    html += `<label>РќР°Р·РІР°РЅРёРµ СѓР·Р»Р°</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
+    html += '<div class="acuity-hint">Р›РѕРіРёРєР° СѓСЃР»РѕРІРЅС‹С… РїРµСЂРµС…РѕРґРѕРІ РїРѕСЏРІРёС‚СЃСЏ РїРѕР·Р¶Рµ.</div></div>';
+    html += '<button class="btn btn-success" id="inp-apply" style="width:100%;">рџ’ѕ РџСЂРёРјРµРЅРёС‚СЊ</button>';
     inspectorEl.innerHTML = html;
 }
 
-// ==================== ИНСПЕКТОР: СРАВНЕНИЕ ====================
+// ==================== РРќРЎРџР•РљРўРћР : РЎР РђР’РќР•РќРР• ====================
 function updateCompareInspector(node) {
-    let html = '<h2>Инспектор</h2><div class="insp-cols">';
-    html += '<div class="panel-section"><h3>📋 Информация</h3>';
-    html += `<label>Название узла</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
-    html += `<label><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> Активный узел</label></div>`;
+    let html = '<h2>РРЅСЃРїРµРєС‚РѕСЂ</h2><div class="insp-cols">';
+    html += '<div class="panel-section"><h3>рџ“‹ РРЅС„РѕСЂРјР°С†РёСЏ</h3>';
+    html += `<label>РќР°Р·РІР°РЅРёРµ СѓР·Р»Р°</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
+    html += `<label><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> РђРєС‚РёРІРЅС‹Р№ СѓР·РµР»</label></div>`;
     html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
-    html += '<h3 style="color:#c084fc;border-color:#a855f7;">⚖️ Режим</h3>';
-    html += `<label>Тип</label><select id="inp-cmp-mode">
-        <option value="direction" ${(node.compareMode || 'direction') === 'direction' ? 'selected' : ''}>Сравнить направления (Да/Нет)</option>
-        <option value="find_same" ${node.compareMode === 'find_same' ? 'selected' : ''}>Найти одинаковые (клик по парам)</option></select>`;
+    html += '<h3 style="color:#c084fc;border-color:#a855f7;">вљ–пёЏ Р РµР¶РёРј</h3>';
+    html += `<label>РўРёРї</label><select id="inp-cmp-mode">
+        <option value="direction" ${(node.compareMode || 'direction') === 'direction' ? 'selected' : ''}>РЎСЂР°РІРЅРёС‚СЊ РЅР°РїСЂР°РІР»РµРЅРёСЏ (Р”Р°/РќРµС‚)</option>
+        <option value="find_same" ${node.compareMode === 'find_same' ? 'selected' : ''}>РќР°Р№С‚Рё РѕРґРёРЅР°РєРѕРІС‹Рµ (РєР»РёРє РїРѕ РїР°СЂР°Рј)</option></select>`;
     html += `<div id="insp-cmp-pairs-block" style="display:${node.compareMode === 'find_same' ? 'block' : 'none'};margin-top:6px;">`;
-    html += `<label>Количество пар</label><input type="number" id="inp-cmp-pairs" value="${node.pairsCount || 2}" min="1" max="20"></div></div>`;
+    html += `<label>РљРѕР»РёС‡РµСЃС‚РІРѕ РїР°СЂ</label><input type="number" id="inp-cmp-pairs" value="${node.pairsCount || 2}" min="1" max="20"></div></div>`;
     html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
-    html += '<h3 style="color:#4ade80;border-color:#22c55e;">🔲 Сетка</h3>';
-    html += `<label>Столбцов (X)</label><input type="number" id="inp-cmp-gx" value="${node.gridX || 3}" min="2" max="6">`;
-    html += `<label>Строк (Y)</label><input type="number" id="inp-cmp-gy" value="${node.gridY || 3}" min="1" max="6">`;
+    html += '<h3 style="color:#4ade80;border-color:#22c55e;">рџ”І РЎРµС‚РєР°</h3>';
+    html += `<label>РЎС‚РѕР»Р±С†РѕРІ (X)</label><input type="number" id="inp-cmp-gx" value="${node.gridX || 3}" min="2" max="6">`;
+    html += `<label>РЎС‚СЂРѕРє (Y)</label><input type="number" id="inp-cmp-gy" value="${node.gridY || 3}" min="1" max="6">`;
     html += '<div id="insp-cmp-grid" class="cmp-grid-preview"></div></div>';
     html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
     html +=
-        '<h3 style="color:#fde047;border-color:#eab308;">🎨 Параметры клеток</h3><div id="insp-cmp-cells"></div></div>';
+        '<h3 style="color:#fde047;border-color:#eab308;">рџЋЁ РџР°СЂР°РјРµС‚СЂС‹ РєР»РµС‚РѕРє</h3><div id="insp-cmp-cells"></div></div>';
     html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
-    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">📊 Серии и время</h3>';
-    html += `<label>Серий</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 5}" min="1" max="50">`;
-    html += `<label>Размер серии</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
-    html += `<label>Порог правильных</label><input type="number" id="inp-cmp-st" value="${node.seriesThreshold || 4}" min="1" max="20">`;
-    html += `<label>Задержка 1 (мс)</label><input type="number" id="inp-cmp-d1" value="${node.delay1 || 1000}" min="0" step="50">`;
-    html += `<label>Время показа (мс)</label><input type="number" id="inp-cmp-dur" value="${node.duration || 2000}" min="200" step="50">`;
-    html += `<label>Задержка 2 (мс)</label><input type="number" id="inp-cmp-d2" value="${node.delay2 || 1000}" min="0" step="50"></div>`;
+    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">рџ“Љ РЎРµСЂРёРё Рё РІСЂРµРјСЏ</h3>';
+    html += `<label>РЎРµСЂРёР№</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 5}" min="1" max="50">`;
+    html += `<label>Р Р°Р·РјРµСЂ СЃРµСЂРёРё</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
+    html += `<label>РџРѕСЂРѕРі РїСЂР°РІРёР»СЊРЅС‹С…</label><input type="number" id="inp-cmp-st" value="${node.seriesThreshold || 4}" min="1" max="20">`;
+    html += `<label>Р—Р°РґРµСЂР¶РєР° 1 (РјСЃ)</label><input type="number" id="inp-cmp-d1" value="${node.delay1 || 1000}" min="0" step="50">`;
+    html += `<label>Р’СЂРµРјСЏ РїРѕРєР°Р·Р° (РјСЃ)</label><input type="number" id="inp-cmp-dur" value="${node.duration || 2000}" min="200" step="50">`;
+    html += `<label>Р—Р°РґРµСЂР¶РєР° 2 (РјСЃ)</label><input type="number" id="inp-cmp-d2" value="${node.delay2 || 1000}" min="0" step="50"></div>`;
     html +=
-        '</div><button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
+        '</div><button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">рџ’ѕ РџСЂРёРјРµРЅРёС‚СЊ</button>';
     inspectorEl.innerHTML = html;
     const previewEl = document.getElementById('insp-cmp-grid');
     previewEl.dataset.selected = JSON.stringify(node.activeCells || []);
@@ -3572,7 +3574,7 @@ function updateCompareInspector(node) {
                     const cur = JSON.parse(previewEl.dataset.selected || '[]');
                     const was = cEl.dataset.on === '1';
                     if (was && cur.length <= 2) {
-                        alert('Нужно минимум 2 активные клетки');
+                        alert('РќСѓР¶РЅРѕ РјРёРЅРёРјСѓРј 2 Р°РєС‚РёРІРЅС‹Рµ РєР»РµС‚РєРё');
                         return;
                     }
                     cEl.dataset.on = was ? '0' : '1';
@@ -3637,11 +3639,11 @@ function updateCompareInspector(node) {
                 const v = i / 10;
                 opts += `<option value="${v.toFixed(1)}" ${Math.abs((p.acuity || 1) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)}</option>`;
             }
-            div.innerHTML = `<label><b>Клетка (${cell.row + 1}, ${cell.col + 1})</b></label>
+            div.innerHTML = `<label><b>РљР»РµС‚РєР° (${cell.row + 1}, ${cell.col + 1})</b></label>
                 <label>V</label><select class="cmp-a">${opts}</select>
-                <label>Цвет стимула</label><input type="color" class="cmp-sc" value="${rgbToHex(p.stimR, p.stimG, p.stimB)}">
-                <label>Цвет фона</label><input type="color" class="cmp-bg" value="${rgbToHex(p.bgR, p.bgG, p.bgB)}">
-                <label>Время (мс)</label><input type="number" class="cmp-d" value="${p.duration || 2000}" min="200" max="5000">`;
+                <label>Р¦РІРµС‚ СЃС‚РёРјСѓР»Р°</label><input type="color" class="cmp-sc" value="${rgbToHex(p.stimR, p.stimG, p.stimB)}">
+                <label>Р¦РІРµС‚ С„РѕРЅР°</label><input type="color" class="cmp-bg" value="${rgbToHex(p.bgR, p.bgG, p.bgB)}">
+                <label>Р’СЂРµРјСЏ (РјСЃ)</label><input type="number" class="cmp-d" value="${p.duration || 2000}" min="200" max="5000">`;
             c.appendChild(div);
         });
     }
@@ -3656,53 +3658,53 @@ function updateCompareInspector(node) {
     });
 }
 
-// ==================== ИНСПЕКТОР: ЧТЕНИЕ ====================
+// ==================== РРќРЎРџР•РљРўРћР : Р§РўР•РќРР• ====================
 function updateReadingInspector(node) {
     const hasOwn = !!(node.bookId && window._books[node.bookId]);
     let bookHtml;
     if (hasOwn)
-        bookHtml = `<span style="color:#7dd3fc;">${escapeHtml(node.bookName || '(без имени)')}</span>`;
-    else if (node.bookName) bookHtml = `<span style="color:#f59e0b;">${escapeHtml(node.bookName)} ⚠</span>`;
-    else bookHtml = `<span style="color:#94a3b8;">Книга из сессии</span>`;
-    let html = '<h2>Инспектор</h2><div class="insp-cols">';
-    html += '<div class="panel-section"><h3>📖 Чтение</h3>';
-    html += `<label>Название узла</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
-    html += `<label>Книга</label><div style="padding:6px 8px;background:#0b0b14;border-radius:3px;font-size:11px;margin-bottom:4px;">${bookHtml}</div>`;
-    html += `<button class="btn btn-reading" id="inp-reading-choose-book" style="width:100%;margin-bottom:4px;">📚 ${hasOwn ? 'Сменить книгу' : 'Задать книгу'}</button></div>`;
+        bookHtml = `<span style="color:#7dd3fc;">${escapeHtml(node.bookName || '(Р±РµР· РёРјРµРЅРё)')}</span>`;
+    else if (node.bookName) bookHtml = `<span style="color:#f59e0b;">${escapeHtml(node.bookName)} вљ </span>`;
+    else bookHtml = `<span style="color:#94a3b8;">РљРЅРёРіР° РёР· СЃРµСЃСЃРёРё</span>`;
+    let html = '<h2>РРЅСЃРїРµРєС‚РѕСЂ</h2><div class="insp-cols">';
+    html += '<div class="panel-section"><h3>рџ“– Р§С‚РµРЅРёРµ</h3>';
+    html += `<label>РќР°Р·РІР°РЅРёРµ СѓР·Р»Р°</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
+    html += `<label>РљРЅРёРіР°</label><div style="padding:6px 8px;background:#0b0b14;border-radius:3px;font-size:11px;margin-bottom:4px;">${bookHtml}</div>`;
+    html += `<button class="btn btn-reading" id="inp-reading-choose-book" style="width:100%;margin-bottom:4px;">рџ“љ ${hasOwn ? 'РЎРјРµРЅРёС‚СЊ РєРЅРёРіСѓ' : 'Р—Р°РґР°С‚СЊ РєРЅРёРіСѓ'}</button></div>`;
     html += '<div class="panel-section" style="background:#0a1020;border-color:#0ea5e9;">';
-    html += '<h3 style="color:#38bdf8;border-color:#0ea5e9;">Отображение</h3>';
-    html += `<label>Шрифт</label><input type="text" id="inp-reading-font" value="${escapeHtml(node.readingFontFamily || 'Segoe UI')}">`;
-    html += `<label><input type="checkbox" id="inp-reading-bold" ${node.readingFontWeight === 'bold' ? 'checked' : ''}> Жирный</label>`;
+    html += '<h3 style="color:#38bdf8;border-color:#0ea5e9;">РћС‚РѕР±СЂР°Р¶РµРЅРёРµ</h3>';
+    html += `<label>РЁСЂРёС„С‚</label><input type="text" id="inp-reading-font" value="${escapeHtml(node.readingFontFamily || 'Segoe UI')}">`;
+    html += `<label><input type="checkbox" id="inp-reading-bold" ${node.readingFontWeight === 'bold' ? 'checked' : ''}> Р–РёСЂРЅС‹Р№</label>`;
     let acOpts = '';
     for (let i = 1; i <= 20; i++) {
         const v = i / 10,
             m = acuityToSizeMm(v, 1);
-        acOpts += `<option value="${v.toFixed(1)}" ${Math.abs((node.readingAcuity || 1.0) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)} — ${m.toFixed(2)} мм</option>`;
+        acOpts += `<option value="${v.toFixed(1)}" ${Math.abs((node.readingAcuity || 1.0) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)} вЂ” ${m.toFixed(2)} РјРј</option>`;
     }
-    html += `<label>Острота зрения V</label><select id="inp-reading-acuity">${acOpts}</select>`;
-    html += `<label>Дистанция чтения (м)</label><input type="number" id="inp-reading-distance" value="${(node.readingDistance || readingDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
-    html += `<label>Цвет текста</label><input type="color" id="inp-reading-text-color" value="${rgbToHex(node.readingTextColor?.r, node.readingTextColor?.g, node.readingTextColor?.b)}"></div>`;
+    html += `<label>РћСЃС‚СЂРѕС‚Р° Р·СЂРµРЅРёСЏ V</label><select id="inp-reading-acuity">${acOpts}</select>`;
+    html += `<label>Р”РёСЃС‚Р°РЅС†РёСЏ С‡С‚РµРЅРёСЏ (Рј)</label><input type="number" id="inp-reading-distance" value="${(node.readingDistance || readingDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
+    html += `<label>Р¦РІРµС‚ С‚РµРєСЃС‚Р°</label><input type="color" id="inp-reading-text-color" value="${rgbToHex(node.readingTextColor?.r, node.readingTextColor?.g, node.readingTextColor?.b)}"></div>`;
     html += '<div class="panel-section" style="background:#0a1a1a;border-color:#14b8a6;">';
-    html += '<h3 style="color:#2dd4bf;border-color:#14b8a6;">Фон</h3>';
-    html += `<label>Тип фона</label><select id="inp-reading-bg-mode">
-        <option value="solid" ${(node.readingBgMode || 'solid') === 'solid' ? 'selected' : ''}>Сплошной</option>
-        <option value="split" ${node.readingBgMode === 'split' ? 'selected' : ''}>Две половины</option>
-        <option value="gradient" ${node.readingBgMode === 'gradient' ? 'selected' : ''}>Градиент</option>
-        <option value="dynamic" ${node.readingBgMode === 'dynamic' ? 'selected' : ''}>Динамический</option></select>`;
-    html += `<div id="insp-rd-solid" style="display:${(node.readingBgMode || 'solid') === 'solid' ? 'block' : 'none'};margin-top:6px;"><label>Цвет фона</label><input type="color" id="inp-rd-bg-color" value="${rgbToHex(node.readingBgColor?.r, node.readingBgColor?.g, node.readingBgColor?.b)}"></div>`;
-    html += `<div id="insp-rd-split" style="display:${node.readingBgMode === 'split' ? 'block' : 'none'};margin-top:6px;"><label>Ширина левой (%)</label><input type="number" id="inp-rd-split-left-width" value="${node.readingSplitLeftWidthPercent ?? 50}" min="0" max="100"><label>Цвет левой</label><input type="color" id="inp-rd-split-left-color" value="${rgbToHex(node.readingSplitLeftColor?.r, node.readingSplitLeftColor?.g, node.readingSplitLeftColor?.b)}"><label>Цвет правой</label><input type="color" id="inp-rd-split-right-color" value="${rgbToHex(node.readingSplitRightColor?.r, node.readingSplitRightColor?.g, node.readingSplitRightColor?.b)}"></div>`;
-    html += `<div id="insp-rd-gradient" style="display:${node.readingBgMode === 'gradient' ? 'block' : 'none'};margin-top:6px;"><label><input type="checkbox" id="inp-rd-grad-mid-enabled" ${node.readingGradientMidEnabled !== false ? 'checked' : ''}> Цвет 3</label><label>Цвет 1</label><input type="color" id="inp-rd-grad-left-color" value="${rgbToHex(node.readingGradientLeftColor?.r, node.readingGradientLeftColor?.g, node.readingGradientLeftColor?.b)}"><div id="insp-rd-grad-mid-row" style="display:${node.readingGradientMidEnabled !== false ? 'block' : 'none'};"><label>Цвет 3</label><input type="color" id="inp-rd-grad-mid-color" value="${rgbToHex(node.readingGradientMidColor?.r, node.readingGradientMidColor?.g, node.readingGradientMidColor?.b)}"><label>Позиция (%)</label><input type="number" id="inp-rd-grad-mid-pos" value="${node.readingGradientMidPosition ?? 50}" min="0" max="100"></div><label>Цвет 2</label><input type="color" id="inp-rd-grad-right-color" value="${rgbToHex(node.readingGradientRightColor?.r, node.readingGradientRightColor?.g, node.readingGradientRightColor?.b)}"></div>`;
-    html += `<div id="insp-rd-dynamic" style="display:${node.readingBgMode === 'dynamic' ? 'block' : 'none'};margin-top:6px;"><label>Режим динамики</label><select id="inp-rd-dyn-mode"><option value="simple" ${(node.readingDynamicMode || 'simple') === 'simple' ? 'selected' : ''}>A→B</option><option value="rgb" ${node.readingDynamicMode === 'rgb' ? 'selected' : ''}>RGB</option><option value="physiological" ${node.readingDynamicMode === 'physiological' ? 'selected' : ''}>Физиологический</option></select><label>Цвет A</label><input type="color" id="inp-rd-dyn-start" value="${rgbToHex(node.readingDynamicStartColor?.r, node.readingDynamicStartColor?.g, node.readingDynamicStartColor?.b)}"><label>Цвет B</label><input type="color" id="inp-rd-dyn-end" value="${rgbToHex(node.readingDynamicEndColor?.r, node.readingDynamicEndColor?.g, node.readingDynamicEndColor?.b)}"><label>Время цикла (с)</label><input type="number" id="inp-rd-dyn-duration" value="${(node.readingDynamicDuration || 10000) / 1000}" min="0.1" step="0.1"><label><input type="checkbox" id="inp-rd-dyn-loop" ${node.readingDynamicLoop ? 'checked' : ''}> Повторять</label><label><input type="checkbox" id="inp-rd-dyn-reverse" ${node.readingDynamicReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
+    html += '<h3 style="color:#2dd4bf;border-color:#14b8a6;">Р¤РѕРЅ</h3>';
+    html += `<label>РўРёРї С„РѕРЅР°</label><select id="inp-reading-bg-mode">
+        <option value="solid" ${(node.readingBgMode || 'solid') === 'solid' ? 'selected' : ''}>РЎРїР»РѕС€РЅРѕР№</option>
+        <option value="split" ${node.readingBgMode === 'split' ? 'selected' : ''}>Р”РІРµ РїРѕР»РѕРІРёРЅС‹</option>
+        <option value="gradient" ${node.readingBgMode === 'gradient' ? 'selected' : ''}>Р“СЂР°РґРёРµРЅС‚</option>
+        <option value="dynamic" ${node.readingBgMode === 'dynamic' ? 'selected' : ''}>Р”РёРЅР°РјРёС‡РµСЃРєРёР№</option></select>`;
+    html += `<div id="insp-rd-solid" style="display:${(node.readingBgMode || 'solid') === 'solid' ? 'block' : 'none'};margin-top:6px;"><label>Р¦РІРµС‚ С„РѕРЅР°</label><input type="color" id="inp-rd-bg-color" value="${rgbToHex(node.readingBgColor?.r, node.readingBgColor?.g, node.readingBgColor?.b)}"></div>`;
+    html += `<div id="insp-rd-split" style="display:${node.readingBgMode === 'split' ? 'block' : 'none'};margin-top:6px;"><label>РЁРёСЂРёРЅР° Р»РµРІРѕР№ (%)</label><input type="number" id="inp-rd-split-left-width" value="${node.readingSplitLeftWidthPercent ?? 50}" min="0" max="100"><label>Р¦РІРµС‚ Р»РµРІРѕР№</label><input type="color" id="inp-rd-split-left-color" value="${rgbToHex(node.readingSplitLeftColor?.r, node.readingSplitLeftColor?.g, node.readingSplitLeftColor?.b)}"><label>Р¦РІРµС‚ РїСЂР°РІРѕР№</label><input type="color" id="inp-rd-split-right-color" value="${rgbToHex(node.readingSplitRightColor?.r, node.readingSplitRightColor?.g, node.readingSplitRightColor?.b)}"></div>`;
+    html += `<div id="insp-rd-gradient" style="display:${node.readingBgMode === 'gradient' ? 'block' : 'none'};margin-top:6px;"><label><input type="checkbox" id="inp-rd-grad-mid-enabled" ${node.readingGradientMidEnabled !== false ? 'checked' : ''}> Р¦РІРµС‚ 3</label><label>Р¦РІРµС‚ 1</label><input type="color" id="inp-rd-grad-left-color" value="${rgbToHex(node.readingGradientLeftColor?.r, node.readingGradientLeftColor?.g, node.readingGradientLeftColor?.b)}"><div id="insp-rd-grad-mid-row" style="display:${node.readingGradientMidEnabled !== false ? 'block' : 'none'};"><label>Р¦РІРµС‚ 3</label><input type="color" id="inp-rd-grad-mid-color" value="${rgbToHex(node.readingGradientMidColor?.r, node.readingGradientMidColor?.g, node.readingGradientMidColor?.b)}"><label>РџРѕР·РёС†РёСЏ (%)</label><input type="number" id="inp-rd-grad-mid-pos" value="${node.readingGradientMidPosition ?? 50}" min="0" max="100"></div><label>Р¦РІРµС‚ 2</label><input type="color" id="inp-rd-grad-right-color" value="${rgbToHex(node.readingGradientRightColor?.r, node.readingGradientRightColor?.g, node.readingGradientRightColor?.b)}"></div>`;
+    html += `<div id="insp-rd-dynamic" style="display:${node.readingBgMode === 'dynamic' ? 'block' : 'none'};margin-top:6px;"><label>Р РµР¶РёРј РґРёРЅР°РјРёРєРё</label><select id="inp-rd-dyn-mode"><option value="simple" ${(node.readingDynamicMode || 'simple') === 'simple' ? 'selected' : ''}>Aв†’B</option><option value="rgb" ${node.readingDynamicMode === 'rgb' ? 'selected' : ''}>RGB</option><option value="physiological" ${node.readingDynamicMode === 'physiological' ? 'selected' : ''}>Р¤РёР·РёРѕР»РѕРіРёС‡РµСЃРєРёР№</option></select><label>Р¦РІРµС‚ A</label><input type="color" id="inp-rd-dyn-start" value="${rgbToHex(node.readingDynamicStartColor?.r, node.readingDynamicStartColor?.g, node.readingDynamicStartColor?.b)}"><label>Р¦РІРµС‚ B</label><input type="color" id="inp-rd-dyn-end" value="${rgbToHex(node.readingDynamicEndColor?.r, node.readingDynamicEndColor?.g, node.readingDynamicEndColor?.b)}"><label>Р’СЂРµРјСЏ С†РёРєР»Р° (СЃ)</label><input type="number" id="inp-rd-dyn-duration" value="${(node.readingDynamicDuration || 10000) / 1000}" min="0.1" step="0.1"><label><input type="checkbox" id="inp-rd-dyn-loop" ${node.readingDynamicLoop ? 'checked' : ''}> РџРѕРІС‚РѕСЂСЏС‚СЊ</label><label><input type="checkbox" id="inp-rd-dyn-reverse" ${node.readingDynamicReverse ? 'checked' : ''}> РџРёРЅРі-РїРѕРЅРі</label></div></div>`;
     html += '<div class="panel-section" style="background:#0a1a0a;border-color:#10b981;">';
-    html += '<h3 style="color:#34d399;border-color:#10b981;">⏱ Время показа</h3>';
+    html += '<h3 style="color:#34d399;border-color:#10b981;">вЏ± Р’СЂРµРјСЏ РїРѕРєР°Р·Р°</h3>';
     const du = detectUnit(node.duration || 0),
         dv = node.duration > 0 ? msToUnit(node.duration, du) : 0;
-    html += `<div class="time-group"><input type="number" id="inp-reading-duration" value="${dv}" step="any" min="0"><select id="inp-reading-duration-unit"><option value="ms" ${du === 'ms' ? 'selected' : ''}>мс</option><option value="s" ${du === 's' ? 'selected' : ''}>с</option><option value="min" ${du === 'min' ? 'selected' : ''}>мин</option></select></div>`;
-    html += `<div class="acuity-hint" style="margin-top:4px;">0 = до кнопки</div>`;
-    html += `<label><input type="checkbox" id="inp-reading-autosave" ${node.autoSaveBookmark !== false ? 'checked' : ''}> Автосохранение</label>`;
-    html += `<label><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> Активный узел</label></div></div>`;
+    html += `<div class="time-group"><input type="number" id="inp-reading-duration" value="${dv}" step="any" min="0"><select id="inp-reading-duration-unit"><option value="ms" ${du === 'ms' ? 'selected' : ''}>РјСЃ</option><option value="s" ${du === 's' ? 'selected' : ''}>СЃ</option><option value="min" ${du === 'min' ? 'selected' : ''}>РјРёРЅ</option></select></div>`;
+    html += `<div class="acuity-hint" style="margin-top:4px;">0 = РґРѕ РєРЅРѕРїРєРё</div>`;
+    html += `<label><input type="checkbox" id="inp-reading-autosave" ${node.autoSaveBookmark !== false ? 'checked' : ''}> РђРІС‚РѕСЃРѕС…СЂР°РЅРµРЅРёРµ</label>`;
+    html += `<label><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> РђРєС‚РёРІРЅС‹Р№ СѓР·РµР»</label></div></div>`;
     html +=
-        '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
+        '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">рџ’ѕ РџСЂРёРјРµРЅРёС‚СЊ</button>';
     inspectorEl.innerHTML = html;
     const bgModeSel = document.getElementById('inp-reading-bg-mode');
     if (bgModeSel)
@@ -3720,7 +3722,7 @@ function updateReadingInspector(node) {
         });
 }
 
-// ==================== ПРИМЕНЕНИЕ ИЗМЕНЕНИЙ ИНСПЕКТОРА ====================
+// ==================== РџР РРњР•РќР•РќРР• РР—РњР•РќР•РќРР™ РРќРЎРџР•РљРўРћР Рђ ====================
 function initInspectorEvents() {
     inspectorEl.addEventListener('click', (e) => {
         if (e.target.id === 'inp-apply') applyInspectorChanges();
@@ -4000,7 +4002,7 @@ function renderBookPickerList() {
         cur = node?.bookId || null;
     const ids = Object.keys(window._books);
     if (ids.length === 0) {
-        c.innerHTML = '<div class="book-picker-empty">Пока нет книг.</div>';
+        c.innerHTML = '<div class="book-picker-empty">РџРѕРєР° РЅРµС‚ РєРЅРёРі.</div>';
         return;
     }
     ids.sort((a, b) =>
@@ -4012,7 +4014,7 @@ function renderBookPickerList() {
         const item = document.createElement('div');
         item.className = 'book-picker-item' + (id === cur ? ' active' : '');
         const kb = Math.round((bk.text || '').length / 1024);
-        item.innerHTML = `<div><div class="name">${escapeHtml(bk.name || '(без имени)')}</div><div class="meta">${kb} КБ · ID ${id.slice(0, 8)}…</div></div><div style="color:#7dd3fc;font-size:12px;">${id === cur ? '✓' : 'Выбрать'}</div>`;
+        item.innerHTML = `<div><div class="name">${escapeHtml(bk.name || '(Р±РµР· РёРјРµРЅРё)')}</div><div class="meta">${kb} РљР‘ В· ID ${id.slice(0, 8)}вЂ¦</div></div><div style="color:#7dd3fc;font-size:12px;">${id === cur ? 'вњ“' : 'Р’С‹Р±СЂР°С‚СЊ'}</div>`;
         item.addEventListener('click', () => applyBookSelection(id));
         c.appendChild(item);
     });
@@ -4022,11 +4024,11 @@ function applyBookSelection(bookId) {
     if (!node || node.nodeType !== 'READING') return;
     const bk = window._books[bookId];
     if (!bk) {
-        alert('Книга не найдена');
+        alert('РљРЅРёРіР° РЅРµ РЅР°Р№РґРµРЅР°');
         return;
     }
     node.bookId = bookId;
-    node.bookName = bk.name || '(без имени)';
+    node.bookName = bk.name || '(Р±РµР· РёРјРµРЅРё)';
     setLastBookId(bookId);
     closeBookPicker();
     requestRenderGraph();
@@ -4045,11 +4047,11 @@ async function handleBookPickerFileUpload(file) {
     if (!file) return;
     const n = (file.name || '').toLowerCase();
     if (!(n.endsWith('.txt') || n.endsWith('.fb2') || n.endsWith('.epub'))) {
-        alert('Поддерживаются .txt, .fb2, .epub');
+        alert('РџРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ .txt, .fb2, .epub');
         return;
     }
     const f = document.getElementById('book-picker-file-name');
-    if (f) f.textContent = '⏳ Загрузка: ' + file.name;
+    if (f) f.textContent = 'вЏі Р—Р°РіСЂСѓР·РєР°: ' + file.name;
     try {
         const text = await parseReadingFile(file);
         const clean = (text || '')
@@ -4057,18 +4059,18 @@ async function handleBookPickerFileUpload(file) {
             .replace(/\n{3,}/g, '\n\n')
             .trim();
         if (!clean) {
-            alert('Не удалось извлечь текст.');
+            alert('РќРµ СѓРґР°Р»РѕСЃСЊ РёР·РІР»РµС‡СЊ С‚РµРєСЃС‚.');
             return;
         }
         const id = await sha1(clean);
         if (!window._books[id]) window._books[id] = { name: file.name, text: clean };
-        if (f) f.textContent = `✅ ${file.name} (${clean.length} символов)`;
+        if (f) f.textContent = `вњ… ${file.name} (${clean.length} СЃРёРјРІРѕР»РѕРІ)`;
         applyBookSelection(id);
     } catch (err) {
-        alert('Ошибка: ' + err.message);
+        alert('РћС€РёР±РєР°: ' + err.message);
     }
 }
-// ==================== РЕЖИМ ЧТЕНИЯ (служебное) ====================
+// ==================== Р Р•Р–РРњ Р§РўР•РќРРЇ (СЃР»СѓР¶РµР±РЅРѕРµ) ====================
 function showReadingToolbar() {
     const tb = document.getElementById('reading-toolbar');
     if (tb) tb.style.display = 'flex';
@@ -4110,7 +4112,7 @@ function scrollReadingToPage(page) {
     readingPage = Math.max(0, Math.min(page, readingTotalPages - 1));
     readingViewportEl.scrollLeft = readingPage * readingViewportEl.clientWidth;
     const info = document.getElementById('reading-page-info');
-    if (info) info.textContent = `Стр. ${readingPage + 1} / ${readingTotalPages}`;
+    if (info) info.textContent = `РЎС‚СЂ. ${readingPage + 1} / ${readingTotalPages}`;
 }
 function prevReadingPage() {
     if (readingPage > 0) scrollReadingToPage(readingPage - 1);
@@ -4124,37 +4126,37 @@ function toggleReadingPause() {
     const b = document.getElementById('reading-play-pause');
     if (readingPaused) {
         readingContentEl.style.opacity = '0';
-        if (b) b.textContent = '▶ Чтение';
+        if (b) b.textContent = 'в–¶ Р§С‚РµРЅРёРµ';
     } else {
         readingContentEl.style.opacity = '1';
-        if (b) b.textContent = '⏸ Пауза';
+        if (b) b.textContent = 'вЏё РџР°СѓР·Р°';
     }
 }
 function saveReadingBookmark() {
     if (!window._currentReadingBookId) {
-        alert('Нет книги');
+        alert('РќРµС‚ РєРЅРёРіРё');
         return;
     }
     localStorage.setItem(
         bookmarkKeyFor(window._currentReadingBookId),
         JSON.stringify({ page: readingPage, updatedAt: new Date().toISOString() })
     );
-    alert(`🔖 Закладка (страница ${readingPage + 1} из ${readingTotalPages})`);
+    alert(`рџ”– Р—Р°РєР»Р°РґРєР° (СЃС‚СЂР°РЅРёС†Р° ${readingPage + 1} РёР· ${readingTotalPages})`);
 }
 function openReadingBookmark() {
     if (!window._currentReadingBookId) {
-        alert('Нет книги');
+        alert('РќРµС‚ РєРЅРёРіРё');
         return;
     }
     const s = localStorage.getItem(bookmarkKeyFor(window._currentReadingBookId));
     if (!s) {
-        alert('Закладка не найдена');
+        alert('Р—Р°РєР»Р°РґРєР° РЅРµ РЅР°Р№РґРµРЅР°');
         return;
     }
     try {
         scrollReadingToPage(JSON.parse(s).page);
     } catch (e) {
-        alert('Ошибка');
+        alert('РћС€РёР±РєР°');
     }
 }
 function changeAcuityByStep(delta) {
@@ -4190,7 +4192,7 @@ function saveCurrentReadingBookmarkSilently() {
     } catch (e) {}
 }
 
-// ==================== ДИНАМИЧЕСКИЙ ФОН ЧТЕНИЯ ====================
+// ==================== Р”РРќРђРњРР§Р•РЎРљРР™ Р¤РћРќ Р§РўР•РќРРЇ ====================
 let readingBgAnimId = null,
     readingBgAnimStart = null,
     readingBgAnimPausedAt = null;
@@ -4259,7 +4261,7 @@ function updatePhysioIndicator(meta, p) {
         i.style.display = 'none';
         return;
     }
-    i.textContent = `${meta.diopters >= 0 ? '+' : ''}${meta.diopters.toFixed(1)} дптр • ${meta.wavelength_nm} нм • ${meta.name}`;
+    i.textContent = `${meta.diopters >= 0 ? '+' : ''}${meta.diopters.toFixed(1)} РґРїС‚СЂ вЂў ${meta.wavelength_nm} РЅРј вЂў ${meta.name}`;
     i.style.display = 'block';
 }
 function startDynamicReadingBackground(p) {
@@ -4403,7 +4405,7 @@ function renderFontPickerList(filter) {
     const list = f ? fonts.filter((x) => x.toLowerCase().includes(f)) : fonts;
     c.innerHTML = '';
     if (list.length === 0) {
-        c.innerHTML = '<div class="font-picker-empty">Ничего не найдено</div>';
+        c.innerHTML = '<div class="font-picker-empty">РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ</div>';
         return;
     }
     const cur = (readingFontFamily || '').toLowerCase();
@@ -4416,7 +4418,7 @@ function renderFontPickerList(filter) {
         item.appendChild(l);
         const p = document.createElement('span');
         p.className = 'preview';
-        p.textContent = 'АаБб 123';
+        p.textContent = 'РђР°Р‘Р± 123';
         p.style.fontFamily = `'${name.replace(/['"]/g, '')}', 'Segoe UI', sans-serif`;
         item.appendChild(p);
         item.addEventListener('click', () => {
@@ -4455,7 +4457,7 @@ function closeFontPicker() {
     if (m) m.classList.remove('visible');
 }
 
-// ==================== ПЛЕЕР: СЛУЖЕБНОЕ ====================
+// ==================== РџР›Р•Р•Р : РЎР›РЈР–Р•Р‘РќРћР• ====================
 function displayStimulus(html, bgColor) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bgColor.r},${bgColor.g},${bgColor.b})`;
@@ -4489,21 +4491,21 @@ function switchMode(mode) {
     if (mode === 'nodes') {
         canvas.style.display = '';
         stimArea.style.display = 'none';
-        btnModeToggle.textContent = '🎯 Узлы';
+        btnModeToggle.textContent = 'рџЋЇ РЈР·Р»С‹';
         if (countersEl) countersEl.style.display = 'none';
         if (headerEl) headerEl.classList.remove('stimuli-mode');
         requestRenderGraph();
     } else {
         canvas.style.display = 'none';
         stimArea.style.display = 'flex';
-        btnModeToggle.textContent = '🖼️ Стимулы';
+        btnModeToggle.textContent = 'рџ–јпёЏ РЎС‚РёРјСѓР»С‹';
         if (countersEl) countersEl.style.display = 'inline-flex';
         if (headerEl) headerEl.classList.add('stimuli-mode');
         if (inspectorEl) inspectorEl.style.display = 'none';
     }
 }
 
-// ==================== ПЛЕЕР: ЗАПУСК ====================
+// ==================== РџР›Р•Р•Р : Р—РђРџРЈРЎРљ ====================
 function startPlayer() {
     if (window._pendingGeneratorMode && trainingNode && trainingNode.params) {
         startAutoTraining();
@@ -4517,7 +4519,7 @@ function startPlayer() {
         startAutoTraining();
         return;
     }
-    alert('Создайте узел или настройте Режим');
+    alert('РЎРѕР·РґР°Р№С‚Рµ СѓР·РµР» РёР»Рё РЅР°СЃС‚СЂРѕР№С‚Рµ Р РµР¶РёРј');
 }
 function startAutoTraining() {
     if (currentMode === 'nodes') switchMode('stimuli');
@@ -4554,7 +4556,7 @@ function startAutoTraining() {
     btnPlayer.disabled = true;
     btnPlayerStop.disabled = false;
     btnPlayerPause.disabled = false;
-    btnPlayerPause.textContent = '⏸ Пауза';
+    btnPlayerPause.textContent = 'вЏё РџР°СѓР·Р°';
     if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
     if (tt === 'reading') {
         btnPlayerPause.disabled = true;
@@ -4598,7 +4600,7 @@ function playNodesSequence() {
     btnPlayer.disabled = true;
     btnPlayerStop.disabled = false;
     btnPlayerPause.disabled = false;
-    btnPlayerPause.textContent = '⏸ Пауза';
+    btnPlayerPause.textContent = 'вЏё РџР°СѓР·Р°';
     if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
     playIndex = 0;
     playNextQueuedNode();
@@ -4607,7 +4609,7 @@ function playNextQueuedNode() {
     if (!playerRunning || isPaused) return;
     if (playIndex >= playQueue.length) {
         stopPlayer();
-        alert('Проигрывание узлов завершено.');
+        alert('РџСЂРѕРёРіСЂС‹РІР°РЅРёРµ СѓР·Р»РѕРІ Р·Р°РІРµСЂС€РµРЅРѕ.');
         return;
     }
     const item = playQueue[playIndex];
@@ -4663,7 +4665,7 @@ function playNextQueuedNode() {
     );
 }
 
-// ==================== ПЛЕЕР: СРАВНЕНИЕ (узел) ====================
+// ==================== РџР›Р•Р•Р : РЎР РђР’РќР•РќРР• (СѓР·РµР») ====================
 function playCompareNodeSeries(node) {
     if (!playerRunning || isPaused) return;
     currentCompareNode = node;
@@ -4753,7 +4755,7 @@ function finishCompareNodeSeries(node) {
     );
 }
 
-// ==================== ПЛЕЕР: СТИМУЛ (узел) ====================
+// ==================== РџР›Р•Р•Р : РЎРўРРњРЈР› (СѓР·РµР») ====================
 function playStimulusNodeSeries(node) {
     if (!playerRunning || isPaused) return;
     if (completedSeries >= (node.seriesCount || 5)) {
@@ -4777,11 +4779,11 @@ function playStimulusNodeSeries(node) {
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     let dir;
     if (node.isActive) {
-        const d = ['вверх', 'вниз', 'влево', 'вправо'];
+        const d = ['РІРІРµСЂС…', 'РІРЅРёР·', 'РІР»РµРІРѕ', 'РІРїСЂР°РІРѕ'];
         do {
             dir = d[Math.floor(Math.random() * d.length)];
         } while (dir === lastDirection);
-    } else dir = node.stimDirectionFixed || 'вверх';
+    } else dir = node.stimDirectionFixed || 'РІРІРµСЂС…';
     lastDirection = dir;
     currentCorrectDirection = dir;
     const dCalc = currentDistanceMeters || node.stimDistance || 1;
@@ -4956,7 +4958,7 @@ function finishStimulusNodeSeries(node) {
     );
 }
 
-// ==================== ПЛЕЕР: ЧТЕНИЕ (узел) ====================
+// ==================== РџР›Р•Р•Р : Р§РўР•РќРР• (СѓР·РµР») ====================
 function playReadingNode(node) {
     if (!readingViewportEl) readingViewportEl = document.getElementById('reading-viewport');
     if (!readingContentEl) readingContentEl = document.getElementById('reading-content');
@@ -4997,8 +4999,8 @@ function playReadingNode(node) {
     if (!bk) {
         const ph =
             !node.bookId && !window._currentReadingBookId && !getLastBookId()
-                ? `📖 ${escapeHtml(node.name)}\n\nКнига не задана.`
-                : `📖 ${escapeHtml(node.name)}\n\nКнига не найдена.`;
+                ? `рџ“– ${escapeHtml(node.name)}\n\nРљРЅРёРіР° РЅРµ Р·Р°РґР°РЅР°.`
+                : `рџ“– ${escapeHtml(node.name)}\n\nРљРЅРёРіР° РЅРµ РЅР°Р№РґРµРЅР°.`;
         readingContentEl.innerHTML = ph
             .split('\n')
             .map((l) => `<p>${l}</p>`)
@@ -5034,7 +5036,7 @@ function playReadingNode(node) {
     readingContentEl.style.opacity = '1';
     readingPaused = false;
     const pp = document.getElementById('reading-play-pause');
-    if (pp) pp.textContent = '⏸ Пауза';
+    if (pp) pp.textContent = 'вЏё РџР°СѓР·Р°';
     showReadingToolbar();
     setupReadingColumns();
     setTimeout(() => {
@@ -5075,7 +5077,7 @@ function startReadingNodeTimer(sec) {
     const el = document.getElementById('reading-timer');
     if (!el) return;
     let s = sec;
-    el.textContent = `⏱ ${s} с`;
+    el.textContent = `вЏ± ${s} СЃ`;
     el.style.display = 'block';
     readingNodeTimerInterval = setInterval(() => {
         s--;
@@ -5083,7 +5085,7 @@ function startReadingNodeTimer(sec) {
             stopReadingNodeTimer();
             return;
         }
-        el.textContent = `⏱ ${s} с`;
+        el.textContent = `вЏ± ${s} СЃ`;
     }, 1000);
 }
 function stopReadingNodeTimer() {
@@ -5095,7 +5097,7 @@ function stopReadingNodeTimer() {
     if (el) el.style.display = 'none';
 }
 
-// ==================== ПЛЕЕР: АВТОТРЕНИРОВКА ====================
+// ==================== РџР›Р•Р•Р : РђР’РўРћРўР Р•РќРР РћР’РљРђ ====================
 function startReadingModeAuto() {
     if (!readingViewportEl) readingViewportEl = document.getElementById('reading-viewport');
     if (!readingContentEl) readingContentEl = document.getElementById('reading-content');
@@ -5119,7 +5121,7 @@ function startReadingModeAuto() {
     readingViewportEl.scrollLeft = 0;
     readingPaused = false;
     const pp = document.getElementById('reading-play-pause');
-    if (pp) pp.textContent = '⏸ Пауза';
+    if (pp) pp.textContent = 'вЏё РџР°СѓР·Р°';
     readingContentEl.style.opacity = '1';
     applyReadingFontForNode({ readingFontFamily: 'Segoe UI', readingFontWeight: 'normal' });
     setupReadingColumns();
@@ -5152,11 +5154,11 @@ function showNextStimulus() {
     const p = trainingNode?.params || {};
     let dir;
     if (p.isActive) {
-        const d = ['вверх', 'вниз', 'влево', 'вправо'];
+        const d = ['РІРІРµСЂС…', 'РІРЅРёР·', 'РІР»РµРІРѕ', 'РІРїСЂР°РІРѕ'];
         do {
             dir = d[Math.floor(Math.random() * d.length)];
         } while (dir === lastDirection);
-    } else dir = 'вверх';
+    } else dir = 'РІРІРµСЂС…';
     lastDirection = dir;
     currentCorrectDirection = dir;
     const dCalc = currentDistanceMeters || generalDistance || trainingDistance;
@@ -5311,11 +5313,11 @@ function finishSeries() {
         let distRep = '';
         if (distanceCount > 0) {
             const avg = distanceSum / distanceCount;
-            distRep = `\n\n📏 Дистанция: ср=${avg.toFixed(2)} м, мин=${distanceMin.toFixed(2)}, макс=${distanceMax.toFixed(2)}`;
+            distRep = `\n\nрџ“Џ Р”РёСЃС‚Р°РЅС†РёСЏ: СЃСЂ=${avg.toFixed(2)} Рј, РјРёРЅ=${distanceMin.toFixed(2)}, РјР°РєСЃ=${distanceMax.toFixed(2)}`;
         }
         const blinkRep = buildBlinkReport();
         alert(
-            `Тренировка завершена!\nУспешных: ${successfulSeries}\nНеуспешных: ${failedSeries}\nV = ${currentAcuity.toFixed(1)}${distRep}${blinkRep}`
+            `РўСЂРµРЅРёСЂРѕРІРєР° Р·Р°РІРµСЂС€РµРЅР°!\nРЈСЃРїРµС€РЅС‹С…: ${successfulSeries}\nРќРµСѓСЃРїРµС€РЅС‹С…: ${failedSeries}\nV = ${currentAcuity.toFixed(1)}${distRep}${blinkRep}`
         );
         stopPlayer();
     } else {
@@ -5325,7 +5327,7 @@ function finishSeries() {
     }
 }
 
-// ==================== ПЛЕЕР: СРАВНЕНИЕ (автотренировка) ====================
+// ==================== РџР›Р•Р•Р : РЎР РђР’РќР•РќРР• (Р°РІС‚РѕС‚СЂРµРЅРёСЂРѕРІРєР°) ====================
 function showNextComparison() {
     if (!playerRunning || isPaused) return;
     if (seriesStep >= (trainingNode?.params?.seriesSize || 6)) {
@@ -5530,7 +5532,7 @@ function processComparisonAnswer(isCorrect) {
     );
 }
 
-// ==================== ПЛЕЕР: ОТВЕТЫ ====================
+// ==================== РџР›Р•Р•Р : РћРўР’Р•РўР« ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
     if (isBlinkResponseBlocked()) return;
@@ -5556,13 +5558,13 @@ responseButtons.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-response');
     if (!btn || !responsePhaseActive) return;
     if (btn.dataset.dir) handleDirectionAnswer(btn.dataset.dir);
-    else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
+    else if (btn.dataset.answer === 'РґР°' || btn.dataset.answer === 'РЅРµС‚') {
         const inCmp =
             (currentCompareNode && currentCompareNode.compareMode === 'direction') ||
             (!currentCompareNode &&
                 compareMode === 'direction' &&
                 trainingNode?.params?.trainingType === 'compare');
-        if (inCmp) handleCompareDirectionAnswer(btn.dataset.answer === 'да');
+        if (inCmp) handleCompareDirectionAnswer(btn.dataset.answer === 'РґР°');
     }
 });
 document.addEventListener('keydown', (e) => {
@@ -5589,7 +5591,7 @@ document.addEventListener('keydown', (e) => {
         }
     }
     if (!responsePhaseActive) return;
-    const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
+    const map = { ArrowUp: 'РІРІРµСЂС…', ArrowDown: 'РІРЅРёР·', ArrowLeft: 'РІР»РµРІРѕ', ArrowRight: 'РІРїСЂР°РІРѕ' };
     if (map[e.key]) {
         e.preventDefault();
         const inCmp =
@@ -5604,7 +5606,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ==================== ПЛЕЕР: ПАУЗА / СТОП ====================
+// ==================== РџР›Р•Р•Р : РџРђРЈР—Рђ / РЎРўРћРџ ====================
 function stopPlayer() {
     phaseTimers.forEach((t) => clearTimeout(t));
     phaseTimers = [];
@@ -5655,7 +5657,7 @@ function togglePause() {
     if (!playerRunning) return;
     isPaused = !isPaused;
     if (isPaused) {
-        btnPlayerPause.textContent = '▶ Продолжить';
+        btnPlayerPause.textContent = 'в–¶ РџСЂРѕРґРѕР»Р¶РёС‚СЊ';
         phaseTimers.forEach((t) => clearTimeout(t));
         phaseTimers = [];
         if (currentShowTimer) clearTimeout(currentShowTimer);
@@ -5668,7 +5670,7 @@ function togglePause() {
         hideStimulus();
         responseButtons.style.display = 'none';
     } else {
-        btnPlayerPause.textContent = '⏸ Пауза';
+        btnPlayerPause.textContent = 'вЏё РџР°СѓР·Р°';
         if (currentCompareNode) {
             playNextCompareRound(currentCompareNode);
             return;
@@ -5727,7 +5729,7 @@ function exitTrainingFromPause() {
     stopPlayer();
 }
 
-// ==================== ГЕНЕРАТОР: UI-СЕКЦИИ ====================
+// ==================== Р“Р•РќР•Р РђРўРћР : UI-РЎР•РљР¦РР ====================
 function ensureSingleGridGeneratorUI() {
     const container = document.getElementById('single-grid-settings');
     if (!container || document.getElementById('gen-single-grid-block')) return;
@@ -5736,14 +5738,14 @@ function ensureSingleGridGeneratorUI() {
     block.style.cssText =
         'margin-top:10px;padding:8px;background:#0a1a10;border:1px solid #22c55e;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#4ade80;font-weight:bold;display:block;margin-bottom:4px;">🔲 Сетка положения стимула</label>
-        <label><input type="checkbox" id="gen-single-grid-enabled"> Включить сетку</label>
+        <label style="color:#4ade80;font-weight:bold;display:block;margin-bottom:4px;">рџ”І РЎРµС‚РєР° РїРѕР»РѕР¶РµРЅРёСЏ СЃС‚РёРјСѓР»Р°</label>
+        <label><input type="checkbox" id="gen-single-grid-enabled"> Р’РєР»СЋС‡РёС‚СЊ СЃРµС‚РєСѓ</label>
         <div id="gen-single-grid-settings" style="display:none;margin-top:6px;">
-            <label>Столбцов (X)</label><input type="number" id="gen-single-grid-x" value="3" min="1" max="10" step="1">
-            <label>Строк (Y)</label><input type="number" id="gen-single-grid-y" value="3" min="1" max="10" step="1">
-            <label><input type="checkbox" id="gen-single-grid-show-lines"> Показывать линии</label>
-            <label><input type="checkbox" id="gen-single-grid-random" checked> Случайная клетка</label>
-            <label><input type="checkbox" id="gen-single-grid-avoid-repeat" checked> Избегать повтора</label>
+            <label>РЎС‚РѕР»Р±С†РѕРІ (X)</label><input type="number" id="gen-single-grid-x" value="3" min="1" max="10" step="1">
+            <label>РЎС‚СЂРѕРє (Y)</label><input type="number" id="gen-single-grid-y" value="3" min="1" max="10" step="1">
+            <label><input type="checkbox" id="gen-single-grid-show-lines"> РџРѕРєР°Р·С‹РІР°С‚СЊ Р»РёРЅРёРё</label>
+            <label><input type="checkbox" id="gen-single-grid-random" checked> РЎР»СѓС‡Р°Р№РЅР°СЏ РєР»РµС‚РєР°</label>
+            <label><input type="checkbox" id="gen-single-grid-avoid-repeat" checked> РР·Р±РµРіР°С‚СЊ РїРѕРІС‚РѕСЂР°</label>
         </div>`;
     container.appendChild(block);
     const cb = document.getElementById('gen-single-grid-enabled');
@@ -5762,14 +5764,14 @@ function ensureDistanceGeneratorUI() {
     block.style.cssText =
         'margin-top:12px;padding:8px;background:#0a1020;border:1px solid #0ea5e9;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#38bdf8;font-weight:bold;display:block;margin-bottom:6px;">📏 Дистанции</label>
-        <label>Общая (стимулы), м</label><input type="number" id="gen-general-distance" value="${generalDistance}" min="0.1" max="20" step="0.1">
-        <label>Чтение, м</label><input type="number" id="gen-reading-distance" value="${readingDistance}" min="0.1" max="20" step="0.1">
+        <label style="color:#38bdf8;font-weight:bold;display:block;margin-bottom:6px;">рџ“Џ Р”РёСЃС‚Р°РЅС†РёРё</label>
+        <label>РћР±С‰Р°СЏ (СЃС‚РёРјСѓР»С‹), Рј</label><input type="number" id="gen-general-distance" value="${generalDistance}" min="0.1" max="20" step="0.1">
+        <label>Р§С‚РµРЅРёРµ, Рј</label><input type="number" id="gen-reading-distance" value="${readingDistance}" min="0.1" max="20" step="0.1">
         <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #0ea5e9;">
-            <label style="color:#38bdf8;font-weight:bold;display:block;margin-bottom:4px;">Допуски (камера)</label>
-            <label>Увеличение, %</label><input type="number" id="gen-tol-inc" value="${distanceToleranceIncreasePct}" min="0" max="100" step="1">
-            <label>Уменьшение, %</label><input type="number" id="gen-tol-dec" value="${distanceToleranceDecreasePct}" min="0" max="100" step="1">
-            <label>Таймаут до пересчёта, с</label><input type="number" id="gen-tol-timeout" value="${distanceRestoreTimeoutSec}" min="0" max="60" step="0.5">
+            <label style="color:#38bdf8;font-weight:bold;display:block;margin-bottom:4px;">Р”РѕРїСѓСЃРєРё (РєР°РјРµСЂР°)</label>
+            <label>РЈРІРµР»РёС‡РµРЅРёРµ, %</label><input type="number" id="gen-tol-inc" value="${distanceToleranceIncreasePct}" min="0" max="100" step="1">
+            <label>РЈРјРµРЅСЊС€РµРЅРёРµ, %</label><input type="number" id="gen-tol-dec" value="${distanceToleranceDecreasePct}" min="0" max="100" step="1">
+            <label>РўР°Р№РјР°СѓС‚ РґРѕ РїРµСЂРµСЃС‡С‘С‚Р°, СЃ</label><input type="number" id="gen-tol-timeout" value="${distanceRestoreTimeoutSec}" min="0" max="60" step="0.5">
         </div>`;
     firstCol.appendChild(block);
 }
@@ -5783,12 +5785,12 @@ function ensureBlinkGeneratorUI() {
     block.style.cssText =
         'margin-top:12px;padding:8px;background:#0a1a1a;border:1px solid #14b8a6;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#2dd4bf;font-weight:bold;display:block;margin-bottom:6px;">👁️ Blink-контроль</label>
-        <label><input type="checkbox" id="gen-blink-enabled" ${blinkEnabled ? 'checked' : ''}> Включить</label>
-        <label>Минимум морганий/мин</label><input type="number" id="gen-blink-min-rate" value="${blinkMinRate}" min="0" max="60" step="1">
-        <label>Окно подсчёта, с</label><input type="number" id="gen-blink-window" value="${blinkWindowSec}" min="5" max="120" step="1">
-        <label><input type="checkbox" id="gen-blink-lock-show" ${blinkLockShow ? 'checked' : ''}> Ждать открытых глаз</label>
-        <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Порог EAR: <b style="color:#22c55e;">${blinkThreshold.toFixed(3)}</b></div>`;
+        <label style="color:#2dd4bf;font-weight:bold;display:block;margin-bottom:6px;">рџ‘ЃпёЏ Blink-РєРѕРЅС‚СЂРѕР»СЊ</label>
+        <label><input type="checkbox" id="gen-blink-enabled" ${blinkEnabled ? 'checked' : ''}> Р’РєР»СЋС‡РёС‚СЊ</label>
+        <label>РњРёРЅРёРјСѓРј РјРѕСЂРіР°РЅРёР№/РјРёРЅ</label><input type="number" id="gen-blink-min-rate" value="${blinkMinRate}" min="0" max="60" step="1">
+        <label>РћРєРЅРѕ РїРѕРґСЃС‡С‘С‚Р°, СЃ</label><input type="number" id="gen-blink-window" value="${blinkWindowSec}" min="5" max="120" step="1">
+        <label><input type="checkbox" id="gen-blink-lock-show" ${blinkLockShow ? 'checked' : ''}> Р–РґР°С‚СЊ РѕС‚РєСЂС‹С‚С‹С… РіР»Р°Р·</label>
+        <div style="font-size:10px;color:#94a3b8;margin-top:4px;">РџРѕСЂРѕРі EAR: <b style="color:#22c55e;">${blinkThreshold.toFixed(3)}</b></div>`;
     firstCol.appendChild(block);
     document.getElementById('gen-blink-enabled').addEventListener('change', (e) => {
         blinkEnabled = e.target.checked;
@@ -5821,29 +5823,29 @@ function ensureCircleGeneratorUI() {
     block.style.cssText =
         'margin-top:10px;padding:8px;background:#1a0a15;border:1px solid #ec4899;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#f472b6;font-weight:bold;display:block;margin-bottom:4px;">🎯 Динамика Круг</label>
-        <label><input type="checkbox" id="gen-circle-enabled"> Включить режим кругов</label>
+        <label style="color:#f472b6;font-weight:bold;display:block;margin-bottom:4px;">рџЋЇ Р”РёРЅР°РјРёРєР° РљСЂСѓРі</label>
+        <label><input type="checkbox" id="gen-circle-enabled"> Р’РєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј РєСЂСѓРіРѕРІ</label>
         <div id="gen-circle-settings" style="display:none;margin-top:8px;">
             <div style="border-top:1px dashed #ec4899;padding-top:6px;">
-                <label style="color:#f9a8d4;font-weight:bold;">Внутренний круг</label>
-                <label>Радиус (% от общего)</label><input type="number" id="gen-ci-radius" value="40" min="5" max="95" step="1">
-                <label>Цвет 1 (центр)</label><input type="color" id="gen-ci-c1" value="#ff0000">
-                <label><input type="checkbox" id="gen-ci-mid-enabled"> Использовать цвет 3</label>
-                <div id="gen-ci-mid-row" style="display:none;"><label>Цвет 3</label><input type="color" id="gen-ci-c3" value="#ffff00"></div>
-                <label>Цвет 2 (край)</label><input type="color" id="gen-ci-c2" value="#0000ff">
-                <label>Время (с)</label><input type="number" id="gen-ci-duration" value="10" min="0.1" step="0.1">
-                <label><input type="checkbox" id="gen-ci-loop" checked> Повторять</label>
-                <label><input type="checkbox" id="gen-ci-reverse"> Пинг-понг</label>
+                <label style="color:#f9a8d4;font-weight:bold;">Р’РЅСѓС‚СЂРµРЅРЅРёР№ РєСЂСѓРі</label>
+                <label>Р Р°РґРёСѓСЃ (% РѕС‚ РѕР±С‰РµРіРѕ)</label><input type="number" id="gen-ci-radius" value="40" min="5" max="95" step="1">
+                <label>Р¦РІРµС‚ 1 (С†РµРЅС‚СЂ)</label><input type="color" id="gen-ci-c1" value="#ff0000">
+                <label><input type="checkbox" id="gen-ci-mid-enabled"> РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С†РІРµС‚ 3</label>
+                <div id="gen-ci-mid-row" style="display:none;"><label>Р¦РІРµС‚ 3</label><input type="color" id="gen-ci-c3" value="#ffff00"></div>
+                <label>Р¦РІРµС‚ 2 (РєСЂР°Р№)</label><input type="color" id="gen-ci-c2" value="#0000ff">
+                <label>Р’СЂРµРјСЏ (СЃ)</label><input type="number" id="gen-ci-duration" value="10" min="0.1" step="0.1">
+                <label><input type="checkbox" id="gen-ci-loop" checked> РџРѕРІС‚РѕСЂСЏС‚СЊ</label>
+                <label><input type="checkbox" id="gen-ci-reverse"> РџРёРЅРі-РїРѕРЅРі</label>
             </div>
             <div style="border-top:1px dashed #ec4899;margin-top:6px;padding-top:6px;">
-                <label style="color:#f9a8d4;font-weight:bold;">Внешнее кольцо</label>
-                <label>Цвет 1 (у диска)</label><input type="color" id="gen-co-c1" value="#00ff00">
-                <label><input type="checkbox" id="gen-co-mid-enabled"> Использовать цвет 3</label>
-                <div id="gen-co-mid-row" style="display:none;"><label>Цвет 3</label><input type="color" id="gen-co-c3" value="#00ffff"></div>
-                <label>Цвет 2 (край)</label><input type="color" id="gen-co-c2" value="#0080ff">
-                <label>Время (с)</label><input type="number" id="gen-co-duration" value="10" min="0.1" step="0.1">
-                <label><input type="checkbox" id="gen-co-loop" checked> Повторять</label>
-                <label><input type="checkbox" id="gen-co-reverse"> Пинг-понг</label>
+                <label style="color:#f9a8d4;font-weight:bold;">Р’РЅРµС€РЅРµРµ РєРѕР»СЊС†Рѕ</label>
+                <label>Р¦РІРµС‚ 1 (Сѓ РґРёСЃРєР°)</label><input type="color" id="gen-co-c1" value="#00ff00">
+                <label><input type="checkbox" id="gen-co-mid-enabled"> РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С†РІРµС‚ 3</label>
+                <div id="gen-co-mid-row" style="display:none;"><label>Р¦РІРµС‚ 3</label><input type="color" id="gen-co-c3" value="#00ffff"></div>
+                <label>Р¦РІРµС‚ 2 (РєСЂР°Р№)</label><input type="color" id="gen-co-c2" value="#0080ff">
+                <label>Р’СЂРµРјСЏ (СЃ)</label><input type="number" id="gen-co-duration" value="10" min="0.1" step="0.1">
+                <label><input type="checkbox" id="gen-co-loop" checked> РџРѕРІС‚РѕСЂСЏС‚СЊ</label>
+                <label><input type="checkbox" id="gen-co-reverse"> РџРёРЅРі-РїРѕРЅРі</label>
             </div>
         </div>`;
     container.appendChild(block);
@@ -5871,18 +5873,18 @@ function ensurePeripheralGeneratorUI() {
     block.style.cssText =
         'margin-top:10px;padding:8px;background:#0a1a15;border:1px solid #10b981;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#34d399;font-weight:bold;display:block;margin-bottom:4px;">🟢 Периферийные точки</label>
-        <label><input type="checkbox" id="gen-peri-enabled"> Включить точки</label>
+        <label style="color:#34d399;font-weight:bold;display:block;margin-bottom:4px;">рџџў РџРµСЂРёС„РµСЂРёР№РЅС‹Рµ С‚РѕС‡РєРё</label>
+        <label><input type="checkbox" id="gen-peri-enabled"> Р’РєР»СЋС‡РёС‚СЊ С‚РѕС‡РєРё</label>
         <div id="gen-peri-settings" style="display:none;margin-top:6px;">
-            <label>Количество (1–12)</label><input type="number" id="gen-peri-count" value="4" min="1" max="12">
-            <label>V размера (острота)</label><input type="number" id="gen-peri-acuity" value="0.3" min="0.1" max="1.0" step="0.1">
-            <label>Радиус min (%)</label><input type="number" id="gen-peri-rmin" value="60" min="20" max="100">
-            <label>Радиус max (%)</label><input type="number" id="gen-peri-rmax" value="90" min="20" max="100">
-            <label>Цвет точки</label><input type="color" id="gen-peri-color" value="#00ff64">
-            <label>Движение</label>
-            <select id="gen-peri-motion"><option value="static" selected>Статично</option><option value="rotate">Вращение</option><option value="pulse">Пульс</option></select>
-            <label>Скорость (об/с или Гц)</label><input type="number" id="gen-peri-speed" value="0.3" min="0.02" max="5" step="0.05">
-            <label><input type="checkbox" id="gen-peri-random" checked> Случайные углы</label>
+            <label>РљРѕР»РёС‡РµСЃС‚РІРѕ (1вЂ“12)</label><input type="number" id="gen-peri-count" value="4" min="1" max="12">
+            <label>V СЂР°Р·РјРµСЂР° (РѕСЃС‚СЂРѕС‚Р°)</label><input type="number" id="gen-peri-acuity" value="0.3" min="0.1" max="1.0" step="0.1">
+            <label>Р Р°РґРёСѓСЃ min (%)</label><input type="number" id="gen-peri-rmin" value="60" min="20" max="100">
+            <label>Р Р°РґРёСѓСЃ max (%)</label><input type="number" id="gen-peri-rmax" value="90" min="20" max="100">
+            <label>Р¦РІРµС‚ С‚РѕС‡РєРё</label><input type="color" id="gen-peri-color" value="#00ff64">
+            <label>Р”РІРёР¶РµРЅРёРµ</label>
+            <select id="gen-peri-motion"><option value="static" selected>РЎС‚Р°С‚РёС‡РЅРѕ</option><option value="rotate">Р’СЂР°С‰РµРЅРёРµ</option><option value="pulse">РџСѓР»СЊСЃ</option></select>
+            <label>РЎРєРѕСЂРѕСЃС‚СЊ (РѕР±/СЃ РёР»Рё Р“С†)</label><input type="number" id="gen-peri-speed" value="0.3" min="0.02" max="5" step="0.05">
+            <label><input type="checkbox" id="gen-peri-random" checked> РЎР»СѓС‡Р°Р№РЅС‹Рµ СѓРіР»С‹</label>
         </div>`;
     container.appendChild(block);
     const cb = document.getElementById('gen-peri-enabled');
@@ -5899,14 +5901,14 @@ function ensureDefocusGeneratorUI() {
     block.style.cssText =
         'margin-top:10px;padding:8px;background:#1a0a0a;border:1px solid #dc2626;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#f87171;font-weight:bold;display:block;margin-bottom:4px;">🔴 Цифровой дефокус</label>
-        <label><input type="checkbox" id="gen-df-enabled"> Включить дефокус</label>
+        <label style="color:#f87171;font-weight:bold;display:block;margin-bottom:4px;">рџ”ґ Р¦РёС„СЂРѕРІРѕР№ РґРµС„РѕРєСѓСЃ</label>
+        <label><input type="checkbox" id="gen-df-enabled"> Р’РєР»СЋС‡РёС‚СЊ РґРµС„РѕРєСѓСЃ</label>
         <div id="gen-df-settings" style="display:none;margin-top:6px;">
-            <label>Радиус центра (мм)</label><input type="number" id="gen-df-radius-mm" value="13" min="3" max="50" step="1">
-            <label>Фон центра (красный)</label><input type="color" id="gen-df-center-bg" value="#cc0000">
-            <label>Цвет стимула в центре (чёрный)</label><input type="color" id="gen-df-stim-color" value="#000000">
-            <label>Фон периферии (синий)</label><input type="color" id="gen-df-peri-bg" value="#0047ab">
-            <label>Размытие к краю (%)</label><input type="number" id="gen-df-blur" value="0" min="0" max="100" step="5">
+            <label>Р Р°РґРёСѓСЃ С†РµРЅС‚СЂР° (РјРј)</label><input type="number" id="gen-df-radius-mm" value="13" min="3" max="50" step="1">
+            <label>Р¤РѕРЅ С†РµРЅС‚СЂР° (РєСЂР°СЃРЅС‹Р№)</label><input type="color" id="gen-df-center-bg" value="#cc0000">
+            <label>Р¦РІРµС‚ СЃС‚РёРјСѓР»Р° РІ С†РµРЅС‚СЂРµ (С‡С‘СЂРЅС‹Р№)</label><input type="color" id="gen-df-stim-color" value="#000000">
+            <label>Р¤РѕРЅ РїРµСЂРёС„РµСЂРёРё (СЃРёРЅРёР№)</label><input type="color" id="gen-df-peri-bg" value="#0047ab">
+            <label>Р Р°Р·РјС‹С‚РёРµ Рє РєСЂР°СЋ (%)</label><input type="number" id="gen-df-blur" value="0" min="0" max="100" step="5">
         </div>`;
     container.appendChild(block);
     const cb = document.getElementById('gen-df-enabled');
@@ -5923,16 +5925,16 @@ function ensureBlinkAnimationGeneratorUI() {
     block.style.cssText =
         'margin-top:10px;padding:8px;background:#1a0a05;border:1px solid #f97316;border-radius:4px;';
     block.innerHTML = `
-        <label style="color:#fb923c;font-weight:bold;display:block;margin-bottom:4px;">🔦 Моргание</label>
-        <label><input type="checkbox" id="gen-blink-anim-enabled"> Включить моргание</label>
+        <label style="color:#fb923c;font-weight:bold;display:block;margin-bottom:4px;">рџ”¦ РњРѕСЂРіР°РЅРёРµ</label>
+        <label><input type="checkbox" id="gen-blink-anim-enabled"> Р’РєР»СЋС‡РёС‚СЊ РјРѕСЂРіР°РЅРёРµ</label>
         <div id="gen-blink-anim-settings" style="display:none;margin-top:6px;">
-            <label>Цель</label>
-            <select id="gen-blink-anim-target"><option value="stim" selected>Только стимул</option><option value="bg">Только фон</option><option value="both">Стимул + фон</option></select>
-            <label>Цвет A</label><input type="color" id="gen-blink-anim-cA" value="#ff0000">
-            <label>Цвет B</label><input type="color" id="gen-blink-anim-cB" value="#0000ff">
-            <label>Период (мс)</label><input type="number" id="gen-blink-anim-interval" value="500" min="50" max="5000" step="50">
-            <label>Доля A</label><input type="number" id="gen-blink-anim-duty" value="0.5" min="0.05" max="0.95" step="0.05">
-            <label>Количество (0 = ∞)</label><input type="number" id="gen-blink-anim-count" value="0" min="0" max="9999">
+            <label>Р¦РµР»СЊ</label>
+            <select id="gen-blink-anim-target"><option value="stim" selected>РўРѕР»СЊРєРѕ СЃС‚РёРјСѓР»</option><option value="bg">РўРѕР»СЊРєРѕ С„РѕРЅ</option><option value="both">РЎС‚РёРјСѓР» + С„РѕРЅ</option></select>
+            <label>Р¦РІРµС‚ A</label><input type="color" id="gen-blink-anim-cA" value="#ff0000">
+            <label>Р¦РІРµС‚ B</label><input type="color" id="gen-blink-anim-cB" value="#0000ff">
+            <label>РџРµСЂРёРѕРґ (РјСЃ)</label><input type="number" id="gen-blink-anim-interval" value="500" min="50" max="5000" step="50">
+            <label>Р”РѕР»СЏ A</label><input type="number" id="gen-blink-anim-duty" value="0.5" min="0.05" max="0.95" step="0.05">
+            <label>РљРѕР»РёС‡РµСЃС‚РІРѕ (0 = в€ћ)</label><input type="number" id="gen-blink-anim-count" value="0" min="0" max="9999">
         </div>`;
     container.appendChild(block);
     const cb = document.getElementById('gen-blink-anim-enabled');
@@ -5942,7 +5944,7 @@ function ensureBlinkAnimationGeneratorUI() {
     });
 }
 
-// ==================== ГЕНЕРАТОР: СЕТКА (сравнение) ====================
+// ==================== Р“Р•РќР•Р РђРўРћР : РЎР•РўРљРђ (СЃСЂР°РІРЅРµРЅРёРµ) ====================
 function renderGridPreview() {
     const gX = parseInt(document.getElementById('gen-grid-x').value) || 3;
     const gY = parseInt(document.getElementById('gen-grid-y').value) || 3;
@@ -5977,14 +5979,14 @@ function generateCellParamsFields() {
         for (let i = 1; i <= 20; i++) {
             const v = i / 10;
             const mm = acuityToSizeMm(v, 1);
-            opts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} — ${mm.toFixed(2)} мм</option>`;
+            opts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} вЂ” ${mm.toFixed(2)} РјРј</option>`;
         }
         div.innerHTML = `
-            <label><b>Клетка (${cell.row + 1}, ${cell.col + 1})</b></label>
+            <label><b>РљР»РµС‚РєР° (${cell.row + 1}, ${cell.col + 1})</b></label>
             <label>V</label><select class="cell-acuity">${opts}</select>
-            <label>Цвет стимула</label><input type="color" class="cell-stim-color" value="#ffffff">
-            <label>Цвет фона</label><input type="color" class="cell-bg-color" value="#000000">
-            <label>Время (мс)</label><input type="number" class="cell-duration" value="1000" min="100" max="5000">`;
+            <label>Р¦РІРµС‚ СЃС‚РёРјСѓР»Р°</label><input type="color" class="cell-stim-color" value="#ffffff">
+            <label>Р¦РІРµС‚ С„РѕРЅР°</label><input type="color" class="cell-bg-color" value="#000000">
+            <label>Р’СЂРµРјСЏ (РјСЃ)</label><input type="number" class="cell-duration" value="1000" min="100" max="5000">`;
         c.appendChild(div);
     });
 }
@@ -6017,7 +6019,7 @@ function collectCompareParams() {
     return { compareMode: cm, gridX: gX, gridY: gY, activeCells: selectedCells.slice(), cellParams: cp };
 }
 
-// ==================== ГЕНЕРАТОР: СБОР ПАРАМЕТРОВ ====================
+// ==================== Р“Р•РќР•Р РђРўРћР : РЎР‘РћР  РџРђР РђРњР•РўР РћР’ ====================
 function buildModeParamsFromUI() {
     const ss = parseInt(document.getElementById('gen-series-size').value) || 6;
     const tt = document.getElementById('gen-training-type').value;
@@ -6062,7 +6064,7 @@ function buildModeParamsFromUI() {
         }
     }
     const p = {
-        mode: safeVal('gen-mode', 'общая'),
+        mode: safeVal('gen-mode', 'РѕР±С‰Р°СЏ'),
         trainingType: tt,
         seriesCount: safeVal('gen-series', 5, parseInt),
         seriesSize: ss,
@@ -6166,7 +6168,7 @@ function buildModeParamsFromUI() {
         p.pairsCount = 2;
     }
     if (tt === 'reading') {
-        p.text = safeVal('gen-reading-text', 'Пример.');
+        p.text = safeVal('gen-reading-text', 'РџСЂРёРјРµСЂ.');
         p.textColor = hexToRgb(safeVal('gen-reading-text-color', '#000000'));
         p.bgMode = safeVal('gen-reading-bg-mode', 'solid');
         p.bgColor = hexToRgb(safeVal('gen-reading-bg-color', '#ffffff'));
@@ -6199,12 +6201,12 @@ function buildModeParamsFromUI() {
     return p;
 }
 
-// ==================== ГЕНЕРАТОР: СОЗДАНИЕ УЗЛА ====================
+// ==================== Р“Р•РќР•Р РђРўРћР : РЎРћР—Р”РђРќРР• РЈР—Р›Рђ ====================
 function modeParamsToNode(modeParams) {
     const prevId = activeNodeId;
     const id = createNewNode('STIMULUS');
     const node = getNode(id);
-    node.name = modeParams.singleCircleEnabled ? 'Динамика Круг' : 'Стимул';
+    node.name = modeParams.singleCircleEnabled ? 'Р”РёРЅР°РјРёРєР° РљСЂСѓРі' : 'РЎС‚РёРјСѓР»';
     node.stimType = modeParams.type || 'LETTER_E';
     node.stimAcuity = modeParams.startAcuity || 1.0;
     node.endAcuity = modeParams.endAcuity || modeParams.startAcuity || 1.0;
@@ -6319,7 +6321,7 @@ function modeParamsToReadingNode(modeParams) {
     const prevId = activeNodeId;
     const id = createNewNode('READING');
     const node = getNode(id);
-    node.name = 'Чтение';
+    node.name = 'Р§С‚РµРЅРёРµ';
     node.readingFontFamily = 'Segoe UI';
     node.readingAcuity = modeParams.startAcuity || 1.0;
     node.readingDistance = modeParams.readingDistance || readingDistance || 1;
@@ -6351,7 +6353,7 @@ function modeParamsToReadingNode(modeParams) {
     if (text)
         (async () => {
             const bid = await sha1(text);
-            if (!window._books[bid]) window._books[bid] = { name: 'Текст из Режимов', text };
+            if (!window._books[bid]) window._books[bid] = { name: 'РўРµРєСЃС‚ РёР· Р РµР¶РёРјРѕРІ', text };
             node.bookId = bid;
             node.bookName = window._books[bid].name;
             setLastBookId(bid);
@@ -6380,17 +6382,17 @@ function modeParamsToReadingNode(modeParams) {
     updateInspector();
 }
 
-// ==================== ПАПКИ ====================
+// ==================== РџРђРџРљР ====================
 async function restoreFolderHandle() {
     if (!HAS_FS_ACCESS) return false;
     try {
         const h = await window.Data.getFolderHandle('scenariosFolderHandle');
         if (!h) return false;
         selectedFolderHandle = h;
-        folderStatus.textContent = '📁 ' + h.name;
+        folderStatus.textContent = 'рџ“Ѓ ' + h.name;
         const perm = await h.queryPermission({ mode: 'readwrite' });
         if (perm !== 'granted') {
-            folderStatus.textContent = '📁 ' + h.name + ' (нужно разрешение)';
+            folderStatus.textContent = 'рџ“Ѓ ' + h.name + ' (РЅСѓР¶РЅРѕ СЂР°Р·СЂРµС€РµРЅРёРµ)';
             return false;
         }
         return true;
@@ -6404,7 +6406,7 @@ async function restoreTemplatesFolderHandle() {
         const h = await window.Data.getFolderHandle('templatesFolderHandle');
         if (!h) return false;
         templatesFolderHandle = h;
-        if (templatesFolderStatus) templatesFolderStatus.textContent = '📋 ' + h.name;
+        if (templatesFolderStatus) templatesFolderStatus.textContent = 'рџ“‹ ' + h.name;
         return true;
     } catch (_) {
         return false;
@@ -6415,7 +6417,7 @@ async function selectFolder() {
         try {
             const newHandle = await window.showDirectoryPicker();
             selectedFolderHandle = newHandle;
-            folderStatus.textContent = '📁 ' + newHandle.name;
+            folderStatus.textContent = 'рџ“Ѓ ' + newHandle.name;
             localStorage.setItem('selectedFolderName', newHandle.name);
             await window.Data.saveFolderHandle('scenariosFolderHandle', newHandle);
             await scanScenariosFolder();
@@ -6424,7 +6426,7 @@ async function selectFolder() {
         }
     } else {
         if (!folderInput) {
-            alert('Браузер не поддерживает выбор папки.');
+            alert('Р‘СЂР°СѓР·РµСЂ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚ РІС‹Р±РѕСЂ РїР°РїРєРё.');
             return;
         }
         folderInput.value = '';
@@ -6435,7 +6437,7 @@ async function scanScenariosFolder() {
     if (!selectedFolderHandle) return;
     const ok = await window.Data.ensurePermission(selectedFolderHandle, 'read');
     if (!ok) {
-        console.warn('[scenarios] нет доступа к папке');
+        console.warn('[scenarios] РЅРµС‚ РґРѕСЃС‚СѓРїР° Рє РїР°РїРєРµ');
         return;
     }
     const files = await window.Data.scanFolder(selectedFolderHandle, '.json');
@@ -6463,16 +6465,16 @@ async function scanScenariosFolder() {
             });
             imported++;
         } catch (e) {
-            console.warn('[scenarios] пропущен файл:', f.name, e.message);
+            console.warn('[scenarios] РїСЂРѕРїСѓС‰РµРЅ С„Р°Р№Р»:', f.name, e.message);
         }
     }
-    if (imported > 0) console.log(`[scenarios] импортировано из папки: ${imported}`);
+    if (imported > 0) console.log(`[scenarios] РёРјРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ РёР· РїР°РїРєРё: ${imported}`);
 }
 
-// ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ГРАФА ====================
+// ==================== РЎРћРҐР РђРќР•РќРР• / Р—РђР“Р РЈР—РљРђ Р“Р РђР¤Рђ ====================
 async function saveGraph() {
     if (_saveGraphInFlight) {
-        console.warn('[saveGraph] уже сохраняется');
+        console.warn('[saveGraph] СѓР¶Рµ СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ');
         return;
     }
     _saveGraphInFlight = true;
@@ -6487,7 +6489,7 @@ async function saveGraph() {
                     let fileName = window._currentScenarioFileName;
                     if (!fileName) {
                         const ans = prompt(
-                            'Имя файла сценария (без пути):',
+                            'РРјСЏ С„Р°Р№Р»Р° СЃС†РµРЅР°СЂРёСЏ (Р±РµР· РїСѓС‚Рё):',
                             'scenario_' + new Date().toISOString().slice(0, 10) + '.json'
                         );
                         if (!ans) return;
@@ -6495,10 +6497,10 @@ async function saveGraph() {
                         window._currentScenarioFileName = fileName;
                     }
                     await window.Data.writeFileToFolder(selectedFolderHandle, fileName, jsonStr);
-                    alert('📁 Файл сохранён: ' + fileName);
+                    alert('рџ“Ѓ Р¤Р°Р№Р» СЃРѕС…СЂР°РЅС‘РЅ: ' + fileName);
                 }
             } catch (err) {
-                console.warn('[saveGraph] папка:', err);
+                console.warn('[saveGraph] РїР°РїРєР°:', err);
             }
         } else {
             const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -6515,7 +6517,7 @@ async function saveGraph() {
             id: window._currentScenarioId || 'local_' + window._currentScenarioKey,
             name: window._currentScenarioFileName
                 ? window._currentScenarioFileName.replace(/\.json$/i, '')
-                : 'Сценарий ' + new Date().toLocaleString('ru-RU'),
+                : 'РЎС†РµРЅР°СЂРёР№ ' + new Date().toLocaleString('ru-RU'),
             training_type: trainingNode?.params?.trainingType || 'single',
             params: {
                 graph: {
@@ -6542,7 +6544,7 @@ async function saveGraph() {
         };
         const saved = await window.Data.saveScenario(record);
         window._currentScenarioId = saved.id;
-        console.log('[saveGraph] сохранено локально, id:', saved.id);
+        console.log('[saveGraph] СЃРѕС…СЂР°РЅРµРЅРѕ Р»РѕРєР°Р»СЊРЅРѕ, id:', saved.id);
     } finally {
         _saveGraphInFlight = false;
     }
@@ -6737,24 +6739,24 @@ function loadGraph(file) {
             requestRenderGraph();
             updateInspector();
         } catch (err) {
-            alert('Ошибка загрузки');
+            alert('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё');
             console.error(err);
         }
     };
     reader.readAsText(file);
 }
 
-// ==================== БИБЛИОТЕКА СЦЕНАРИЕВ ====================
+// ==================== Р‘РР‘Р›РРћРўР•РљРђ РЎР¦Р•РќРђР РР•Р’ ====================
 async function loadScenarioList() {
     const list = document.getElementById('scenario-list');
     if (!list) return;
-    list.innerHTML = '<div style="padding:20px;color:#666;text-align:center;">Загрузка…</div>';
+    list.innerHTML = '<div style="padding:20px;color:#666;text-align:center;">Р—Р°РіСЂСѓР·РєР°вЂ¦</div>';
     try {
         const scenarios = await window.Data.getScenarios();
         list.innerHTML = '';
         if (scenarios.length === 0) {
             list.innerHTML =
-                '<div style="padding:20px;color:#666;text-align:center;font-style:italic;">Пока нет сценариев.</div>';
+                '<div style="padding:20px;color:#666;text-align:center;font-style:italic;">РџРѕРєР° РЅРµС‚ СЃС†РµРЅР°СЂРёРµРІ.</div>';
             return;
         }
         scenarios.forEach((sc) => {
@@ -6762,8 +6764,8 @@ async function loadScenarioList() {
             div.style.cssText = 'border-bottom:1px solid #333;padding:8px 4px;';
             const nodeCount = sc.params?.graph?.nodes?.length || 0;
             const connCount = sc.params?.graph?.connections?.length || 0;
-            const dirty = sc._dirty ? ' <span style="color:#f59e0b;font-size:10px;">● локально</span>' : '';
-            div.innerHTML = `<b>${escapeHtml(sc.name || '(без имени)')}</b>${dirty} <span style="color:#94a3b8;font-size:11px;">(${escapeHtml(sc.training_type || 'single')})</span><br><span style="font-size:11px;color:#94a3b8;">Узлов: ${nodeCount}, связей: ${connCount}</span><br><button class="btn btn-secondary btn-load-scenario" data-id="${escapeHtml(sc.id)}" style="margin-top:4px;font-size:11px;padding:3px 10px;">Загрузить</button>`;
+            const dirty = sc._dirty ? ' <span style="color:#f59e0b;font-size:10px;">в—Џ Р»РѕРєР°Р»СЊРЅРѕ</span>' : '';
+            div.innerHTML = `<b>${escapeHtml(sc.name || '(Р±РµР· РёРјРµРЅРё)')}</b>${dirty} <span style="color:#94a3b8;font-size:11px;">(${escapeHtml(sc.training_type || 'single')})</span><br><span style="font-size:11px;color:#94a3b8;">РЈР·Р»РѕРІ: ${nodeCount}, СЃРІСЏР·РµР№: ${connCount}</span><br><button class="btn btn-secondary btn-load-scenario" data-id="${escapeHtml(sc.id)}" style="margin-top:4px;font-size:11px;padding:3px 10px;">Р—Р°РіСЂСѓР·РёС‚СЊ</button>`;
             list.appendChild(div);
         });
         list.querySelectorAll('.btn-load-scenario').forEach((btn) => {
@@ -6771,7 +6773,7 @@ async function loadScenarioList() {
                 const id = btn.dataset.id;
                 const sc = await window.Data.getScenarioById(id);
                 if (!sc) {
-                    alert('Сценарий не найден');
+                    alert('РЎС†РµРЅР°СЂРёР№ РЅРµ РЅР°Р№РґРµРЅ');
                     return;
                 }
                 trainingNode = { params: sc.params };
@@ -6785,25 +6787,25 @@ async function loadScenarioList() {
                     window._currentScenarioId = id;
                     window._currentScenarioFileName = (sc.name || 'scenario') + '.json';
                     requestRenderGraph();
-                    alert('Сценарий загружен в граф.');
-                } else alert('Сценарий загружен. Нажмите «Плеер».');
+                    alert('РЎС†РµРЅР°СЂРёР№ Р·Р°РіСЂСѓР¶РµРЅ РІ РіСЂР°С„.');
+                } else alert('РЎС†РµРЅР°СЂРёР№ Р·Р°РіСЂСѓР¶РµРЅ. РќР°Р¶РјРёС‚Рµ В«РџР»РµРµСЂВ».');
                 document.getElementById('library-modal').style.display = 'none';
             });
         });
     } catch (e) {
-        list.innerHTML = `<div style="padding:20px;color:#dc2626;">Ошибка: ${escapeHtml(e.message)}</div>`;
+        list.innerHTML = `<div style="padding:20px;color:#dc2626;">РћС€РёР±РєР°: ${escapeHtml(e.message)}</div>`;
     }
 }
 async function saveCurrentScenario() {
     if (!window.Data || !window.Data.getCurrentUserId()) {
-        alert('Войдите');
+        alert('Р’РѕР№РґРёС‚Рµ');
         return;
     }
     if (!trainingNode || !trainingNode.params) {
-        alert('Нет тренировки');
+        alert('РќРµС‚ С‚СЂРµРЅРёСЂРѕРІРєРё');
         return;
     }
-    const name = prompt('Название:');
+    const name = prompt('РќР°Р·РІР°РЅРёРµ:');
     if (!name) return;
     const record = {
         id: window.Data.uuid(),
@@ -6819,60 +6821,60 @@ async function saveCurrentScenario() {
         }
     };
     await window.Data.saveScenario(record);
-    alert('Сохранено: ' + name);
+    alert('РЎРѕС…СЂР°РЅРµРЅРѕ: ' + name);
     loadScenarioList();
 }
 
-// ==================== ПОЛЬЗОВАТЕЛИ И НАЗНАЧЕНИЯ ====================
+// ==================== РџРћР›Р¬Р—РћР’РђРўР•Р›Р Р РќРђР—РќРђР§Р•РќРРЇ ====================
 async function loadUsers() {
     const us = document.getElementById('selected-user');
     if (!us) return;
-    us.innerHTML = '<option>Загрузка…</option>';
+    us.innerHTML = '<option>Р—Р°РіСЂСѓР·РєР°вЂ¦</option>';
     try {
         const users = await window.Data.getUsers();
         us.innerHTML = '';
-        if (users.length === 0) us.innerHTML = '<option value="">— нет пользователей —</option>';
+        if (users.length === 0) us.innerHTML = '<option value="">вЂ” РЅРµС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ вЂ”</option>';
         else
             users.forEach((p) => {
                 const o = document.createElement('option');
                 o.value = p.id;
-                o.textContent = (p.email || '(без email)') + (p.full_name ? ' (' + p.full_name + ')' : '');
+                o.textContent = (p.email || '(Р±РµР· email)') + (p.full_name ? ' (' + p.full_name + ')' : '');
                 us.appendChild(o);
             });
         const sc = document.getElementById('selected-scenario');
-        sc.innerHTML = '<option>Загрузка…</option>';
+        sc.innerHTML = '<option>Р—Р°РіСЂСѓР·РєР°вЂ¦</option>';
         const scenarios = await window.Data.getScenariosLocal();
         sc.innerHTML = '';
-        if (scenarios.length === 0) sc.innerHTML = '<option value="">— нет сценариев —</option>';
+        if (scenarios.length === 0) sc.innerHTML = '<option value="">вЂ” РЅРµС‚ СЃС†РµРЅР°СЂРёРµРІ вЂ”</option>';
         else
             scenarios.forEach((s) => {
                 const o = document.createElement('option');
                 o.value = s.id;
-                o.textContent = s.name || '(без имени)';
+                o.textContent = s.name || '(Р±РµР· РёРјРµРЅРё)';
                 sc.appendChild(o);
             });
     } catch (e) {
-        us.innerHTML = '<option value="">Ошибка: ' + escapeHtml(e.message) + '</option>';
+        us.innerHTML = '<option value="">РћС€РёР±РєР°: ' + escapeHtml(e.message) + '</option>';
     }
 }
 async function assignScenario() {
     const u = document.getElementById('selected-user').value;
     const s = document.getElementById('selected-scenario').value;
     if (!u || !s) {
-        alert('Выберите пользователя и сценарий');
+        alert('Р’С‹Р±РµСЂРёС‚Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Рё СЃС†РµРЅР°СЂРёР№');
         return;
     }
     await window.Data.assignScenario(u, s, 'ready');
-    alert('✅ Назначено');
+    alert('вњ… РќР°Р·РЅР°С‡РµРЅРѕ');
 }
 
-// ==================== БЛОКИ ====================
+// ==================== Р‘Р›РћРљР ====================
 function renderBlockList() {
     blockListDiv.innerHTML = '';
     blockList.forEach((b, i) => {
         const t = document.createElement('span');
         t.className = 'block-tag';
-        t.innerHTML = `${escapeHtml(b.name)} (${escapeHtml(b.type)}) <span class="remove-block" data-index="${i}">✕</span>`;
+        t.innerHTML = `${escapeHtml(b.name)} (${escapeHtml(b.type)}) <span class="remove-block" data-index="${i}">вњ•</span>`;
         t.querySelector('.remove-block').addEventListener('click', function (e) {
             e.stopPropagation();
             blockList.splice(parseInt(this.dataset.index), 1);
@@ -6880,18 +6882,18 @@ function renderBlockList() {
         });
         blockListDiv.appendChild(t);
     });
-    blockCountSpan.textContent = `Блоков: ${blockList.length}`;
+    blockCountSpan.textContent = `Р‘Р»РѕРєРѕРІ: ${blockList.length}`;
     blockListDiv.style.display = blockList.length > 0 ? 'block' : 'none';
 }
 function addBlock() {
     const type = blockSelect.value,
-        name = blockNameInput.value.trim() || 'Блок';
+        name = blockNameInput.value.trim() || 'Р‘Р»РѕРє';
     let p = {};
     if (type === 'warmup') p = { count: 5, size: 200, duration: 1000 };
     else if (type === 'complex') p = { count: 10, size: 80, duration: 500 };
     else if (type === 'random') p = { count: 8, size: 150, duration: 800 };
     else if (type === 'custom') {
-        const c = prompt('Количество:', '5');
+        const c = prompt('РљРѕР»РёС‡РµСЃС‚РІРѕ:', '5');
         p = { count: parseInt(c) || 5, size: 120, duration: 700 };
     }
     blockList.push({ type, params: p, name });
@@ -6904,7 +6906,7 @@ function clearBlocks() {
 }
 function generateSequenceFromBlocks() {
     if (blockList.length === 0) {
-        alert('Список пуст');
+        alert('РЎРїРёСЃРѕРє РїСѓСЃС‚');
         return;
     }
     nodes = [];
@@ -6918,7 +6920,7 @@ function generateSequenceFromBlocks() {
             y = 100;
         const nid = createNewNode('STIMULUS', x, y);
         const n = getNode(nid);
-        n.name = b.name || 'Блок ' + (i + 1);
+        n.name = b.name || 'Р‘Р»РѕРє ' + (i + 1);
         n.duration = b.params.duration || 1000;
         if (prevId)
             connections.push({
@@ -6941,7 +6943,7 @@ function generateSequenceFromBlocks() {
         updateInspector();
     }
     requestRenderGraph();
-    alert('Последовательность создана.');
+    alert('РџРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ СЃРѕР·РґР°РЅР°.');
 }
 
 // ==================== AUTH ====================
@@ -6967,7 +6969,7 @@ function initSupabase() {
 }
 async function signIn(email, password) {
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) alert('Ошибка: ' + error.message);
+    if (error) alert('РћС€РёР±РєР°: ' + error.message);
     else document.getElementById('auth-modal').style.display = 'none';
 }
 async function signUp(email, password, fullName) {
@@ -6976,7 +6978,7 @@ async function signUp(email, password, fullName) {
         password,
         options: { data: { full_name: fullName } }
     });
-    if (error) alert('Ошибка: ' + error.message);
+    if (error) alert('РћС€РёР±РєР°: ' + error.message);
     else document.getElementById('auth-modal').style.display = 'none';
 }
 async function signOut() {
@@ -6988,12 +6990,12 @@ function updateAuthUI() {
             window.location.href = 'user.html';
             return;
         }
-        btnAuth.textContent = 'Выйти';
+        btnAuth.textContent = 'Р’С‹Р№С‚Рё';
         userEmailSpan.textContent = currentUser.email;
         userEmailSpan.style.display = 'inline-flex';
         document.getElementById('main-layout').style.display = 'flex';
     } else {
-        btnAuth.textContent = 'Войти';
+        btnAuth.textContent = 'Р’РѕР№С‚Рё';
         userEmailSpan.textContent = '';
         userEmailSpan.style.display = 'none';
         document.getElementById('main-layout').style.display = 'none';
@@ -7007,17 +7009,17 @@ function showAuthModal(mode) {
         tb = document.getElementById('auth-toggle'),
         sb = document.getElementById('auth-submit');
     if (mode === 'signin') {
-        t.textContent = 'Вход';
+        t.textContent = 'Р’С…РѕРґ';
         nl.style.display = 'none';
         ni.style.display = 'none';
-        tb.textContent = 'Нет аккаунта? Регистрация';
-        sb.textContent = 'Войти';
+        tb.textContent = 'РќРµС‚ Р°РєРєР°СѓРЅС‚Р°? Р РµРіРёСЃС‚СЂР°С†РёСЏ';
+        sb.textContent = 'Р’РѕР№С‚Рё';
     } else {
-        t.textContent = 'Регистрация';
+        t.textContent = 'Р РµРіРёСЃС‚СЂР°С†РёСЏ';
         nl.style.display = 'block';
         ni.style.display = 'block';
-        tb.textContent = 'Уже есть аккаунт? Войти';
-        sb.textContent = 'Зарегистрироваться';
+        tb.textContent = 'РЈР¶Рµ РµСЃС‚СЊ Р°РєРєР°СѓРЅС‚? Р’РѕР№С‚Рё';
+        sb.textContent = 'Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ';
     }
     document.getElementById('auth-modal').style.display = 'flex';
 }
@@ -7064,7 +7066,7 @@ function showSWUpdateBanner(reg) {
     el.style.cssText =
         'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;z-index:10000;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,0.4);font-family:"Segoe UI",Tahoma,sans-serif;';
     el.innerHTML =
-        '<span>Доступна новая версия</span><button style="background:#fff;color:#10b981;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-weight:bold;font-family:inherit;">Обновить</button>';
+        '<span>Р”РѕСЃС‚СѓРїРЅР° РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ</span><button style="background:#fff;color:#10b981;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-weight:bold;font-family:inherit;">РћР±РЅРѕРІРёС‚СЊ</button>';
     el.querySelector('button').addEventListener('click', () => {
         try {
             reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
@@ -7095,7 +7097,7 @@ function init() {
     ensureBlinkAnimationGeneratorUI();
     ensureBlinkCalibrationUI();
     const sfn = localStorage.getItem('selectedFolderName');
-    if (sfn) folderStatus.textContent = '📁 ' + sfn;
+    if (sfn) folderStatus.textContent = 'рџ“Ѓ ' + sfn;
     btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
@@ -7218,14 +7220,14 @@ function init() {
                     scrollReadingToPage(0);
                 }, 60);
             } catch (err) {
-                alert('Не удалось загрузить шрифт: ' + err.message);
+                alert('РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ С€СЂРёС„С‚: ' + err.message);
             }
             fontFileInput.value = '';
         });
     }
     document.getElementById('reading-font-system')?.addEventListener('click', async () => {
         if (!('queryLocalFonts' in window)) {
-            alert('Браузер не поддерживает список системных шрифтов.');
+            alert('Р‘СЂР°СѓР·РµСЂ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚ СЃРїРёСЃРѕРє СЃРёСЃС‚РµРјРЅС‹С… С€СЂРёС„С‚РѕРІ.');
             return;
         }
         try {
@@ -7235,7 +7237,7 @@ function init() {
             list.innerHTML = '';
             const first = document.createElement('option');
             first.value = 'Sivtsev';
-            first.textContent = 'Сивцев';
+            first.textContent = 'РЎРёРІС†РµРІ';
             list.appendChild(first);
             const pref = ['Segoe UI', 'Arial', 'Times New Roman', 'Calibri', 'Verdana', 'Georgia', 'Tahoma'];
             const ordered = [
@@ -7247,9 +7249,9 @@ function init() {
                 o.value = fam;
                 list.appendChild(o);
             }
-            alert(`Загружено ${fams.length} шрифтов.`);
+            alert(`Р—Р°РіСЂСѓР¶РµРЅРѕ ${fams.length} С€СЂРёС„С‚РѕРІ.`);
         } catch (err) {
-            alert('Ошибка: ' + err.message);
+            alert('РћС€РёР±РєР°: ' + err.message);
         }
     });
     document.getElementById('reading-bold-toggle')?.addEventListener('click', () => {
@@ -7287,7 +7289,7 @@ function init() {
                     readingPage = Math.max(0, Math.min(np, readingTotalPages - 1));
                     window._currentReadingPage = readingPage;
                     const i = document.getElementById('reading-page-info');
-                    if (i) i.textContent = `Стр. ${readingPage + 1} / ${readingTotalPages}`;
+                    if (i) i.textContent = `РЎС‚СЂ. ${readingPage + 1} / ${readingTotalPages}`;
                 }
             }, 100);
         });
@@ -7298,11 +7300,11 @@ function init() {
             if (!f) return;
             const n = (f.name || '').toLowerCase();
             if (!(n.endsWith('.txt') || n.endsWith('.fb2') || n.endsWith('.epub'))) {
-                alert('Поддерживаются .txt, .fb2, .epub');
+                alert('РџРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ .txt, .fb2, .epub');
                 readingFileInput.value = '';
                 return;
             }
-            if (readingFileName) readingFileName.textContent = '⏳ Загрузка: ' + f.name;
+            if (readingFileName) readingFileName.textContent = 'вЏі Р—Р°РіСЂСѓР·РєР°: ' + f.name;
             try {
                 const t = await parseReadingFile(f);
                 const clean = (t || '')
@@ -7310,14 +7312,14 @@ function init() {
                     .replace(/\n{3,}/g, '\n\n')
                     .trim();
                 if (!clean) {
-                    alert('Файл пуст');
+                    alert('Р¤Р°Р№Р» РїСѓСЃС‚');
                     return;
                 }
                 const ta = document.getElementById('gen-reading-text');
                 if (ta) ta.value = clean;
-                if (readingFileName) readingFileName.textContent = `✅ ${f.name} (${clean.length} символов)`;
+                if (readingFileName) readingFileName.textContent = `вњ… ${f.name} (${clean.length} СЃРёРјРІРѕР»РѕРІ)`;
             } catch (err) {
-                alert('Ошибка: ' + err.message);
+                alert('РћС€РёР±РєР°: ' + err.message);
             }
             readingFileInput.value = '';
         });
@@ -7381,17 +7383,17 @@ function init() {
         modal.style.display = 'none';
         if (tt === 'reading') {
             modeParamsToReadingNode(mp);
-            alert('📌 Узел «Чтение» создан.');
+            alert('рџ“Њ РЈР·РµР» В«Р§С‚РµРЅРёРµВ» СЃРѕР·РґР°РЅ.');
         } else if (tt === 'single') {
             modeParamsToNode(mp);
-            alert('📌 Узел создан.');
-        } else alert('Сравнение пока не переносится в узел.');
+            alert('рџ“Њ РЈР·РµР» СЃРѕР·РґР°РЅ.');
+        } else alert('РЎСЂР°РІРЅРµРЅРёРµ РїРѕРєР° РЅРµ РїРµСЂРµРЅРѕСЃРёС‚СЃСЏ РІ СѓР·РµР».');
     });
     document.getElementById('gen-apply').addEventListener('click', () => {
         modal.style.display = 'none';
         trainingNode = { id: 'training_node', params: buildModeParamsFromUI() };
         window._pendingGeneratorMode = true;
-        alert('Тренировка готова. Нажмите «Плеер».');
+        alert('РўСЂРµРЅРёСЂРѕРІРєР° РіРѕС‚РѕРІР°. РќР°Р¶РјРёС‚Рµ В«РџР»РµРµСЂВ».');
     });
     document.getElementById('gen-training-type').addEventListener('change', function () {
         updateGeneratorVisibility();
@@ -7472,7 +7474,7 @@ function init() {
         const ss = document.getElementById('gen-reading-dynamic-step');
         const sd = ss ? Math.max(0.1, parseFloat(ss.value) || 0.1) : 0.1;
         const l = document.getElementById('gen-reading-dynamic-step-duration-label');
-        if (l) l.textContent = `Длительность шага (${sd.toFixed(1)} дптр)`;
+        if (l) l.textContent = `Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ С€Р°РіР° (${sd.toFixed(1)} РґРїС‚СЂ)`;
         if (!h) return;
         let c = 0;
         for (const p of PHYSIOLOGICAL_PHASES) {
@@ -7482,7 +7484,7 @@ function init() {
         const last = PHYSIOLOGICAL_PHASES[PHYSIOLOGICAL_PHASES.length - 1];
         const lr = last.diopters / sd;
         if (Math.abs(lr - Math.round(lr)) > 1e-6) c++;
-        h.textContent = `0.0 → +1.6 дптр • ${c} точек • шаг ${sd.toFixed(1)} • Thibos et al.`;
+        h.textContent = `0.0 в†’ +1.6 РґРїС‚СЂ вЂў ${c} С‚РѕС‡РµРє вЂў С€Р°Рі ${sd.toFixed(1)} вЂў Thibos et al.`;
     }
     function updateSingleStimDynamicVisibility() {
         const cb = document.getElementById('gen-single-stim-dynamic-enabled');
@@ -7561,8 +7563,8 @@ function init() {
                         imported++;
                     } catch (_) {}
                 }
-                folderStatus.textContent = '📁 ' + (list[0].webkitRelativePath.split('/')[0] || 'папка');
-                alert(`📁 Импортировано сценариев: ${imported}`);
+                folderStatus.textContent = 'рџ“Ѓ ' + (list[0].webkitRelativePath.split('/')[0] || 'РїР°РїРєР°');
+                alert(`рџ“Ѓ РРјРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ СЃС†РµРЅР°СЂРёРµРІ: ${imported}`);
             }
             folderInput.value = '';
         });
@@ -7622,7 +7624,7 @@ function init() {
         const n = document.getElementById('auth-name').value.trim();
         if (authMode === 'signin') await signIn(e, p);
         else {
-            if (!n) return alert('Введите имя');
+            if (!n) return alert('Р’РІРµРґРёС‚Рµ РёРјСЏ');
             await signUp(e, p, n);
         }
         document.getElementById('auth-modal').style.display = 'none';
