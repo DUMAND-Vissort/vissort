@@ -1,4 +1,4 @@
-﻿ <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#0b0b12">
-<title>Vissort Studio Pro вЂ” РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ</title>
+<title>Vissort Studio Pro — Администратор</title>
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -247,88 +247,71 @@ header { padding: 3px 6px; }
     .header-section .btn-icon { padding: 0 3px; font-size: 12px; }
 }
 </style>
-<style id="btn-icon-fix">
-.header-section .btn-icon {
-    padding: 0 !important;
-    width: 26px !important;
-    min-width: 26px !important;
-    max-width: 26px !important;
-    height: var(--btn-h) !important;
-    font-size: 14px !important;
-    line-height: 1 !important;
-    box-sizing: border-box;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.header-section .btn-icon > * { max-width: 100%; }
-</style>
 </head>
 <body>
 <header>
 <div class="header-row">
 
 <div class="header-section section-work">
-<button class="btn btn-warning btn-icon" id="btn-player" title="РџР»РµРµСЂ">в–¶</button>
-<button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="РЎС‚РѕРї">вЏ№</button>
-<button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="РџР°СѓР·Р°">вЏё</button>
-<button class="btn btn-mode" id="btn-mode-toggle">рџЋЇ РЈР·Р»С‹</button>
+<button class="btn btn-warning btn-icon" id="btn-player" title="Плеер">▶</button>
+<button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">⏹</button>
+<button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">⏸</button>
+<button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
 <span class="header-sep"></span>
-<button class="btn btn-success btn-icon" id="btn-add-stim" title="РќРѕРІС‹Р№ СѓР·РµР»">вћ•</button>
-<button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Р›РѕРіРёРєР°">рџ§ </button>
-<button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Р”РёРЅР°РјРёРєР°">рџЋ¬</button>
-<button class="btn btn-compare btn-icon" id="btn-add-compare" title="РЎСЂР°РІРЅРµРЅРёРµ">вљ–пёЏ</button>
-<button class="btn btn-reading btn-icon" id="btn-add-reading" title="Р§С‚РµРЅРёРµ">рџ“–</button>
-<button class="btn btn-success btn-icon" id="btn-generator" title="Р РµР¶РёРјС‹">вљ™пёЏ</button>
-<button class="btn btn-secondary btn-icon" id="btn-inspector" title="РРЅСЃРїРµРєС‚РѕСЂ">рџ§°</button>
-<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="РћС†РµРЅРєР° РІСЂРµРјРµРЅРё СЃС†РµРЅР°СЂРёСЏ">вЏ±</button>
+<button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>
+<button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
+<button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
+<button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">⚖️</button>
+<button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
+<button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
+<button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
+<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
 </div>
 
 <span class="section-sep"></span>
 
 <div class="header-section section-device">
-<button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Р’РєР»СЋС‡РёС‚СЊ РєР°РјРµСЂСѓ">рџ“·</button>
-<button class="btn btn-success btn-icon" id="btn-disable-camera" style="display:none;" title="Р’С‹РєР»СЋС‡РёС‚СЊ РєР°РјРµСЂСѓ">рџ“·</button>
-<button class="btn btn-warning btn-icon" id="btn-calibrate-camera" disabled title="РљР°Р»РёР±СЂРѕРІРєР° РєР°РјРµСЂС‹">рџЋҐ</button>
-<button class="btn btn-warning btn-icon" id="btn-calibrate-screen" title="РљР°Р»РёР±СЂРѕРІРєР° СЌРєСЂР°РЅР°">рџ“ђ</button>
+<button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Включить камеру">📷</button>
+<button class="btn btn-success btn-icon" id="btn-disable-camera" style="display:none;" title="Выключить камеру">📷</button>
+<button class="btn btn-warning btn-icon" id="btn-calibrate-camera" disabled title="Калибровка камеры">🎥</button>
+<button class="btn btn-warning btn-icon" id="btn-calibrate-screen" title="Калибровка экрана">📐</button>
 <span class="header-sep"></span>
-<span class="status-chip" id="camera-status" title="РЎС‚Р°С‚СѓСЃ РєР°РјРµСЂС‹">рџ“· РІС‹РєР»</span>
-<span class="status-chip" id="distance-display" title="Р”РёСЃС‚Р°РЅС†РёСЏ">вЂ”</span>
-<span class="status-chip face-missing" id="face-status" title="Р›РёС†Рѕ">вЂ”</span>
+<span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
+<span class="status-chip" id="distance-display" title="Дистанция">—</span>
+<span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
 </div>
 
 <span class="section-sep"></span>
 
 <div class="header-section section-files">
-<button class="btn btn-secondary btn-icon" id="btn-save" title="РЎРѕС…СЂР°РЅРёС‚СЊ">рџ’ѕ</button>
-<button class="btn btn-secondary btn-icon" id="btn-open" title="РћС‚РєСЂС‹С‚СЊ">рџ“‚</button>
+<button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
+<button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
 <input type="file" id="file-input" accept=".json" style="display:none;">
 <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-<button class="btn btn-secondary btn-icon" id="btn-select-folder" title="РџР°РїРєР° СЃС†РµРЅР°СЂРёРµРІ">рџ“Ѓ</button>
-<button class="btn btn-secondary btn-icon" id="btn-select-templates-folder" title="РџР°РїРєР° Р·Р°РіРѕС‚РѕРІРѕРє">рџ“‹</button>
+<button class="btn btn-secondary btn-icon" id="btn-select-folder" title="Папка сценариев">📁</button>
+<button class="btn btn-secondary btn-icon" id="btn-select-templates-folder" title="Папка заготовок">📋</button>
 <input type="file" id="templates-folder-input" webkitdirectory directory multiple style="display:none;">
-<button class="btn btn-secondary btn-icon" id="btn-library" title="Р‘РёР±Р»РёРѕС‚РµРєР°">рџ“љ</button>
+<button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
 <span class="header-sep"></span>
-<span class="status-chip" id="folder-status" title="РџР°РїРєР°">рџ“Ѓ вЂ”</span>
-<span class="status-chip" id="templates-folder-status" title="РџР°РїРєР° Р·Р°РіРѕС‚РѕРІРѕРє">рџ“‹ вЂ”</span>
+<span class="status-chip" id="folder-status" title="Папка">📁 —</span>
+<span class="status-chip" id="templates-folder-status" title="Папка заготовок">📋 —</span>
 <div class="counters" id="counters">
-<span class="counter" title="РџРѕР»РЅС‹С… СЃРµСЂРёР№"><span class="label">Рџ:</span> <b id="cnt-completed">0</b></span>
-<span class="counter" title="РЈСЃРїРµС€РЅС‹С… СЃРµСЂРёР№"><span class="label">РЈ:</span> <b id="cnt-success">0</b></span>
-<span class="counter" title="РќРµСѓСЃРїРµС€РЅС‹С… СЃРµСЂРёР№"><span class="label">Рќ:</span> <b id="cnt-failed">0</b></span>
-<span class="counter" title="РџСЂР°РІРёР»СЊРЅС‹С… РѕС‚РІРµС‚РѕРІ"><span class="label">вњ“</span> <b id="cnt-series-correct">0</b></span>
-<span class="counter" title="РќРµРїСЂР°РІРёР»СЊРЅС‹С… РѕС‚РІРµС‚РѕРІ"><span class="label">вњ—</span> <b id="cnt-series-incorrect">0</b></span>
-<span class="counter" title="Р‘РµР· РѕС‚РІРµС‚Р°"><span class="label">в€…</span> <b id="cnt-series-noanswer">0</b></span>
+<span class="counter" title="Полных серий"><span class="label">П:</span> <b id="cnt-completed">0</b></span>
+<span class="counter" title="Успешных серий"><span class="label">У:</span> <b id="cnt-success">0</b></span>
+<span class="counter" title="Неуспешных серий"><span class="label">Н:</span> <b id="cnt-failed">0</b></span>
+<span class="counter" title="Правильных ответов"><span class="label">✓</span> <b id="cnt-series-correct">0</b></span>
+<span class="counter" title="Неправильных ответов"><span class="label">✗</span> <b id="cnt-series-incorrect">0</b></span>
+<span class="counter" title="Без ответа"><span class="label">∅</span> <b id="cnt-series-noanswer">0</b></span>
 </div>
 </div>
 
 <span class="section-sep"></span>
 
 <div class="header-section section-account">
-<span class="status-chip clickable" id="sync-chip" title="РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ вЂ” РЅР°Р¶РјРёС‚Рµ РґР»СЏ РѕС‡РµСЂРµРґРё">рџџў РћРЅР»Р°Р№РЅ</span>
-<button class="btn btn-secondary btn-icon" id="btn-users" title="РџРѕР»СЊР·РѕРІР°С‚РµР»Рё">рџ‘Ґ</button>
+<span class="status-chip clickable" id="sync-chip" title="Синхронизация — нажмите для очереди">🟢 Онлайн</span>
+<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
 <span class="header-sep"></span>
-<button class="btn btn-secondary" id="btn-auth">Р’РѕР№С‚Рё</button>
+<button class="btn btn-secondary" id="btn-auth">Войти</button>
 <span class="status-chip" id="user-email" title="Email" style="display:none;"></span>
 </div>
 
@@ -343,310 +326,310 @@ header { padding: 3px 6px; }
 <div id="live-distance-indicator"></div>
 <div id="reading-timer"></div>
 <div id="reading-toolbar">
-<button class="btn btn-secondary" id="reading-prev" title="РџСЂРµРґС‹РґСѓС‰Р°СЏ СЃС‚СЂР°РЅРёС†Р° (в†ђ)">в—Ђ РќР°Р·Р°Рґ</button>
-<button class="btn btn-warning" id="reading-play-pause" title="РЎРєСЂС‹С‚СЊ/РїРѕРєР°Р·Р°С‚СЊ С‚РµРєСЃС‚ (РџСЂРѕР±РµР»)">вЏё РџР°СѓР·Р°</button>
-<button class="btn btn-secondary" id="reading-next" title="РЎР»РµРґСѓСЋС‰Р°СЏ СЃС‚СЂР°РЅРёС†Р° (в†’)">Р’РїРµСЂС‘Рґ в–¶</button>
-<span id="reading-page-info">РЎС‚СЂ. 1 / 1</span>
-<button class="btn btn-danger" id="reading-not-see" title="РўРµРєСЃС‚ СЃР»РёРІР°РµС‚СЃСЏ вЂ” СѓРІРµР»РёС‡РёС‚СЊ СЂР°Р·РјРµСЂ">рџ”» РќРµ РІРёР¶Сѓ</button>
-<button class="btn btn-success" id="reading-see-well" title="РўРµРєСЃС‚ РјРµР»РєРёР№ вЂ” СѓРјРµРЅСЊС€РёС‚СЊ СЂР°Р·РјРµСЂ">рџ”є Р’РёР¶Сѓ С…РѕСЂРѕС€Рѕ</button>
-<input type="text" id="reading-font-input" value="Segoe UI" placeholder="РЁСЂРёС„С‚" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="vissort-reading-font-family-x" title="Р’РІРµРґРёС‚Рµ РёРјСЏ С€СЂРёС„С‚Р° РІСЂСѓС‡РЅСѓСЋ">
+<button class="btn btn-secondary" id="reading-prev" title="Предыдущая страница (←)">◀ Назад</button>
+<button class="btn btn-warning" id="reading-play-pause" title="Скрыть/показать текст (Пробел)">⏸ Пауза</button>
+<button class="btn btn-secondary" id="reading-next" title="Следующая страница (→)">Вперёд ▶</button>
+<span id="reading-page-info">Стр. 1 / 1</span>
+<button class="btn btn-danger" id="reading-not-see" title="Текст сливается — увеличить размер">🔻 Не вижу</button>
+<button class="btn btn-success" id="reading-see-well" title="Текст мелкий — уменьшить размер">🔺 Вижу хорошо</button>
+<input type="text" id="reading-font-input" value="Segoe UI" placeholder="Шрифт" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="vissort-reading-font-family-x" title="Введите имя шрифта вручную">
 <datalist id="reading-font-list">
-<option value="Sivtsev">РЎРёРІС†РµРІ</option><option value="Segoe UI">Segoe UI</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Calibri">Calibri</option><option value="Cambria">Cambria</option><option value="Consolas">Consolas</option><option value="Courier New">Courier New</option><option value="Garamond">Garamond</option><option value="Georgia">Georgia</option><option value="Lucida Console">Lucida Console</option><option value="Palatino Linotype">Palatino Linotype</option><option value="Comic Sans MS">Comic Sans MS</option><option value="Bookman Old Style">Bookman Old Style</option><option value="Franklin Gothic Medium">Franklin Gothic Medium</option><option value="Century Gothic">Century Gothic</option><option value="MS Sans Serif">MS Sans Serif</option><option value="Times New Roman">Times New Roman</option>
+<option value="Sivtsev">Сивцев</option><option value="Segoe UI">Segoe UI</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Calibri">Calibri</option><option value="Cambria">Cambria</option><option value="Consolas">Consolas</option><option value="Courier New">Courier New</option><option value="Garamond">Garamond</option><option value="Georgia">Georgia</option><option value="Lucida Console">Lucida Console</option><option value="Palatino Linotype">Palatino Linotype</option><option value="Comic Sans MS">Comic Sans MS</option><option value="Bookman Old Style">Bookman Old Style</option><option value="Franklin Gothic Medium">Franklin Gothic Medium</option><option value="Century Gothic">Century Gothic</option><option value="MS Sans Serif">MS Sans Serif</option><option value="Times New Roman">Times New Roman</option>
 </datalist>
-<button class="btn btn-secondary" id="reading-font-picker" title="Р’С‹Р±СЂР°С‚СЊ С€СЂРёС„С‚ РёР· СЃРїРёСЃРєР°">в–ѕ РЎРїРёСЃРѕРє</button>
-<button class="btn btn-warning" id="reading-font-sivtsev" title="Р‘С‹СЃС‚СЂРѕ РїРµСЂРµРєР»СЋС‡РёС‚СЊ РЅР° С€СЂРёС„С‚ РЎРёРІС†РµРІР°">РЎРёРІС†РµРІ</button>
-<button class="btn btn-secondary" id="reading-font-file" title="Р—Р°РіСЂСѓР·РёС‚СЊ СЃРІРѕР№ С„Р°Р№Р» С€СЂРёС„С‚Р°">рџ“‚</button>
+<button class="btn btn-secondary" id="reading-font-picker" title="Выбрать шрифт из списка">▾ Список</button>
+<button class="btn btn-warning" id="reading-font-sivtsev" title="Быстро переключить на шрифт Сивцева">Сивцев</button>
+<button class="btn btn-secondary" id="reading-font-file" title="Загрузить свой файл шрифта">📂</button>
 <input type="file" id="reading-font-file-input" accept=".ttf,.otf,.woff,.woff2" style="display:none;">
-<button class="btn btn-secondary" id="reading-font-system" title="Р—Р°РіСЂСѓР·РёС‚СЊ РІСЃРµ СЃРёСЃС‚РµРјРЅС‹Рµ С€СЂРёС„С‚С‹">рџ–ҐпёЏ</button>
-<button class="btn" id="reading-bold-toggle" title="Р–РёСЂРЅС‹Р№ С€СЂРёС„С‚">B</button>
-<button class="btn btn-success" id="reading-bookmark" title="РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РєР»Р°РґРєСѓ">рџ”– Р—Р°РєР»Р°РґРєР°</button>
-<button class="btn btn-dynamic" id="reading-open-bookmark" title="РћС‚РєСЂС‹С‚СЊ СЃРѕС…СЂР°РЅС‘РЅРЅСѓСЋ Р·Р°РєР»Р°РґРєСѓ">рџ“– РћС‚РєСЂС‹С‚СЊ Р·Р°РєР»Р°РґРєСѓ</button>
-<button class="btn btn-danger" id="reading-finish" title="Р—Р°РєРѕРЅС‡РёС‚СЊ СѓР·РµР» С‡С‚РµРЅРёСЏ">вЏ№ Р—Р°РєРѕРЅС‡РёС‚СЊ</button>
+<button class="btn btn-secondary" id="reading-font-system" title="Загрузить все системные шрифты">🖥️</button>
+<button class="btn" id="reading-bold-toggle" title="Жирный шрифт">B</button>
+<button class="btn btn-success" id="reading-bookmark" title="Сохранить закладку">🔖 Закладка</button>
+<button class="btn btn-dynamic" id="reading-open-bookmark" title="Открыть сохранённую закладку">📖 Открыть закладку</button>
+<button class="btn btn-danger" id="reading-finish" title="Закончить узел чтения">⏹ Закончить</button>
 </div>
 <div id="response-buttons">
-<button class="btn-response" data-dir="РІРІРµСЂС…">в–І</button>
-<button class="btn-response" data-dir="РІРЅРёР·">в–ј</button>
-<button class="btn-response" data-dir="РІР»РµРІРѕ">в—Ђ</button>
-<button class="btn-response" data-dir="РІРїСЂР°РІРѕ">в–¶</button>
-<button class="btn-response" data-answer="РґР°" style="display:none;width:auto;padding:0 20px;">Р”Р°</button>
-<button class="btn-response" data-answer="РЅРµС‚" style="display:none;width:auto;padding:0 20px;">РќРµС‚</button>
+<button class="btn-response" data-dir="вверх">▲</button>
+<button class="btn-response" data-dir="вниз">▼</button>
+<button class="btn-response" data-dir="влево">◀</button>
+<button class="btn-response" data-dir="вправо">▶</button>
+<button class="btn-response" data-answer="да" style="display:none;width:auto;padding:0 20px;">Да</button>
+<button class="btn-response" data-answer="нет" style="display:none;width:auto;padding:0 20px;">Нет</button>
 </div>
 </div>
 <div class="inspector-panel" id="inspector"></div>
 </div>
 
 <div id="block-panel" style="display:none;">
-<span>РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ:</span>
-<input type="text" id="block-name-input" placeholder="РќР°Р·РІР°РЅРёРµ Р±Р»РѕРєР°">
+<span>Конструктор:</span>
+<input type="text" id="block-name-input" placeholder="Название блока">
 <select id="block-select">
-<option value="warmup">Р Р°Р·РјРёРЅРєР°</option>
-<option value="complex">РЎР»РѕР¶РЅРѕСЃС‚СЊ</option>
-<option value="random">РЎР»СѓС‡Р°Р№РЅС‹Рµ</option>
-<option value="custom">РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№</option>
+<option value="warmup">Разминка</option>
+<option value="complex">Сложность</option>
+<option value="random">Случайные</option>
+<option value="custom">Пользовательский</option>
 </select>
-<button class="btn btn-success" id="btn-add-block">вћ• Р”РѕР±Р°РІРёС‚СЊ</button>
-<button class="btn btn-danger" id="btn-clear-blocks">рџ—‘ РћС‡РёСЃС‚РёС‚СЊ</button>
-<span id="block-count">Р‘Р»РѕРєРѕРІ: 0</span>
-<button class="btn btn-warning" id="btn-generate-sequence">вљЎ РЎРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ</button>
+<button class="btn btn-success" id="btn-add-block">➕ Добавить</button>
+<button class="btn btn-danger" id="btn-clear-blocks">🗑 Очистить</button>
+<span id="block-count">Блоков: 0</span>
+<button class="btn btn-warning" id="btn-generate-sequence">⚡ Сгенерировать</button>
 </div>
 <div id="block-list"></div>
 
 <div id="sync-banner">
-<span class="icon" id="sync-banner-icon">рџџў</span>
-<span class="text" id="sync-banner-text">Р“РѕС‚РѕРІРѕ</span>
+<span class="icon" id="sync-banner-icon">🟢</span>
+<span class="text" id="sync-banner-text">Готово</span>
 <div class="actions">
-<button id="sync-banner-action" style="display:none;">РћС‚РєСЂС‹С‚СЊ</button>
-<button id="sync-banner-close">Г—</button>
+<button id="sync-banner-action" style="display:none;">Открыть</button>
+<button id="sync-banner-close">×</button>
 </div>
 </div>
 
 <div class="modal" id="queue-modal">
 <div class="modal-content">
-<h3>рџ“‹ РћС‡РµСЂРµРґСЊ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё</h3>
-<p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">РР·РјРµРЅРµРЅРёСЏ, РєРѕС‚РѕСЂС‹Рµ РµС‰С‘ РЅРµ РѕС‚РїСЂР°РІР»РµРЅС‹ РІ РѕР±Р»Р°РєРѕ. РћС‚РїСЂР°РІР»СЏСЋС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РїСЂРё РїРѕСЏРІР»РµРЅРёРё РёРЅС‚РµСЂРЅРµС‚Р°.</p>
+<h3>📋 Очередь синхронизации</h3>
+<p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Изменения, которые ещё не отправлены в облако. Отправляются автоматически при появлении интернета.</p>
 <div id="queue-body">
 <table id="queue-table">
-<thead><tr><th>РўРёРї</th><th>Р”РµР№СЃС‚РІРёРµ</th><th>ID</th><th>РЎРѕР·РґР°РЅРѕ</th><th>РџРѕРїС‹С‚РѕРє</th><th>РЎС‚Р°С‚СѓСЃ</th></tr></thead>
+<thead><tr><th>Тип</th><th>Действие</th><th>ID</th><th>Создано</th><th>Попыток</th><th>Статус</th></tr></thead>
 <tbody id="queue-tbody"></tbody>
 </table>
-<div id="queue-empty" style="display:none;">РћС‡РµСЂРµРґСЊ РїСѓСЃС‚Р°. Р’СЃС‘ СЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°РЅРѕ.</div>
+<div id="queue-empty" style="display:none;">Очередь пуста. Всё синхронизировано.</div>
 </div>
 <div class="modal-footer queue-actions">
-<button class="btn btn-warning" id="queue-sync-now">рџ”„ РЎРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°С‚СЊ СЃРµР№С‡Р°СЃ</button>
-<button class="btn btn-danger" id="queue-clear">рџ—‘ РћС‡РёСЃС‚РёС‚СЊ РІСЃС‘</button>
-<button class="btn btn-secondary" id="queue-close">Р—Р°РєСЂС‹С‚СЊ</button>
+<button class="btn btn-warning" id="queue-sync-now">🔄 Синхронизировать сейчас</button>
+<button class="btn btn-danger" id="queue-clear">🗑 Очистить всё</button>
+<button class="btn btn-secondary" id="queue-close">Закрыть</button>
 </div>
 </div>
 </div>
 
 <div class="modal" id="generator-modal">
 <div class="modal-content">
-<h3>Р РµР¶РёРјС‹</h3>
-<p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">Р­С‚Рѕ <b>С‡РµСЂРЅРѕРІРёРє</b>. РќР°СЃС‚СЂРѕР№С‚Рµ РїР°СЂР°РјРµС‚СЂС‹ Рё РЅР°Р¶РјРёС‚Рµ <b>рџ“Њ Р’ РіСЂР°С„</b>, С‡С‚РѕР±С‹ СЃРѕР·РґР°С‚СЊ СѓР·РµР» РЅР° С…РѕР»СЃС‚Рµ. Р›РёР±Рѕ РЅР°Р¶РјРёС‚Рµ <b>РџСЂРёРјРµРЅРёС‚СЊ</b>, С‡С‚РѕР±С‹ Р·Р°РїСѓСЃС‚РёС‚СЊ Р°РІС‚РѕС‚СЂРµРЅРёСЂРѕРІРєСѓ Р±РµР· РіСЂР°С„Р°.</p>
+<h3>Режимы</h3>
+<p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">Это <b>черновик</b>. Настройте параметры и нажмите <b>📌 В граф</b>, чтобы создать узел на холсте. Либо нажмите <b>Применить</b>, чтобы запустить автотренировку без графа.</p>
 <div class="modal-columns">
 <div class="modal-col">
-<label>Р РµР¶РёРј С‚СЂРµРЅРёСЂРѕРІРєРё</label>
-<select id="gen-mode"><option value="Р±Р»РёР·РѕСЂСѓРєРѕСЃС‚СЊ">Р‘Р»РёР·РѕСЂСѓРєРѕСЃС‚СЊ</option><option value="РґР°Р»СЊРЅРѕР·РѕСЂРєРѕСЃС‚СЊ">Р”Р°Р»СЊРЅРѕР·РѕСЂРєРѕСЃС‚СЊ</option><option value="РѕР±С‰Р°СЏ">РћР±С‰Р°СЏ</option></select>
-<div class="checkbox-row"><input type="checkbox" id="gen-active" checked><label>РђРєС‚РёРІРЅР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°</label></div>
-<label>РўРёРї С‚СЂРµРЅРёСЂРѕРІРєРё</label>
-<select id="gen-training-type"><option value="single">РћРґРёРЅ СЃС‚РёРјСѓР»</option><option value="compare">РЎСЂР°РІРЅРµРЅРёРµ</option><option value="reading">Р§С‚РµРЅРёРµ</option></select>
+<label>Режим тренировки</label>
+<select id="gen-mode"><option value="близорукость">Близорукость</option><option value="дальнозоркость">Дальнозоркость</option><option value="общая">Общая</option></select>
+<div class="checkbox-row"><input type="checkbox" id="gen-active" checked><label>Активная тренировка</label></div>
+<label>Тип тренировки</label>
+<select id="gen-training-type"><option value="single">Один стимул</option><option value="compare">Сравнение</option><option value="reading">Чтение</option></select>
 <div id="single-grid-settings" style="display:block;margin-top:10px;">
-<label>Р Р°Р·РјРµСЂ СЃРµС‚РєРё РґР»СЏ РѕРґРёРЅРѕС‡РЅРѕРіРѕ СЃС‚РёРјСѓР»Р°</label>
+<label>Размер сетки для одиночного стимула</label>
 <div style="display:flex;gap:4px;align-items:center;">
 <input type="number" id="gen-single-grid-x" value="1" min="1" max="5" style="width:50px;">
-<span>Г—</span>
+<span>×</span>
 <input type="number" id="gen-single-grid-y" value="1" min="1" max="5" style="width:50px;">
 </div>
-<div class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="gen-single-random-pos"><label>РЎР»СѓС‡Р°Р№РЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ СЃС‚РёРјСѓР»Р°</label></div>
-<div class="checkbox-row" style="margin-top:12px;padding-top:8px;border-top:1px solid #444;"><input type="checkbox" id="gen-single-stim-dynamic-enabled"><label>рџЋЁ Р”РёРЅР°РјРёРєР° С†РІРµС‚Р° СЃС‚РёРјСѓР»Р°</label></div>
+<div class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="gen-single-random-pos"><label>Случайное положение стимула</label></div>
+<div class="checkbox-row" style="margin-top:12px;padding-top:8px;border-top:1px solid #444;"><input type="checkbox" id="gen-single-stim-dynamic-enabled"><label>🎨 Динамика цвета стимула</label></div>
 <div id="single-stim-dynamic-settings" style="display:none;margin-top:6px;">
-<div class="split-color-row"><label>Р¦РІРµС‚ 1:</label><input type="color" id="gen-single-stim-color1" value="#ff0000"></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-mid-enabled"><label>Р¦РІРµС‚ 3</label></div>
-<div class="split-color-row" id="single-stim-mid-row" style="display:none;"><label>Р¦РІРµС‚ 3:</label><input type="color" id="gen-single-stim-color3" value="#ffff00"></div>
-<div class="split-color-row"><label>Р¦РІРµС‚ 2:</label><input type="color" id="gen-single-stim-color2" value="#0000ff"></div>
-<label>Р’СЂРµРјСЏ РїРѕРєР°Р·Р° СЃС‚РёРјСѓР»Р°</label>
-<div class="time-group"><input type="number" id="gen-single-stim-duration" value="10" min="0.1" step="0.1"><select id="gen-single-stim-duration-unit"><option value="ms">РјСЃ</option><option value="s" selected>СЃ</option><option value="min">РјРёРЅ</option></select></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-loop"><label>РџРѕРІС‚РѕСЂСЏС‚СЊ С†РёРєР»</label></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-reverse"><label>РџРёРЅРі-РїРѕРЅРі</label></div>
+<div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-single-stim-color1" value="#ff0000"></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-mid-enabled"><label>Цвет 3</label></div>
+<div class="split-color-row" id="single-stim-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-single-stim-color3" value="#ffff00"></div>
+<div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-single-stim-color2" value="#0000ff"></div>
+<label>Время показа стимула</label>
+<div class="time-group"><input type="number" id="gen-single-stim-duration" value="10" min="0.1" step="0.1"><select id="gen-single-stim-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-loop"><label>Повторять цикл</label></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-reverse"><label>Пинг-понг</label></div>
 </div>
-<div class="checkbox-row" style="margin-top:12px;padding-top:8px;border-top:1px solid #444;"><input type="checkbox" id="gen-single-bg-dynamic-enabled"><label>рџ–јпёЏ Р”РёРЅР°РјРёРєР° С†РІРµС‚Р° С„РѕРЅР°</label></div>
+<div class="checkbox-row" style="margin-top:12px;padding-top:8px;border-top:1px solid #444;"><input type="checkbox" id="gen-single-bg-dynamic-enabled"><label>🖼️ Динамика цвета фона</label></div>
 <div id="single-bg-dynamic-settings" style="display:none;margin-top:6px;">
-<div class="split-color-row"><label>Р¦РІРµС‚ 1:</label><input type="color" id="gen-single-bg-color1" value="#ff0000"></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-mid-enabled"><label>Р¦РІРµС‚ 3</label></div>
-<div class="split-color-row" id="single-bg-mid-row" style="display:none;"><label>Р¦РІРµС‚ 3:</label><input type="color" id="gen-single-bg-color3" value="#ffff00"></div>
-<div class="split-color-row"><label>Р¦РІРµС‚ 2:</label><input type="color" id="gen-single-bg-color2" value="#0000ff"></div>
-<label>Р’СЂРµРјСЏ РїРѕРєР°Р·Р° С„РѕРЅР°</label>
-<div class="time-group"><input type="number" id="gen-single-bg-duration" value="10" min="0.1" step="0.1"><select id="gen-single-bg-duration-unit"><option value="ms">РјСЃ</option><option value="s" selected>СЃ</option><option value="min">РјРёРЅ</option></select></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-loop"><label>РџРѕРІС‚РѕСЂСЏС‚СЊ С†РёРєР»</label></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-reverse"><label>РџРёРЅРі-РїРѕРЅРі</label></div>
+<div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-single-bg-color1" value="#ff0000"></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-mid-enabled"><label>Цвет 3</label></div>
+<div class="split-color-row" id="single-bg-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-single-bg-color3" value="#ffff00"></div>
+<div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-single-bg-color2" value="#0000ff"></div>
+<label>Время показа фона</label>
+<div class="time-group"><input type="number" id="gen-single-bg-duration" value="10" min="0.1" step="0.1"><select id="gen-single-bg-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-loop"><label>Повторять цикл</label></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-reverse"><label>Пинг-понг</label></div>
 </div>
 </div>
 <div id="compare-settings" style="display:none;margin-top:10px;">
-<label>РџРѕРґСЂРµР¶РёРј СЃСЂР°РІРЅРµРЅРёСЏ</label>
-<select id="gen-compare-mode"><option value="direction">РЎСЂР°РІРЅРµРЅРёРµ РЅР°РїСЂР°РІР»РµРЅРёР№</option><option value="find_same">РќР°Р№РґРё РѕРґРёРЅР°РєРѕРІС‹Рµ</option></select>
-<label>Р Р°Р·РјРµСЂ СЃРµС‚РєРё</label>
+<label>Подрежим сравнения</label>
+<select id="gen-compare-mode"><option value="direction">Сравнение направлений</option><option value="find_same">Найди одинаковые</option></select>
+<label>Размер сетки</label>
 <div style="display:flex;gap:4px;align-items:center;">
 <input type="number" id="gen-grid-x" value="3" min="1" max="5" style="width:50px;">
-<span>Г—</span>
+<span>×</span>
 <input type="number" id="gen-grid-y" value="3" min="1" max="5" style="width:50px;">
 </div>
-<label>РђРєС‚РёРІРЅС‹Рµ РєР»РµС‚РєРё (РєР»РёРєРЅРёС‚Рµ РґР»СЏ РІС‹Р±РѕСЂР°)</label>
+<label>Активные клетки (кликните для выбора)</label>
 <div id="grid-preview"></div>
 <div id="cell-params-container"></div>
 </div>
 <div id="reading-settings" style="display:none;margin-top:10px;">
-<label>РўРµРєСЃС‚ РґР»СЏ С‡С‚РµРЅРёСЏ</label>
-<textarea id="gen-reading-text" rows="4" style="width:100%;background:#222;color:#fff;border:1px solid #444;border-radius:3px;padding:4px;font-family:inherit;">РџСЂРёРјРµСЂ С‚РµРєСЃС‚Р° РґР»СЏ С‡С‚РµРЅРёСЏ.</textarea>
-<label>Р—Р°РіСЂСѓР·РёС‚СЊ С‚РµРєСЃС‚ РёР· С„Р°Р№Р»Р°</label>
+<label>Текст для чтения</label>
+<textarea id="gen-reading-text" rows="4" style="width:100%;background:#222;color:#fff;border:1px solid #444;border-radius:3px;padding:4px;font-family:inherit;">Пример текста для чтения.</textarea>
+<label>Загрузить текст из файла</label>
 <input type="file" id="reading-file-input" accept=".txt,.fb2,.epub" style="display:none;">
-<label for="reading-file-input" class="file-upload-btn">рџ“‚ Р’С‹Р±СЂР°С‚СЊ С„Р°Р№Р»</label>
+<label for="reading-file-input" class="file-upload-btn">📂 Выбрать файл</label>
 <span id="reading-file-name"></span>
-<label>Р¦РІРµС‚ С‚РµРєСЃС‚Р°</label>
+<label>Цвет текста</label>
 <input type="color" id="gen-reading-text-color" value="#000000">
-<label>РўРёРї С„РѕРЅР°</label>
-<select id="gen-reading-bg-mode"><option value="solid" selected>РЎРїР»РѕС€РЅРѕР№ С†РІРµС‚</option><option value="split">Р”РІРµ РїРѕР»РѕРІРёРЅС‹</option><option value="gradient">Р“СЂР°РґРёРµРЅС‚</option><option value="dynamic">Р”РёРЅР°РјРёС‡РµСЃРєРёР№</option></select>
-<div id="reading-solid-settings"><label>Р¦РІРµС‚ С„РѕРЅР°</label><input type="color" id="gen-reading-bg-color" value="#ffffff"></div>
-<div id="reading-split-settings"><label>РЁРёСЂРёРЅР° Р»РµРІРѕР№ (%)</label><input type="number" id="gen-reading-split-left-width" value="50" min="0" max="100"><div class="split-color-row"><label>Р¦РІРµС‚ Р»РµРІРѕР№:</label><input type="color" id="gen-reading-left-color" value="#000000"></div><div class="split-color-row"><label>Р¦РІРµС‚ РїСЂР°РІРѕР№:</label><input type="color" id="gen-reading-right-color" value="#ffffff"></div></div>
-<div id="reading-gradient-settings"><div class="checkbox-row"><input type="checkbox" id="gen-reading-gradient-mid-enabled" checked><label>РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С†РІРµС‚ 3</label></div><div class="split-color-row"><label>Р¦РІРµС‚ 1:</label><input type="color" id="gen-reading-gradient-left-color" value="#ffffff"></div><div class="split-color-row" id="gradient-mid-row"><label>Р¦РІРµС‚ 3:</label><input type="color" id="gen-reading-gradient-mid-color" value="#cccccc"></div><label id="gradient-mid-pos-label">РџРѕР·РёС†РёСЏ С†РІРµС‚Р° 3 (%)</label><input type="number" id="gen-reading-gradient-mid-position" value="50" min="0" max="100" step="1"><div class="split-color-row"><label>Р¦РІРµС‚ 2:</label><input type="color" id="gen-reading-gradient-right-color" value="#000000"></div></div>
-<div id="reading-dynamic-settings"><label>Р РµР¶РёРј РґРёРЅР°РјРёРєРё</label><select id="gen-reading-dynamic-mode"><option value="simple" selected>РџСЂРѕСЃС‚РѕР№</option><option value="rgb">RGB-С†РёРєР»</option><option value="physiological">Р¤РёР·РёРѕР»РѕРіРёС‡РµСЃРєРёР№</option></select><div id="reading-dynamic-simple-colors"><div class="split-color-row"><label>РќР°С‡Р°Р»СЊРЅС‹Р№ С†РІРµС‚:</label><input type="color" id="gen-reading-dynamic-start-color" value="#ff0000"></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-mid-enabled"><label>Р¦РІРµС‚ 3</label></div><div class="split-color-row" id="dynamic-mid-row" style="display:none;"><label>Р¦РІРµС‚ 3:</label><input type="color" id="gen-reading-dynamic-mid-color" value="#ffff00"></div><div class="split-color-row"><label>РљРѕРЅРµС‡РЅС‹Р№ С†РІРµС‚:</label><input type="color" id="gen-reading-dynamic-end-color" value="#0000ff"></div></div><div id="reading-dynamic-physio-settings" style="display:none;"><label>РЁР°Рі РґРёРѕРїС‚СЂРёР№</label><select id="gen-reading-dynamic-step"><option value="0.1" selected>0.1 РґРїС‚СЂ</option><option value="0.2">0.2 РґРїС‚СЂ</option><option value="0.3">0.3 РґРїС‚СЂ</option><option value="0.4">0.4 РґРїС‚СЂ</option><option value="0.5">0.5 РґРїС‚СЂ</option><option value="0.6">0.6 РґРїС‚СЂ</option><option value="0.7">0.7 РґРїС‚СЂ</option><option value="0.8">0.8 РґРїС‚СЂ</option><option value="0.9">0.9 РґРїС‚СЂ</option><option value="1.0">1.0 РґРїС‚СЂ</option><option value="1.1">1.1 РґРїС‚СЂ</option><option value="1.2">1.2 РґРїС‚СЂ</option><option value="1.3">1.3 РґРїС‚СЂ</option><option value="1.4">1.4 РґРїС‚СЂ</option><option value="1.5">1.5 РґРїС‚СЂ</option><option value="1.6">1.6 РґРїС‚СЂ</option></select><label id="gen-reading-dynamic-step-duration-label">Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ С€Р°РіР°</label><div class="time-group"><input type="number" id="gen-reading-dynamic-step-duration" value="1" min="0.1" step="0.1"><select id="gen-reading-dynamic-step-duration-unit"><option value="ms">РјСЃ</option><option value="s" selected>СЃ</option><option value="min">РјРёРЅ</option></select></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-show-label" checked><label>РџРѕРєР°Р·С‹РІР°С‚СЊ РґРїС‚СЂ</label></div><div class="acuity-hint" id="physio-list-hint">0.0 в†’ +1.6 РґРїС‚СЂ</div></div><div id="reading-dynamic-duration-settings"><label>Р’СЂРµРјСЏ РїРѕР»РЅРѕРіРѕ С†РёРєР»Р°</label><div class="time-group"><input type="number" id="gen-reading-dynamic-duration" value="10" min="0.1" step="0.1"><select id="gen-reading-dynamic-duration-unit"><option value="ms">РјСЃ</option><option value="s" selected>СЃ</option><option value="min">РјРёРЅ</option></select></div></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-loop"><label>РџРѕРІС‚РѕСЂСЏС‚СЊ С†РёРєР»</label></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-reverse"><label>РџРёРЅРі-РїРѕРЅРі</label></div></div>
+<label>Тип фона</label>
+<select id="gen-reading-bg-mode"><option value="solid" selected>Сплошной цвет</option><option value="split">Две половины</option><option value="gradient">Градиент</option><option value="dynamic">Динамический</option></select>
+<div id="reading-solid-settings"><label>Цвет фона</label><input type="color" id="gen-reading-bg-color" value="#ffffff"></div>
+<div id="reading-split-settings"><label>Ширина левой (%)</label><input type="number" id="gen-reading-split-left-width" value="50" min="0" max="100"><div class="split-color-row"><label>Цвет левой:</label><input type="color" id="gen-reading-left-color" value="#000000"></div><div class="split-color-row"><label>Цвет правой:</label><input type="color" id="gen-reading-right-color" value="#ffffff"></div></div>
+<div id="reading-gradient-settings"><div class="checkbox-row"><input type="checkbox" id="gen-reading-gradient-mid-enabled" checked><label>Использовать цвет 3</label></div><div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-reading-gradient-left-color" value="#ffffff"></div><div class="split-color-row" id="gradient-mid-row"><label>Цвет 3:</label><input type="color" id="gen-reading-gradient-mid-color" value="#cccccc"></div><label id="gradient-mid-pos-label">Позиция цвета 3 (%)</label><input type="number" id="gen-reading-gradient-mid-position" value="50" min="0" max="100" step="1"><div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-reading-gradient-right-color" value="#000000"></div></div>
+<div id="reading-dynamic-settings"><label>Режим динамики</label><select id="gen-reading-dynamic-mode"><option value="simple" selected>Простой</option><option value="rgb">RGB-цикл</option><option value="physiological">Физиологический</option></select><div id="reading-dynamic-simple-colors"><div class="split-color-row"><label>Начальный цвет:</label><input type="color" id="gen-reading-dynamic-start-color" value="#ff0000"></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-mid-enabled"><label>Цвет 3</label></div><div class="split-color-row" id="dynamic-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-reading-dynamic-mid-color" value="#ffff00"></div><div class="split-color-row"><label>Конечный цвет:</label><input type="color" id="gen-reading-dynamic-end-color" value="#0000ff"></div></div><div id="reading-dynamic-physio-settings" style="display:none;"><label>Шаг диоптрий</label><select id="gen-reading-dynamic-step"><option value="0.1" selected>0.1 дптр</option><option value="0.2">0.2 дптр</option><option value="0.3">0.3 дптр</option><option value="0.4">0.4 дптр</option><option value="0.5">0.5 дптр</option><option value="0.6">0.6 дптр</option><option value="0.7">0.7 дптр</option><option value="0.8">0.8 дптр</option><option value="0.9">0.9 дптр</option><option value="1.0">1.0 дптр</option><option value="1.1">1.1 дптр</option><option value="1.2">1.2 дптр</option><option value="1.3">1.3 дптр</option><option value="1.4">1.4 дптр</option><option value="1.5">1.5 дптр</option><option value="1.6">1.6 дптр</option></select><label id="gen-reading-dynamic-step-duration-label">Длительность шага</label><div class="time-group"><input type="number" id="gen-reading-dynamic-step-duration" value="1" min="0.1" step="0.1"><select id="gen-reading-dynamic-step-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-show-label" checked><label>Показывать дптр</label></div><div class="acuity-hint" id="physio-list-hint">0.0 → +1.6 дптр</div></div><div id="reading-dynamic-duration-settings"><label>Время полного цикла</label><div class="time-group"><input type="number" id="gen-reading-dynamic-duration" value="10" min="0.1" step="0.1"><select id="gen-reading-dynamic-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-loop"><label>Повторять цикл</label></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-reverse"><label>Пинг-понг</label></div></div>
 </div>
-<label>РљРѕР»РёС‡РµСЃС‚РІРѕ СЃРµСЂРёР№</label>
+<label>Количество серий</label>
 <input type="number" id="gen-series" value="5" min="1" max="20">
-<label>Р Р°Р·РјРµСЂ СЃРµСЂРёРё</label>
+<label>Размер серии</label>
 <select id="gen-series-size"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option></select>
-<label>РџРѕСЂРѕРі РїСЂР°РІРёР»СЊРЅС‹С…</label>
+<label>Порог правильных</label>
 <input type="number" id="gen-threshold" value="4" min="1" max="8">
 </div>
 <div class="modal-col">
-<label>РўРёРї СЃС‚РёРјСѓР»Р°</label>
-<select id="gen-type"><option value="LETTER_E" selected>Р‘СѓРєРІР° Р•</option><option value="LANDOLT">РљРѕР»СЊС†Рѕ Р›Р°РЅРґРѕР»СЊС‚Р°</option></select>
-<div class="checkbox-row"><input type="checkbox" id="chk-stim-size" checked><label>РћСЃС‚СЂРѕС‚Р° Р·СЂРµРЅРёСЏ Р°РєС‚РёРІРЅР°</label></div>
-<label>РќР°С‡Р°Р»СЊРЅР°СЏ РѕСЃС‚СЂРѕС‚Р° V</label>
+<label>Тип стимула</label>
+<select id="gen-type"><option value="LETTER_E" selected>Буква Е</option><option value="LANDOLT">Кольцо Ландольта</option></select>
+<div class="checkbox-row"><input type="checkbox" id="chk-stim-size" checked><label>Острота зрения активна</label></div>
+<label>Начальная острота V</label>
 <select id="gen-start-acuity"><option value="0.1">0.1</option><option value="0.2">0.2</option><option value="0.3">0.3</option><option value="0.4">0.4</option><option value="0.5" selected>0.5</option><option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option><option value="0.9">0.9</option><option value="1.0">1.0</option><option value="1.1">1.1</option><option value="1.2">1.2</option><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option><option value="1.6">1.6</option><option value="1.7">1.7</option><option value="1.8">1.8</option><option value="1.9">1.9</option><option value="2.0">2.0</option></select>
-<label>РљРѕРЅРµС‡РЅР°СЏ РѕСЃС‚СЂРѕС‚Р° V</label>
+<label>Конечная острота V</label>
 <select id="gen-end-acuity"><option value="0.1">0.1</option><option value="0.2">0.2</option><option value="0.3">0.3</option><option value="0.4">0.4</option><option value="0.5">0.5</option><option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option><option value="0.9">0.9</option><option value="1.0">1.0</option><option value="1.1">1.1</option><option value="1.2">1.2</option><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option><option value="1.6">1.6</option><option value="1.7">1.7</option><option value="1.8">1.8</option><option value="1.9">1.9</option><option value="2.0" selected>2.0</option></select>
-<label>РЁР°Рі РѕСЃС‚СЂРѕС‚С‹</label>
+<label>Шаг остроты</label>
 <select id="gen-acuity-step"><option value="0.05">0.05</option><option value="0.1" selected>0.1</option><option value="0.2">0.2</option><option value="0.5">0.5</option></select>
-<label>Р”РёСЃС‚Р°РЅС†РёСЏ (Рј)</label>
+<label>Дистанция (м)</label>
 <input type="number" id="gen-distance" value="1" min="0.1" max="20" step="0.1">
-<label>PPI СЌРєСЂР°РЅР°</label>
+<label>PPI экрана</label>
 <input type="number" id="gen-ppi" value="96" min="20" max="1200" step="1">
 </div>
 <div class="modal-col">
-<div class="checkbox-row"><input type="checkbox" id="chk-stim-color" checked><label>Р¦РІРµС‚ СЃС‚РёРјСѓР»Р° Р°РєС‚РёРІРµРЅ</label></div>
-<label>РќР°С‡Р°Р»СЊРЅС‹Р№ С†РІРµС‚ СЃС‚РёРјСѓР»Р°</label>
+<div class="checkbox-row"><input type="checkbox" id="chk-stim-color" checked><label>Цвет стимула активен</label></div>
+<label>Начальный цвет стимула</label>
 <input type="color" id="gen-start-color" value="#00ff00">
-<label>РљРѕРЅРµС‡РЅС‹Р№ С†РІРµС‚ СЃС‚РёРјСѓР»Р°</label>
+<label>Конечный цвет стимула</label>
 <input type="color" id="gen-end-color" value="#ff0000">
-<label>РЁР°Рі RGB</label>
+<label>Шаг RGB</label>
 <input type="number" id="gen-color-step" value="16" min="1" max="255">
-<div class="checkbox-row"><input type="checkbox" id="chk-bg-color" checked><label>Р¦РІРµС‚ С„РѕРЅР° Р°РєС‚РёРІРµРЅ</label></div>
-<label>РќР°С‡Р°Р»СЊРЅС‹Р№ С†РІРµС‚ С„РѕРЅР°</label>
+<div class="checkbox-row"><input type="checkbox" id="chk-bg-color" checked><label>Цвет фона активен</label></div>
+<label>Начальный цвет фона</label>
 <input type="color" id="gen-start-bg" value="#00ff00">
-<label>РљРѕРЅРµС‡РЅС‹Р№ С†РІРµС‚ С„РѕРЅР°</label>
+<label>Конечный цвет фона</label>
 <input type="color" id="gen-end-bg" value="#000000">
-<label>РЁР°Рі С„РѕРЅР° RGB</label>
+<label>Шаг фона RGB</label>
 <input type="number" id="gen-bg-step" value="16" min="1" max="255">
-<div class="checkbox-row"><input type="checkbox" id="gen-bg-cycle" checked><label>Р¦РёРєР»РёС‡РµСЃРєР°СЏ Р°РЅРёРјР°С†РёСЏ С„РѕРЅР°</label></div>
-<label>Р—Р°РґРµСЂР¶РєР° 1</label>
-<div class="time-group"><input type="number" id="gen-delay1" value="1" min="0" step="0.1"><select id="gen-delay1-unit"><option value="ms">РјСЃ</option><option value="s" selected>СЃ</option><option value="min">РјРёРЅ</option></select></div>
-<label>Р—Р°РґРµСЂР¶РєР° 2</label>
-<div class="time-group"><input type="number" id="gen-delay2" value="1" min="0" step="0.1"><select id="gen-delay2-unit"><option value="ms">РјСЃ</option><option value="s" selected>СЃ</option><option value="min">РјРёРЅ</option></select></div>
+<div class="checkbox-row"><input type="checkbox" id="gen-bg-cycle" checked><label>Циклическая анимация фона</label></div>
+<label>Задержка 1</label>
+<div class="time-group"><input type="number" id="gen-delay1" value="1" min="0" step="0.1"><select id="gen-delay1-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
+<label>Задержка 2</label>
+<div class="time-group"><input type="number" id="gen-delay2" value="1" min="0" step="0.1"><select id="gen-delay2-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
 </div>
 </div>
 <div class="modal-footer">
-<button class="btn btn-reading" id="gen-to-node" title="РЎРѕР·РґР°С‚СЊ СѓР·РµР» РЅР° С…РѕР»СЃС‚Рµ">рџ“Њ Р’ РіСЂР°С„</button>
-<button class="btn" id="gen-apply">РџСЂРёРјРµРЅРёС‚СЊ</button>
-<button class="btn btn-secondary" id="gen-cancel">РћС‚РјРµРЅР°</button>
+<button class="btn btn-reading" id="gen-to-node" title="Создать узел на холсте">📌 В граф</button>
+<button class="btn" id="gen-apply">Применить</button>
+<button class="btn btn-secondary" id="gen-cancel">Отмена</button>
 </div>
 </div>
 </div>
 
 <div class="modal" id="calibration-modal">
 <div class="modal-content" style="width:400px;text-align:center;">
-<h3>рџЋЇ РљР°Р»РёР±СЂРѕРІРєР° РєР°РјРµСЂС‹</h3>
-<p style="font-size:12px;">Р Р°СЃРїРѕР»РѕР¶РёС‚РµСЃСЊ РЅР° СѓРєР°Р·Р°РЅРЅРѕРј СЂР°СЃСЃС‚РѕСЏРЅРёРё РѕС‚ СЌРєСЂР°РЅР°.</p>
-<label>Р Р°СЃСЃС‚РѕСЏРЅРёРµ РґРѕ РєР°РјРµСЂС‹ (СЃРј)</label>
+<h3>🎯 Калибровка камеры</h3>
+<p style="font-size:12px;">Расположитесь на указанном расстоянии от экрана.</p>
+<label>Расстояние до камеры (см)</label>
 <input type="number" id="calib-distance" value="100" min="10" max="500" style="width:100%;margin-bottom:10px;">
 <div class="calib-video-wrapper">
 <video id="calibration-video" autoplay playsinline></video>
-<div id="calib-face-indicator" class="calib-face-indicator missing">РќРµС‚ Р»РёС†Р°</div>
+<div id="calib-face-indicator" class="calib-face-indicator missing">Нет лица</div>
 </div>
 <div class="modal-footer" style="justify-content:center;">
-<button class="btn" id="calibrate-confirm">РљР°Р»РёР±СЂРѕРІР°С‚СЊ</button>
-<button class="btn btn-secondary" id="calibrate-cancel">РћС‚РјРµРЅР°</button>
+<button class="btn" id="calibrate-confirm">Калибровать</button>
+<button class="btn btn-secondary" id="calibrate-cancel">Отмена</button>
 </div>
 </div>
 </div>
 
 <div class="modal" id="screen-calib-modal">
 <div class="modal-content" style="width:700px;max-width:95%;">
-<h3>рџ“ђ РљР°Р»РёР±СЂРѕРІРєР° СЌРєСЂР°РЅР°</h3>
-<p style="font-size:13px;color:#ccc;margin:8px 0;">РР·РјРµСЂСЊС‚Рµ РґР»РёРЅСѓ РєСЂР°СЃРЅРѕР№ РїРѕР»РѕСЃС‹ Р»РёРЅРµР№РєРѕР№ РІ РјРј.</p>
+<h3>📐 Калибровка экрана</h3>
+<p style="font-size:13px;color:#ccc;margin:8px 0;">Измерьте длину красной полосы линейкой в мм.</p>
 <div style="margin:20px 0;padding:15px 0;background:#0b0b0d;border-radius:6px;">
 <div id="screen-calib-bar" style="width:400px;height:30px;background:#ff0000;margin:0 auto;"></div>
-<div style="text-align:center;color:#888;font-size:11px;margin-top:6px;">в†ђ 400 РїРёРєСЃРµР»РµР№ в†’</div>
+<div style="text-align:center;color:#888;font-size:11px;margin-top:6px;">← 400 пикселей →</div>
 </div>
-<label style="font-size:12px;">РР·РјРµСЂРµРЅРЅР°СЏ РґР»РёРЅР° (РјРј):</label>
+<label style="font-size:12px;">Измеренная длина (мм):</label>
 <input type="number" id="screen-calib-mm" value="106" min="5" max="500" step="0.5" style="font-size:16px;padding:6px;width:100%;">
 <div style="margin-top:12px;padding:10px;background:#0b0b0d;border-radius:6px;font-size:12px;">
 <div>PPI: <b id="screen-calib-result" style="color:#00ff88;font-size:16px;">96</b></div>
 <div id="screen-calib-detail" style="color:#888;margin-top:4px;"></div>
 </div>
-<div style="font-size:11px;color:#888;margin-top:10px;">РђРІС‚Рѕ: <span id="screen-calib-auto">вЂ”</span></div>
+<div style="font-size:11px;color:#888;margin-top:10px;">Авто: <span id="screen-calib-auto">—</span></div>
 <div class="modal-footer" style="justify-content:center;">
-<button class="btn btn-success" id="screen-calib-apply">РџСЂРёРјРµРЅРёС‚СЊ</button>
-<button class="btn btn-secondary" id="screen-calib-cancel">РћС‚РјРµРЅР°</button>
+<button class="btn btn-success" id="screen-calib-apply">Применить</button>
+<button class="btn btn-secondary" id="screen-calib-cancel">Отмена</button>
 </div>
 </div>
 </div>
 
 <div class="modal" id="scenario-time-modal">
 <div class="modal-content" style="width:560px;">
-<h3>вЏ± РћС†РµРЅРєР° РІСЂРµРјРµРЅРё СЃС†РµРЅР°СЂРёСЏ</h3>
-<div id="scenario-time-body" style="font-size:13px;color:#ccc;line-height:1.6;margin-top:10px;"><div>РђРЅР°Р»РёР· РіСЂР°С„Р°вЂ¦</div></div>
-<div class="modal-footer"><button class="btn btn-secondary" id="scenario-time-close">Р—Р°РєСЂС‹С‚СЊ</button></div>
+<h3>⏱ Оценка времени сценария</h3>
+<div id="scenario-time-body" style="font-size:13px;color:#ccc;line-height:1.6;margin-top:10px;"><div>Анализ графа…</div></div>
+<div class="modal-footer"><button class="btn btn-secondary" id="scenario-time-close">Закрыть</button></div>
 </div>
 </div>
 
 <div class="modal" id="auth-modal">
 <div class="modal-content" style="width:300px;">
-<h3 id="auth-title">Р’С…РѕРґ</h3>
+<h3 id="auth-title">Вход</h3>
 <label>Email</label>
 <input type="email" id="auth-email" placeholder="you@example.com">
-<label>РџР°СЂРѕР»СЊ</label>
+<label>Пароль</label>
 <input type="password" id="auth-password">
-<label id="auth-name-label" style="display:none;">РРјСЏ</label>
+<label id="auth-name-label" style="display:none;">Имя</label>
 <input type="text" id="auth-name" style="display:none;">
 <div class="modal-footer" style="justify-content:center;">
-<button class="btn btn-secondary" id="auth-toggle">РќРµС‚ Р°РєРєР°СѓРЅС‚Р°? Р РµРіРёСЃС‚СЂР°С†РёСЏ</button>
-<button class="btn" id="auth-submit">Р’РѕР№С‚Рё</button>
+<button class="btn btn-secondary" id="auth-toggle">Нет аккаунта? Регистрация</button>
+<button class="btn" id="auth-submit">Войти</button>
 </div>
 </div>
 </div>
 
 <div class="modal" id="pause-modal">
 <div class="modal-content" style="width:300px;text-align:center;">
-<h2>РўСЂРµРЅРёСЂРѕРІРєР° РїСЂРёРѕСЃС‚Р°РЅРѕРІР»РµРЅР°</h2>
-<p>РўСЂРё СЃРµСЂРёРё РїРѕРґСЂСЏРґ Р±РµР· РѕС‚РІРµС‚РѕРІ.</p>
-<button class="btn" id="pause-continue">в–¶ РџСЂРѕРґРѕР»Р¶РёС‚СЊ</button>
-<button class="btn btn-danger" id="pause-exit">вњ• Р’С‹С…РѕРґ</button>
+<h2>Тренировка приостановлена</h2>
+<p>Три серии подряд без ответов.</p>
+<button class="btn" id="pause-continue">▶ Продолжить</button>
+<button class="btn btn-danger" id="pause-exit">✕ Выход</button>
 </div>
 </div>
 
 <div class="modal" id="library-modal">
 <div class="modal-content" style="width:500px;">
-<h3>Р‘РёР±Р»РёРѕС‚РµРєР° СЃС†РµРЅР°СЂРёРµРІ</h3>
+<h3>Библиотека сценариев</h3>
 <div id="scenario-list" style="max-height:300px;overflow-y:auto;margin-bottom:10px;"></div>
-<button class="btn btn-success" id="btn-save-current-scenario">рџ’ѕ РЎРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰РёР№ СЃС†РµРЅР°СЂРёР№</button>
-<button class="btn btn-secondary" id="btn-library-close">Р—Р°РєСЂС‹С‚СЊ</button>
+<button class="btn btn-success" id="btn-save-current-scenario">💾 Сохранить текущий сценарий</button>
+<button class="btn btn-secondary" id="btn-library-close">Закрыть</button>
 </div>
 </div>
 
 <div class="modal" id="users-modal">
 <div class="modal-content" style="width:500px;">
-<h3>РџРѕР»СЊР·РѕРІР°С‚РµР»Рё</h3>
+<h3>Пользователи</h3>
 <div id="user-list" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div>
 <select id="selected-user" style="width:100%;margin-bottom:5px;"></select>
 <select id="selected-scenario" style="width:100%;margin-bottom:5px;"></select>
-<button class="btn btn-warning" id="btn-assign-scenario">РќР°Р·РЅР°С‡РёС‚СЊ РІС‹Р±СЂР°РЅРЅРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ</button>
-<button class="btn btn-secondary" id="btn-users-close">Р—Р°РєСЂС‹С‚СЊ</button>
+<button class="btn btn-warning" id="btn-assign-scenario">Назначить выбранному пользователю</button>
+<button class="btn btn-secondary" id="btn-users-close">Закрыть</button>
 </div>
 </div>
 
 <div class="modal" id="book-picker-modal">
 <div class="modal-content" style="width:560px;">
-<h3>Р’С‹Р±РѕСЂ РєРЅРёРіРё</h3>
-<p style="font-size:12px;color:#999;margin:6px 0 12px;">Р’С‹Р±РµСЂРёС‚Рµ РёР· Р·Р°РіСЂСѓР¶РµРЅРЅС‹С… РєРЅРёРі РёР»Рё Р·Р°РіСЂСѓР·РёС‚Рµ РЅРѕРІСѓСЋ.</p>
+<h3>Выбор книги</h3>
+<p style="font-size:12px;color:#999;margin:6px 0 12px;">Выберите из загруженных книг или загрузите новую.</p>
 <div id="book-picker-list" style="max-height:320px;overflow-y:auto;margin-bottom:12px;"></div>
 <div style="padding-top:10px;border-top:1px solid #3f3f46;">
 <input type="file" id="book-picker-file" accept=".txt,.fb2,.epub" style="display:none;">
-<label for="book-picker-file" class="file-upload-btn">рџ“‚ Р—Р°РіСЂСѓР·РёС‚СЊ РєРЅРёРіСѓ (.txt / .fb2 / .epub)</label>
+<label for="book-picker-file" class="file-upload-btn">📂 Загрузить книгу (.txt / .fb2 / .epub)</label>
 <span id="book-picker-file-name" style="font-size:11px;color:#88ccff;margin-left:8px;"></span>
 </div>
 <div class="modal-footer">
-<button class="btn btn-danger" id="book-picker-detach">вќЊ РћС‚РІСЏР·Р°С‚СЊ РєРЅРёРіСѓ</button>
-<button class="btn btn-secondary" id="book-picker-close">Р—Р°РєСЂС‹С‚СЊ</button>
+<button class="btn btn-danger" id="book-picker-detach">❌ Отвязать книгу</button>
+<button class="btn btn-secondary" id="book-picker-close">Закрыть</button>
 </div>
 </div>
 </div>
@@ -654,10 +637,10 @@ header { padding: 3px 6px; }
 <div id="font-picker-modal">
 <div class="font-picker-content">
 <div class="font-picker-header">
-<h3>Р’С‹Р±РѕСЂ С€СЂРёС„С‚Р°</h3>
-<button class="btn btn-secondary" id="font-picker-close" title="Р—Р°РєСЂС‹С‚СЊ">вњ•</button>
+<h3>Выбор шрифта</h3>
+<button class="btn btn-secondary" id="font-picker-close" title="Закрыть">✕</button>
 </div>
-<input type="text" id="font-picker-search" placeholder="РџРѕРёСЃРє С€СЂРёС„С‚Р°..." autocomplete="off" autocorrect="off" spellcheck="false">
+<input type="text" id="font-picker-search" placeholder="Поиск шрифта..." autocomplete="off" autocorrect="off" spellcheck="false">
 <div id="font-picker-list" class="font-picker-list"></div>
 </div>
 </div>
@@ -688,11 +671,11 @@ header { padding: 3px 6px; }
         const chip = document.getElementById('sync-chip');
         if (!chip) return;
         chip.classList.remove('online', 'offline', 'syncing', 'queue', 'errors');
-        if (status.processing) { chip.textContent = 'рџ”„ РЎРёРЅРєвЂ¦'; chip.classList.add('syncing'); return; }
-        if (status.problematic > 0) { chip.textContent = `вќ— ${status.problematic} РѕС€РёР±РѕРє`; chip.classList.add('errors'); return; }
-        if (status.queueSize > 0) { chip.textContent = `вљ пёЏ ${status.queueSize} РёР·Рј.`; chip.classList.add('queue'); return; }
-        if (status.online) { chip.textContent = 'рџџў РћРЅР»Р°Р№РЅ'; chip.classList.add('online'); }
-        else { chip.textContent = 'рџ“Ў РћС„Р»Р°Р№РЅ'; chip.classList.add('offline'); }
+        if (status.processing) { chip.textContent = '🔄 Синк…'; chip.classList.add('syncing'); return; }
+        if (status.problematic > 0) { chip.textContent = `❗ ${status.problematic} ошибок`; chip.classList.add('errors'); return; }
+        if (status.queueSize > 0) { chip.textContent = `⚠️ ${status.queueSize} изм.`; chip.classList.add('queue'); return; }
+        if (status.online) { chip.textContent = '🟢 Онлайн'; chip.classList.add('online'); }
+        else { chip.textContent = '📡 Офлайн'; chip.classList.add('offline'); }
     }
     function showBanner(icon, text, actionLabel, actionFn) {
         const banner = document.getElementById('sync-banner');
@@ -723,8 +706,8 @@ header { padding: 3px 6px; }
             const tr = document.createElement('tr');
             if (item.problematic) tr.classList.add('problematic');
             const when = new Date(item.createdAt).toLocaleTimeString('ru-RU');
-            const statusText = item.problematic ? `вќЊ ${item.lastError || 'РѕС€РёР±РєР°'}` : (item.retries > 0 ? `вЏі РїРѕРїС‹С‚РѕРє: ${item.retries}` : 'вЏі РІ РѕС‡РµСЂРµРґРё');
-            tr.innerHTML = `<td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.action)}</td><td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || 'вЂ”').slice(0, 16))}</td><td>${when}</td><td>${item.retries || 0}</td><td>${escapeHtml(statusText)}</td>`;
+            const statusText = item.problematic ? `❌ ${item.lastError || 'ошибка'}` : (item.retries > 0 ? `⏳ попыток: ${item.retries}` : '⏳ в очереди');
+            tr.innerHTML = `<td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.action)}</td><td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || '—').slice(0, 16))}</td><td>${when}</td><td>${item.retries || 0}</td><td>${escapeHtml(statusText)}</td>`;
             tbody.appendChild(tr);
         });
     }
@@ -737,10 +720,10 @@ header { padding: 3px 6px; }
             const key = `${status.online}|${status.processing}|${status.queueSize}|${status.problematic}`;
             if (key !== lastBannerState) {
                 lastBannerState = key;
-                if (!status.online) showBanner('рџ“Ў', 'РќРµС‚ РёРЅС‚РµСЂРЅРµС‚Р°. Р Р°Р±РѕС‚Р°РµРј Р»РѕРєР°Р»СЊРЅРѕ, РґР°РЅРЅС‹Рµ СЃРѕС…СЂР°РЅСЏСЋС‚СЃСЏ РІ Р±СЂР°СѓР·РµСЂРµ.', status.queueSize > 0 ? 'РћС‡РµСЂРµРґСЊ' : null, status.queueSize > 0 ? openQueueModal : null);
-                else if (status.processing) showBanner('рџ”„', 'РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ СЃ РѕР±Р»Р°РєРѕРјвЂ¦', null, null);
-                else if (status.problematic > 0) showBanner('вќ—', `РќРµ РѕС‚РїСЂР°РІР»РµРЅРѕ: ${status.problematic} Р·Р°РїРёСЃРµР№`, 'РћС‡РµСЂРµРґСЊ', openQueueModal);
-                else if (status.queueSize > 0) showBanner('вљ пёЏ', `Р’ РѕС‡РµСЂРµРґРё: ${status.queueSize} Р·Р°РїРёСЃРµР№`, 'РћС‡РµСЂРµРґСЊ', openQueueModal);
+                if (!status.online) showBanner('📡', 'Нет интернета. Работаем локально, данные сохраняются в браузере.', status.queueSize > 0 ? 'Очередь' : null, status.queueSize > 0 ? openQueueModal : null);
+                else if (status.processing) showBanner('🔄', 'Синхронизация с облаком…', null, null);
+                else if (status.problematic > 0) showBanner('❗', `Не отправлено: ${status.problematic} записей`, 'Очередь', openQueueModal);
+                else if (status.queueSize > 0) showBanner('⚠️', `В очереди: ${status.queueSize} записей`, 'Очередь', openQueueModal);
                 else if (status.online) hideBanner();
             }
         } catch (e) { console.warn('[sync-ui] updateAll:', e); }
@@ -755,13 +738,13 @@ header { padding: 3px 6px; }
         const qModal = document.getElementById('queue-modal'); if (qModal) qModal.addEventListener('click', e => { if (e.target === qModal) closeQueueModal(); });
         const syncNow = document.getElementById('queue-sync-now');
         if (syncNow) syncNow.addEventListener('click', async () => {
-            syncNow.disabled = true; syncNow.textContent = 'вЏі РћС‚РїСЂР°РІР»СЏСЋвЂ¦';
+            syncNow.disabled = true; syncNow.textContent = '⏳ Отправляю…';
             try { await Data.flush(); await refreshQueueModal(); await updateAll(); }
-            finally { syncNow.disabled = false; syncNow.textContent = 'рџ”„ РЎРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°С‚СЊ СЃРµР№С‡Р°СЃ'; }
+            finally { syncNow.disabled = false; syncNow.textContent = '🔄 Синхронизировать сейчас'; }
         });
         const clearBtn = document.getElementById('queue-clear');
         if (clearBtn) clearBtn.addEventListener('click', async () => {
-            if (!confirm('РћС‡РёСЃС‚РёС‚СЊ РІСЃСЋ РѕС‡РµСЂРµРґСЊ? РќРµРѕС‚РїСЂР°РІР»РµРЅРЅС‹Рµ РёР·РјРµРЅРµРЅРёСЏ Р±СѓРґСѓС‚ РїРѕС‚РµСЂСЏРЅС‹.')) return;
+            if (!confirm('Очистить всю очередь? Неотправленные изменения будут потеряны.')) return;
             await Data.clearQueue(); await refreshQueueModal(); await updateAll();
         });
         Data.onChange((type) => {

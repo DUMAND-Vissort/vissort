@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
     <head>
         <meta charset="UTF-8" />
@@ -21,7 +21,7 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Vissort" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <title>Vissort вЂ” РўСЂРµРЅРёСЂРѕРІРєР°</title>
+        <title>Vissort — Тренировка</title>
         <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <style>
@@ -445,48 +445,31 @@
                 }
             }
         </style>
-    <style id="btn-icon-fix">
-.header-section .btn-icon {
-    padding: 0 !important;
-    width: 26px !important;
-    min-width: 26px !important;
-    max-width: 26px !important;
-    height: var(--btn-h) !important;
-    font-size: 14px !important;
-    line-height: 1 !important;
-    box-sizing: border-box;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.header-section .btn-icon > * { max-width: 100%; }
-</style>
-</head>
+    </head>
     <body>
         <header>
-            <span class="chip" id="hdr-scenario" title="Р’С‹Р±СЂР°С‚СЊ СЃС†РµРЅР°СЂРёР№">вЂ”</span>
+            <span class="chip" id="hdr-scenario" title="Выбрать сценарий">—</span>
             <div class="counters">
-                <span class="counter">РЎРµСЂРёСЏ <b id="cnt-series-progress">0/0</b></span>
-                <span class="counter">V <b id="cnt-acuity">вЂ”</b></span>
-                <span class="counter">вњ“ <b id="cnt-correct">0</b></span>
-                <span class="counter">вњ— <b id="cnt-incorrect">0</b></span>
-                <span class="counter">в€… <b id="cnt-noanswer">0</b></span>
+                <span class="counter">Серия <b id="cnt-series-progress">0/0</b></span>
+                <span class="counter">V <b id="cnt-acuity">—</b></span>
+                <span class="counter">✓ <b id="cnt-correct">0</b></span>
+                <span class="counter">✗ <b id="cnt-incorrect">0</b></span>
+                <span class="counter">∅ <b id="cnt-noanswer">0</b></span>
             </div>
             <div class="hdr-spacer"></div>
-            <button class="btn btn-games" id="btn-games">рџЋ® РРіСЂС‹ в–ѕ</button>
-            <button class="btn btn-ghost" id="btn-history">рџ“Љ РСЃС‚РѕСЂРёСЏ</button>
-            <button class="btn btn-primary" id="btn-player">в–¶ РќР°С‡Р°С‚СЊ</button>
-            <button class="btn btn-warn" id="btn-player-pause" disabled>вЏё</button>
-            <button class="btn btn-danger" id="btn-player-stop" disabled>вЏ№</button>
-            <span class="chip" id="hdr-user">вЂ”</span>
-            <button class="btn btn-ghost" id="btn-logout">Р’С‹Р№С‚Рё</button>
+            <button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
+            <button class="btn btn-ghost" id="btn-history">📊 История</button>
+            <button class="btn btn-primary" id="btn-player">▶ Начать</button>
+            <button class="btn btn-warn" id="btn-player-pause" disabled>⏸</button>
+            <button class="btn btn-danger" id="btn-player-stop" disabled>⏹</button>
+            <span class="chip" id="hdr-user">—</span>
+            <button class="btn btn-ghost" id="btn-logout">Выйти</button>
         </header>
 
         <div class="games-menu" id="games-menu">
-            <a href="/pyatnashki.html"><span class="g-icon">рџ”ў</span><span>РџСЏС‚РЅР°С€РєРё</span></a>
+            <a href="/pyatnashki.html"><span class="g-icon">🔢</span><span>Пятнашки</span></a>
             <a href="/differences-wolf.html"
-                ><span class="g-icon">рџђє</span><span>РќР°Р№РґРё 10 РѕС‚Р»РёС‡РёР№ вЂ” Р’РѕР»РєРё</span></a
+                ><span class="g-icon">🐺</span><span>Найди 10 отличий — Волки</span></a
             >
         </div>
 
@@ -497,73 +480,73 @@
                 <div id="physio-indicator"></div>
                 <div id="cam-indicator"></div>
                 <div id="reading-toolbar">
-                    <button class="btn btn-ghost" id="reading-prev">в—Ђ РќР°Р·Р°Рґ</button>
-                    <button class="btn btn-warn" id="reading-play-pause">вЏё РџР°СѓР·Р°</button>
-                    <button class="btn btn-ghost" id="reading-next">Р’РїРµСЂС‘Рґ в–¶</button>
-                    <span id="reading-page-info">РЎС‚СЂ. 1 / 1</span>
-                    <button class="btn btn-danger" id="reading-not-see">рџ”» РќРµ РІРёР¶Сѓ</button>
-                    <button class="btn btn-success" id="reading-see-well">рџ”є Р’РёР¶Сѓ С…РѕСЂРѕС€Рѕ</button>
-                    <button class="btn btn-primary" id="reading-finish">вЏ№ Р—Р°РєРѕРЅС‡РёС‚СЊ</button>
+                    <button class="btn btn-ghost" id="reading-prev">◀ Назад</button>
+                    <button class="btn btn-warn" id="reading-play-pause">⏸ Пауза</button>
+                    <button class="btn btn-ghost" id="reading-next">Вперёд ▶</button>
+                    <span id="reading-page-info">Стр. 1 / 1</span>
+                    <button class="btn btn-danger" id="reading-not-see">🔻 Не вижу</button>
+                    <button class="btn btn-success" id="reading-see-well">🔺 Вижу хорошо</button>
+                    <button class="btn btn-primary" id="reading-finish">⏹ Закончить</button>
                 </div>
                 <div id="response-buttons">
-                    <button class="btn-resp" data-dir="РІРІРµСЂС…">в–І</button>
-                    <button class="btn-resp" data-dir="РІРЅРёР·">в–ј</button>
-                    <button class="btn-resp" data-dir="РІР»РµРІРѕ">в—Ђ</button>
-                    <button class="btn-resp" data-dir="РІРїСЂР°РІРѕ">в–¶</button>
-                    <button class="btn-resp wide" data-answer="РґР°" style="display: none">Р”Р°</button>
-                    <button class="btn-resp wide" data-answer="РЅРµС‚" style="display: none">РќРµС‚</button>
+                    <button class="btn-resp" data-dir="вверх">▲</button>
+                    <button class="btn-resp" data-dir="вниз">▼</button>
+                    <button class="btn-resp" data-dir="влево">◀</button>
+                    <button class="btn-resp" data-dir="вправо">▶</button>
+                    <button class="btn-resp wide" data-answer="да" style="display: none">Да</button>
+                    <button class="btn-resp wide" data-answer="нет" style="display: none">Нет</button>
                 </div>
             </div>
 
             <div id="status-overlay">
                 <div class="box">
-                    <h2 id="status-title">Р—Р°РіСЂСѓР·РєР°вЂ¦</h2>
-                    <p id="status-text">РџСЂРѕРІРµСЂСЏРµРј Р°РІС‚РѕСЂРёР·Р°С†РёСЋ.</p>
-                    <button class="btn btn-primary hidden" id="status-action">Р’РѕР№С‚Рё</button>
+                    <h2 id="status-title">Загрузка…</h2>
+                    <p id="status-text">Проверяем авторизацию.</p>
+                    <button class="btn btn-primary hidden" id="status-action">Войти</button>
                 </div>
             </div>
         </main>
 
         <div class="modal" id="scenario-modal">
             <div class="modal-content">
-                <h3>Р’С‹Р±РµСЂРёС‚Рµ СЃС†РµРЅР°СЂРёР№</h3>
+                <h3>Выберите сценарий</h3>
                 <div id="scenario-list"></div>
                 <div class="modal-footer">
-                    <button class="btn btn-ghost" id="scenario-close">Р—Р°РєСЂС‹С‚СЊ</button>
+                    <button class="btn btn-ghost" id="scenario-close">Закрыть</button>
                 </div>
             </div>
         </div>
 
         <div class="modal" id="history-modal">
             <div class="modal-content" style="width: 640px">
-                <h3>РњРѕРё СЂРµР·СѓР»СЊС‚Р°С‚С‹</h3>
-                <div id="history-body" style="font-size: 13px; color: #9ca3af">Р—Р°РіСЂСѓР·РєР°вЂ¦</div>
+                <h3>Мои результаты</h3>
+                <div id="history-body" style="font-size: 13px; color: #9ca3af">Загрузка…</div>
                 <div class="modal-footer">
-                    <button class="btn btn-ghost" id="history-close">Р—Р°РєСЂС‹С‚СЊ</button>
+                    <button class="btn btn-ghost" id="history-close">Закрыть</button>
                 </div>
             </div>
         </div>
 
         <div class="modal" id="auth-modal">
             <div class="modal-content">
-                <h3 id="auth-title">Р’С…РѕРґ</h3>
+                <h3 id="auth-title">Вход</h3>
                 <label>Email</label>
                 <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
-                <label>РџР°СЂРѕР»СЊ</label>
+                <label>Пароль</label>
                 <input type="password" id="auth-password" autocomplete="current-password" />
                 <div class="modal-footer">
-                    <button class="btn btn-ghost" id="auth-toggle">Р РµРіРёСЃС‚СЂР°С†РёСЏ</button>
-                    <button class="btn btn-primary" id="auth-submit">Р’РѕР№С‚Рё</button>
+                    <button class="btn btn-ghost" id="auth-toggle">Регистрация</button>
+                    <button class="btn btn-primary" id="auth-submit">Войти</button>
                 </div>
             </div>
         </div>
 
         <div class="modal" id="pause-modal">
             <div class="modal-content" style="text-align: center">
-                <h3>РџР°СѓР·Р°</h3>
-                <p style="color: #9ca3af; font-size: 13px; margin-bottom: 14px">РўСЂРµРЅРёСЂРѕРІРєР° РїСЂРёРѕСЃС‚Р°РЅРѕРІР»РµРЅР°.</p>
-                <button class="btn btn-success" id="pause-continue">в–¶ РџСЂРѕРґРѕР»Р¶РёС‚СЊ</button>
-                <button class="btn btn-danger" id="pause-exit">вњ• Р’С‹Р№С‚Рё</button>
+                <h3>Пауза</h3>
+                <p style="color: #9ca3af; font-size: 13px; margin-bottom: 14px">Тренировка приостановлена.</p>
+                <button class="btn btn-success" id="pause-continue">▶ Продолжить</button>
+                <button class="btn btn-danger" id="pause-exit">✕ Выйти</button>
             </div>
         </div>
 
