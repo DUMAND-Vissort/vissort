@@ -342,23 +342,23 @@ async function onLoggedIn() {
         openScenarioPicker();
         hideStatus();
     }
-    if (userScenario?.params?.cameraCheck) {
-        if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
-            try {
-                const fp = await VissortDevice.getFingerprint();
-                VissortDevice.setCurrent(fp);
-                await Onboarding.start({
-                    client: supabaseClient,
-                    userId: currentUser ? currentUser.id : null,
-                    onDone: () => enableCamera()
-                });
-            } catch (e) {
-                console.warn('[user] onboarding:', e);
-                enableCamera();
-            }
-        } else {
-            enableCamera();
+    if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
+        try {
+            const fp = await VissortDevice.getFingerprint();
+            VissortDevice.setCurrent(fp);
+            await Onboarding.start({
+                client: supabaseClient,
+                userId: currentUser ? currentUser.id : null,
+                onDone: () => {
+                    if (userScenario?.params?.cameraCheck) enableCamera();
+                }
+            });
+        } catch (e) {
+            console.warn('[user] onboarding:', e);
+            if (userScenario?.params?.cameraCheck) enableCamera();
         }
+    } else if (userScenario?.params?.cameraCheck) {
+        enableCamera();
     }
 }
 async function loadUserScenarios() {
