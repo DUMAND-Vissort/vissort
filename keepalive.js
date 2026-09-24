@@ -40,7 +40,7 @@
         }
         btn = document.createElement('button');
         btn.id = 'btn-keepalive';
-        btn.className = 'btn btn-secondary';
+        btn.className = 'btn btn-secondary btn-icon';
         btn.type = 'button';
         btn.style.position = 'relative';
         btn.title = 'Отправить сигнал активности в Supabase, чтобы проект не ушёл в паузу';
@@ -75,7 +75,7 @@
     function refreshLabel(btn) {
         const badge = document.getElementById('keepalive-badge');
         if (!badge) return;
-        btn.textContent = '📡 Keepalive';
+        btn.textContent = '📡';
         btn.appendChild(badge);
         const d = daysSinceLast();
         if (!isFinite(d)) {
