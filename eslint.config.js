@@ -1,0 +1,80 @@
+export default [
+    {
+        ignores: [
+            'node_modules/**',
+            'playwright-report/**',
+            'test-results/**',
+            '*.min.js',
+            'eslint.config.js'
+        ]
+    },
+    {
+        files: ['**/*.js'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'script',
+            globals: {
+                window: 'readonly',
+                document: 'readonly',
+                console: 'readonly',
+                localStorage: 'readonly',
+                navigator: 'readonly',
+                location: 'readonly',
+                performance: 'readonly',
+                fetch: 'readonly',
+                alert: 'readonly',
+                confirm: 'readonly',
+                prompt: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                setInterval: 'readonly',
+                clearInterval: 'readonly',
+                requestAnimationFrame: 'readonly',
+                cancelAnimationFrame: 'readonly',
+                indexedDB: 'readonly',
+                Blob: 'readonly',
+                FileReader: 'readonly',
+                TextDecoder: 'readonly',
+                TextEncoder: 'readonly',
+                FontFace: 'readonly',
+                SpeechSynthesisUtterance: 'readonly',
+                MutationObserver: 'readonly',
+                DOMParser: 'readonly',
+                getComputedStyle: 'readonly',
+                URL: 'readonly',
+                URLSearchParams: 'readonly',
+                AbortController: 'readonly',
+                CompressionStream: 'readonly',
+                Response: 'readonly',
+                Request: 'readonly',
+                crypto: 'readonly',
+                self: 'readonly',
+                caches: 'readonly',
+                importScripts: 'readonly',
+                VC: 'readonly',
+                VissortCore: 'readonly',
+                VissortCamera: 'readonly',
+                VissortGraph: 'readonly',
+                VissortReading: 'readonly',
+                VissortAnimation: 'readonly',
+                AppEditorCore: 'readonly',
+                Data: 'readonly',
+                Voice: 'readonly',
+                Toast: 'readonly',
+                supabase: 'readonly',
+                faceapi: 'readonly',
+                JSZip: 'readonly',
+                Sentry: 'readonly',
+                Deno: 'readonly'
+            }
+        },
+        rules: {
+            'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+            'no-undef': 'error',
+            'no-redeclare': 'error',
+            'no-dupe-keys': 'error',
+            'no-unreachable': 'warn',
+            'no-empty': ['warn', { allowEmptyCatch: true }]
+        }
+    }
+];

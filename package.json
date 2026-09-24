@@ -1,0 +1,17 @@
+{
+  "name": "vissort",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write \"**/*.{js,html,css,json,md}\"",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3"
+  }
+}

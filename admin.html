@@ -19,12 +19,10 @@
 @font-face{font-family:'Sivtsev';src:url('https://cdn.jsdelivr.net/gh/shoorick/sivtsev-font@master/Sivtsev-Eye-Chart.otf') format('opentype');font-weight:normal;font-style:normal;font-display:swap}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#111115;color:#eee;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-:root{--hdr-h:74px;--row-h:30px;--btn-h:26px;--btn-font:11px;--gap:4px;--btn-max-w:80px;--counter-w:40px}
-header{background:#1e1e24;padding:4px 8px;display:flex;flex-direction:column;gap:var(--gap);border-bottom:1px solid #3f3f46;height:var(--hdr-h);min-height:var(--hdr-h);max-height:var(--hdr-h);z-index:1000;user-select:none;overflow:hidden}
+:root{--hdr-h:auto;--row-h:30px;--btn-h:26px;--btn-font:11px;--gap:4px;--btn-max-w:80px;--counter-w:40px}
+header{background:#1e1e24;padding:4px 8px;display:flex;flex-direction:column;gap:var(--gap);border-bottom:1px solid #3f3f46;min-height:calc(var(--row-h) + 8px);z-index:1000;user-select:none;overflow:visible}
 header.stimuli-mode{flex-direction:row;align-items:center;height:calc(var(--row-h) + 8px);min-height:calc(var(--row-h) + 8px);max-height:calc(var(--row-h) + 8px)}
-.header-row{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--gap);height:var(--row-h);min-height:var(--row-h);max-height:var(--row-h);width:100%;overflow:hidden}
-.header-section{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--gap);height:var(--row-h);min-height:var(--row-h);max-height:var(--row-h);overflow:hidden;padding:0 4px;border-radius:4px;background:rgba(255,255,255,0.015)}
-.header-section.section-work{flex:4 1 0}
+.header-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--gap);row-gap:6px;width:100%;padding:2px 0;overflow:visible}
 .header-section.section-device{flex:2 1 0}
 .header-section.section-files{flex:5 1 0}
 .header-section.section-account{flex:3 1 0;justify-content:flex-end}
