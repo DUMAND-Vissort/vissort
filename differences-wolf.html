@@ -1,327 +1,631 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;">
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="apple-touch-icon" href="/favicon.svg">
-<link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#0b0b12">
-<title>Vissort — Найди 10 отличий (Волки)</title>
-<style>
-:root{--bg:#0b0b12;--bg-2:#121220;--line:#252540;--txt:#e8e8f0;--muted:#9494a8;--accent:#6366f1;--green:#10b981}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,Tahoma,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
-header{background:rgba(11,11,18,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
-.logo-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:grid;place-items:center;font-size:14px}
-.hdr-title{font-size:13px;color:var(--muted)}
-.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-left:auto}
-.control{display:flex;gap:5px;align-items:center;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.control input[type="number"]{width:64px;padding:5px 7px;background:#1a1a2e;border:1px solid var(--line);border-radius:6px;color:#fff;font-family:inherit;font-size:12px}
-.control input[type="color"]{width:34px;height:28px;border:1px solid var(--line);border-radius:6px;background:#1a1a2e;cursor:pointer;padding:2px}
-.info-chip{padding:5px 11px;background:#1a1a2e;border-radius:6px;font-size:11px;color:#a5b4fc;font-weight:600;white-space:nowrap}
-.info-chip b{color:#fff;margin-left:3px}
-.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-weight:600;font-family:inherit;font-size:12px;transition:.15s}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff}
-.btn:hover{transform:translateY(-1px)}
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+        />
+        <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+        <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+        <meta
+            http-equiv="Permissions-Policy"
+            content="camera=(self), microphone=(), geolocation=(), payment=()"
+        />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#0b0b12" />
+        <title>Vissort — Найди 10 отличий (Волки)</title>
+        <style>
+            :root {
+                --bg: #0b0b12;
+                --bg-2: #121220;
+                --line: #252540;
+                --txt: #e8e8f0;
+                --muted: #9494a8;
+                --accent: #6366f1;
+                --green: #10b981;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: 'Segoe UI', system-ui, Tahoma, sans-serif;
+                background: var(--bg);
+                color: var(--txt);
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+            header {
+                background: rgba(11, 11, 18, 0.92);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid var(--line);
+                padding: 10px 18px;
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                flex-wrap: wrap;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            .logo {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 800;
+                font-size: 17px;
+            }
+            .logo-mark {
+                width: 26px;
+                height: 26px;
+                border-radius: 7px;
+                background: linear-gradient(135deg, var(--accent), #8b5cf6);
+                display: grid;
+                place-items: center;
+                font-size: 14px;
+            }
+            .hdr-title {
+                font-size: 13px;
+                color: var(--muted);
+            }
+            .controls {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-left: auto;
+            }
+            .control {
+                display: flex;
+                gap: 5px;
+                align-items: center;
+                font-size: 11px;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+            .control input[type='number'] {
+                width: 64px;
+                padding: 5px 7px;
+                background: #1a1a2e;
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                color: #fff;
+                font-family: inherit;
+                font-size: 12px;
+            }
+            .control input[type='color'] {
+                width: 34px;
+                height: 28px;
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                background: #1a1a2e;
+                cursor: pointer;
+                padding: 2px;
+            }
+            .info-chip {
+                padding: 5px 11px;
+                background: #1a1a2e;
+                border-radius: 6px;
+                font-size: 11px;
+                color: #a5b4fc;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+            .info-chip b {
+                color: #fff;
+                margin-left: 3px;
+            }
+            .btn {
+                padding: 7px 14px;
+                border-radius: 7px;
+                border: none;
+                cursor: pointer;
+                font-weight: 600;
+                font-family: inherit;
+                font-size: 12px;
+                transition: 0.15s;
+            }
+            .btn-primary {
+                background: linear-gradient(135deg, var(--accent), #8b5cf6);
+                color: #fff;
+            }
+            .btn:hover {
+                transform: translateY(-1px);
+            }
 
-main{padding:20px;max-width:1600px;margin:0 auto}
-.status-bar{display:flex;gap:14px;align-items:center;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
-.stat{padding:9px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;font-size:13px;color:var(--muted)}
-.stat b{color:#fff;font-size:16px;margin-left:5px;font-weight:800}
+            main {
+                padding: 20px;
+                max-width: 1600px;
+                margin: 0 auto;
+            }
+            .status-bar {
+                display: flex;
+                gap: 14px;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 18px;
+                flex-wrap: wrap;
+            }
+            .stat {
+                padding: 9px 16px;
+                background: var(--bg-2);
+                border: 1px solid var(--line);
+                border-radius: 9px;
+                font-size: 13px;
+                color: var(--muted);
+            }
+            .stat b {
+                color: #fff;
+                font-size: 16px;
+                margin-left: 5px;
+                font-weight: 800;
+            }
 
-.scenes{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media (max-width:900px){.scenes{grid-template-columns:1fr}}
-.scene-wrap{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:1/1}
-.scene-wrap svg{display:block;width:100%;height:100%}
-.scene-label{position:absolute;top:9px;left:9px;padding:4px 11px;background:rgba(0,0,0,.75);color:#fff;font-size:11px;border-radius:5px;font-weight:600;letter-spacing:.3px;z-index:5}
-.scene-wrap.right .scene-label{background:rgba(99,102,241,.9)}
+            .scenes {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+            }
+            @media (max-width: 900px) {
+                .scenes {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .scene-wrap {
+                position: relative;
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                overflow: hidden;
+                aspect-ratio: 1/1;
+            }
+            .scene-wrap svg {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+            .scene-label {
+                position: absolute;
+                top: 9px;
+                left: 9px;
+                padding: 4px 11px;
+                background: rgba(0, 0, 0, 0.75);
+                color: #fff;
+                font-size: 11px;
+                border-radius: 5px;
+                font-weight: 600;
+                letter-spacing: 0.3px;
+                z-index: 5;
+            }
+            .scene-wrap.right .scene-label {
+                background: rgba(99, 102, 241, 0.9);
+            }
 
-.diff-zone{fill:transparent;cursor:pointer;pointer-events:all}
-.diff-zone:hover{fill:rgba(99,102,241,.25)}
-.diff-found{pointer-events:none}
-.diff-marker{fill:none;stroke:var(--green);stroke-width:3;pointer-events:none;opacity:0;transition:opacity .3s}
-.diff-found .diff-marker{opacity:1;animation:pop .4s ease-out}
-@keyframes pop{0%{transform:scale(0);opacity:1}80%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+            .diff-zone {
+                fill: transparent;
+                cursor: pointer;
+                pointer-events: all;
+            }
+            .diff-zone:hover {
+                fill: rgba(99, 102, 241, 0.25);
+            }
+            .diff-found {
+                pointer-events: none;
+            }
+            .diff-marker {
+                fill: none;
+                stroke: var(--green);
+                stroke-width: 3;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .diff-found .diff-marker {
+                opacity: 1;
+                animation: pop 0.4s ease-out;
+            }
+            @keyframes pop {
+                0% {
+                    transform: scale(0);
+                    opacity: 1;
+                }
+                80% {
+                    transform: scale(1.15);
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
 
-.instructions{text-align:center;color:var(--muted);font-size:13px;margin-top:20px;line-height:1.6}
-.instructions kbd{padding:2px 7px;background:#1a1a2e;border:1px solid var(--line);border-radius:4px;font-family:'Consolas',monospace;font-size:11px}
+            .instructions {
+                text-align: center;
+                color: var(--muted);
+                font-size: 13px;
+                margin-top: 20px;
+                line-height: 1.6;
+            }
+            .instructions kbd {
+                padding: 2px 7px;
+                background: #1a1a2e;
+                border: 1px solid var(--line);
+                border-radius: 4px;
+                font-family: 'Consolas', monospace;
+                font-size: 11px;
+            }
 
-.win-overlay{position:fixed;inset:0;background:rgba(11,11,18,.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
-.win-overlay.visible{display:flex}
-.win-card{background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:36px 46px;text-align:center;max-width:420px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
-.win-card h2{font-size:26px;margin-bottom:10px;font-weight:800;letter-spacing:-.5px}
-.win-card p{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.5}
-.win-stats{display:flex;gap:22px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
-.win-stat{font-size:12px;color:var(--muted)}
-.win-stat b{display:block;font-size:22px;color:#fff;font-weight:800;letter-spacing:-.5px;margin-top:4px}
-</style>
-</head>
-<body>
+            .win-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(11, 11, 18, 0.92);
+                backdrop-filter: blur(8px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                padding: 20px;
+            }
+            .win-overlay.visible {
+                display: flex;
+            }
+            .win-card {
+                background: var(--bg-2);
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                padding: 36px 46px;
+                text-align: center;
+                max-width: 420px;
+                box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            }
+            .win-card h2 {
+                font-size: 26px;
+                margin-bottom: 10px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+            }
+            .win-card p {
+                color: var(--muted);
+                font-size: 14px;
+                margin-bottom: 22px;
+                line-height: 1.5;
+            }
+            .win-stats {
+                display: flex;
+                gap: 22px;
+                justify-content: center;
+                margin-bottom: 24px;
+                flex-wrap: wrap;
+            }
+            .win-stat {
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .win-stat b {
+                display: block;
+                font-size: 22px;
+                color: #fff;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+                margin-top: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="logo"><span class="logo-mark">👁</span> Vissort</div>
+            <span class="hdr-title">Найди 10 отличий — Волки</span>
+            <div class="controls">
+                <div class="control">
+                    V <input type="number" id="inp-v" value="1.0" min="0.1" max="2.0" step="0.1" />
+                </div>
+                <div class="control">
+                    м <input type="number" id="inp-dist" value="1.0" min="0.3" max="10" step="0.1" />
+                </div>
+                <div class="control">
+                    PPI <input type="number" id="inp-ppi" value="96" min="50" max="800" step="1" />
+                </div>
+                <div class="control">Фон L <input type="color" id="inp-bg-l" value="#e8e0d0" /></div>
+                <div class="control">Фон R <input type="color" id="inp-bg-r" value="#e8e0d0" /></div>
+                <span class="info-chip">Отличие: <b id="info-mm">—</b> мм / <b id="info-px">—</b> px</span>
+                <button class="btn btn-primary" id="btn-reset">⟳ Заново</button>
+            </div>
+        </header>
 
-<header>
-<div class="logo"><span class="logo-mark">👁</span> Vissort</div>
-<span class="hdr-title">Найди 10 отличий — Волки</span>
-<div class="controls">
-<div class="control">V <input type="number" id="inp-v" value="1.0" min="0.1" max="2.0" step="0.1"></div>
-<div class="control">м <input type="number" id="inp-dist" value="1.0" min="0.3" max="10" step="0.1"></div>
-<div class="control">PPI <input type="number" id="inp-ppi" value="96" min="50" max="800" step="1"></div>
-<div class="control">Фон L <input type="color" id="inp-bg-l" value="#e8e0d0"></div>
-<div class="control">Фон R <input type="color" id="inp-bg-r" value="#e8e0d0"></div>
-<span class="info-chip">Отличие: <b id="info-mm">—</b> мм / <b id="info-px">—</b> px</span>
-<button class="btn btn-primary" id="btn-reset">⟳ Заново</button>
-</div>
-</header>
+        <main>
+            <div class="status-bar">
+                <div class="stat">
+                    Найдено: <b><span id="stat-found">0</span> / 10</b>
+                </div>
+                <div class="stat">Ошибки: <b id="stat-miss">0</b></div>
+                <div class="stat">Время: <b id="stat-time">0:00</b></div>
+            </div>
 
-<main>
-<div class="status-bar">
-<div class="stat">Найдено: <b><span id="stat-found">0</span> / 10</b></div>
-<div class="stat">Ошибки: <b id="stat-miss">0</b></div>
-<div class="stat">Время: <b id="stat-time">0:00</b></div>
-</div>
+            <div class="scenes">
+                <div class="scene-wrap left">
+                    <span class="scene-label">Оригинал</span>
+                    <svg id="scene-left" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="scene-wrap right">
+                    <span class="scene-label">Найди отличия</span>
+                    <svg id="scene-right" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+            </div>
 
-<div class="scenes">
-<div class="scene-wrap left">
-<span class="scene-label">Оригинал</span>
-<svg id="scene-left" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg>
-</div>
-<div class="scene-wrap right">
-<span class="scene-label">Найди отличия</span>
-<svg id="scene-right" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg>
-</div>
-</div>
+            <p class="instructions">
+                Найди <b style="color: #fff">10 отличий</b>. Кликай по отличиям на <b>правой</b> сцене.<br />
+                Размер отличий рассчитывается под остроту зрения: <kbd>V</kbd> · <kbd>дистанция</kbd> ·
+                <kbd>PPI</kbd>.
+            </p>
+        </main>
 
-<p class="instructions">
-Найди <b style="color:#fff">10 отличий</b>. Кликай по отличиям на <b>правой</b> сцене.<br>
-Размер отличий рассчитывается под остроту зрения: <kbd>V</kbd> · <kbd>дистанция</kbd> · <kbd>PPI</kbd>.
-</p>
-</main>
+        <div class="win-overlay" id="win-overlay">
+            <div class="win-card">
+                <h2>🎉 Все 10 отличий найдены!</h2>
+                <p>Отличная работа. Уменьшите V или увеличьте дистанцию — отличия станут мельче.</p>
+                <div class="win-stats">
+                    <div class="win-stat">Время<b id="win-time">—</b></div>
+                    <div class="win-stat">Ошибки<b id="win-miss">—</b></div>
+                    <div class="win-stat">Размер<b id="win-size">—</b></div>
+                </div>
+                <button class="btn btn-primary" id="btn-again" style="width: 100%; padding: 12px">
+                    Играть снова
+                </button>
+            </div>
+        </div>
 
-<div class="win-overlay" id="win-overlay">
-<div class="win-card">
-<h2>🎉 Все 10 отличий найдены!</h2>
-<p>Отличная работа. Уменьшите V или увеличьте дистанцию — отличия станут мельче.</p>
-<div class="win-stats">
-<div class="win-stat">Время<b id="win-time">—</b></div>
-<div class="win-stat">Ошибки<b id="win-miss">—</b></div>
-<div class="win-stat">Размер<b id="win-size">—</b></div>
-</div>
-<button class="btn btn-primary" id="btn-again" style="width:100%;padding:12px">Играть снова</button>
-</div>
-</div>
+        <script>
+            'use strict';
 
-<script>
-'use strict';
+            function acuityToSizeMm(a, d) {
+                const dd = d && d > 0 ? d : 1;
+                const V = Math.max(0.01, a || 1.0);
+                return (dd * 1.454) / V;
+            }
+            function acuityToSizePx(a, d, ppi) {
+                const mm = acuityToSizeMm(a, d);
+                const dpr = window.devicePixelRatio || 1;
+                const p = (mm * (ppi || 96)) / 25.4;
+                return Math.round(Math.max(1, Math.min(3000, p / dpr)));
+            }
 
-function acuityToSizeMm(a, d){
-const dd = (d && d > 0) ? d : 1;
-const V = Math.max(0.01, a || 1.0);
-return dd * 1.454 / V;
-}
-function acuityToSizePx(a, d, ppi){
-const mm = acuityToSizeMm(a, d);
-const dpr = window.devicePixelRatio || 1;
-const p = mm * (ppi || 96) / 25.4;
-return Math.round(Math.max(1, Math.min(3000, p / dpr)));
-}
+            const VIEW_W = 1024,
+                VIEW_H = 1024;
+            const IMG_SRC = 'wolves.png';
+            const INK = '#0a0a0a';
 
-const VIEW_W = 1024, VIEW_H = 1024;
-const IMG_SRC = 'wolves.png';
-const INK = '#0a0a0a';
+            let currentAcuity = 1.0;
+            let currentDistance = 1.0;
+            let currentPPI = 96;
+            let bgLeft = '#e8e0d0';
+            let bgRight = '#e8e0d0';
+            let foundCount = 0,
+                missCount = 0;
+            let startTime = 0,
+                timerInterval = null,
+                elapsed = 0;
+            let S = 8;
 
-let currentAcuity = 1.0;
-let currentDistance = 1.0;
-let currentPPI = 96;
-let bgLeft  = '#e8e0d0';
-let bgRight = '#e8e0d0';
-let foundCount = 0, missCount = 0;
-let startTime = 0, timerInterval = null, elapsed = 0;
-let S = 8;
+            const DIFF_POINTS = [
+                { key: 'd01', type: 'dot', x: 400, y: 530, k: 0.6 },
+                { key: 'd02', type: 'line', x: 340, y: 560, k: 2.5, a: 30 },
+                { key: 'd03', type: 'cross', x: 620, y: 130, k: 1.0 },
+                { key: 'd04', type: 'line', x: 180, y: 300, k: 2.0, a: -60 },
+                { key: 'd05', type: 'dot', x: 640, y: 500, k: 0.6 },
+                { key: 'd06', type: 'line', x: 350, y: 620, k: 2.5, a: 75 },
+                { key: 'd07', type: 'circle', x: 650, y: 750, k: 0.8 },
+                { key: 'd08', type: 'dot', x: 130, y: 780, k: 0.6 },
+                { key: 'd09', type: 'cross', x: 220, y: 560, k: 0.9 },
+                { key: 'd10', type: 'line', x: 500, y: 850, k: 2.0, a: 90 }
+            ];
 
-const DIFF_POINTS = [
-{ key: 'd01', type: 'dot',    x: 400, y: 530, k: 0.6 },
-{ key: 'd02', type: 'line',   x: 340, y: 560, k: 2.5, a: 30 },
-{ key: 'd03', type: 'cross',  x: 620, y: 130, k: 1.0 },
-{ key: 'd04', type: 'line',   x: 180, y: 300, k: 2.0, a: -60 },
-{ key: 'd05', type: 'dot',    x: 640, y: 500, k: 0.6 },
-{ key: 'd06', type: 'line',   x: 350, y: 620, k: 2.5, a: 75 },
-{ key: 'd07', type: 'circle', x: 650, y: 750, k: 0.8 },
-{ key: 'd08', type: 'dot',    x: 130, y: 780, k: 0.6 },
-{ key: 'd09', type: 'cross',  x: 220, y: 560, k: 0.9 },
-{ key: 'd10', type: 'line',   x: 500, y: 850, k: 2.0, a: 90 }
-];
-
-function drawDiff(d){
-const sz = S * d.k;
-const x = d.x, y = d.y;
-if (d.type === 'dot')    return `<circle cx="${x}" cy="${y}" r="${sz}" fill="${INK}"/>`;
-if (d.type === 'circle') return `<circle cx="${x}" cy="${y}" r="${sz}" stroke="${INK}" fill="none" stroke-width="2"/>`;
-if (d.type === 'line'){
-const a = (d.a || 0) * Math.PI / 180;
-const x1 = x - Math.cos(a) * sz, y1 = y - Math.sin(a) * sz;
-const x2 = x + Math.cos(a) * sz, y2 = y + Math.sin(a) * sz;
-return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`;
-}
-if (d.type === 'cross'){
-return `<line x1="${x - sz}" y1="${y}" x2="${x + sz}" y2="${y}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
+            function drawDiff(d) {
+                const sz = S * d.k;
+                const x = d.x,
+                    y = d.y;
+                if (d.type === 'dot') return `<circle cx="${x}" cy="${y}" r="${sz}" fill="${INK}"/>`;
+                if (d.type === 'circle')
+                    return `<circle cx="${x}" cy="${y}" r="${sz}" stroke="${INK}" fill="none" stroke-width="2"/>`;
+                if (d.type === 'line') {
+                    const a = ((d.a || 0) * Math.PI) / 180;
+                    const x1 = x - Math.cos(a) * sz,
+                        y1 = y - Math.sin(a) * sz;
+                    const x2 = x + Math.cos(a) * sz,
+                        y2 = y + Math.sin(a) * sz;
+                    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`;
+                }
+                if (d.type === 'cross') {
+                    return `<line x1="${x - sz}" y1="${y}" x2="${x + sz}" y2="${y}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
 <line x1="${x}" y1="${y - sz}" x2="${x}" y2="${y + sz}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`;
-}
-return '';
-}
+                }
+                return '';
+            }
 
-function buildScene(isRight, S){
-const p = [];
-const bg = isRight ? bgRight : bgLeft;
+            function buildScene(isRight, S) {
+                const p = [];
+                const bg = isRight ? bgRight : bgLeft;
 
-p.push(`<rect width="${VIEW_W}" height="${VIEW_H}" fill="${bg}"/>`);
-p.push(`<image href="${IMG_SRC}" xlink:href="${IMG_SRC}" x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" preserveAspectRatio="xMidYMid meet" style="mix-blend-mode:multiply;"/>`);
+                p.push(`<rect width="${VIEW_W}" height="${VIEW_H}" fill="${bg}"/>`);
+                p.push(
+                    `<image href="${IMG_SRC}" xlink:href="${IMG_SRC}" x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" preserveAspectRatio="xMidYMid meet" style="mix-blend-mode:multiply;"/>`
+                );
 
-if (isRight){
-DIFF_POINTS.forEach(d => p.push(drawDiff(d)));
-const hr = Math.min(60, Math.max(14, S * 1.8));
-DIFF_POINTS.forEach(d => {
-p.push(`<circle cx="${d.x}" cy="${d.y}" r="${hr}" class="diff-zone" data-diff="${d.key}"/>`);
-p.push(`<circle cx="${d.x}" cy="${d.y}" r="${hr * 0.9}" class="diff-marker" data-marker="${d.key}"/>`);
-});
-}
-return p.join('');
-}
+                if (isRight) {
+                    DIFF_POINTS.forEach((d) => p.push(drawDiff(d)));
+                    const hr = Math.min(60, Math.max(14, S * 1.8));
+                    DIFF_POINTS.forEach((d) => {
+                        p.push(
+                            `<circle cx="${d.x}" cy="${d.y}" r="${hr}" class="diff-zone" data-diff="${d.key}"/>`
+                        );
+                        p.push(
+                            `<circle cx="${d.x}" cy="${d.y}" r="${hr * 0.9}" class="diff-marker" data-marker="${d.key}"/>`
+                        );
+                    });
+                }
+                return p.join('');
+            }
 
-const sceneLeft  = document.getElementById('scene-left');
-const sceneRight = document.getElementById('scene-right');
+            const sceneLeft = document.getElementById('scene-left');
+            const sceneRight = document.getElementById('scene-right');
 
-function render(){
-sceneLeft.innerHTML  = buildScene(false, S);
-sceneRight.innerHTML = buildScene(true,  S);
-sceneRight.querySelectorAll('.diff-zone').forEach(z => z.addEventListener('click', handleDiffClick));
-updateInfoChip();
-}
+            function render() {
+                sceneLeft.innerHTML = buildScene(false, S);
+                sceneRight.innerHTML = buildScene(true, S);
+                sceneRight
+                    .querySelectorAll('.diff-zone')
+                    .forEach((z) => z.addEventListener('click', handleDiffClick));
+                updateInfoChip();
+            }
 
-function handleDiffClick(e){
-e.stopPropagation();
-const z = e.currentTarget;
-if (z.dataset.found === '1') return;
-z.dataset.found = '1';
-z.classList.add('diff-found');
-const marker = sceneRight.querySelector(`.diff-marker[data-marker="${z.dataset.diff}"]`);
-if (marker) marker.classList.add('diff-found');
-foundCount++;
-document.getElementById('stat-found').textContent = foundCount;
-if (foundCount >= 10) setTimeout(showWin, 300);
-}
+            function handleDiffClick(e) {
+                e.stopPropagation();
+                const z = e.currentTarget;
+                if (z.dataset.found === '1') return;
+                z.dataset.found = '1';
+                z.classList.add('diff-found');
+                const marker = sceneRight.querySelector(`.diff-marker[data-marker="${z.dataset.diff}"]`);
+                if (marker) marker.classList.add('diff-found');
+                foundCount++;
+                document.getElementById('stat-found').textContent = foundCount;
+                if (foundCount >= 10) setTimeout(showWin, 300);
+            }
 
-sceneRight.addEventListener('click', (e) => {
-if (e.target.classList.contains('diff-zone')) return;
-if (e.target.closest('.diff-zone')) return;
-if (!startTime) return;
-missCount++;
-document.getElementById('stat-miss').textContent = missCount;
-const wrap = sceneRight.parentElement;
-const wrapRect = wrap.getBoundingClientRect();
-const x = e.clientX - wrapRect.left - 20;
-const y = e.clientY - wrapRect.top - 20;
-const f = document.createElement('div');
-f.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:40px;height:40px;border:3px solid #ef4444;border-radius:50%;pointer-events:none;animation:pop .4s ease-out;`;
-wrap.appendChild(f);
-setTimeout(() => f.remove(), 400);
-});
+            sceneRight.addEventListener('click', (e) => {
+                if (e.target.classList.contains('diff-zone')) return;
+                if (e.target.closest('.diff-zone')) return;
+                if (!startTime) return;
+                missCount++;
+                document.getElementById('stat-miss').textContent = missCount;
+                const wrap = sceneRight.parentElement;
+                const wrapRect = wrap.getBoundingClientRect();
+                const x = e.clientX - wrapRect.left - 20;
+                const y = e.clientY - wrapRect.top - 20;
+                const f = document.createElement('div');
+                f.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:40px;height:40px;border:3px solid #ef4444;border-radius:50%;pointer-events:none;animation:pop .4s ease-out;`;
+                wrap.appendChild(f);
+                setTimeout(() => f.remove(), 400);
+            });
 
-function startTimer(){
-startTime = Date.now();
-elapsed = 0;
-if (timerInterval) clearInterval(timerInterval);
-timerInterval = setInterval(() => {
-elapsed = Math.floor((Date.now() - startTime) / 1000);
-const m = Math.floor(elapsed / 60);
-const s = elapsed % 60;
-document.getElementById('stat-time').textContent = `${m}:${String(s).padStart(2,'0')}`;
-}, 250);
-}
+            function startTimer() {
+                startTime = Date.now();
+                elapsed = 0;
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const m = Math.floor(elapsed / 60);
+                    const s = elapsed % 60;
+                    document.getElementById('stat-time').textContent = `${m}:${String(s).padStart(2, '0')}`;
+                }, 250);
+            }
 
-function updateInfoChip(){
-document.getElementById('info-mm').textContent = acuityToSizeMm(currentAcuity, currentDistance).toFixed(2);
-document.getElementById('info-px').textContent = acuityToSizePx(currentAcuity, currentDistance, currentPPI);
-}
+            function updateInfoChip() {
+                document.getElementById('info-mm').textContent = acuityToSizeMm(
+                    currentAcuity,
+                    currentDistance
+                ).toFixed(2);
+                document.getElementById('info-px').textContent = acuityToSizePx(
+                    currentAcuity,
+                    currentDistance,
+                    currentPPI
+                );
+            }
 
-function recalcDiffSize(){
-const px = acuityToSizePx(currentAcuity, currentDistance, currentPPI);
-const rect = sceneRight.getBoundingClientRect();
-const cw = rect.width || VIEW_W;
-const scale = VIEW_W / cw;
-S = Math.max(4, Math.min(60, px * scale));
-}
+            function recalcDiffSize() {
+                const px = acuityToSizePx(currentAcuity, currentDistance, currentPPI);
+                const rect = sceneRight.getBoundingClientRect();
+                const cw = rect.width || VIEW_W;
+                const scale = VIEW_W / cw;
+                S = Math.max(4, Math.min(60, px * scale));
+            }
 
-function applySettings(){
-currentAcuity   = Math.max(0.1, Math.min(2.0, parseFloat(document.getElementById('inp-v').value) || 1.0));
-currentDistance = Math.max(0.3, Math.min(10,  parseFloat(document.getElementById('inp-dist').value) || 1.0));
-currentPPI      = Math.max(50,  Math.min(800, parseInt(document.getElementById('inp-ppi').value) || 96));
-bgLeft  = document.getElementById('inp-bg-l').value;
-bgRight = document.getElementById('inp-bg-r').value;
+            function applySettings() {
+                currentAcuity = Math.max(
+                    0.1,
+                    Math.min(2.0, parseFloat(document.getElementById('inp-v').value) || 1.0)
+                );
+                currentDistance = Math.max(
+                    0.3,
+                    Math.min(10, parseFloat(document.getElementById('inp-dist').value) || 1.0)
+                );
+                currentPPI = Math.max(
+                    50,
+                    Math.min(800, parseInt(document.getElementById('inp-ppi').value) || 96)
+                );
+                bgLeft = document.getElementById('inp-bg-l').value;
+                bgRight = document.getElementById('inp-bg-r').value;
 
-const url = new URL(location.href);
-url.searchParams.set('v', currentAcuity.toFixed(1));
-url.searchParams.set('d', currentDistance.toFixed(1));
-url.searchParams.set('ppi', currentPPI);
-url.searchParams.set('bgl', bgLeft.replace('#',''));
-url.searchParams.set('bgr', bgRight.replace('#',''));
-history.replaceState(null, '', url);
+                const url = new URL(location.href);
+                url.searchParams.set('v', currentAcuity.toFixed(1));
+                url.searchParams.set('d', currentDistance.toFixed(1));
+                url.searchParams.set('ppi', currentPPI);
+                url.searchParams.set('bgl', bgLeft.replace('#', ''));
+                url.searchParams.set('bgr', bgRight.replace('#', ''));
+                history.replaceState(null, '', url);
 
-recalcDiffSize();
-render();
-}
+                recalcDiffSize();
+                render();
+            }
 
-function resetGame(){
-foundCount = 0; missCount = 0;
-document.getElementById('stat-found').textContent = '0';
-document.getElementById('stat-miss').textContent = '0';
-document.getElementById('stat-time').textContent = '0:00';
-document.getElementById('win-overlay').classList.remove('visible');
-recalcDiffSize();
-render();
-startTimer();
-}
+            function resetGame() {
+                foundCount = 0;
+                missCount = 0;
+                document.getElementById('stat-found').textContent = '0';
+                document.getElementById('stat-miss').textContent = '0';
+                document.getElementById('stat-time').textContent = '0:00';
+                document.getElementById('win-overlay').classList.remove('visible');
+                recalcDiffSize();
+                render();
+                startTimer();
+            }
 
-function showWin(){
-if (timerInterval) clearInterval(timerInterval);
-const m = Math.floor(elapsed / 60);
-const s = elapsed % 60;
-document.getElementById('win-time').textContent = `${m}:${String(s).padStart(2,'0')}`;
-document.getElementById('win-miss').textContent = missCount;
-document.getElementById('win-size').textContent = `${acuityToSizeMm(currentAcuity, currentDistance).toFixed(2)} мм`;
-document.getElementById('win-overlay').classList.add('visible');
-}
+            function showWin() {
+                if (timerInterval) clearInterval(timerInterval);
+                const m = Math.floor(elapsed / 60);
+                const s = elapsed % 60;
+                document.getElementById('win-time').textContent = `${m}:${String(s).padStart(2, '0')}`;
+                document.getElementById('win-miss').textContent = missCount;
+                document.getElementById('win-size').textContent =
+                    `${acuityToSizeMm(currentAcuity, currentDistance).toFixed(2)} мм`;
+                document.getElementById('win-overlay').classList.add('visible');
+            }
 
-function init(){
-const p = new URLSearchParams(location.search);
-if (p.has('v'))   currentAcuity   = parseFloat(p.get('v'))   || 1.0;
-if (p.has('d'))   currentDistance = parseFloat(p.get('d'))   || 1.0;
-if (p.has('ppi')) currentPPI      = parseInt(p.get('ppi'))   || 96;
-if (p.has('bgl')) bgLeft  = '#' + p.get('bgl');
-if (p.has('bgr')) bgRight = '#' + p.get('bgr');
+            function init() {
+                const p = new URLSearchParams(location.search);
+                if (p.has('v')) currentAcuity = parseFloat(p.get('v')) || 1.0;
+                if (p.has('d')) currentDistance = parseFloat(p.get('d')) || 1.0;
+                if (p.has('ppi')) currentPPI = parseInt(p.get('ppi')) || 96;
+                if (p.has('bgl')) bgLeft = '#' + p.get('bgl');
+                if (p.has('bgr')) bgRight = '#' + p.get('bgr');
 
-document.getElementById('inp-v').value = currentAcuity;
-document.getElementById('inp-dist').value = currentDistance;
-document.getElementById('inp-ppi').value = currentPPI;
-document.getElementById('inp-bg-l').value = bgLeft;
-document.getElementById('inp-bg-r').value = bgRight;
+                document.getElementById('inp-v').value = currentAcuity;
+                document.getElementById('inp-dist').value = currentDistance;
+                document.getElementById('inp-ppi').value = currentPPI;
+                document.getElementById('inp-bg-l').value = bgLeft;
+                document.getElementById('inp-bg-r').value = bgRight;
 
-['inp-v','inp-dist','inp-ppi','inp-bg-l','inp-bg-r'].forEach(id => {
-document.getElementById(id).addEventListener('change', applySettings);
-});
-document.getElementById('btn-reset').addEventListener('click', resetGame);
-document.getElementById('btn-again').addEventListener('click', resetGame);
-window.addEventListener('resize', () => { recalcDiffSize(); render(); });
+                ['inp-v', 'inp-dist', 'inp-ppi', 'inp-bg-l', 'inp-bg-r'].forEach((id) => {
+                    document.getElementById(id).addEventListener('change', applySettings);
+                });
+                document.getElementById('btn-reset').addEventListener('click', resetGame);
+                document.getElementById('btn-again').addEventListener('click', resetGame);
+                window.addEventListener('resize', () => {
+                    recalcDiffSize();
+                    render();
+                });
 
-setTimeout(() => { recalcDiffSize(); render(); startTimer(); }, 50);
-}
+                setTimeout(() => {
+                    recalcDiffSize();
+                    render();
+                    startTimer();
+                }, 50);
+            }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
-</script>
-</body>
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+            else init();
+        </script>
+    </body>
 </html>

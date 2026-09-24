@@ -1,113 +1,336 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<title>Vissort — Тренировка зрения нового поколения</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;background:#000;color:#f5f5f7;line-height:1.47;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <title>Vissort — Тренировка зрения нового поколения</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
+                background: #000;
+                color: #f5f5f7;
+                line-height: 1.47;
+                -webkit-font-smoothing: antialiased;
+                overflow-x: hidden;
+            }
 
-nav{position:fixed;top:0;width:100%;background:rgba(0,0,0,.72);backdrop-filter:blur(20px);z-index:100;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.nav-inner{max-width:980px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:0 22px}
-.brand{font-weight:600;font-size:19px;letter-spacing:-.3px}
-.brand span{color:#0a84ff}
-nav ul{display:flex;gap:28px;list-style:none;font-size:13px}
-nav a{color:#f5f5f7;text-decoration:none;opacity:.8;transition:.2s}
-nav a:hover{opacity:1}
+            nav {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.72);
+                backdrop-filter: blur(20px);
+                z-index: 100;
+                padding: 14px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .nav-inner {
+                max-width: 980px;
+                margin: 0 auto;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 22px;
+            }
+            .brand {
+                font-weight: 600;
+                font-size: 19px;
+                letter-spacing: -0.3px;
+            }
+            .brand span {
+                color: #0a84ff;
+            }
+            nav ul {
+                display: flex;
+                gap: 28px;
+                list-style: none;
+                font-size: 13px;
+            }
+            nav a {
+                color: #f5f5f7;
+                text-decoration: none;
+                opacity: 0.8;
+                transition: 0.2s;
+            }
+            nav a:hover {
+                opacity: 1;
+            }
 
-section{padding:120px 22px;text-align:center;max-width:980px;margin:0 auto}
-.hero{padding-top:200px;padding-bottom:140px}
-.hero h1{font-size:clamp(48px,7vw,88px);font-weight:700;letter-spacing:-.03em;line-height:1.05;margin-bottom:24px}
-.hero h1 .grad{background:linear-gradient(135deg,#0a84ff,#5e5ce6 60%,#bf5af2);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{font-size:clamp(19px,2vw,24px);color:#86868b;max-width:640px;margin:0 auto 40px;line-height:1.4}
+            section {
+                padding: 120px 22px;
+                text-align: center;
+                max-width: 980px;
+                margin: 0 auto;
+            }
+            .hero {
+                padding-top: 200px;
+                padding-bottom: 140px;
+            }
+            .hero h1 {
+                font-size: clamp(48px, 7vw, 88px);
+                font-weight: 700;
+                letter-spacing: -0.03em;
+                line-height: 1.05;
+                margin-bottom: 24px;
+            }
+            .hero h1 .grad {
+                background: linear-gradient(135deg, #0a84ff, #5e5ce6 60%, #bf5af2);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
+            .hero p {
+                font-size: clamp(19px, 2vw, 24px);
+                color: #86868b;
+                max-width: 640px;
+                margin: 0 auto 40px;
+                line-height: 1.4;
+            }
 
-.cta{display:inline-block;padding:16px 32px;background:#0a84ff;color:#fff;text-decoration:none;font-weight:500;font-size:17px;border-radius:980px;transition:.2s;margin:0 6px}
-.cta:hover{background:#0077ed;transform:scale(1.02)}
-.cta-ghost{background:transparent;border:1px solid rgba(255,255,255,.3)}
-.cta-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5)}
+            .cta {
+                display: inline-block;
+                padding: 16px 32px;
+                background: #0a84ff;
+                color: #fff;
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 17px;
+                border-radius: 980px;
+                transition: 0.2s;
+                margin: 0 6px;
+            }
+            .cta:hover {
+                background: #0077ed;
+                transform: scale(1.02);
+            }
+            .cta-ghost {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+            .cta-ghost:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.5);
+            }
 
-.eye-visual{width:300px;height:300px;border-radius:50%;margin:0 auto 60px;background:radial-gradient(circle at 35% 35%,#fff 0%,#e0e0f0 40%,#0a84ff 70%,#1c1c1e 100%);box-shadow:0 0 120px rgba(10,132,255,.55),inset 0 0 60px rgba(0,0,0,.5);position:relative}
-.eye-visual::after{content:'';position:absolute;inset:0;margin:auto;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#000 30%,#0a0a0f);box-shadow:inset 0 0 20px rgba(255,255,255,.4)}
+            .eye-visual {
+                width: 300px;
+                height: 300px;
+                border-radius: 50%;
+                margin: 0 auto 60px;
+                background: radial-gradient(
+                    circle at 35% 35%,
+                    #fff 0%,
+                    #e0e0f0 40%,
+                    #0a84ff 70%,
+                    #1c1c1e 100%
+                );
+                box-shadow:
+                    0 0 120px rgba(10, 132, 255, 0.55),
+                    inset 0 0 60px rgba(0, 0, 0, 0.5);
+                position: relative;
+            }
+            .eye-visual::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                margin: auto;
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                background: radial-gradient(circle at 40% 40%, #000 30%, #0a0a0f);
+                box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.4);
+            }
 
-.section-title{font-size:clamp(36px,5vw,56px);font-weight:700;letter-spacing:-.025em;margin-bottom:16px}
-.section-sub{color:#86868b;font-size:19px;margin-bottom:70px;max-width:600px;margin-left:auto;margin-right:auto}
+            .section-title {
+                font-size: clamp(36px, 5vw, 56px);
+                font-weight: 700;
+                letter-spacing: -0.025em;
+                margin-bottom: 16px;
+            }
+            .section-sub {
+                color: #86868b;
+                font-size: 19px;
+                margin-bottom: 70px;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
 
-.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;text-align:left}
-.card{background:#1c1c1e;border-radius:20px;padding:36px 28px;transition:.3s;border:1px solid rgba(255,255,255,.06)}
-.card:hover{transform:translateY(-4px);background:#2c2c2e;border-color:rgba(10,132,255,.4)}
-.card .ico{font-size:38px;margin-bottom:18px;display:block}
-.card h3{font-size:20px;font-weight:600;margin-bottom:10px;letter-spacing:-.3px}
-.card p{color:#86868b;font-size:15px;line-height:1.5}
+            .feature-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+                text-align: left;
+            }
+            .card {
+                background: #1c1c1e;
+                border-radius: 20px;
+                padding: 36px 28px;
+                transition: 0.3s;
+                border: 1px solid rgba(255, 255, 255, 0.06);
+            }
+            .card:hover {
+                transform: translateY(-4px);
+                background: #2c2c2e;
+                border-color: rgba(10, 132, 255, 0.4);
+            }
+            .card .ico {
+                font-size: 38px;
+                margin-bottom: 18px;
+                display: block;
+            }
+            .card h3 {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                letter-spacing: -0.3px;
+            }
+            .card p {
+                color: #86868b;
+                font-size: 15px;
+                line-height: 1.5;
+            }
 
-.split{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;text-align:left;padding:100px 22px}
-.split h2{font-size:44px;font-weight:700;letter-spacing:-.02em;margin-bottom:20px}
-.split p{color:#86868b;font-size:17px;line-height:1.6}
-.split .stat{font-size:80px;font-weight:700;letter-spacing:-.04em;background:linear-gradient(135deg,#0a84ff,#bf5af2);-webkit-background-clip:text;background-clip:text;color:transparent}
+            .split {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 60px;
+                align-items: center;
+                text-align: left;
+                padding: 100px 22px;
+            }
+            .split h2 {
+                font-size: 44px;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+                margin-bottom: 20px;
+            }
+            .split p {
+                color: #86868b;
+                font-size: 17px;
+                line-height: 1.6;
+            }
+            .split .stat {
+                font-size: 80px;
+                font-weight: 700;
+                letter-spacing: -0.04em;
+                background: linear-gradient(135deg, #0a84ff, #bf5af2);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
 
-footer{padding:40px 22px;text-align:center;color:#6e6e73;font-size:12px;border-top:1px solid rgba(255,255,255,.06)}
+            footer {
+                padding: 40px 22px;
+                text-align: center;
+                color: #6e6e73;
+                font-size: 12px;
+                border-top: 1px solid rgba(255, 255, 255, 0.06);
+            }
 
-@media(max-width:768px){
-nav ul{display:none}
-.split{grid-template-columns:1fr;gap:30px}
-.eye-visual{width:220px;height:220px}
-}
-</style>
-</head>
-<body>
+            @media (max-width: 768px) {
+                nav ul {
+                    display: none;
+                }
+                .split {
+                    grid-template-columns: 1fr;
+                    gap: 30px;
+                }
+                .eye-visual {
+                    width: 220px;
+                    height: 220px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <div class="nav-inner">
+                <div class="brand">Vissort <span>●</span></div>
+                <ul>
+                    <li><a href="#features">Возможности</a></li>
+                    <li><a href="#how">Как работает</a></li>
+                    <li><a href="/user.html">Войти</a></li>
+                </ul>
+            </div>
+        </nav>
 
-<nav>
-  <div class="nav-inner">
-    <div class="brand">Vissort <span>●</span></div>
-    <ul>
-      <li><a href="#features">Возможности</a></li>
-      <li><a href="#how">Как работает</a></li>
-      <li><a href="/user.html">Войти</a></li>
-    </ul>
-  </div>
-</nav>
+        <section class="hero">
+            <div class="eye-visual"></div>
+            <h1>Зрение — это <span class="grad">тренируемый навык</span>.</h1>
+            <p>
+                Vissort превращает ежедневную 10-минутную тренировку в понятный прогресс. Научный подход,
+                адаптивная сложность, контроль дистанции через камеру.
+            </p>
+            <a href="/user.html" class="cta">Попробовать бесплатно</a>
+            <a href="#features" class="cta cta-ghost">Узнать больше</a>
+        </section>
 
-<section class="hero">
-  <div class="eye-visual"></div>
-  <h1>Зрение — это <span class="grad">тренируемый навык</span>.</h1>
-  <p>Vissort превращает ежедневную 10-минутную тренировку в понятный прогресс. Научный подход, адаптивная сложность, контроль дистанции через камеру.</p>
-  <a href="/user.html" class="cta">Попробовать бесплатно</a>
-  <a href="#features" class="cta cta-ghost">Узнать больше</a>
-</section>
+        <section id="features">
+            <h2 class="section-title">Всё, что нужно.</h2>
+            <p class="section-sub">Шесть программ и умные технологии под капотом.</p>
+            <div class="feature-grid">
+                <div class="card">
+                    <span class="ico">🎯</span>
+                    <h3>Острота зрения</h3>
+                    <p>
+                        Стимулы Сивцева и Ландольта. Размер рассчитывается в мм с учётом PPI экрана и
+                        дистанции.
+                    </p>
+                </div>
+                <div class="card">
+                    <span class="ico">📷</span>
+                    <h3>Контроль дистанции</h3>
+                    <p>Камера отслеживает положение лица и предупреждает, если вы отклоняетесь.</p>
+                </div>
+                <div class="card">
+                    <span class="ico">📖</span>
+                    <h3>Тренировка чтения</h3>
+                    <p>Книги в FB2, EPUB и TXT. Физиологический фон от красного до синего по шкале Thibos.</p>
+                </div>
+                <div class="card">
+                    <span class="ico">🎨</span>
+                    <h3>Динамика цвета</h3>
+                    <p>Плавные переходы красный → синий. Работает с хроматической аберрацией глаза.</p>
+                </div>
+                <div class="card">
+                    <span class="ico">👁️</span>
+                    <h3>Периферия и дефокус</h3>
+                    <p>Точки на границе обзора и цифровой дефокус для расширения поля зрения.</p>
+                </div>
+                <div class="card">
+                    <span class="ico">📊</span>
+                    <h3>Статистика</h3>
+                    <p>Графики прогресса, динамика V, отчёты по дистанции и частоте морганий.</p>
+                </div>
+            </div>
+        </section>
 
-<section id="features">
-  <h2 class="section-title">Всё, что нужно.</h2>
-  <p class="section-sub">Шесть программ и умные технологии под капотом.</p>
-  <div class="feature-grid">
-    <div class="card"><span class="ico">🎯</span><h3>Острота зрения</h3><p>Стимулы Сивцева и Ландольта. Размер рассчитывается в мм с учётом PPI экрана и дистанции.</p></div>
-    <div class="card"><span class="ico">📷</span><h3>Контроль дистанции</h3><p>Камера отслеживает положение лица и предупреждает, если вы отклоняетесь.</p></div>
-    <div class="card"><span class="ico">📖</span><h3>Тренировка чтения</h3><p>Книги в FB2, EPUB и TXT. Физиологический фон от красного до синего по шкале Thibos.</p></div>
-    <div class="card"><span class="ico">🎨</span><h3>Динамика цвета</h3><p>Плавные переходы красный → синий. Работает с хроматической аберрацией глаза.</p></div>
-    <div class="card"><span class="ico">👁️</span><h3>Периферия и дефокус</h3><p>Точки на границе обзора и цифровой дефокус для расширения поля зрения.</p></div>
-    <div class="card"><span class="ico">📊</span><h3>Статистика</h3><p>Графики прогресса, динамика V, отчёты по дистанции и частоте морганий.</p></div>
-  </div>
-</section>
+        <div class="split">
+            <div>
+                <div class="stat">87%</div>
+            </div>
+            <div>
+                <h2>Замечают улучшение через 3 недели.</h2>
+                <p>
+                    Регулярные короткие сессии эффективнее долгих редких занятий. Оптимально — 10 минут каждый
+                    день.
+                </p>
+            </div>
+        </div>
 
-<div class="split">
-  <div>
-    <div class="stat">87%</div>
-  </div>
-  <div>
-    <h2>Замечают улучшение через 3 недели.</h2>
-    <p>Регулярные короткие сессии эффективнее долгих редких занятий. Оптимально — 10 минут каждый день.</p>
-  </div>
-</div>
+        <section>
+            <h2 class="section-title">Начните сегодня.</h2>
+            <p class="section-sub">7 дней бесплатно. Без привязки карты.</p>
+            <a href="/user.html" class="cta">Создать аккаунт</a>
+        </section>
 
-<section>
-  <h2 class="section-title">Начните сегодня.</h2>
-  <p class="section-sub">7 дней бесплатно. Без привязки карты.</p>
-  <a href="/user.html" class="cta">Создать аккаунт</a>
-</section>
-
-<footer>
-  © 2026 Vissort · Тренажёр зрения. Не является медицинским изделием.
-</footer>
-
-</body>
+        <footer>© 2026 Vissort · Тренажёр зрения. Не является медицинским изделием.</footer>
+    </body>
 </html>

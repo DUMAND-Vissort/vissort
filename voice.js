@@ -8,9 +8,9 @@
 
     const LS = {
         enabled: 'vissort_voice_enabled',
-        voice:   'vissort_voice_name',
-        rate:    'vissort_voice_rate',
-        volume:  'vissort_voice_volume',
+        voice: 'vissort_voice_name',
+        rate: 'vissort_voice_rate',
+        volume: 'vissort_voice_volume',
         readingRate: 'vissort_voice_readingRate'
     };
 
@@ -40,7 +40,8 @@
             }
             const e = localStorage.getItem(LS.enabled);
             if (e !== null) this.enabled = e === 'true';
-            const v = localStorage.getItem(LS.voice); if (v) this.voiceName = v;
+            const v = localStorage.getItem(LS.voice);
+            if (v) this.voiceName = v;
             const r = parseFloat(localStorage.getItem(LS.rate));
             if (!isNaN(r) && r >= 0.5 && r <= 2) this.rate = r;
             const vol = parseFloat(localStorage.getItem(LS.volume));
@@ -55,23 +56,26 @@
 
         _loadVoices() {
             const all = window.speechSynthesis.getVoices();
-            this._voices = all.filter(v => /^ru/i.test(v.lang));
+            this._voices = all.filter((v) => /^ru/i.test(v.lang));
             if (this._voices.length === 0) this._voices = all;
-            console.log('[voice] голосов:', this._voices.length,
-                this._voices.map(v => v.name + ' (' + v.lang + ')').join(', '));
+            console.log(
+                '[voice] голосов:',
+                this._voices.length,
+                this._voices.map((v) => v.name + ' (' + v.lang + ')').join(', ')
+            );
         },
 
         _pickVoice() {
             if (!this._voices.length) return null;
             if (this.voiceName) {
-                const f = this._voices.find(v => v.name === this.voiceName);
+                const f = this._voices.find((v) => v.name === this.voiceName);
                 if (f) return f;
             }
-            const ru = this._voices.filter(v => /^ru/i.test(v.lang));
+            const ru = this._voices.filter((v) => /^ru/i.test(v.lang));
             if (ru.length) {
-                const female = ru.find(v => /female|женск|milena|alena|irina|katya|svetlana/i.test(v.name));
+                const female = ru.find((v) => /female|женск|milena|alena|irina|katya|svetlana/i.test(v.name));
                 if (female) return female;
-                const local = ru.find(v => v.localService);
+                const local = ru.find((v) => v.localService);
                 return local || ru[0];
             }
             return this._voices[0];
@@ -83,36 +87,69 @@
             if (!text) return;
             const now = performance.now();
             if (!opts.allowRepeat && text === this._lastText && now - this._lastTime < 700) return;
-            this._lastText = text; this._lastTime = now;
-            if (opts.cancel) { try { window.speechSynthesis.cancel(); } catch (_) {} }
+            this._lastText = text;
+            this._lastTime = now;
+            if (opts.cancel) {
+                try {
+                    window.speechSynthesis.cancel();
+                } catch (_) {}
+            }
             const u = new SpeechSynthesisUtterance(text);
             const v = this._pickVoice();
             if (v) u.voice = v;
             u.lang = (v && v.lang) || 'ru-RU';
-            u.rate = (opts.rate != null ? opts.rate : this.rate);
-            u.volume = (opts.volume != null ? opts.volume : this.volume);
-            u.pitch = (opts.pitch != null ? opts.pitch : 1.0);
-            try { window.speechSynthesis.speak(u); } catch (e) { console.warn('[voice] speak:', e); }
+            u.rate = opts.rate != null ? opts.rate : this.rate;
+            u.volume = opts.volume != null ? opts.volume : this.volume;
+            u.pitch = opts.pitch != null ? opts.pitch : 1.0;
+            try {
+                window.speechSynthesis.speak(u);
+            } catch (e) {
+                console.warn('[voice] speak:', e);
+            }
         },
 
-        cancel() { try { window.speechSynthesis.cancel(); } catch (_) {} },
+        cancel() {
+            try {
+                window.speechSynthesis.cancel();
+            } catch (_) {}
+        },
 
         mute(flag) {
             this.enabled = !flag;
             localStorage.setItem(LS.enabled, String(this.enabled));
-            if (!this.enabled) { this.cancel(); this.stopReading(); }
+            if (!this.enabled) {
+                this.cancel();
+                this.stopReading();
+            }
         },
-        toggle() { this.mute(this.enabled); return this.enabled; },
+        toggle() {
+            this.mute(this.enabled);
+            return this.enabled;
+        },
 
         setVoice(name) {
             this.voiceName = name || null;
             if (name) localStorage.setItem(LS.voice, name);
             else localStorage.removeItem(LS.voice);
         },
-        setRate(r) { r = Math.max(0.5, Math.min(2, parseFloat(r) || 1)); this.rate = r; localStorage.setItem(LS.rate, String(r)); },
-        setVolume(v) { v = Math.max(0, Math.min(1, parseFloat(v) || 1)); this.volume = v; localStorage.setItem(LS.volume, String(v)); },
-        setReadingRate(r) { r = Math.max(0.5, Math.min(2, parseFloat(r) || 1)); this.readingRate = r; localStorage.setItem(LS.readingRate, String(r)); },
-        listVoices() { return this._voices.slice(); },
+        setRate(r) {
+            r = Math.max(0.5, Math.min(2, parseFloat(r) || 1));
+            this.rate = r;
+            localStorage.setItem(LS.rate, String(r));
+        },
+        setVolume(v) {
+            v = Math.max(0, Math.min(1, parseFloat(v) || 1));
+            this.volume = v;
+            localStorage.setItem(LS.volume, String(v));
+        },
+        setReadingRate(r) {
+            r = Math.max(0.5, Math.min(2, parseFloat(r) || 1));
+            this.readingRate = r;
+            localStorage.setItem(LS.readingRate, String(r));
+        },
+        listVoices() {
+            return this._voices.slice();
+        },
 
         // ============================================================
         // ЧТЕНИЕ ВСЛУХ
@@ -150,12 +187,16 @@
             const result = [];
             const MAX = 220;
             for (const s of rough) {
-                if (s.length <= MAX) { result.push(s); continue; }
+                if (s.length <= MAX) {
+                    result.push(s);
+                    continue;
+                }
                 let buf = '';
                 const parts = splitByCommas(s);
                 for (const part of parts) {
                     if ((buf + ' ' + part).trim().length > MAX && buf) {
-                        result.push(buf.trim()); buf = part;
+                        result.push(buf.trim());
+                        buf = part;
                     } else {
                         buf = (buf + ' ' + part).trim();
                     }
@@ -166,7 +207,10 @@
         },
 
         readText(text, startIndex = 0) {
-            if (!this.enabled) { console.warn('[voice] озвучивание выключено'); return; }
+            if (!this.enabled) {
+                console.warn('[voice] озвучивание выключено');
+                return;
+            }
             if (!('speechSynthesis' in window)) return;
             this.stopReading();
             const sentences = this._splitSentences(text);
@@ -205,13 +249,19 @@
                 console.warn('[voice] utterance error:', e.error);
             };
             this.reading.currentUtterance = u;
-            try { window.speechSynthesis.speak(u); } catch (e) { console.warn('[voice] speak:', e); }
+            try {
+                window.speechSynthesis.speak(u);
+            } catch (e) {
+                console.warn('[voice] speak:', e);
+            }
         },
 
         pauseReading() {
             if (!this.reading.active) return;
             this.reading.paused = true;
-            try { window.speechSynthesis.cancel(); } catch (_) {}
+            try {
+                window.speechSynthesis.cancel();
+            } catch (_) {}
             updateReadingUI();
         },
 
@@ -225,14 +275,18 @@
         stopReading(completed = false) {
             this.reading.active = false;
             this.reading.paused = false;
-            try { window.speechSynthesis.cancel(); } catch (_) {}
+            try {
+                window.speechSynthesis.cancel();
+            } catch (_) {}
             updateReadingUI();
         },
 
         nextSentence() {
             if (!this.reading.active) return;
             this.reading.index = Math.min(this.reading.index + 1, this.reading.sentences.length - 1);
-            try { window.speechSynthesis.cancel(); } catch (_) {}
+            try {
+                window.speechSynthesis.cancel();
+            } catch (_) {}
             updateReadingUI();
             this._readNext();
         },
@@ -240,7 +294,9 @@
         prevSentence() {
             if (!this.reading.active) return;
             this.reading.index = Math.max(0, this.reading.index - 1);
-            try { window.speechSynthesis.cancel(); } catch (_) {}
+            try {
+                window.speechSynthesis.cancel();
+            } catch (_) {}
             updateReadingUI();
             this._readNext();
         },
@@ -248,55 +304,64 @@
         jumpToSentence(i) {
             if (!this.reading.active) return;
             this.reading.index = Math.max(0, Math.min(i, this.reading.sentences.length - 1));
-            try { window.speechSynthesis.cancel(); } catch (_) {}
+            try {
+                window.speechSynthesis.cancel();
+            } catch (_) {}
             updateReadingUI();
             this._readNext();
         },
 
-        isReading() { return this.reading.active && !this.reading.paused; },
-        isReadingPaused() { return this.reading.active && this.reading.paused; },
+        isReading() {
+            return this.reading.active && !this.reading.paused;
+        },
+        isReadingPaused() {
+            return this.reading.active && this.reading.paused;
+        },
 
         readReadingContent() {
             const el = document.getElementById('reading-content');
-            if (!el) { console.warn('[voice] #reading-content не найден'); return; }
+            if (!el) {
+                console.warn('[voice] #reading-content не найден');
+                return;
+            }
             const text = el.innerText || el.textContent || '';
             this.readText(text, 0);
         }
     };
 
-    Voice.sayKey = function(key, opts) {
+    Voice.sayKey = function (key, opts) {
         const phrases = {
-            ready:          'Приготовьтесь',
-            look:           'Смотрите',
-            correct:        'Правильно',
-            wrong:          'Ошибка',
-            timeout:        'Время вышло',
-            blink:          'Поморгайте',
-            moveBack:       'Не приближайтесь',
-            moveUp:         'Не отклоняйтесь',
-            countdown5:     'Осталось пять секунд',
-            countdown4:     'Четыре',
-            countdown3:     'Три',
-            countdown2:     'Два',
-            countdown1:     'Один',
-            paused:         'Пауза',
-            resumed:        'Продолжаем',
-            finished:       'Тренировка завершена',
-            readingStart:   'Начинаем чтение',
-            readingPause:   'Пауза',
-            readingResume:  'Продолжаем',
-            readingEnd:     'Чтение завершено',
-            nextNode:       'Следующее задание',
-            seriesDone:     'Серия завершена',
-            seriesFailed:   'Серия не пройдена',
-            camOff:         'Камера выключена',
-            camOn:          'Камера включена',
-            faceLost:       'Лицо не найдено',
-            faceFound:      'Лицо найдено',
-            voiceOn:        'Озвучивание включено',
-            voiceOff:       'Озвучивание выключено',
-            voiceSelected:  'Голос выбран',
-            voiceTest:      'Правильно. Не отклоняйтесь. Осталось пять секунд.'
+            ready: 'Приготовьтесь',
+            look: 'Смотрите',
+            correct: 'Правильно',
+            wrong: 'Ошибка',
+            timeout: 'Время вышло',
+            blink: 'Поморгайте',
+            moveBack: 'Не приближайтесь',
+            moveUp: 'Не отклоняйтесь',
+            countdown5: 'Осталось пять секунд',
+            countdown4: 'Четыре',
+            countdown3: 'Три',
+            countdown2: 'Два',
+            countdown1: 'Один',
+            paused: 'Пауза',
+            resumed: 'Продолжаем',
+            finished: 'Тренировка завершена',
+            readingStart: 'Начинаем чтение',
+            readingPause: 'Пауза',
+            readingResume: 'Продолжаем',
+            readingEnd: 'Чтение завершено',
+            nextNode: 'Следующее задание',
+            seriesDone: 'Серия завершена',
+            seriesFailed: 'Серия не пройдена',
+            camOff: 'Камера выключена',
+            camOn: 'Камера включена',
+            faceLost: 'Лицо не найдено',
+            faceFound: 'Лицо найдено',
+            voiceOn: 'Озвучивание включено',
+            voiceOff: 'Озвучивание выключено',
+            voiceSelected: 'Голос выбран',
+            voiceTest: 'Правильно. Не отклоняйтесь. Осталось пять секунд.'
         };
         const text = phrases[key];
         if (!text) {
@@ -359,7 +424,10 @@
         btn.textContent = Voice.enabled ? '🔊' : '🔇';
         btn.title = 'Озвучивание: вкл/выкл (M). Shift+клик — выбрать голос.';
         btn.addEventListener('click', (e) => {
-            if (e.shiftKey) { openVoicePicker(); return; }
+            if (e.shiftKey) {
+                openVoicePicker();
+                return;
+            }
             const on = Voice.toggle();
             btn.textContent = on ? '🔊' : '🔇';
         });
@@ -420,8 +488,13 @@
         prevBtn.style.display = '';
         nextBtn.style.display = '';
         prog.style.display = '';
-        if (r.paused) { pauseBtn.style.display = 'none'; resumeBtn.style.display = ''; }
-        else { pauseBtn.style.display = ''; resumeBtn.style.display = 'none'; }
+        if (r.paused) {
+            pauseBtn.style.display = 'none';
+            resumeBtn.style.display = '';
+        } else {
+            pauseBtn.style.display = '';
+            resumeBtn.style.display = 'none';
+        }
         prog.textContent = `${r.index + 1} / ${r.sentences.length}`;
     }
 
@@ -435,7 +508,8 @@
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.id = 'voice-picker-modal';
-        modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1500;justify-content:center;align-items:center;';
+        modal.style.cssText =
+            'display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1500;justify-content:center;align-items:center;';
         modal.innerHTML = `
             <div class="modal-content" style="width:540px;max-width:92vw;max-height:80vh;overflow-y:auto;">
                 <h3>🔊 Голос озвучивания</h3>
@@ -454,13 +528,22 @@
         document.body.appendChild(modal);
 
         const closeBtn = modal.querySelector('#voice-close');
-        const onClose = () => { modal.remove(); };
+        const onClose = () => {
+            modal.remove();
+        };
         closeBtn.addEventListener('click', onClose);
-        modal.addEventListener('click', e => { if (e.target.id === 'voice-picker-modal') onClose(); });
+        modal.addEventListener('click', (e) => {
+            if (e.target.id === 'voice-picker-modal') onClose();
+        });
 
-        modal.querySelector('#voice-test').addEventListener('click', () =>
-            Voice.say('Правильно. Не отклоняйтесь. Осталось пять секунд.', { cancel: true, allowRepeat: true })
-        );
+        modal
+            .querySelector('#voice-test')
+            .addEventListener('click', () =>
+                Voice.say('Правильно. Не отклоняйтесь. Осталось пять секунд.', {
+                    cancel: true,
+                    allowRepeat: true
+                })
+            );
 
         const rateEl = modal.querySelector('#voice-rate');
         rateEl.value = Voice.rate;
@@ -495,11 +578,12 @@
         const list = Voice.listVoices();
         c.innerHTML = '';
         if (list.length === 0) {
-            c.innerHTML = '<div style="color:#888;font-size:13px;padding:10px;">Голоса ещё не загружены. Нажмите «Проверить».</div>';
+            c.innerHTML =
+                '<div style="color:#888;font-size:13px;padding:10px;">Голоса ещё не загружены. Нажмите «Проверить».</div>';
             return;
         }
         const current = Voice._pickVoice();
-        list.forEach(v => {
+        list.forEach((v) => {
             const item = document.createElement('div');
             item.style.cssText = `padding:8px 12px;border-radius:4px;cursor:pointer;margin-bottom:4px;background:${current && current.name === v.name ? '#075985' : '#16161a'};color:#eee;font-size:13px;display:flex;justify-content:space-between;`;
             item.innerHTML = `<span>${v.name}</span><span style="color:#888;">${v.lang}${v.localService ? ' · offline' : ''}</span>`;

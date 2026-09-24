@@ -1,741 +1,2678 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="apple-touch-icon" href="/favicon.svg">
-<link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#0b0b12">
-<title>Vissort Studio Pro — Администратор</title>
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<style>
-@font-face{font-family:'Sivtsev';src:url('https://cdn.jsdelivr.net/gh/shoorick/sivtsev-font@master/Sivtsev-Eye-Chart.otf') format('opentype');font-weight:normal;font-style:normal;font-display:swap}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#111115;color:#eee;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-:root{--hdr-h:auto;--row-h:30px;--btn-h:26px;--btn-font:11px;--gap:4px;--btn-max-w:80px;--counter-w:40px}
-header{background:#1e1e24;padding:4px 8px;display:flex;flex-direction:column;gap:var(--gap);border-bottom:1px solid #3f3f46;min-height:calc(var(--row-h) + 8px);z-index:1000;user-select:none;overflow:visible}
-header.stimuli-mode{flex-direction:row;align-items:center;height:calc(var(--row-h) + 8px);min-height:calc(var(--row-h) + 8px);max-height:calc(var(--row-h) + 8px)}
-.header-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--gap);row-gap:6px;width:100%;padding:2px 0;overflow:visible}
-.header-section.section-device{flex:2 1 0}
-.header-section.section-files{flex:5 1 0}
-.header-section.section-account{flex:3 1 0;justify-content:flex-end}
-.header-section .btn{flex:0 0 auto;padding:0 6px;border-radius:3px;cursor:pointer;font-weight:bold;font-size:var(--btn-font);white-space:nowrap;font-family:inherit;line-height:1;height:var(--btn-h);display:inline-flex;align-items:center;justify-content:center;overflow:hidden;text-overflow:ellipsis;color:white;border:none}
-.header-section .btn-icon{padding:0 5px;font-size:13px}
-.header-section .btn:disabled{opacity:0.45;cursor:not-allowed}
-.header-section .status-chip,.header-section .counters,.header-section .header-sep{flex:0 0 auto}
-.header-section .header-sep{display:inline-block;width:1px;height:14px;background:#3f3f46;margin:0 4px;flex-shrink:0}
-.section-sep{width:2px;height:22px;background:linear-gradient(180deg,transparent,#3f3f46,transparent);margin:0 6px;flex-shrink:0}
-header.stimuli-mode .header-section > *:not(#btn-player):not(#btn-player-stop):not(#btn-player-pause):not(#btn-mode-toggle):not(#counters){display:none !important}
-header.stimuli-mode .section-sep{display:none !important}
-header.stimuli-mode .header-section{flex:0 0 auto;background:transparent;padding:0}
-@media (max-width:1300px){.header-section.section-work{flex:3 1 0}.header-section.section-device{flex:1.5 1 0}.header-section.section-files{flex:3.5 1 0}.header-section.section-account{flex:2 1 0}}
-@media (max-width:1000px){.section-sep{width:1px;height:16px;margin:0 3px}}
-@media (max-width:820px){.header-section .btn{padding:0 4px}.header-section .btn-icon{padding:0 3px;font-size:12px}}
-
-#camera-status{display:none !important}
-@media (max-width:700px){:root{--btn-font:10px;--gap:2px;--btn-h:22px;--btn-max-w:60px;--counter-w:30px;--row-h:26px;--hdr-h:64px}header{padding:3px 6px}}
-@media (min-width:1800px){:root{--hdr-h:82px;--row-h:34px;--btn-h:28px;--btn-font:12px;--gap:6px;--btn-max-w:96px;--counter-w:48px}header{padding:4px 14px}}
-.btn-secondary{background:#4b5563}
-.btn-warning{background:#eab308;color:#111}
-.btn-danger{background:#dc2626}
-.btn-success{background:#10b981}
-.btn-dynamic{background:#a855f7}
-.btn-reading{background:#0ea5e9}
-.btn-compare{background:#f97316}
-.btn-mode{background:#2d2d3a;color:#eee;border:1px solid #3f3f46}
-.btn-mode.active{background:#8b5cf6;border-color:#8b5cf6}
-.status-chip{display:inline-flex;align-items:center;background:#2d2d3a;color:#aaa;padding:0 6px;border-radius:3px;font-size:10px;height:20px;max-height:20px;white-space:nowrap;flex-shrink:0;max-width:130px;overflow:hidden;text-overflow:ellipsis}
-.status-chip.face-detected{color:#00ff00}
-.status-chip.face-missing{color:#ff6666}
-.status-chip.clickable{cursor:pointer}
-.status-chip.clickable:hover{background:#3a3a4a}
-
-#sync-chip{font-weight:bold;transition:background 0.2s}
-#sync-chip.online{color:#22c55e;background:#0a2a1a}
-#sync-chip.offline{color:#f59e0b;background:#2a1f05}
-#sync-chip.syncing{color:#38bdf8;background:#0a1a2a;animation:pulseSync 1.2s ease-in-out infinite}
-#sync-chip.queue{color:#fb923c;background:#2a1205}
-#sync-chip.errors{color:#ef4444;background:#2a0505}
-@keyframes pulseSync{0%,100%{opacity:1}50%{opacity:0.5}}
-
-.counters{display:inline-flex;align-items:center;gap:3px;font-size:10px;flex-shrink:0;flex-wrap:nowrap;margin-left:0}
-.counter{background:#2d2d3a;color:#ccc;padding:0 2px;border-radius:3px;height:20px;max-height:20px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex:0 0 var(--counter-w);width:var(--counter-w);min-width:var(--counter-w);max-width:var(--counter-w);overflow:hidden;font-size:10px}
-.counter b{color:#fff;margin-left:2px;font-weight:bold}
-.counter .label{display:inline}
-.main-layout{display:flex;flex:1;overflow:hidden}
-.graph-canvas{flex:1;background:#141419;background-image:radial-gradient(#2a2a35 1px,transparent 1px);background-size:20px 20px;position:relative;overflow:hidden;user-select:none}
-.stim-display-area{display:none;flex:1;background:#000;position:relative;overflow:hidden}
-#stim{font-size:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center}
-#response-buttons{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:none;gap:10px;z-index:20}
-.btn-response{background:#3a3a55;border:1px solid #3f3f46;color:#fff;font-size:24px;width:50px;height:50px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
-.btn-response:hover{background:#5a5a7a}
-.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1500}
-.modal-content{background:#1e1e24;padding:20px;border-radius:8px;width:700px;max-width:95%;max-height:90vh;overflow-y:auto}
-.modal-content h3{margin-top:0}
-#generator-modal .modal-content{width:95vw;max-width:1400px;max-height:90vh;overflow-y:auto;padding:15px}
-#generator-modal .modal-columns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:start}
-.modal-col label{display:block;margin-top:6px;font-size:12px}
-.modal-col input,.modal-col select{width:100%;padding:4px;margin-bottom:4px;background:#222;color:#fff;border:1px solid #444;border-radius:3px;font-family:inherit}
-.checkbox-row{display:flex;align-items:center;gap:6px;margin-top:4px}
-.checkbox-row input{width:auto;margin:0}
-.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:15px}
-.inspector-panel{width:560px;background:#1e1e24;border-left:1px solid #3f3f46;padding:8px;overflow-y:auto;font-size:12px;color:#00ff00;display:none}
-.inspector-panel h2{color:#ef4444;font-size:14px;text-align:center;margin-bottom:6px}
-.inspector-panel label{display:block;font-size:10px;text-transform:uppercase;margin-top:4px}
-.inspector-panel input,.inspector-panel select{width:100%;background:#22222a;border:1px solid #3f3f46;color:#fff;padding:2px 4px;border-radius:3px;font-size:12px;font-family:inherit}
-.panel-section{background:#16161a;border:1px solid #3f3f46;border-radius:4px;padding:6px;margin-bottom:6px}
-.panel-section h3{font-size:11px;border-bottom:1px solid #3f3f46;padding-bottom:2px;margin-bottom:4px}
-.insp-cols{column-count:2;column-gap:10px}
-.insp-cols .panel-section{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid}
-@media (max-width:900px){.inspector-panel{width:280px}.insp-cols{column-count:1}}
-.scenario-node{position:absolute;background:#22222a;border:2px solid #3f3f46;border-radius:6px;box-shadow:0 4px 8px rgba(0,0,0,0.4);display:flex;flex-direction:column;min-width:280px;min-height:260px;z-index:10;cursor:default}
-.scenario-node.active{border-color:#ef4444}
-.scenario-node.connection-source{border-color:#f59e0b;box-shadow:0 0 12px #f59e0b}
-.scenario-node.reading-node{border-color:#0ea5e9}
-.scenario-node.reading-node.active{border-color:#ef4444}
-.scenario-node.compare-node{border-color:#f97316}
-.scenario-node.compare-node.active{border-color:#ef4444}
-.node-header{background:#2d2d3a;padding:4px 6px;font-size:12px;font-weight:bold;text-align:center;border-bottom:1px solid #3f3f46;cursor:move;display:flex;justify-content:space-between;align-items:center}
-.node-header.reading-header{background:#075985}
-.node-header.compare-header{background:#7c2d12}
-.node-header span{flex:1}
-.node-header .start-checkbox{width:14px;height:14px;margin-left:5px;cursor:pointer}
-.node-content{display:flex;flex:1}
-.node-preview-area{flex:0 0 55%;display:flex;justify-content:center;align-items:center;padding:6px;background:#0b0b0d;border-right:1px solid #2a2a3a;min-height:120px;overflow:hidden}
-.node-info{flex:0 0 45%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:4px;font-size:10px;color:#a1a1aa;background:#16161e}
-.node-acuity{font-size:15px;margin-top:2px;color:#00ff88;font-weight:bold}
-.node-size-mm{font-size:13px;margin-top:3px;color:#ffcc00;font-weight:bold}
-.node-size-px{font-size:10px;color:#aa8833;margin-top:1px}
-.node-distance{font-size:11px;margin-top:3px;color:#88ccff}
-.node-inherit{font-size:12px;margin-top:2px;color:#ffaa88}
-.node-reading-book{font-size:12px;color:#7dd3fc;margin-top:3px;text-align:center;word-break:break-word;padding:0 4px}
-.node-reading-icon{font-size:56px;line-height:1}
-.node-reading-sub{font-size:10px;color:#64748b;margin-top:2px}
-.node-compare-icon{font-size:44px;line-height:1}
-.node-compare-sub{font-size:10px;color:#94a3b8;margin-top:2px;text-align:center}
-.node-body{display:flex;flex-direction:row;gap:3px;padding:4px;border-top:1px solid #2a2a3a;justify-content:center}
-.node-btn{flex:0 0 auto;padding:3px 6px;font-size:9px;border-radius:3px;border:none;cursor:pointer;font-weight:bold;color:#fff;text-align:center;position:relative;z-index:20;white-space:nowrap;font-family:inherit}
-.btn-node-connect{background:#10b981}
-.btn-node-loop{background:#a855f7}
-.btn-node-del{background:#dc2626}
-.node-resize-handle{position:absolute;right:0;bottom:0;width:12px;height:12px;background:#4b5563;cursor:se-resize;border-radius:4px 0 4px 0;z-index:15}
-.html-graph-line{position:absolute;transform-origin:top left;z-index:5;pointer-events:auto;cursor:pointer}
-.line-solid{height:3px;background:#10b981}
-.line-dashed{height:0;border-top:3px dashed #a855f7;background:transparent}
-.line-arrow{position:absolute;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#10b981;z-index:1000;pointer-events:auto;cursor:pointer;transform-origin:center;text-shadow:0 0 2px #000}
-.line-arrow.loop-arrow{color:#a855f7}
-#block-panel{position:fixed;bottom:0;left:0;width:100%;background:#1e1e24;border-top:1px solid #3f3f46;padding:4px 12px;z-index:500;display:none;flex-wrap:wrap;gap:6px;align-items:center}
-#block-panel select,#block-panel input[type="text"]{background:#22222a;color:#eee;border:1px solid #3f3f46;padding:2px 6px;border-radius:3px;font-size:11px;font-family:inherit}
-#block-list{position:fixed;bottom:38px;left:0;width:100%;background:#16161a;border-top:1px solid #3f3f46;padding:4px 12px;z-index:499;display:none;max-height:70px;overflow-y:auto}
-.block-tag{background:#2d2d3a;border:1px solid #3f3f46;border-radius:3px;padding:2px 8px;font-size:11px;color:#eee;display:inline-flex;align-items:center;gap:4px;margin:2px}
-.block-tag .remove-block{cursor:pointer;color:#dc2626;font-weight:bold}
-#hidden-video{position:fixed;left:-9999px;top:0;width:320px;height:240px;opacity:0;pointer-events:none}
-#calibration-video{width:100%;max-width:320px;border-radius:8px;background:#000}
-.calib-face-indicator{position:absolute;top:5px;left:5px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;font-size:12px;z-index:10;color:#fff}
-.calib-face-indicator.detected{background:rgba(0,255,0,0.3);color:#0f0;font-weight:bold}
-.calib-face-indicator.missing{background:rgba(255,0,0,0.3);color:#f00;font-weight:bold}
-.calib-video-wrapper{position:relative;display:inline-block}
-#grid-preview{display:grid;gap:2px;margin-bottom:8px}
-#grid-preview .grid-cell{width:40px;height:40px;border:1px solid #666;background:#222;cursor:pointer}
-#connection-menu{display:none;position:fixed;z-index:9999;background:#1e1e24;border:1px solid #3f3f46;border-radius:4px;padding:8px;box-shadow:0 4px 10px rgba(0,0,0,0.5);min-width:150px}
-#connection-menu label{font-size:11px;display:block;margin-top:4px}
-#connection-menu input[type="number"]{width:80px;margin-bottom:4px;background:#222;color:#fff;border:1px solid #444;border-radius:3px;padding:2px;font-family:inherit}
-.time-group{display:flex;gap:4px;align-items:center}
-.time-group input[type="number"]{flex:1}
-.time-group select{width:auto;padding:2px;background:#222;color:#fff;border:1px solid #444;border-radius:3px;font-family:inherit}
-.hide-in-stimuli{display:none !important}
-#reading-solid-settings{margin-top:10px}
-#reading-split-settings{display:none;margin-top:10px}
-#reading-gradient-settings{display:none;margin-top:10px}
-#reading-dynamic-settings{display:none;margin-top:10px}
-#reading-solid-settings label,#reading-split-settings label,#reading-gradient-settings label,#reading-dynamic-settings label{margin-top:5px}
-#reading-split-settings input[type="color"],#reading-gradient-settings input[type="color"],#reading-dynamic-settings input[type="color"],#reading-solid-settings input[type="color"]{width:40px;height:25px;padding:0;border:none}
-#reading-split-settings input[type="number"],#reading-gradient-settings input[type="number"]{width:70px}
-.split-color-row{display:flex;gap:10px;align-items:center}
-.acuity-hint{font-size:10px;color:#88ccff;margin-top:-3px;margin-bottom:4px}
-.file-upload-btn{display:inline-block;background:#4b5563;color:#fff;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-top:4px;font-family:inherit}
-.file-upload-btn:hover{background:#5a6573}
-#reading-file-name{font-size:11px;color:#88ccff;margin-left:8px}
-#reading-viewport{display:none;position:absolute;top:0;left:0;width:100%;height:100%;overflow-x:auto;overflow-y:hidden;background:#000;color:#000;line-height:1.5;z-index:10;user-select:text;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth}
-#reading-viewport::-webkit-scrollbar{display:none}
-#reading-content{height:100%;width:100%;box-sizing:border-box;padding:20px 40px 120px 40px;font-size:24px;font-weight:400;font-synthesis:none;column-fill:auto;word-break:keep-all;overflow-wrap:normal;word-wrap:normal;hyphens:none;white-space:normal}
-#reading-content p{margin:0 0 1em 0;orphans:2;widows:2}
-#reading-content,#reading-content *{font-weight:inherit;font-synthesis:none}
-#reading-content h1,#reading-content h2,#reading-content h3,#reading-content h4,#reading-content h5,#reading-content h6{font-size:inherit;margin:0 0 1em 0}
-#reading-toolbar{display:none;position:absolute;bottom:0;left:0;width:100%;background:rgba(20,20,25,0.95);padding:10px 16px;z-index:25;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;border-top:1px solid #3f3f46}
-#reading-toolbar .btn{font-size:14px;padding:6px 14px;height:auto}
-#reading-page-info{color:#fff;font-size:14px;background:#222;padding:6px 14px;border-radius:4px;min-width:100px;text-align:center}
-#reading-font-input{background:#2a2a35;color:#fff;border:1px solid #3f3f46;border-radius:4px;padding:6px 10px;font-size:13px;font-family:'Segoe UI',Tahoma,sans-serif;min-width:160px;max-width:220px}
-#reading-font-input:focus{outline:1px solid #8b5cf6;border-color:#8b5cf6}
-#reading-font-picker,#reading-font-sivtsev,#reading-font-file,#reading-font-system{font-size:14px;padding:6px 10px;min-width:auto}
-#reading-bold-toggle{font-family:'Times New Roman',Times,serif;font-weight:bold;font-size:16px;width:40px;padding:4px 8px;background:#2d2d3a;color:#eee;border:1px solid #3f3f46}
-#reading-bold-toggle.active{background:#8b5cf6;border-color:#8b5cf6;color:#fff}
-#font-picker-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:10000;justify-content:center;align-items:center}
-#font-picker-modal.visible{display:flex}
-.font-picker-content{background:#1e1e24;border-radius:8px;width:460px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);border:1px solid #3f3f46}
-.font-picker-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #3f3f46}
-.font-picker-header h3{margin:0;font-size:15px;color:#eee}
-#font-picker-search{margin:12px 16px;padding:8px 12px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;font-size:14px;font-family:inherit;outline:none;flex:0 0 auto}
-#font-picker-search:focus{border-color:#8b5cf6}
-.font-picker-list{flex:1;overflow-y:auto;padding:0 16px 16px 16px;min-height:0}
-.font-picker-item{padding:8px 12px;cursor:pointer;border-radius:4px;color:#eee;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.font-picker-item:hover{background:#2d2d3a}
-.font-picker-item.active{background:#8b5cf6;color:#fff}
-.font-picker-item .preview{font-size:15px;opacity:0.85;white-space:nowrap}
-.font-picker-empty{padding:20px;color:#888;text-align:center;font-size:13px}
-.book-picker-item{padding:8px 12px;cursor:pointer;border-radius:4px;color:#eee;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid transparent;margin-bottom:4px;background:#16161a}
-.book-picker-item:hover{background:#2d2d3a}
-.book-picker-item.active{background:#075985;border-color:#0ea5e9}
-.book-picker-item .name{font-weight:bold;color:#7dd3fc}
-.book-picker-item .meta{font-size:11px;color:#888;margin-top:2px}
-.book-picker-empty{padding:20px;color:#666;text-align:center;font-size:13px;font-style:italic}
-.cmp-grid-preview{display:inline-grid;gap:3px;margin:6px 0}
-.cmp-grid-cell{width:42px;height:42px;border:1px solid #555;background:#222;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888;border-radius:3px}
-.cmp-grid-cell.active{background:#7c2d12;border-color:#f97316;color:#fff;font-weight:bold}
-.cmp-cell-block{border:1px solid #444;border-radius:4px;padding:6px;margin-top:6px;background:#131316}
-#physio-indicator{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
-#live-distance-indicator{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
-#reading-timer{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;font-family:'Segoe UI',Tahoma,sans-serif;z-index:35;display:none;letter-spacing:0.5px}
-
-#sync-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e24;border:1px solid #3f3f46;border-radius:8px;padding:12px 20px;font-size:13px;color:#eee;z-index:9998;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:transform 0.3s,opacity 0.3s;max-width:90vw}
-#sync-banner.visible{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
-#sync-banner .icon{font-size:18px;flex-shrink:0}
-#sync-banner .text{flex:1;min-width:0}
-#sync-banner .actions{display:flex;gap:8px;flex-shrink:0}
-#sync-banner button{background:#3a3a4a;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600}
-#sync-banner button:hover{background:#4a4a5a}
-#sync-banner button.primary{background:#0ea5e9}
-#sync-banner button.primary:hover{background:#38bdf8}
-
-#queue-modal .modal-content{width:720px;max-width:95vw}
-#queue-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
-#queue-table th{text-align:left;padding:8px 6px;color:#94a3b8;border-bottom:1px solid #3f3f46;font-weight:600}
-#queue-table td{padding:8px 6px;border-bottom:1px solid #1e1e24}
-#queue-table tr.problematic{background:rgba(220,38,38,0.1)}
-#queue-table tr.problematic td{color:#f87171}
-#queue-empty{text-align:center;color:#666;padding:30px;font-style:italic}
-.queue-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-.queue-actions .btn{font-size:13px;padding:8px 16px;height:auto}
-</style>
-</head>
-<body>
-<header>
-<div class="header-row">
-
-<!-- === СЕКЦИЯ 1: РАБОТА === -->
-<div class="header-section section-work">
-<button class="btn btn-warning btn-icon" id="btn-player" title="Плеер">▶</button>
-<button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">⏹</button>
-<button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">⏸</button>
-<button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
-<span class="header-sep"></span>
-<button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>
-<button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
-<button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
-<button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">⚖️</button>
-<button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
-<button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
-<button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
-<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
-</div>
-
-<span class="section-sep"></span>
-
-<!-- === СЕКЦИЯ 2: ОБОРУДОВАНИЕ === -->
-<div class="header-section section-device">
-<button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Включить камеру">📷</button>
-<button class="btn btn-success btn-icon" id="btn-disable-camera" style="display:none;" title="Выключить камеру">📷</button>
-<button class="btn btn-warning btn-icon" id="btn-calibrate-camera" disabled title="Калибровка камеры">🎥</button>
-<button class="btn btn-warning btn-icon" id="btn-calibrate-screen" title="Калибровка экрана">📐</button>
-<span class="header-sep"></span>
-<span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
-<span class="status-chip" id="distance-display" title="Дистанция">—</span>
-<span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
-</div>
-
-<span class="section-sep"></span>
-
-<!-- === СЕКЦИЯ 3: ФАЙЛЫ === -->
-<div class="header-section section-files">
-<button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
-<button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
-<input type="file" id="file-input" accept=".json" style="display:none;">
-<input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-<button class="btn btn-secondary btn-icon" id="btn-select-folder" title="Папка сценариев">📁</button>
-<button class="btn btn-secondary btn-icon" id="btn-select-templates-folder" title="Папка заготовок">📋</button>
-<input type="file" id="templates-folder-input" webkitdirectory directory multiple style="display:none;">
-<button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
-<span class="header-sep"></span>
-<span class="status-chip" id="folder-status" title="Папка">📁 —</span>
-<span class="status-chip" id="templates-folder-status" title="Папка заготовок">📋 —</span>
-<div class="counters" id="counters">
-<span class="counter" title="Полных серий"><span class="label">П:</span> <b id="cnt-completed">0</b></span>
-<span class="counter" title="Успешных серий"><span class="label">У:</span> <b id="cnt-success">0</b></span>
-<span class="counter" title="Неуспешных серий"><span class="label">Н:</span> <b id="cnt-failed">0</b></span>
-<span class="counter" title="Правильных ответов"><span class="label">✓</span> <b id="cnt-series-correct">0</b></span>
-<span class="counter" title="Неправильных ответов"><span class="label">✗</span> <b id="cnt-series-incorrect">0</b></span>
-<span class="counter" title="Без ответа"><span class="label">∅</span> <b id="cnt-series-noanswer">0</b></span>
-</div>
-</div>
-
-<span class="section-sep"></span>
-
-<!-- === СЕКЦИЯ 4: АККАУНТ === -->
-<div class="header-section section-account">
-<span class="status-chip clickable" id="sync-chip" title="Синхронизация — нажмите для очереди">🟢 Онлайн</span>
-<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
-<span class="header-sep"></span>
-<button class="btn btn-secondary" id="btn-auth">Войти</button>
-<span class="status-chip" id="user-email" title="Email" style="display:none;"></span>
-</div>
-
-</div>
-</header>
-<div class="main-layout" id="main-layout">
-<div class="graph-canvas" id="canvas"></div>
-<div class="stim-display-area" id="stim-display">
-<div id="stim"></div>
-<div id="reading-viewport"><div id="reading-content"></div></div>
-<div id="physio-indicator"></div>
-<div id="live-distance-indicator"></div>
-<div id="reading-timer"></div>
-<div id="reading-toolbar">
-<button class="btn btn-secondary" id="reading-prev" title="Предыдущая страница (←)">◀ Назад</button>
-<button class="btn btn-warning" id="reading-play-pause" title="Скрыть/показать текст (Пробел)">⏸ Пауза</button>
-<button class="btn btn-secondary" id="reading-next" title="Следующая страница (→)">Вперёд ▶</button>
-<span id="reading-page-info">Стр. 1 / 1</span>
-<button class="btn btn-danger" id="reading-not-see" title="Текст сливается — увеличить размер">🔻 Не вижу</button>
-<button class="btn btn-success" id="reading-see-well" title="Текст мелкий — уменьшить размер">🔺 Вижу хорошо</button>
-<input type="text" id="reading-font-input" value="Segoe UI" placeholder="Шрифт" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="vissort-reading-font-family-x" title="Введите имя шрифта вручную">
-<datalist id="reading-font-list">
-<option value="Sivtsev">Сивцев</option><option value="Segoe UI">Segoe UI</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Calibri">Calibri</option><option value="Cambria">Cambria</option><option value="Consolas">Consolas</option><option value="Courier New">Courier New</option><option value="Garamond">Garamond</option><option value="Georgia">Georgia</option><option value="Lucida Console">Lucida Console</option><option value="Palatino Linotype">Palatino Linotype</option><option value="Comic Sans MS">Comic Sans MS</option><option value="Bookman Old Style">Bookman Old Style</option><option value="Franklin Gothic Medium">Franklin Gothic Medium</option><option value="Century Gothic">Century Gothic</option><option value="MS Sans Serif">MS Sans Serif</option><option value="Times New Roman">Times New Roman</option>
-</datalist>
-<button class="btn btn-secondary" id="reading-font-picker" title="Выбрать шрифт из списка">▾ Список</button>
-<button class="btn btn-warning" id="reading-font-sivtsev" title="Быстро переключить на шрифт Сивцева">Сивцев</button>
-<button class="btn btn-secondary" id="reading-font-file" title="Загрузить свой файл шрифта">📂</button>
-<input type="file" id="reading-font-file-input" accept=".ttf,.otf,.woff,.woff2" style="display:none;">
-<button class="btn btn-secondary" id="reading-font-system" title="Загрузить все системные шрифты">🖥️</button>
-<button class="btn" id="reading-bold-toggle" title="Жирный шрифт">B</button>
-<button class="btn btn-success" id="reading-bookmark" title="Сохранить закладку">🔖 Закладка</button>
-<button class="btn btn-dynamic" id="reading-open-bookmark" title="Открыть сохранённую закладку">📖 Открыть закладку</button>
-<button class="btn btn-danger" id="reading-finish" title="Закончить узел чтения">⏹ Закончить</button>
-</div>
-<div id="response-buttons">
-<button class="btn-response" data-dir="вверх">▲</button>
-<button class="btn-response" data-dir="вниз">▼</button>
-<button class="btn-response" data-dir="влево">◀</button>
-<button class="btn-response" data-dir="вправо">▶</button>
-<button class="btn-response" data-answer="да" style="display:none;width:auto;padding:0 20px;">Да</button>
-<button class="btn-response" data-answer="нет" style="display:none;width:auto;padding:0 20px;">Нет</button>
-</div>
-</div>
-<div class="inspector-panel" id="inspector"></div>
-</div>
-
-<div id="block-panel" style="display:none;">
-<span>Конструктор:</span>
-<input type="text" id="block-name-input" placeholder="Название блока">
-<select id="block-select">
-<option value="warmup">Разминка</option>
-<option value="complex">Сложность</option>
-<option value="random">Случайные</option>
-<option value="custom">Пользовательский</option>
-</select>
-<button class="btn btn-success" id="btn-add-block">➕ Добавить</button>
-<button class="btn btn-danger" id="btn-clear-blocks">🗑 Очистить</button>
-<span id="block-count">Блоков: 0</span>
-<button class="btn btn-warning" id="btn-generate-sequence">⚡ Сгенерировать</button>
-</div>
-<div id="block-list"></div>
-
-<div id="sync-banner">
-<span class="icon" id="sync-banner-icon">🟢</span>
-<span class="text" id="sync-banner-text">Готово</span>
-<div class="actions">
-<button id="sync-banner-action" style="display:none;">Открыть</button>
-<button id="sync-banner-close">×</button>
-</div>
-</div>
-
-<div class="modal" id="queue-modal">
-<div class="modal-content">
-<h3>📋 Очередь синхронизации</h3>
-<p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Изменения, которые ещё не отправлены в облако. Отправляются автоматически при появлении интернета.</p>
-<div id="queue-body">
-<table id="queue-table">
-<thead><tr><th>Тип</th><th>Действие</th><th>ID</th><th>Создано</th><th>Попыток</th><th>Статус</th></tr></thead>
-<tbody id="queue-tbody"></tbody>
-</table>
-<div id="queue-empty" style="display:none;">Очередь пуста. Всё синхронизировано.</div>
-</div>
-<div class="modal-footer queue-actions">
-<button class="btn btn-warning" id="queue-sync-now">🔄 Синхронизировать сейчас</button>
-<button class="btn btn-danger" id="queue-clear">🗑 Очистить всё</button>
-<button class="btn btn-secondary" id="queue-close">Закрыть</button>
-</div>
-</div>
-</div>
-
-<div class="modal" id="generator-modal">
-<div class="modal-content">
-<h3>Режимы</h3>
-<p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">Это <b>черновик</b>. Настройте параметры и нажмите <b>📌 В граф</b>, чтобы создать узел на холсте. Либо нажмите <b>Применить</b>, чтобы запустить автотренировку без графа.</p>
-<div class="modal-columns">
-<div class="modal-col">
-<label>Режим тренировки</label>
-<select id="gen-mode"><option value="близорукость">Близорукость</option><option value="дальнозоркость">Дальнозоркость</option><option value="общая">Общая</option></select>
-<div class="checkbox-row"><input type="checkbox" id="gen-active" checked><label>Активная тренировка</label></div>
-<label>Тип тренировки</label>
-<select id="gen-training-type"><option value="single">Один стимул</option><option value="compare">Сравнение</option><option value="reading">Чтение</option></select>
-<div id="single-grid-settings" style="display:block;margin-top:10px;">
-<label>Размер сетки для одиночного стимула</label>
-<div style="display:flex;gap:4px;align-items:center;">
-<input type="number" id="gen-single-grid-x" value="1" min="1" max="5" style="width:50px;">
-<span>×</span>
-<input type="number" id="gen-single-grid-y" value="1" min="1" max="5" style="width:50px;">
-</div>
-<div class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="gen-single-random-pos"><label>Случайное положение стимула</label></div>
-<div class="checkbox-row" style="margin-top:12px;padding-top:8px;border-top:1px solid #444;"><input type="checkbox" id="gen-single-stim-dynamic-enabled"><label>🎨 Динамика цвета стимула</label></div>
-<div id="single-stim-dynamic-settings" style="display:none;margin-top:6px;">
-<div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-single-stim-color1" value="#ff0000"></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-mid-enabled"><label>Цвет 3</label></div>
-<div class="split-color-row" id="single-stim-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-single-stim-color3" value="#ffff00"></div>
-<div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-single-stim-color2" value="#0000ff"></div>
-<label>Время показа стимула</label>
-<div class="time-group"><input type="number" id="gen-single-stim-duration" value="10" min="0.1" step="0.1"><select id="gen-single-stim-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-loop"><label>Повторять цикл</label></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-stim-reverse"><label>Пинг-понг</label></div>
-</div>
-<div class="checkbox-row" style="margin-top:12px;padding-top:8px;border-top:1px solid #444;"><input type="checkbox" id="gen-single-bg-dynamic-enabled"><label>🖼️ Динамика цвета фона</label></div>
-<div id="single-bg-dynamic-settings" style="display:none;margin-top:6px;">
-<div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-single-bg-color1" value="#ff0000"></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-mid-enabled"><label>Цвет 3</label></div>
-<div class="split-color-row" id="single-bg-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-single-bg-color3" value="#ffff00"></div>
-<div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-single-bg-color2" value="#0000ff"></div>
-<label>Время показа фона</label>
-<div class="time-group"><input type="number" id="gen-single-bg-duration" value="10" min="0.1" step="0.1"><select id="gen-single-bg-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-loop"><label>Повторять цикл</label></div>
-<div class="checkbox-row"><input type="checkbox" id="gen-single-bg-reverse"><label>Пинг-понг</label></div>
-</div>
-</div>
-<div id="compare-settings" style="display:none;margin-top:10px;">
-<label>Подрежим сравнения</label>
-<select id="gen-compare-mode"><option value="direction">Сравнение направлений</option><option value="find_same">Найди одинаковые</option></select>
-<label>Размер сетки</label>
-<div style="display:flex;gap:4px;align-items:center;">
-<input type="number" id="gen-grid-x" value="3" min="1" max="5" style="width:50px;">
-<span>×</span>
-<input type="number" id="gen-grid-y" value="3" min="1" max="5" style="width:50px;">
-</div>
-<label>Активные клетки (кликните для выбора)</label>
-<div id="grid-preview"></div>
-<div id="cell-params-container"></div>
-</div>
-<div id="reading-settings" style="display:none;margin-top:10px;">
-<label>Текст для чтения</label>
-<textarea id="gen-reading-text" rows="4" style="width:100%;background:#222;color:#fff;border:1px solid #444;border-radius:3px;padding:4px;font-family:inherit;">Пример текста для чтения.</textarea>
-<label>Загрузить текст из файла</label>
-<input type="file" id="reading-file-input" accept=".txt,.fb2,.epub" style="display:none;">
-<label for="reading-file-input" class="file-upload-btn">📂 Выбрать файл</label>
-<span id="reading-file-name"></span>
-<label>Цвет текста</label>
-<input type="color" id="gen-reading-text-color" value="#000000">
-<label>Тип фона</label>
-<select id="gen-reading-bg-mode"><option value="solid" selected>Сплошной цвет</option><option value="split">Две половины</option><option value="gradient">Градиент</option><option value="dynamic">Динамический</option></select>
-<div id="reading-solid-settings"><label>Цвет фона</label><input type="color" id="gen-reading-bg-color" value="#ffffff"></div>
-<div id="reading-split-settings"><label>Ширина левой (%)</label><input type="number" id="gen-reading-split-left-width" value="50" min="0" max="100"><div class="split-color-row"><label>Цвет левой:</label><input type="color" id="gen-reading-left-color" value="#000000"></div><div class="split-color-row"><label>Цвет правой:</label><input type="color" id="gen-reading-right-color" value="#ffffff"></div></div>
-<div id="reading-gradient-settings"><div class="checkbox-row"><input type="checkbox" id="gen-reading-gradient-mid-enabled" checked><label>Использовать цвет 3</label></div><div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-reading-gradient-left-color" value="#ffffff"></div><div class="split-color-row" id="gradient-mid-row"><label>Цвет 3:</label><input type="color" id="gen-reading-gradient-mid-color" value="#cccccc"></div><label id="gradient-mid-pos-label">Позиция цвета 3 (%)</label><input type="number" id="gen-reading-gradient-mid-position" value="50" min="0" max="100" step="1"><div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-reading-gradient-right-color" value="#000000"></div></div>
-<div id="reading-dynamic-settings"><label>Режим динамики</label><select id="gen-reading-dynamic-mode"><option value="simple" selected>Простой</option><option value="rgb">RGB-цикл</option><option value="physiological">Физиологический</option></select><div id="reading-dynamic-simple-colors"><div class="split-color-row"><label>Начальный цвет:</label><input type="color" id="gen-reading-dynamic-start-color" value="#ff0000"></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-mid-enabled"><label>Цвет 3</label></div><div class="split-color-row" id="dynamic-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-reading-dynamic-mid-color" value="#ffff00"></div><div class="split-color-row"><label>Конечный цвет:</label><input type="color" id="gen-reading-dynamic-end-color" value="#0000ff"></div></div><div id="reading-dynamic-physio-settings" style="display:none;"><label>Шаг диоптрий</label><select id="gen-reading-dynamic-step"><option value="0.1" selected>0.1 дптр</option><option value="0.2">0.2 дптр</option><option value="0.3">0.3 дптр</option><option value="0.4">0.4 дптр</option><option value="0.5">0.5 дптр</option><option value="0.6">0.6 дптр</option><option value="0.7">0.7 дптр</option><option value="0.8">0.8 дптр</option><option value="0.9">0.9 дптр</option><option value="1.0">1.0 дптр</option><option value="1.1">1.1 дптр</option><option value="1.2">1.2 дптр</option><option value="1.3">1.3 дптр</option><option value="1.4">1.4 дптр</option><option value="1.5">1.5 дптр</option><option value="1.6">1.6 дптр</option></select><label id="gen-reading-dynamic-step-duration-label">Длительность шага</label><div class="time-group"><input type="number" id="gen-reading-dynamic-step-duration" value="1" min="0.1" step="0.1"><select id="gen-reading-dynamic-step-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-show-label" checked><label>Показывать дптр</label></div><div class="acuity-hint" id="physio-list-hint">0.0 → +1.6 дптр</div></div><div id="reading-dynamic-duration-settings"><label>Время полного цикла</label><div class="time-group"><input type="number" id="gen-reading-dynamic-duration" value="10" min="0.1" step="0.1"><select id="gen-reading-dynamic-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-loop"><label>Повторять цикл</label></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-reverse"><label>Пинг-понг</label></div></div>
-</div>
-<label>Количество серий</label>
-<input type="number" id="gen-series" value="5" min="1" max="20">
-<label>Размер серии</label>
-<select id="gen-series-size"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option></select>
-<label>Порог правильных</label>
-<input type="number" id="gen-threshold" value="4" min="1" max="8">
-</div>
-<div class="modal-col">
-<label>Тип стимула</label>
-<select id="gen-type"><option value="LETTER_E" selected>Буква Е</option><option value="LANDOLT">Кольцо Ландольта</option></select>
-<div class="checkbox-row"><input type="checkbox" id="chk-stim-size" checked><label>Острота зрения активна</label></div>
-<label>Начальная острота V</label>
-<select id="gen-start-acuity"><option value="0.1">0.1</option><option value="0.2">0.2</option><option value="0.3">0.3</option><option value="0.4">0.4</option><option value="0.5" selected>0.5</option><option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option><option value="0.9">0.9</option><option value="1.0">1.0</option><option value="1.1">1.1</option><option value="1.2">1.2</option><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option><option value="1.6">1.6</option><option value="1.7">1.7</option><option value="1.8">1.8</option><option value="1.9">1.9</option><option value="2.0">2.0</option></select>
-<label>Конечная острота V</label>
-<select id="gen-end-acuity"><option value="0.1">0.1</option><option value="0.2">0.2</option><option value="0.3">0.3</option><option value="0.4">0.4</option><option value="0.5">0.5</option><option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option><option value="0.9">0.9</option><option value="1.0">1.0</option><option value="1.1">1.1</option><option value="1.2">1.2</option><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option><option value="1.6">1.6</option><option value="1.7">1.7</option><option value="1.8">1.8</option><option value="1.9">1.9</option><option value="2.0" selected>2.0</option></select>
-<label>Шаг остроты</label>
-<select id="gen-acuity-step"><option value="0.05">0.05</option><option value="0.1" selected>0.1</option><option value="0.2">0.2</option><option value="0.5">0.5</option></select>
-<label>Дистанция (м)</label>
-<input type="number" id="gen-distance" value="1" min="0.1" max="20" step="0.1">
-<label>PPI экрана</label>
-<input type="number" id="gen-ppi" value="96" min="20" max="1200" step="1">
-</div>
-<div class="modal-col">
-<div class="checkbox-row"><input type="checkbox" id="chk-stim-color" checked><label>Цвет стимула активен</label></div>
-<label>Начальный цвет стимула</label>
-<input type="color" id="gen-start-color" value="#00ff00">
-<label>Конечный цвет стимула</label>
-<input type="color" id="gen-end-color" value="#ff0000">
-<label>Шаг RGB</label>
-<input type="number" id="gen-color-step" value="16" min="1" max="255">
-<div class="checkbox-row"><input type="checkbox" id="chk-bg-color" checked><label>Цвет фона активен</label></div>
-<label>Начальный цвет фона</label>
-<input type="color" id="gen-start-bg" value="#00ff00">
-<label>Конечный цвет фона</label>
-<input type="color" id="gen-end-bg" value="#000000">
-<label>Шаг фона RGB</label>
-<input type="number" id="gen-bg-step" value="16" min="1" max="255">
-<div class="checkbox-row"><input type="checkbox" id="gen-bg-cycle" checked><label>Циклическая анимация фона</label></div>
-<label>Задержка 1</label>
-<div class="time-group"><input type="number" id="gen-delay1" value="1" min="0" step="0.1"><select id="gen-delay1-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
-<label>Задержка 2</label>
-<div class="time-group"><input type="number" id="gen-delay2" value="1" min="0" step="0.1"><select id="gen-delay2-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
-</div>
-</div>
-<div class="modal-footer">
-<button class="btn btn-reading" id="gen-to-node" title="Создать узел на холсте">📌 В граф</button>
-<button class="btn" id="gen-apply">Применить</button>
-<button class="btn btn-secondary" id="gen-cancel">Отмена</button>
-</div>
-</div>
-</div>
-
-<div class="modal" id="calibration-modal">
-<div class="modal-content" style="width:400px;text-align:center;">
-<h3>🎯 Калибровка камеры</h3>
-<p style="font-size:12px;">Расположитесь на указанном расстоянии от экрана.</p>
-<label>Расстояние до камеры (см)</label>
-<input type="number" id="calib-distance" value="100" min="10" max="500" style="width:100%;margin-bottom:10px;">
-<div class="calib-video-wrapper">
-<video id="calibration-video" autoplay playsinline></video>
-<div id="calib-face-indicator" class="calib-face-indicator missing">Нет лица</div>
-</div>
-<div class="modal-footer" style="justify-content:center;">
-<button class="btn" id="calibrate-confirm">Калибровать</button>
-<button class="btn btn-secondary" id="calibrate-cancel">Отмена</button>
-</div>
-</div>
-</div>
-
-<div class="modal" id="screen-calib-modal">
-<div class="modal-content" style="width:700px;max-width:95%;">
-<h3>📐 Калибровка экрана</h3>
-<p style="font-size:13px;color:#ccc;margin:8px 0;">Измерьте длину красной полосы линейкой в мм.</p>
-<div style="margin:20px 0;padding:15px 0;background:#0b0b0d;border-radius:6px;">
-<div id="screen-calib-bar" style="width:400px;height:30px;background:#ff0000;margin:0 auto;"></div>
-<div style="text-align:center;color:#888;font-size:11px;margin-top:6px;">← 400 пикселей →</div>
-</div>
-<label style="font-size:12px;">Измеренная длина (мм):</label>
-<input type="number" id="screen-calib-mm" value="106" min="5" max="500" step="0.5" style="font-size:16px;padding:6px;width:100%;">
-<div style="margin-top:12px;padding:10px;background:#0b0b0d;border-radius:6px;font-size:12px;">
-<div>PPI: <b id="screen-calib-result" style="color:#00ff88;font-size:16px;">96</b></div>
-<div id="screen-calib-detail" style="color:#888;margin-top:4px;"></div>
-</div>
-<div style="font-size:11px;color:#888;margin-top:10px;">Авто: <span id="screen-calib-auto">—</span></div>
-<div class="modal-footer" style="justify-content:center;">
-<button class="btn btn-success" id="screen-calib-apply">Применить</button>
-<button class="btn btn-secondary" id="screen-calib-cancel">Отмена</button>
-</div>
-</div>
-</div>
-
-<div class="modal" id="scenario-time-modal">
-<div class="modal-content" style="width:560px;">
-<h3>⏱ Оценка времени сценария</h3>
-<div id="scenario-time-body" style="font-size:13px;color:#ccc;line-height:1.6;margin-top:10px;"><div>Анализ графа…</div></div>
-<div class="modal-footer"><button class="btn btn-secondary" id="scenario-time-close">Закрыть</button></div>
-</div>
-</div>
-
-<div class="modal" id="auth-modal">
-<div class="modal-content" style="width:300px;">
-<h3 id="auth-title">Вход</h3>
-<label>Email</label>
-<input type="email" id="auth-email" placeholder="you@example.com">
-<label>Пароль</label>
-<input type="password" id="auth-password">
-<label id="auth-name-label" style="display:none;">Имя</label>
-<input type="text" id="auth-name" style="display:none;">
-<div class="modal-footer" style="justify-content:center;">
-<button class="btn btn-secondary" id="auth-toggle">Нет аккаунта? Регистрация</button>
-<button class="btn" id="auth-submit">Войти</button>
-</div>
-</div>
-</div>
-
-<div class="modal" id="pause-modal">
-<div class="modal-content" style="width:300px;text-align:center;">
-<h2>Тренировка приостановлена</h2>
-<p>Три серии подряд без ответов.</p>
-<button class="btn" id="pause-continue">▶ Продолжить</button>
-<button class="btn btn-danger" id="pause-exit">✕ Выход</button>
-</div>
-</div>
-
-<div class="modal" id="library-modal">
-<div class="modal-content" style="width:500px;">
-<h3>Библиотека сценариев</h3>
-<div id="scenario-list" style="max-height:300px;overflow-y:auto;margin-bottom:10px;"></div>
-<button class="btn btn-success" id="btn-save-current-scenario">💾 Сохранить текущий сценарий</button>
-<button class="btn btn-secondary" id="btn-library-close">Закрыть</button>
-</div>
-</div>
-
-<div class="modal" id="users-modal">
-<div class="modal-content" style="width:500px;">
-<h3>Пользователи</h3>
-<div id="user-list" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div>
-<select id="selected-user" style="width:100%;margin-bottom:5px;"></select>
-<select id="selected-scenario" style="width:100%;margin-bottom:5px;"></select>
-<button class="btn btn-warning" id="btn-assign-scenario">Назначить выбранному пользователю</button>
-<button class="btn btn-secondary" id="btn-users-close">Закрыть</button>
-</div>
-</div>
-
-<div class="modal" id="book-picker-modal">
-<div class="modal-content" style="width:560px;">
-<h3>Выбор книги</h3>
-<p style="font-size:12px;color:#999;margin:6px 0 12px;">Выберите из загруженных книг или загрузите новую.</p>
-<div id="book-picker-list" style="max-height:320px;overflow-y:auto;margin-bottom:12px;"></div>
-<div style="padding-top:10px;border-top:1px solid #3f3f46;">
-<input type="file" id="book-picker-file" accept=".txt,.fb2,.epub" style="display:none;">
-<label for="book-picker-file" class="file-upload-btn">📂 Загрузить книгу (.txt / .fb2 / .epub)</label>
-<span id="book-picker-file-name" style="font-size:11px;color:#88ccff;margin-left:8px;"></span>
-</div>
-<div class="modal-footer">
-<button class="btn btn-danger" id="book-picker-detach">❌ Отвязать книгу</button>
-<button class="btn btn-secondary" id="book-picker-close">Закрыть</button>
-</div>
-</div>
-</div>
-
-<div id="font-picker-modal">
-<div class="font-picker-content">
-<div class="font-picker-header">
-<h3>Выбор шрифта</h3>
-<button class="btn btn-secondary" id="font-picker-close" title="Закрыть">✕</button>
-</div>
-<input type="text" id="font-picker-search" placeholder="Поиск шрифта..." autocomplete="off" autocorrect="off" spellcheck="false">
-<div id="font-picker-list" class="font-picker-list"></div>
-</div>
-</div>
-
-<div id="connection-menu"></div>
-<video id="hidden-video" playsinline muted></video>
-
-<script src="data-layer.js" defer></script>
-<script src="app.js" defer></script>
-<script src="keepalive.js" defer></script>
-<script src="voice.js" defer></script>
-
-<script>
-(function installSyncUI() {
-    'use strict';
-    function waitForData() {
-        return new Promise(resolve => {
-            if (window.Data) return resolve(window.Data);
-            const t = setInterval(() => {
-                if (window.Data) { clearInterval(t); resolve(window.Data); }
-            }, 50);
-        });
-    }
-    let lastBannerState = null;
-    function renderChip(status) {
-        const chip = document.getElementById('sync-chip');
-        if (!chip) return;
-        chip.classList.remove('online', 'offline', 'syncing', 'queue', 'errors');
-        if (status.processing) { chip.textContent = '🔄 Синк…'; chip.classList.add('syncing'); return; }
-        if (status.problematic > 0) { chip.textContent = `❗ ${status.problematic} ошибок`; chip.classList.add('errors'); return; }
-        if (status.queueSize > 0) { chip.textContent = `⚠️ ${status.queueSize} изм.`; chip.classList.add('queue'); return; }
-        if (status.online) { chip.textContent = '🟢 Онлайн'; chip.classList.add('online'); }
-        else { chip.textContent = '📡 Офлайн'; chip.classList.add('offline'); }
-    }
-    function showBanner(icon, text, actionLabel, actionFn) {
-        const banner = document.getElementById('sync-banner');
-        const iconEl = document.getElementById('sync-banner-icon');
-        const textEl = document.getElementById('sync-banner-text');
-        const actionBtn = document.getElementById('sync-banner-action');
-        if (!banner) return;
-        iconEl.textContent = icon; textEl.textContent = text;
-        if (actionLabel) { actionBtn.style.display = 'inline-block'; actionBtn.textContent = actionLabel; actionBtn.onclick = actionFn || null; }
-        else { actionBtn.style.display = 'none'; actionBtn.onclick = null; }
-        banner.classList.add('visible');
-        clearTimeout(banner._hideTimer);
-        banner._hideTimer = setTimeout(() => banner.classList.remove('visible'), 4500);
-    }
-    function hideBanner() { const b = document.getElementById('sync-banner'); if (b) b.classList.remove('visible'); }
-    async function refreshQueueModal() {
-        const m = document.getElementById('queue-modal');
-        if (!m || m.style.display !== 'flex') return;
-        const Data = window.Data; if (!Data) return;
-        const queue = await Data.getQueue();
-        const tbody = document.getElementById('queue-tbody');
-        const empty = document.getElementById('queue-empty');
-        const table = document.getElementById('queue-table');
-        tbody.innerHTML = '';
-        if (queue.length === 0) { table.style.display = 'none'; empty.style.display = 'block'; return; }
-        table.style.display = 'table'; empty.style.display = 'none';
-        queue.forEach(item => {
-            const tr = document.createElement('tr');
-            if (item.problematic) tr.classList.add('problematic');
-            const when = new Date(item.createdAt).toLocaleTimeString('ru-RU');
-            const statusText = item.problematic ? `❌ ${item.lastError || 'ошибка'}` : (item.retries > 0 ? `⏳ попыток: ${item.retries}` : '⏳ в очереди');
-            tr.innerHTML = `<td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.action)}</td><td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || '—').slice(0, 16))}</td><td>${when}</td><td>${item.retries || 0}</td><td>${escapeHtml(statusText)}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
-    async function updateAll() {
-        const Data = window.Data; if (!Data) return;
-        try {
-            const status = await Data.getStatus();
-            renderChip(status);
-            const key = `${status.online}|${status.processing}|${status.queueSize}|${status.problematic}`;
-            if (key !== lastBannerState) {
-                lastBannerState = key;
-                if (!status.online) showBanner('📡', 'Нет интернета. Работаем локально, данные сохраняются в браузере.', status.queueSize > 0 ? 'Очередь' : null, status.queueSize > 0 ? openQueueModal : null);
-                else if (status.processing) showBanner('🔄', 'Синхронизация с облаком…', null, null);
-                else if (status.problematic > 0) showBanner('❗', `Не отправлено: ${status.problematic} записей`, 'Очередь', openQueueModal);
-                else if (status.queueSize > 0) showBanner('⚠️', `В очереди: ${status.queueSize} записей`, 'Очередь', openQueueModal);
-                else if (status.online) hideBanner();
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta
+            http-equiv="Content-Security-Policy"
+connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co https://cdn.jsdelivr.net;        />
+        <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+        <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+        <meta
+            http-equiv="Permissions-Policy"
+            content="camera=(self), microphone=(), geolocation=(), payment=()"
+        />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#0b0b12" />
+        <title>Vissort Studio Pro — Администратор</title>
+        <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+        <style>
+            @font-face {
+                font-family: 'Sivtsev';
+                src: url('https://cdn.jsdelivr.net/gh/shoorick/sivtsev-font@master/Sivtsev-Eye-Chart.otf')
+                    format('opentype');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
             }
-        } catch (e) { console.warn('[sync-ui] updateAll:', e); }
-    }
-    function openQueueModal() { const m = document.getElementById('queue-modal'); if (!m) return; m.style.display = 'flex'; refreshQueueModal(); }
-    function closeQueueModal() { const m = document.getElementById('queue-modal'); if (m) m.style.display = 'none'; }
-    async function bindEvents() {
-        const Data = await waitForData();
-        const chip = document.getElementById('sync-chip'); if (chip) chip.addEventListener('click', openQueueModal);
-        const closeBtn = document.getElementById('sync-banner-close'); if (closeBtn) closeBtn.addEventListener('click', hideBanner);
-        const qClose = document.getElementById('queue-close'); if (qClose) qClose.addEventListener('click', closeQueueModal);
-        const qModal = document.getElementById('queue-modal'); if (qModal) qModal.addEventListener('click', e => { if (e.target === qModal) closeQueueModal(); });
-        const syncNow = document.getElementById('queue-sync-now');
-        if (syncNow) syncNow.addEventListener('click', async () => {
-            syncNow.disabled = true; syncNow.textContent = '⏳ Отправляю…';
-            try { await Data.flush(); await refreshQueueModal(); await updateAll(); }
-            finally { syncNow.disabled = false; syncNow.textContent = '🔄 Синхронизировать сейчас'; }
-        });
-        const clearBtn = document.getElementById('queue-clear');
-        if (clearBtn) clearBtn.addEventListener('click', async () => {
-            if (!confirm('Очистить всю очередь? Неотправленные изменения будут потеряны.')) return;
-            await Data.clearQueue(); await refreshQueueModal(); await updateAll();
-        });
-        Data.onChange((type) => {
-            if (type === 'queue-changed' || type === 'sync-start' || type === 'sync-end' || type === 'online' || type === 'offline' || type === 'ready') { updateAll(); refreshQueueModal(); }
-        });
-        setInterval(updateAll, 5000);
-        setInterval(refreshQueueModal, 5000);
-        updateAll();
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindEvents);
-    else bindEvents();
-})();
-</script>
-</body>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: #111115;
+                color: #eee;
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
+            }
+            :root {
+                --hdr-h: auto;
+                --row-h: 30px;
+                --btn-h: 26px;
+                --btn-font: 11px;
+                --gap: 4px;
+                --btn-max-w: 80px;
+                --counter-w: 40px;
+            }
+            header {
+                background: #1e1e24;
+                padding: 4px 8px;
+                display: flex;
+                flex-direction: column;
+                gap: var(--gap);
+                border-bottom: 1px solid #3f3f46;
+                min-height: calc(var(--row-h) + 8px);
+                z-index: 1000;
+                user-select: none;
+                overflow: visible;
+            }
+            header.stimuli-mode {
+                flex-direction: row;
+                align-items: center;
+                height: calc(var(--row-h) + 8px);
+                min-height: calc(var(--row-h) + 8px);
+                max-height: calc(var(--row-h) + 8px);
+            }
+            .header-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: var(--gap);
+                row-gap: 6px;
+                width: 100%;
+                padding: 2px 0;
+                overflow: visible;
+            }
+            .header-section.section-device {
+                flex: 2 1 0;
+            }
+            .header-section.section-files {
+                flex: 5 1 0;
+            }
+            .header-section.section-account {
+                flex: 3 1 0;
+                justify-content: flex-end;
+            }
+            .header-section .btn {
+                flex: 0 0 auto;
+                padding: 0 6px;
+                border-radius: 3px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: var(--btn-font);
+                white-space: nowrap;
+                font-family: inherit;
+                line-height: 1;
+                height: var(--btn-h);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                color: white;
+                border: none;
+            }
+            .header-section .btn-icon {
+                padding: 0 5px;
+                font-size: 13px;
+            }
+            .header-section .btn:disabled {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
+            .header-section .status-chip,
+            .header-section .counters,
+            .header-section .header-sep {
+                flex: 0 0 auto;
+            }
+            .header-section .header-sep {
+                display: inline-block;
+                width: 1px;
+                height: 14px;
+                background: #3f3f46;
+                margin: 0 4px;
+                flex-shrink: 0;
+            }
+            .section-sep {
+                width: 2px;
+                height: 22px;
+                background: linear-gradient(180deg, transparent, #3f3f46, transparent);
+                margin: 0 6px;
+                flex-shrink: 0;
+            }
+            header.stimuli-mode
+                .header-section
+                > *:not(#btn-player):not(#btn-player-stop):not(#btn-player-pause):not(#btn-mode-toggle):not(
+                    #counters
+                ) {
+                display: none !important;
+            }
+            header.stimuli-mode .section-sep {
+                display: none !important;
+            }
+            header.stimuli-mode .header-section {
+                flex: 0 0 auto;
+                background: transparent;
+                padding: 0;
+            }
+            @media (max-width: 1300px) {
+                .header-section.section-work {
+                    flex: 3 1 0;
+                }
+                .header-section.section-device {
+                    flex: 1.5 1 0;
+                }
+                .header-section.section-files {
+                    flex: 3.5 1 0;
+                }
+                .header-section.section-account {
+                    flex: 2 1 0;
+                }
+            }
+            @media (max-width: 1000px) {
+                .section-sep {
+                    width: 1px;
+                    height: 16px;
+                    margin: 0 3px;
+                }
+            }
+            @media (max-width: 820px) {
+                .header-section .btn {
+                    padding: 0 4px;
+                }
+                .header-section .btn-icon {
+                    padding: 0 3px;
+                    font-size: 12px;
+                }
+            }
+
+            #camera-status {
+                display: none !important;
+            }
+            @media (max-width: 700px) {
+                :root {
+                    --btn-font: 10px;
+                    --gap: 2px;
+                    --btn-h: 22px;
+                    --btn-max-w: 60px;
+                    --counter-w: 30px;
+                    --row-h: 26px;
+                    --hdr-h: 64px;
+                }
+                header {
+                    padding: 3px 6px;
+                }
+            }
+            @media (min-width: 1800px) {
+                :root {
+                    --hdr-h: 82px;
+                    --row-h: 34px;
+                    --btn-h: 28px;
+                    --btn-font: 12px;
+                    --gap: 6px;
+                    --btn-max-w: 96px;
+                    --counter-w: 48px;
+                }
+                header {
+                    padding: 4px 14px;
+                }
+            }
+            .btn-secondary {
+                background: #4b5563;
+            }
+            .btn-warning {
+                background: #eab308;
+                color: #111;
+            }
+            .btn-danger {
+                background: #dc2626;
+            }
+            .btn-success {
+                background: #10b981;
+            }
+            .btn-dynamic {
+                background: #a855f7;
+            }
+            .btn-reading {
+                background: #0ea5e9;
+            }
+            .btn-compare {
+                background: #f97316;
+            }
+            .btn-mode {
+                background: #2d2d3a;
+                color: #eee;
+                border: 1px solid #3f3f46;
+            }
+            .btn-mode.active {
+                background: #8b5cf6;
+                border-color: #8b5cf6;
+            }
+            .status-chip {
+                display: inline-flex;
+                align-items: center;
+                background: #2d2d3a;
+                color: #aaa;
+                padding: 0 6px;
+                border-radius: 3px;
+                font-size: 10px;
+                height: 20px;
+                max-height: 20px;
+                white-space: nowrap;
+                flex-shrink: 0;
+                max-width: 130px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .status-chip.face-detected {
+                color: #00ff00;
+            }
+            .status-chip.face-missing {
+                color: #ff6666;
+            }
+            .status-chip.clickable {
+                cursor: pointer;
+            }
+            .status-chip.clickable:hover {
+                background: #3a3a4a;
+            }
+
+            #sync-chip {
+                font-weight: bold;
+                transition: background 0.2s;
+            }
+            #sync-chip.online {
+                color: #22c55e;
+                background: #0a2a1a;
+            }
+            #sync-chip.offline {
+                color: #f59e0b;
+                background: #2a1f05;
+            }
+            #sync-chip.syncing {
+                color: #38bdf8;
+                background: #0a1a2a;
+                animation: pulseSync 1.2s ease-in-out infinite;
+            }
+            #sync-chip.queue {
+                color: #fb923c;
+                background: #2a1205;
+            }
+            #sync-chip.errors {
+                color: #ef4444;
+                background: #2a0505;
+            }
+            @keyframes pulseSync {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+
+            .counters {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                font-size: 10px;
+                flex-shrink: 0;
+                flex-wrap: nowrap;
+                margin-left: 0;
+            }
+            .counter {
+                background: #2d2d3a;
+                color: #ccc;
+                padding: 0 2px;
+                border-radius: 3px;
+                height: 20px;
+                max-height: 20px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                white-space: nowrap;
+                flex: 0 0 var(--counter-w);
+                width: var(--counter-w);
+                min-width: var(--counter-w);
+                max-width: var(--counter-w);
+                overflow: hidden;
+                font-size: 10px;
+            }
+            .counter b {
+                color: #fff;
+                margin-left: 2px;
+                font-weight: bold;
+            }
+            .counter .label {
+                display: inline;
+            }
+            .main-layout {
+                display: flex;
+                flex: 1;
+                overflow: hidden;
+            }
+            .graph-canvas {
+                flex: 1;
+                background: #141419;
+                background-image: radial-gradient(#2a2a35 1px, transparent 1px);
+                background-size: 20px 20px;
+                position: relative;
+                overflow: hidden;
+                user-select: none;
+            }
+            .stim-display-area {
+                display: none;
+                flex: 1;
+                background: #000;
+                position: relative;
+                overflow: hidden;
+            }
+            #stim {
+                font-size: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            #response-buttons {
+                position: absolute;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: none;
+                gap: 10px;
+                z-index: 20;
+            }
+            .btn-response {
+                background: #3a3a55;
+                border: 1px solid #3f3f46;
+                color: #fff;
+                font-size: 24px;
+                width: 50px;
+                height: 50px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: inherit;
+            }
+            .btn-response:hover {
+                background: #5a5a7a;
+            }
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                justify-content: center;
+                align-items: center;
+                z-index: 1500;
+            }
+            .modal-content {
+                background: #1e1e24;
+                padding: 20px;
+                border-radius: 8px;
+                width: 700px;
+                max-width: 95%;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .modal-content h3 {
+                margin-top: 0;
+            }
+            #generator-modal .modal-content {
+                width: 95vw;
+                max-width: 1400px;
+                max-height: 90vh;
+                overflow-y: auto;
+                padding: 15px;
+            }
+            #generator-modal .modal-columns {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+                gap: 10px;
+                align-items: start;
+            }
+            .modal-col label {
+                display: block;
+                margin-top: 6px;
+                font-size: 12px;
+            }
+            .modal-col input,
+            .modal-col select {
+                width: 100%;
+                padding: 4px;
+                margin-bottom: 4px;
+                background: #222;
+                color: #fff;
+                border: 1px solid #444;
+                border-radius: 3px;
+                font-family: inherit;
+            }
+            .checkbox-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-top: 4px;
+            }
+            .checkbox-row input {
+                width: auto;
+                margin: 0;
+            }
+            .modal-footer {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                margin-top: 15px;
+            }
+            .inspector-panel {
+                width: 560px;
+                background: #1e1e24;
+                border-left: 1px solid #3f3f46;
+                padding: 8px;
+                overflow-y: auto;
+                font-size: 12px;
+                color: #00ff00;
+                display: none;
+            }
+            .inspector-panel h2 {
+                color: #ef4444;
+                font-size: 14px;
+                text-align: center;
+                margin-bottom: 6px;
+            }
+            .inspector-panel label {
+                display: block;
+                font-size: 10px;
+                text-transform: uppercase;
+                margin-top: 4px;
+            }
+            .inspector-panel input,
+            .inspector-panel select {
+                width: 100%;
+                background: #22222a;
+                border: 1px solid #3f3f46;
+                color: #fff;
+                padding: 2px 4px;
+                border-radius: 3px;
+                font-size: 12px;
+                font-family: inherit;
+            }
+            .panel-section {
+                background: #16161a;
+                border: 1px solid #3f3f46;
+                border-radius: 4px;
+                padding: 6px;
+                margin-bottom: 6px;
+            }
+            .panel-section h3 {
+                font-size: 11px;
+                border-bottom: 1px solid #3f3f46;
+                padding-bottom: 2px;
+                margin-bottom: 4px;
+            }
+            .insp-cols {
+                column-count: 2;
+                column-gap: 10px;
+            }
+            .insp-cols .panel-section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                -webkit-column-break-inside: avoid;
+            }
+            @media (max-width: 900px) {
+                .inspector-panel {
+                    width: 280px;
+                }
+                .insp-cols {
+                    column-count: 1;
+                }
+            }
+            .scenario-node {
+                position: absolute;
+                background: #22222a;
+                border: 2px solid #3f3f46;
+                border-radius: 6px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+                display: flex;
+                flex-direction: column;
+                min-width: 280px;
+                min-height: 260px;
+                z-index: 10;
+                cursor: default;
+            }
+            .scenario-node.active {
+                border-color: #ef4444;
+            }
+            .scenario-node.connection-source {
+                border-color: #f59e0b;
+                box-shadow: 0 0 12px #f59e0b;
+            }
+            .scenario-node.reading-node {
+                border-color: #0ea5e9;
+            }
+            .scenario-node.reading-node.active {
+                border-color: #ef4444;
+            }
+            .scenario-node.compare-node {
+                border-color: #f97316;
+            }
+            .scenario-node.compare-node.active {
+                border-color: #ef4444;
+            }
+            .node-header {
+                background: #2d2d3a;
+                padding: 4px 6px;
+                font-size: 12px;
+                font-weight: bold;
+                text-align: center;
+                border-bottom: 1px solid #3f3f46;
+                cursor: move;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .node-header.reading-header {
+                background: #075985;
+            }
+            .node-header.compare-header {
+                background: #7c2d12;
+            }
+            .node-header span {
+                flex: 1;
+            }
+            .node-header .start-checkbox {
+                width: 14px;
+                height: 14px;
+                margin-left: 5px;
+                cursor: pointer;
+            }
+            .node-content {
+                display: flex;
+                flex: 1;
+            }
+            .node-preview-area {
+                flex: 0 0 55%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 6px;
+                background: #0b0b0d;
+                border-right: 1px solid #2a2a3a;
+                min-height: 120px;
+                overflow: hidden;
+            }
+            .node-info {
+                flex: 0 0 45%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 4px;
+                font-size: 10px;
+                color: #a1a1aa;
+                background: #16161e;
+            }
+            .node-acuity {
+                font-size: 15px;
+                margin-top: 2px;
+                color: #00ff88;
+                font-weight: bold;
+            }
+            .node-size-mm {
+                font-size: 13px;
+                margin-top: 3px;
+                color: #ffcc00;
+                font-weight: bold;
+            }
+            .node-size-px {
+                font-size: 10px;
+                color: #aa8833;
+                margin-top: 1px;
+            }
+            .node-distance {
+                font-size: 11px;
+                margin-top: 3px;
+                color: #88ccff;
+            }
+            .node-inherit {
+                font-size: 12px;
+                margin-top: 2px;
+                color: #ffaa88;
+            }
+            .node-reading-book {
+                font-size: 12px;
+                color: #7dd3fc;
+                margin-top: 3px;
+                text-align: center;
+                word-break: break-word;
+                padding: 0 4px;
+            }
+            .node-reading-icon {
+                font-size: 56px;
+                line-height: 1;
+            }
+            .node-reading-sub {
+                font-size: 10px;
+                color: #64748b;
+                margin-top: 2px;
+            }
+            .node-compare-icon {
+                font-size: 44px;
+                line-height: 1;
+            }
+            .node-compare-sub {
+                font-size: 10px;
+                color: #94a3b8;
+                margin-top: 2px;
+                text-align: center;
+            }
+            .node-body {
+                display: flex;
+                flex-direction: row;
+                gap: 3px;
+                padding: 4px;
+                border-top: 1px solid #2a2a3a;
+                justify-content: center;
+            }
+            .node-btn {
+                flex: 0 0 auto;
+                padding: 3px 6px;
+                font-size: 9px;
+                border-radius: 3px;
+                border: none;
+                cursor: pointer;
+                font-weight: bold;
+                color: #fff;
+                text-align: center;
+                position: relative;
+                z-index: 20;
+                white-space: nowrap;
+                font-family: inherit;
+            }
+            .btn-node-connect {
+                background: #10b981;
+            }
+            .btn-node-loop {
+                background: #a855f7;
+            }
+            .btn-node-del {
+                background: #dc2626;
+            }
+            .node-resize-handle {
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                width: 12px;
+                height: 12px;
+                background: #4b5563;
+                cursor: se-resize;
+                border-radius: 4px 0 4px 0;
+                z-index: 15;
+            }
+            .html-graph-line {
+                position: absolute;
+                transform-origin: top left;
+                z-index: 5;
+                pointer-events: auto;
+                cursor: pointer;
+            }
+            .line-solid {
+                height: 3px;
+                background: #10b981;
+            }
+            .line-dashed {
+                height: 0;
+                border-top: 3px dashed #a855f7;
+                background: transparent;
+            }
+            .line-arrow {
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                color: #10b981;
+                z-index: 1000;
+                pointer-events: auto;
+                cursor: pointer;
+                transform-origin: center;
+                text-shadow: 0 0 2px #000;
+            }
+            .line-arrow.loop-arrow {
+                color: #a855f7;
+            }
+            #block-panel {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: #1e1e24;
+                border-top: 1px solid #3f3f46;
+                padding: 4px 12px;
+                z-index: 500;
+                display: none;
+                flex-wrap: wrap;
+                gap: 6px;
+                align-items: center;
+            }
+            #block-panel select,
+            #block-panel input[type='text'] {
+                background: #22222a;
+                color: #eee;
+                border: 1px solid #3f3f46;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 11px;
+                font-family: inherit;
+            }
+            #block-list {
+                position: fixed;
+                bottom: 38px;
+                left: 0;
+                width: 100%;
+                background: #16161a;
+                border-top: 1px solid #3f3f46;
+                padding: 4px 12px;
+                z-index: 499;
+                display: none;
+                max-height: 70px;
+                overflow-y: auto;
+            }
+            .block-tag {
+                background: #2d2d3a;
+                border: 1px solid #3f3f46;
+                border-radius: 3px;
+                padding: 2px 8px;
+                font-size: 11px;
+                color: #eee;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                margin: 2px;
+            }
+            .block-tag .remove-block {
+                cursor: pointer;
+                color: #dc2626;
+                font-weight: bold;
+            }
+            #hidden-video {
+                position: fixed;
+                left: -9999px;
+                top: 0;
+                width: 320px;
+                height: 240px;
+                opacity: 0;
+                pointer-events: none;
+            }
+            #calibration-video {
+                width: 100%;
+                max-width: 320px;
+                border-radius: 8px;
+                background: #000;
+            }
+            .calib-face-indicator {
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                background: rgba(0, 0, 0, 0.6);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 12px;
+                z-index: 10;
+                color: #fff;
+            }
+            .calib-face-indicator.detected {
+                background: rgba(0, 255, 0, 0.3);
+                color: #0f0;
+                font-weight: bold;
+            }
+            .calib-face-indicator.missing {
+                background: rgba(255, 0, 0, 0.3);
+                color: #f00;
+                font-weight: bold;
+            }
+            .calib-video-wrapper {
+                position: relative;
+                display: inline-block;
+            }
+            #grid-preview {
+                display: grid;
+                gap: 2px;
+                margin-bottom: 8px;
+            }
+            #grid-preview .grid-cell {
+                width: 40px;
+                height: 40px;
+                border: 1px solid #666;
+                background: #222;
+                cursor: pointer;
+            }
+            #connection-menu {
+                display: none;
+                position: fixed;
+                z-index: 9999;
+                background: #1e1e24;
+                border: 1px solid #3f3f46;
+                border-radius: 4px;
+                padding: 8px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+                min-width: 150px;
+            }
+            #connection-menu label {
+                font-size: 11px;
+                display: block;
+                margin-top: 4px;
+            }
+            #connection-menu input[type='number'] {
+                width: 80px;
+                margin-bottom: 4px;
+                background: #222;
+                color: #fff;
+                border: 1px solid #444;
+                border-radius: 3px;
+                padding: 2px;
+                font-family: inherit;
+            }
+            .time-group {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+            .time-group input[type='number'] {
+                flex: 1;
+            }
+            .time-group select {
+                width: auto;
+                padding: 2px;
+                background: #222;
+                color: #fff;
+                border: 1px solid #444;
+                border-radius: 3px;
+                font-family: inherit;
+            }
+            .hide-in-stimuli {
+                display: none !important;
+            }
+            #reading-solid-settings {
+                margin-top: 10px;
+            }
+            #reading-split-settings {
+                display: none;
+                margin-top: 10px;
+            }
+            #reading-gradient-settings {
+                display: none;
+                margin-top: 10px;
+            }
+            #reading-dynamic-settings {
+                display: none;
+                margin-top: 10px;
+            }
+            #reading-solid-settings label,
+            #reading-split-settings label,
+            #reading-gradient-settings label,
+            #reading-dynamic-settings label {
+                margin-top: 5px;
+            }
+            #reading-split-settings input[type='color'],
+            #reading-gradient-settings input[type='color'],
+            #reading-dynamic-settings input[type='color'],
+            #reading-solid-settings input[type='color'] {
+                width: 40px;
+                height: 25px;
+                padding: 0;
+                border: none;
+            }
+            #reading-split-settings input[type='number'],
+            #reading-gradient-settings input[type='number'] {
+                width: 70px;
+            }
+            .split-color-row {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            .acuity-hint {
+                font-size: 10px;
+                color: #88ccff;
+                margin-top: -3px;
+                margin-bottom: 4px;
+            }
+            .file-upload-btn {
+                display: inline-block;
+                background: #4b5563;
+                color: #fff;
+                padding: 4px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                margin-top: 4px;
+                font-family: inherit;
+            }
+            .file-upload-btn:hover {
+                background: #5a6573;
+            }
+            #reading-file-name {
+                font-size: 11px;
+                color: #88ccff;
+                margin-left: 8px;
+            }
+            #reading-viewport {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                overflow-x: auto;
+                overflow-y: hidden;
+                background: #000;
+                color: #000;
+                line-height: 1.5;
+                z-index: 10;
+                user-select: text;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                scroll-behavior: smooth;
+            }
+            #reading-viewport::-webkit-scrollbar {
+                display: none;
+            }
+            #reading-content {
+                height: 100%;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 20px 40px 120px 40px;
+                font-size: 24px;
+                font-weight: 400;
+                font-synthesis: none;
+                column-fill: auto;
+                word-break: keep-all;
+                overflow-wrap: normal;
+                word-wrap: normal;
+                hyphens: none;
+                white-space: normal;
+            }
+            #reading-content p {
+                margin: 0 0 1em 0;
+                orphans: 2;
+                widows: 2;
+            }
+            #reading-content,
+            #reading-content * {
+                font-weight: inherit;
+                font-synthesis: none;
+            }
+            #reading-content h1,
+            #reading-content h2,
+            #reading-content h3,
+            #reading-content h4,
+            #reading-content h5,
+            #reading-content h6 {
+                font-size: inherit;
+                margin: 0 0 1em 0;
+            }
+            #reading-toolbar {
+                display: none;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: rgba(20, 20, 25, 0.95);
+                padding: 10px 16px;
+                z-index: 25;
+                gap: 10px;
+                align-items: center;
+                justify-content: center;
+                flex-wrap: wrap;
+                border-top: 1px solid #3f3f46;
+            }
+            #reading-toolbar .btn {
+                font-size: 14px;
+                padding: 6px 14px;
+                height: auto;
+            }
+            #reading-page-info {
+                color: #fff;
+                font-size: 14px;
+                background: #222;
+                padding: 6px 14px;
+                border-radius: 4px;
+                min-width: 100px;
+                text-align: center;
+            }
+            #reading-font-input {
+                background: #2a2a35;
+                color: #fff;
+                border: 1px solid #3f3f46;
+                border-radius: 4px;
+                padding: 6px 10px;
+                font-size: 13px;
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                min-width: 160px;
+                max-width: 220px;
+            }
+            #reading-font-input:focus {
+                outline: 1px solid #8b5cf6;
+                border-color: #8b5cf6;
+            }
+            #reading-font-picker,
+            #reading-font-sivtsev,
+            #reading-font-file,
+            #reading-font-system {
+                font-size: 14px;
+                padding: 6px 10px;
+                min-width: auto;
+            }
+            #reading-bold-toggle {
+                font-family: 'Times New Roman', Times, serif;
+                font-weight: bold;
+                font-size: 16px;
+                width: 40px;
+                padding: 4px 8px;
+                background: #2d2d3a;
+                color: #eee;
+                border: 1px solid #3f3f46;
+            }
+            #reading-bold-toggle.active {
+                background: #8b5cf6;
+                border-color: #8b5cf6;
+                color: #fff;
+            }
+            #font-picker-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 10000;
+                justify-content: center;
+                align-items: center;
+            }
+            #font-picker-modal.visible {
+                display: flex;
+            }
+            .font-picker-content {
+                background: #1e1e24;
+                border-radius: 8px;
+                width: 460px;
+                max-width: 92vw;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+                border: 1px solid #3f3f46;
+            }
+            .font-picker-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                border-bottom: 1px solid #3f3f46;
+            }
+            .font-picker-header h3 {
+                margin: 0;
+                font-size: 15px;
+                color: #eee;
+            }
+            #font-picker-search {
+                margin: 12px 16px;
+                padding: 8px 12px;
+                background: #22222a;
+                color: #fff;
+                border: 1px solid #3f3f46;
+                border-radius: 4px;
+                font-size: 14px;
+                font-family: inherit;
+                outline: none;
+                flex: 0 0 auto;
+            }
+            #font-picker-search:focus {
+                border-color: #8b5cf6;
+            }
+            .font-picker-list {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0 16px 16px 16px;
+                min-height: 0;
+            }
+            .font-picker-item {
+                padding: 8px 12px;
+                cursor: pointer;
+                border-radius: 4px;
+                color: #eee;
+                font-size: 14px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+            }
+            .font-picker-item:hover {
+                background: #2d2d3a;
+            }
+            .font-picker-item.active {
+                background: #8b5cf6;
+                color: #fff;
+            }
+            .font-picker-item .preview {
+                font-size: 15px;
+                opacity: 0.85;
+                white-space: nowrap;
+            }
+            .font-picker-empty {
+                padding: 20px;
+                color: #888;
+                text-align: center;
+                font-size: 13px;
+            }
+            .book-picker-item {
+                padding: 8px 12px;
+                cursor: pointer;
+                border-radius: 4px;
+                color: #eee;
+                font-size: 13px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                border: 1px solid transparent;
+                margin-bottom: 4px;
+                background: #16161a;
+            }
+            .book-picker-item:hover {
+                background: #2d2d3a;
+            }
+            .book-picker-item.active {
+                background: #075985;
+                border-color: #0ea5e9;
+            }
+            .book-picker-item .name {
+                font-weight: bold;
+                color: #7dd3fc;
+            }
+            .book-picker-item .meta {
+                font-size: 11px;
+                color: #888;
+                margin-top: 2px;
+            }
+            .book-picker-empty {
+                padding: 20px;
+                color: #666;
+                text-align: center;
+                font-size: 13px;
+                font-style: italic;
+            }
+            .cmp-grid-preview {
+                display: inline-grid;
+                gap: 3px;
+                margin: 6px 0;
+            }
+            .cmp-grid-cell {
+                width: 42px;
+                height: 42px;
+                border: 1px solid #555;
+                background: #222;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                color: #888;
+                border-radius: 3px;
+            }
+            .cmp-grid-cell.active {
+                background: #7c2d12;
+                border-color: #f97316;
+                color: #fff;
+                font-weight: bold;
+            }
+            .cmp-cell-block {
+                border: 1px solid #444;
+                border-radius: 4px;
+                padding: 6px;
+                margin-top: 6px;
+                background: #131316;
+            }
+            #physio-indicator {
+                position: absolute;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.6);
+                color: #fff;
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                z-index: 35;
+                display: none;
+                letter-spacing: 0.5px;
+            }
+            #live-distance-indicator {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.6);
+                color: #fff;
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                z-index: 35;
+                display: none;
+                letter-spacing: 0.5px;
+            }
+            #reading-timer {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.6);
+                color: #fff;
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                z-index: 35;
+                display: none;
+                letter-spacing: 0.5px;
+            }
+
+            #sync-banner {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100px);
+                background: #1e1e24;
+                border: 1px solid #3f3f46;
+                border-radius: 8px;
+                padding: 12px 20px;
+                font-size: 13px;
+                color: #eee;
+                z-index: 9998;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                opacity: 0;
+                pointer-events: none;
+                transition:
+                    transform 0.3s,
+                    opacity 0.3s;
+                max-width: 90vw;
+            }
+            #sync-banner.visible {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            #sync-banner .icon {
+                font-size: 18px;
+                flex-shrink: 0;
+            }
+            #sync-banner .text {
+                flex: 1;
+                min-width: 0;
+            }
+            #sync-banner .actions {
+                display: flex;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            #sync-banner button {
+                background: #3a3a4a;
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                padding: 4px 10px;
+                cursor: pointer;
+                font-family: inherit;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            #sync-banner button:hover {
+                background: #4a4a5a;
+            }
+            #sync-banner button.primary {
+                background: #0ea5e9;
+            }
+            #sync-banner button.primary:hover {
+                background: #38bdf8;
+            }
+
+            #queue-modal .modal-content {
+                width: 720px;
+                max-width: 95vw;
+            }
+            #queue-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                margin: 10px 0;
+            }
+            #queue-table th {
+                text-align: left;
+                padding: 8px 6px;
+                color: #94a3b8;
+                border-bottom: 1px solid #3f3f46;
+                font-weight: 600;
+            }
+            #queue-table td {
+                padding: 8px 6px;
+                border-bottom: 1px solid #1e1e24;
+            }
+            #queue-table tr.problematic {
+                background: rgba(220, 38, 38, 0.1);
+            }
+            #queue-table tr.problematic td {
+                color: #f87171;
+            }
+            #queue-empty {
+                text-align: center;
+                color: #666;
+                padding: 30px;
+                font-style: italic;
+            }
+            .queue-actions {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+            .queue-actions .btn {
+                font-size: 13px;
+                padding: 8px 16px;
+                height: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="header-row">
+                <!-- === СЕКЦИЯ 1: РАБОТА === -->
+                <div class="header-section section-work">
+                    <button class="btn btn-warning btn-icon" id="btn-player" title="Плеер">▶</button>
+                    <button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">
+                        ⏹
+                    </button>
+                    <button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">
+                        ⏸
+                    </button>
+                    <button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
+                    <span class="header-sep"></span>
+                    <button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>
+                    <button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
+                    <button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
+                    <button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">
+                        ⚖️
+                    </button>
+                    <button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
+                    <button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
+                    <button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">
+                        🧰
+                    </button>
+                    <button
+                        class="btn btn-secondary btn-icon"
+                        id="btn-scenario-time"
+                        title="Оценка времени сценария"
+                    >
+                        ⏱
+                    </button>
+                </div>
+
+                <span class="section-sep"></span>
+
+                <!-- === СЕКЦИЯ 2: ОБОРУДОВАНИЕ === -->
+                <div class="header-section section-device">
+                    <button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Включить камеру">
+                        📷
+                    </button>
+                    <button
+                        class="btn btn-success btn-icon"
+                        id="btn-disable-camera"
+                        style="display: none"
+                        title="Выключить камеру"
+                    >
+                        📷
+                    </button>
+                    <button
+                        class="btn btn-warning btn-icon"
+                        id="btn-calibrate-camera"
+                        disabled
+                        title="Калибровка камеры"
+                    >
+                        🎥
+                    </button>
+                    <button
+                        class="btn btn-warning btn-icon"
+                        id="btn-calibrate-screen"
+                        title="Калибровка экрана"
+                    >
+                        📐
+                    </button>
+                    <span class="header-sep"></span>
+                    <span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
+                    <span class="status-chip" id="distance-display" title="Дистанция">—</span>
+                    <span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
+                </div>
+
+                <span class="section-sep"></span>
+
+                <!-- === СЕКЦИЯ 3: ФАЙЛЫ === -->
+                <div class="header-section section-files">
+                    <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
+                    <button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
+                    <input type="file" id="file-input" accept=".json" style="display: none" />
+                    <input
+                        type="file"
+                        id="folder-input"
+                        webkitdirectory
+                        directory
+                        multiple
+                        style="display: none"
+                    />
+                    <button class="btn btn-secondary btn-icon" id="btn-select-folder" title="Папка сценариев">
+                        📁
+                    </button>
+                    <button
+                        class="btn btn-secondary btn-icon"
+                        id="btn-select-templates-folder"
+                        title="Папка заготовок"
+                    >
+                        📋
+                    </button>
+                    <input
+                        type="file"
+                        id="templates-folder-input"
+                        webkitdirectory
+                        directory
+                        multiple
+                        style="display: none"
+                    />
+                    <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
+                    <span class="header-sep"></span>
+                    <span class="status-chip" id="folder-status" title="Папка">📁 —</span>
+                    <span class="status-chip" id="templates-folder-status" title="Папка заготовок">📋 —</span>
+                    <div class="counters" id="counters">
+                        <span class="counter" title="Полных серий"
+                            ><span class="label">П:</span> <b id="cnt-completed">0</b></span
+                        >
+                        <span class="counter" title="Успешных серий"
+                            ><span class="label">У:</span> <b id="cnt-success">0</b></span
+                        >
+                        <span class="counter" title="Неуспешных серий"
+                            ><span class="label">Н:</span> <b id="cnt-failed">0</b></span
+                        >
+                        <span class="counter" title="Правильных ответов"
+                            ><span class="label">✓</span> <b id="cnt-series-correct">0</b></span
+                        >
+                        <span class="counter" title="Неправильных ответов"
+                            ><span class="label">✗</span> <b id="cnt-series-incorrect">0</b></span
+                        >
+                        <span class="counter" title="Без ответа"
+                            ><span class="label">∅</span> <b id="cnt-series-noanswer">0</b></span
+                        >
+                    </div>
+                </div>
+
+                <span class="section-sep"></span>
+
+                <!-- === СЕКЦИЯ 4: АККАУНТ === -->
+                <div class="header-section section-account">
+                    <span
+                        class="status-chip clickable"
+                        id="sync-chip"
+                        title="Синхронизация — нажмите для очереди"
+                        >🟢 Онлайн</span
+                    >
+                    <button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
+                    <span class="header-sep"></span>
+                    <button class="btn btn-secondary" id="btn-auth">Войти</button>
+                    <span class="status-chip" id="user-email" title="Email" style="display: none"></span>
+                </div>
+            </div>
+        </header>
+        <div class="main-layout" id="main-layout">
+            <div class="graph-canvas" id="canvas"></div>
+            <div class="stim-display-area" id="stim-display">
+                <div id="stim"></div>
+                <div id="reading-viewport"><div id="reading-content"></div></div>
+                <div id="physio-indicator"></div>
+                <div id="live-distance-indicator"></div>
+                <div id="reading-timer"></div>
+                <div id="reading-toolbar">
+                    <button class="btn btn-secondary" id="reading-prev" title="Предыдущая страница (←)">
+                        ◀ Назад
+                    </button>
+                    <button
+                        class="btn btn-warning"
+                        id="reading-play-pause"
+                        title="Скрыть/показать текст (Пробел)"
+                    >
+                        ⏸ Пауза
+                    </button>
+                    <button class="btn btn-secondary" id="reading-next" title="Следующая страница (→)">
+                        Вперёд ▶
+                    </button>
+                    <span id="reading-page-info">Стр. 1 / 1</span>
+                    <button
+                        class="btn btn-danger"
+                        id="reading-not-see"
+                        title="Текст сливается — увеличить размер"
+                    >
+                        🔻 Не вижу
+                    </button>
+                    <button
+                        class="btn btn-success"
+                        id="reading-see-well"
+                        title="Текст мелкий — уменьшить размер"
+                    >
+                        🔺 Вижу хорошо
+                    </button>
+                    <input
+                        type="text"
+                        id="reading-font-input"
+                        value="Segoe UI"
+                        placeholder="Шрифт"
+                        autocomplete="new-password"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        name="vissort-reading-font-family-x"
+                        title="Введите имя шрифта вручную"
+                    />
+                    <datalist id="reading-font-list">
+                        <option value="Sivtsev">Сивцев</option>
+                        <option value="Segoe UI">Segoe UI</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Tahoma">Tahoma</option>
+                        <option value="Trebuchet MS">Trebuchet MS</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Cambria">Cambria</option>
+                        <option value="Consolas">Consolas</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Garamond">Garamond</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Lucida Console">Lucida Console</option>
+                        <option value="Palatino Linotype">Palatino Linotype</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
+                        <option value="Bookman Old Style">Bookman Old Style</option>
+                        <option value="Franklin Gothic Medium">Franklin Gothic Medium</option>
+                        <option value="Century Gothic">Century Gothic</option>
+                        <option value="MS Sans Serif">MS Sans Serif</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                    </datalist>
+                    <button
+                        class="btn btn-secondary"
+                        id="reading-font-picker"
+                        title="Выбрать шрифт из списка"
+                    >
+                        ▾ Список
+                    </button>
+                    <button
+                        class="btn btn-warning"
+                        id="reading-font-sivtsev"
+                        title="Быстро переключить на шрифт Сивцева"
+                    >
+                        Сивцев
+                    </button>
+                    <button
+                        class="btn btn-secondary"
+                        id="reading-font-file"
+                        title="Загрузить свой файл шрифта"
+                    >
+                        📂
+                    </button>
+                    <input
+                        type="file"
+                        id="reading-font-file-input"
+                        accept=".ttf,.otf,.woff,.woff2"
+                        style="display: none"
+                    />
+                    <button
+                        class="btn btn-secondary"
+                        id="reading-font-system"
+                        title="Загрузить все системные шрифты"
+                    >
+                        🖥️
+                    </button>
+                    <button class="btn" id="reading-bold-toggle" title="Жирный шрифт">B</button>
+                    <button class="btn btn-success" id="reading-bookmark" title="Сохранить закладку">
+                        🔖 Закладка
+                    </button>
+                    <button
+                        class="btn btn-dynamic"
+                        id="reading-open-bookmark"
+                        title="Открыть сохранённую закладку"
+                    >
+                        📖 Открыть закладку
+                    </button>
+                    <button class="btn btn-danger" id="reading-finish" title="Закончить узел чтения">
+                        ⏹ Закончить
+                    </button>
+                </div>
+                <div id="response-buttons">
+                    <button class="btn-response" data-dir="вверх">▲</button>
+                    <button class="btn-response" data-dir="вниз">▼</button>
+                    <button class="btn-response" data-dir="влево">◀</button>
+                    <button class="btn-response" data-dir="вправо">▶</button>
+                    <button
+                        class="btn-response"
+                        data-answer="да"
+                        style="display: none; width: auto; padding: 0 20px"
+                    >
+                        Да
+                    </button>
+                    <button
+                        class="btn-response"
+                        data-answer="нет"
+                        style="display: none; width: auto; padding: 0 20px"
+                    >
+                        Нет
+                    </button>
+                </div>
+            </div>
+            <div class="inspector-panel" id="inspector"></div>
+        </div>
+
+        <div id="block-panel" style="display: none">
+            <span>Конструктор:</span>
+            <input type="text" id="block-name-input" placeholder="Название блока" />
+            <select id="block-select">
+                <option value="warmup">Разминка</option>
+                <option value="complex">Сложность</option>
+                <option value="random">Случайные</option>
+                <option value="custom">Пользовательский</option>
+            </select>
+            <button class="btn btn-success" id="btn-add-block">➕ Добавить</button>
+            <button class="btn btn-danger" id="btn-clear-blocks">🗑 Очистить</button>
+            <span id="block-count">Блоков: 0</span>
+            <button class="btn btn-warning" id="btn-generate-sequence">⚡ Сгенерировать</button>
+        </div>
+        <div id="block-list"></div>
+
+        <div id="sync-banner">
+            <span class="icon" id="sync-banner-icon">🟢</span>
+            <span class="text" id="sync-banner-text">Готово</span>
+            <div class="actions">
+                <button id="sync-banner-action" style="display: none">Открыть</button>
+                <button id="sync-banner-close">×</button>
+            </div>
+        </div>
+
+        <div class="modal" id="queue-modal">
+            <div class="modal-content">
+                <h3>📋 Очередь синхронизации</h3>
+                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px">
+                    Изменения, которые ещё не отправлены в облако. Отправляются автоматически при появлении
+                    интернета.
+                </p>
+                <div id="queue-body">
+                    <table id="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Тип</th>
+                                <th>Действие</th>
+                                <th>ID</th>
+                                <th>Создано</th>
+                                <th>Попыток</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queue-tbody"></tbody>
+                    </table>
+                    <div id="queue-empty" style="display: none">Очередь пуста. Всё синхронизировано.</div>
+                </div>
+                <div class="modal-footer queue-actions">
+                    <button class="btn btn-warning" id="queue-sync-now">🔄 Синхронизировать сейчас</button>
+                    <button class="btn btn-danger" id="queue-clear">🗑 Очистить всё</button>
+                    <button class="btn btn-secondary" id="queue-close">Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="generator-modal">
+            <div class="modal-content">
+                <h3>Режимы</h3>
+                <p style="font-size: 12px; color: #94a3b8; margin: 0 0 10px">
+                    Это <b>черновик</b>. Настройте параметры и нажмите <b>📌 В граф</b>, чтобы создать узел на
+                    холсте. Либо нажмите <b>Применить</b>, чтобы запустить автотренировку без графа.
+                </p>
+                <div class="modal-columns">
+                    <div class="modal-col">
+                        <label>Режим тренировки</label>
+                        <select id="gen-mode">
+                            <option value="близорукость">Близорукость</option>
+                            <option value="дальнозоркость">Дальнозоркость</option>
+                            <option value="общая">Общая</option>
+                        </select>
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="gen-active" checked /><label
+                                >Активная тренировка</label
+                            >
+                        </div>
+                        <label>Тип тренировки</label>
+                        <select id="gen-training-type">
+                            <option value="single">Один стимул</option>
+                            <option value="compare">Сравнение</option>
+                            <option value="reading">Чтение</option>
+                        </select>
+                        <div id="single-grid-settings" style="display: block; margin-top: 10px">
+                            <label>Размер сетки для одиночного стимула</label>
+                            <div style="display: flex; gap: 4px; align-items: center">
+                                <input
+                                    type="number"
+                                    id="gen-single-grid-x"
+                                    value="1"
+                                    min="1"
+                                    max="5"
+                                    style="width: 50px"
+                                />
+                                <span>×</span>
+                                <input
+                                    type="number"
+                                    id="gen-single-grid-y"
+                                    value="1"
+                                    min="1"
+                                    max="5"
+                                    style="width: 50px"
+                                />
+                            </div>
+                            <div class="checkbox-row" style="margin-top: 8px">
+                                <input type="checkbox" id="gen-single-random-pos" /><label
+                                    >Случайное положение стимула</label
+                                >
+                            </div>
+                            <div
+                                class="checkbox-row"
+                                style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #444"
+                            >
+                                <input type="checkbox" id="gen-single-stim-dynamic-enabled" /><label
+                                    >🎨 Динамика цвета стимула</label
+                                >
+                            </div>
+                            <div id="single-stim-dynamic-settings" style="display: none; margin-top: 6px">
+                                <div class="split-color-row">
+                                    <label>Цвет 1:</label
+                                    ><input type="color" id="gen-single-stim-color1" value="#ff0000" />
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-single-stim-mid-enabled" /><label
+                                        >Цвет 3</label
+                                    >
+                                </div>
+                                <div class="split-color-row" id="single-stim-mid-row" style="display: none">
+                                    <label>Цвет 3:</label
+                                    ><input type="color" id="gen-single-stim-color3" value="#ffff00" />
+                                </div>
+                                <div class="split-color-row">
+                                    <label>Цвет 2:</label
+                                    ><input type="color" id="gen-single-stim-color2" value="#0000ff" />
+                                </div>
+                                <label>Время показа стимула</label>
+                                <div class="time-group">
+                                    <input
+                                        type="number"
+                                        id="gen-single-stim-duration"
+                                        value="10"
+                                        min="0.1"
+                                        step="0.1"
+                                    /><select id="gen-single-stim-duration-unit">
+                                        <option value="ms">мс</option>
+                                        <option value="s" selected>с</option>
+                                        <option value="min">мин</option>
+                                    </select>
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-single-stim-loop" /><label
+                                        >Повторять цикл</label
+                                    >
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-single-stim-reverse" /><label
+                                        >Пинг-понг</label
+                                    >
+                                </div>
+                            </div>
+                            <div
+                                class="checkbox-row"
+                                style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #444"
+                            >
+                                <input type="checkbox" id="gen-single-bg-dynamic-enabled" /><label
+                                    >🖼️ Динамика цвета фона</label
+                                >
+                            </div>
+                            <div id="single-bg-dynamic-settings" style="display: none; margin-top: 6px">
+                                <div class="split-color-row">
+                                    <label>Цвет 1:</label
+                                    ><input type="color" id="gen-single-bg-color1" value="#ff0000" />
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-single-bg-mid-enabled" /><label
+                                        >Цвет 3</label
+                                    >
+                                </div>
+                                <div class="split-color-row" id="single-bg-mid-row" style="display: none">
+                                    <label>Цвет 3:</label
+                                    ><input type="color" id="gen-single-bg-color3" value="#ffff00" />
+                                </div>
+                                <div class="split-color-row">
+                                    <label>Цвет 2:</label
+                                    ><input type="color" id="gen-single-bg-color2" value="#0000ff" />
+                                </div>
+                                <label>Время показа фона</label>
+                                <div class="time-group">
+                                    <input
+                                        type="number"
+                                        id="gen-single-bg-duration"
+                                        value="10"
+                                        min="0.1"
+                                        step="0.1"
+                                    /><select id="gen-single-bg-duration-unit">
+                                        <option value="ms">мс</option>
+                                        <option value="s" selected>с</option>
+                                        <option value="min">мин</option>
+                                    </select>
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-single-bg-loop" /><label
+                                        >Повторять цикл</label
+                                    >
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-single-bg-reverse" /><label
+                                        >Пинг-понг</label
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                        <div id="compare-settings" style="display: none; margin-top: 10px">
+                            <label>Подрежим сравнения</label>
+                            <select id="gen-compare-mode">
+                                <option value="direction">Сравнение направлений</option>
+                                <option value="find_same">Найди одинаковые</option>
+                            </select>
+                            <label>Размер сетки</label>
+                            <div style="display: flex; gap: 4px; align-items: center">
+                                <input
+                                    type="number"
+                                    id="gen-grid-x"
+                                    value="3"
+                                    min="1"
+                                    max="5"
+                                    style="width: 50px"
+                                />
+                                <span>×</span>
+                                <input
+                                    type="number"
+                                    id="gen-grid-y"
+                                    value="3"
+                                    min="1"
+                                    max="5"
+                                    style="width: 50px"
+                                />
+                            </div>
+                            <label>Активные клетки (кликните для выбора)</label>
+                            <div id="grid-preview"></div>
+                            <div id="cell-params-container"></div>
+                        </div>
+                        <div id="reading-settings" style="display: none; margin-top: 10px">
+                            <label>Текст для чтения</label>
+                            <textarea
+                                id="gen-reading-text"
+                                rows="4"
+                                style="
+                                    width: 100%;
+                                    background: #222;
+                                    color: #fff;
+                                    border: 1px solid #444;
+                                    border-radius: 3px;
+                                    padding: 4px;
+                                    font-family: inherit;
+                                "
+                            >
+Пример текста для чтения.</textarea>
+                            <label>Загрузить текст из файла</label>
+                            <input
+                                type="file"
+                                id="reading-file-input"
+                                accept=".txt,.fb2,.epub"
+                                style="display: none"
+                            />
+                            <label for="reading-file-input" class="file-upload-btn">📂 Выбрать файл</label>
+                            <span id="reading-file-name"></span>
+                            <label>Цвет текста</label>
+                            <input type="color" id="gen-reading-text-color" value="#000000" />
+                            <label>Тип фона</label>
+                            <select id="gen-reading-bg-mode">
+                                <option value="solid" selected>Сплошной цвет</option>
+                                <option value="split">Две половины</option>
+                                <option value="gradient">Градиент</option>
+                                <option value="dynamic">Динамический</option>
+                            </select>
+                            <div id="reading-solid-settings">
+                                <label>Цвет фона</label
+                                ><input type="color" id="gen-reading-bg-color" value="#ffffff" />
+                            </div>
+                            <div id="reading-split-settings">
+                                <label>Ширина левой (%)</label
+                                ><input
+                                    type="number"
+                                    id="gen-reading-split-left-width"
+                                    value="50"
+                                    min="0"
+                                    max="100"
+                                />
+                                <div class="split-color-row">
+                                    <label>Цвет левой:</label
+                                    ><input type="color" id="gen-reading-left-color" value="#000000" />
+                                </div>
+                                <div class="split-color-row">
+                                    <label>Цвет правой:</label
+                                    ><input type="color" id="gen-reading-right-color" value="#ffffff" />
+                                </div>
+                            </div>
+                            <div id="reading-gradient-settings">
+                                <div class="checkbox-row">
+                                    <input
+                                        type="checkbox"
+                                        id="gen-reading-gradient-mid-enabled"
+                                        checked
+                                    /><label>Использовать цвет 3</label>
+                                </div>
+                                <div class="split-color-row">
+                                    <label>Цвет 1:</label
+                                    ><input
+                                        type="color"
+                                        id="gen-reading-gradient-left-color"
+                                        value="#ffffff"
+                                    />
+                                </div>
+                                <div class="split-color-row" id="gradient-mid-row">
+                                    <label>Цвет 3:</label
+                                    ><input
+                                        type="color"
+                                        id="gen-reading-gradient-mid-color"
+                                        value="#cccccc"
+                                    />
+                                </div>
+                                <label id="gradient-mid-pos-label">Позиция цвета 3 (%)</label
+                                ><input
+                                    type="number"
+                                    id="gen-reading-gradient-mid-position"
+                                    value="50"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                />
+                                <div class="split-color-row">
+                                    <label>Цвет 2:</label
+                                    ><input
+                                        type="color"
+                                        id="gen-reading-gradient-right-color"
+                                        value="#000000"
+                                    />
+                                </div>
+                            </div>
+                            <div id="reading-dynamic-settings">
+                                <label>Режим динамики</label
+                                ><select id="gen-reading-dynamic-mode">
+                                    <option value="simple" selected>Простой</option>
+                                    <option value="rgb">RGB-цикл</option>
+                                    <option value="physiological">Физиологический</option>
+                                </select>
+                                <div id="reading-dynamic-simple-colors">
+                                    <div class="split-color-row">
+                                        <label>Начальный цвет:</label
+                                        ><input
+                                            type="color"
+                                            id="gen-reading-dynamic-start-color"
+                                            value="#ff0000"
+                                        />
+                                    </div>
+                                    <div class="checkbox-row">
+                                        <input type="checkbox" id="gen-reading-dynamic-mid-enabled" /><label
+                                            >Цвет 3</label
+                                        >
+                                    </div>
+                                    <div class="split-color-row" id="dynamic-mid-row" style="display: none">
+                                        <label>Цвет 3:</label
+                                        ><input
+                                            type="color"
+                                            id="gen-reading-dynamic-mid-color"
+                                            value="#ffff00"
+                                        />
+                                    </div>
+                                    <div class="split-color-row">
+                                        <label>Конечный цвет:</label
+                                        ><input
+                                            type="color"
+                                            id="gen-reading-dynamic-end-color"
+                                            value="#0000ff"
+                                        />
+                                    </div>
+                                </div>
+                                <div id="reading-dynamic-physio-settings" style="display: none">
+                                    <label>Шаг диоптрий</label
+                                    ><select id="gen-reading-dynamic-step">
+                                        <option value="0.1" selected>0.1 дптр</option>
+                                        <option value="0.2">0.2 дптр</option>
+                                        <option value="0.3">0.3 дптр</option>
+                                        <option value="0.4">0.4 дптр</option>
+                                        <option value="0.5">0.5 дптр</option>
+                                        <option value="0.6">0.6 дптр</option>
+                                        <option value="0.7">0.7 дптр</option>
+                                        <option value="0.8">0.8 дптр</option>
+                                        <option value="0.9">0.9 дптр</option>
+                                        <option value="1.0">1.0 дптр</option>
+                                        <option value="1.1">1.1 дптр</option>
+                                        <option value="1.2">1.2 дптр</option>
+                                        <option value="1.3">1.3 дптр</option>
+                                        <option value="1.4">1.4 дптр</option>
+                                        <option value="1.5">1.5 дптр</option>
+                                        <option value="1.6">1.6 дптр</option></select
+                                    ><label id="gen-reading-dynamic-step-duration-label"
+                                        >Длительность шага</label
+                                    >
+                                    <div class="time-group">
+                                        <input
+                                            type="number"
+                                            id="gen-reading-dynamic-step-duration"
+                                            value="1"
+                                            min="0.1"
+                                            step="0.1"
+                                        /><select id="gen-reading-dynamic-step-duration-unit">
+                                            <option value="ms">мс</option>
+                                            <option value="s" selected>с</option>
+                                            <option value="min">мин</option>
+                                        </select>
+                                    </div>
+                                    <div class="checkbox-row">
+                                        <input
+                                            type="checkbox"
+                                            id="gen-reading-dynamic-show-label"
+                                            checked
+                                        /><label>Показывать дптр</label>
+                                    </div>
+                                    <div class="acuity-hint" id="physio-list-hint">0.0 → +1.6 дптр</div>
+                                </div>
+                                <div id="reading-dynamic-duration-settings">
+                                    <label>Время полного цикла</label>
+                                    <div class="time-group">
+                                        <input
+                                            type="number"
+                                            id="gen-reading-dynamic-duration"
+                                            value="10"
+                                            min="0.1"
+                                            step="0.1"
+                                        /><select id="gen-reading-dynamic-duration-unit">
+                                            <option value="ms">мс</option>
+                                            <option value="s" selected>с</option>
+                                            <option value="min">мин</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-reading-dynamic-loop" /><label
+                                        >Повторять цикл</label
+                                    >
+                                </div>
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="gen-reading-dynamic-reverse" /><label
+                                        >Пинг-понг</label
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                        <label>Количество серий</label>
+                        <input type="number" id="gen-series" value="5" min="1" max="20" />
+                        <label>Размер серии</label>
+                        <select id="gen-series-size">
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6" selected>6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                        </select>
+                        <label>Порог правильных</label>
+                        <input type="number" id="gen-threshold" value="4" min="1" max="8" />
+                    </div>
+                    <div class="modal-col">
+                        <label>Тип стимула</label>
+                        <select id="gen-type">
+                            <option value="LETTER_E" selected>Буква Е</option>
+                            <option value="LANDOLT">Кольцо Ландольта</option>
+                        </select>
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="chk-stim-size" checked /><label
+                                >Острота зрения активна</label
+                            >
+                        </div>
+                        <label>Начальная острота V</label>
+                        <select id="gen-start-acuity">
+                            <option value="0.1">0.1</option>
+                            <option value="0.2">0.2</option>
+                            <option value="0.3">0.3</option>
+                            <option value="0.4">0.4</option>
+                            <option value="0.5" selected>0.5</option>
+                            <option value="0.6">0.6</option>
+                            <option value="0.7">0.7</option>
+                            <option value="0.8">0.8</option>
+                            <option value="0.9">0.9</option>
+                            <option value="1.0">1.0</option>
+                            <option value="1.1">1.1</option>
+                            <option value="1.2">1.2</option>
+                            <option value="1.3">1.3</option>
+                            <option value="1.4">1.4</option>
+                            <option value="1.5">1.5</option>
+                            <option value="1.6">1.6</option>
+                            <option value="1.7">1.7</option>
+                            <option value="1.8">1.8</option>
+                            <option value="1.9">1.9</option>
+                            <option value="2.0">2.0</option>
+                        </select>
+                        <label>Конечная острота V</label>
+                        <select id="gen-end-acuity">
+                            <option value="0.1">0.1</option>
+                            <option value="0.2">0.2</option>
+                            <option value="0.3">0.3</option>
+                            <option value="0.4">0.4</option>
+                            <option value="0.5">0.5</option>
+                            <option value="0.6">0.6</option>
+                            <option value="0.7">0.7</option>
+                            <option value="0.8">0.8</option>
+                            <option value="0.9">0.9</option>
+                            <option value="1.0">1.0</option>
+                            <option value="1.1">1.1</option>
+                            <option value="1.2">1.2</option>
+                            <option value="1.3">1.3</option>
+                            <option value="1.4">1.4</option>
+                            <option value="1.5">1.5</option>
+                            <option value="1.6">1.6</option>
+                            <option value="1.7">1.7</option>
+                            <option value="1.8">1.8</option>
+                            <option value="1.9">1.9</option>
+                            <option value="2.0" selected>2.0</option>
+                        </select>
+                        <label>Шаг остроты</label>
+                        <select id="gen-acuity-step">
+                            <option value="0.05">0.05</option>
+                            <option value="0.1" selected>0.1</option>
+                            <option value="0.2">0.2</option>
+                            <option value="0.5">0.5</option>
+                        </select>
+                        <label>Дистанция (м)</label>
+                        <input type="number" id="gen-distance" value="1" min="0.1" max="20" step="0.1" />
+                        <label>PPI экрана</label>
+                        <input type="number" id="gen-ppi" value="96" min="20" max="1200" step="1" />
+                    </div>
+                    <div class="modal-col">
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="chk-stim-color" checked /><label
+                                >Цвет стимула активен</label
+                            >
+                        </div>
+                        <label>Начальный цвет стимула</label>
+                        <input type="color" id="gen-start-color" value="#00ff00" />
+                        <label>Конечный цвет стимула</label>
+                        <input type="color" id="gen-end-color" value="#ff0000" />
+                        <label>Шаг RGB</label>
+                        <input type="number" id="gen-color-step" value="16" min="1" max="255" />
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="chk-bg-color" checked /><label
+                                >Цвет фона активен</label
+                            >
+                        </div>
+                        <label>Начальный цвет фона</label>
+                        <input type="color" id="gen-start-bg" value="#00ff00" />
+                        <label>Конечный цвет фона</label>
+                        <input type="color" id="gen-end-bg" value="#000000" />
+                        <label>Шаг фона RGB</label>
+                        <input type="number" id="gen-bg-step" value="16" min="1" max="255" />
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="gen-bg-cycle" checked /><label
+                                >Циклическая анимация фона</label
+                            >
+                        </div>
+                        <label>Задержка 1</label>
+                        <div class="time-group">
+                            <input type="number" id="gen-delay1" value="1" min="0" step="0.1" /><select
+                                id="gen-delay1-unit"
+                            >
+                                <option value="ms">мс</option>
+                                <option value="s" selected>с</option>
+                                <option value="min">мин</option>
+                            </select>
+                        </div>
+                        <label>Задержка 2</label>
+                        <div class="time-group">
+                            <input type="number" id="gen-delay2" value="1" min="0" step="0.1" /><select
+                                id="gen-delay2-unit"
+                            >
+                                <option value="ms">мс</option>
+                                <option value="s" selected>с</option>
+                                <option value="min">мин</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-reading" id="gen-to-node" title="Создать узел на холсте">
+                        📌 В граф
+                    </button>
+                    <button class="btn" id="gen-apply">Применить</button>
+                    <button class="btn btn-secondary" id="gen-cancel">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="calibration-modal">
+            <div class="modal-content" style="width: 400px; text-align: center">
+                <h3>🎯 Калибровка камеры</h3>
+                <p style="font-size: 12px">Расположитесь на указанном расстоянии от экрана.</p>
+                <label>Расстояние до камеры (см)</label>
+                <input
+                    type="number"
+                    id="calib-distance"
+                    value="100"
+                    min="10"
+                    max="500"
+                    style="width: 100%; margin-bottom: 10px"
+                />
+                <div class="calib-video-wrapper">
+                    <video id="calibration-video" autoplay playsinline></video>
+                    <div id="calib-face-indicator" class="calib-face-indicator missing">Нет лица</div>
+                </div>
+                <div class="modal-footer" style="justify-content: center">
+                    <button class="btn" id="calibrate-confirm">Калибровать</button>
+                    <button class="btn btn-secondary" id="calibrate-cancel">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="screen-calib-modal">
+            <div class="modal-content" style="width: 700px; max-width: 95%">
+                <h3>📐 Калибровка экрана</h3>
+                <p style="font-size: 13px; color: #ccc; margin: 8px 0">
+                    Измерьте длину красной полосы линейкой в мм.
+                </p>
+                <div style="margin: 20px 0; padding: 15px 0; background: #0b0b0d; border-radius: 6px">
+                    <div
+                        id="screen-calib-bar"
+                        style="width: 400px; height: 30px; background: #ff0000; margin: 0 auto"
+                    ></div>
+                    <div style="text-align: center; color: #888; font-size: 11px; margin-top: 6px">
+                        ← 400 пикселей →
+                    </div>
+                </div>
+                <label style="font-size: 12px">Измеренная длина (мм):</label>
+                <input
+                    type="number"
+                    id="screen-calib-mm"
+                    value="106"
+                    min="5"
+                    max="500"
+                    step="0.5"
+                    style="font-size: 16px; padding: 6px; width: 100%"
+                />
+                <div
+                    style="
+                        margin-top: 12px;
+                        padding: 10px;
+                        background: #0b0b0d;
+                        border-radius: 6px;
+                        font-size: 12px;
+                    "
+                >
+                    <div>PPI: <b id="screen-calib-result" style="color: #00ff88; font-size: 16px">96</b></div>
+                    <div id="screen-calib-detail" style="color: #888; margin-top: 4px"></div>
+                </div>
+                <div style="font-size: 11px; color: #888; margin-top: 10px">
+                    Авто: <span id="screen-calib-auto">—</span>
+                </div>
+                <div class="modal-footer" style="justify-content: center">
+                    <button class="btn btn-success" id="screen-calib-apply">Применить</button>
+                    <button class="btn btn-secondary" id="screen-calib-cancel">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="scenario-time-modal">
+            <div class="modal-content" style="width: 560px">
+                <h3>⏱ Оценка времени сценария</h3>
+                <div
+                    id="scenario-time-body"
+                    style="font-size: 13px; color: #ccc; line-height: 1.6; margin-top: 10px"
+                >
+                    <div>Анализ графа…</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="scenario-time-close">Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="auth-modal">
+            <div class="modal-content" style="width: 300px">
+                <h3 id="auth-title">Вход</h3>
+                <label>Email</label>
+                <input type="email" id="auth-email" placeholder="you@example.com" />
+                <label>Пароль</label>
+                <input type="password" id="auth-password" />
+                <label id="auth-name-label" style="display: none">Имя</label>
+                <input type="text" id="auth-name" style="display: none" />
+                <div class="modal-footer" style="justify-content: center">
+                    <button class="btn btn-secondary" id="auth-toggle">Нет аккаунта? Регистрация</button>
+                    <button class="btn" id="auth-submit">Войти</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="pause-modal">
+            <div class="modal-content" style="width: 300px; text-align: center">
+                <h2>Тренировка приостановлена</h2>
+                <p>Три серии подряд без ответов.</p>
+                <button class="btn" id="pause-continue">▶ Продолжить</button>
+                <button class="btn btn-danger" id="pause-exit">✕ Выход</button>
+            </div>
+        </div>
+
+        <div class="modal" id="library-modal">
+            <div class="modal-content" style="width: 500px">
+                <h3>Библиотека сценариев</h3>
+                <div
+                    id="scenario-list"
+                    style="max-height: 300px; overflow-y: auto; margin-bottom: 10px"
+                ></div>
+                <button class="btn btn-success" id="btn-save-current-scenario">
+                    💾 Сохранить текущий сценарий
+                </button>
+                <button class="btn btn-secondary" id="btn-library-close">Закрыть</button>
+            </div>
+        </div>
+
+        <div class="modal" id="users-modal">
+            <div class="modal-content" style="width: 500px">
+                <h3>Пользователи</h3>
+                <div id="user-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px"></div>
+                <select id="selected-user" style="width: 100%; margin-bottom: 5px"></select>
+                <select id="selected-scenario" style="width: 100%; margin-bottom: 5px"></select>
+                <button class="btn btn-warning" id="btn-assign-scenario">
+                    Назначить выбранному пользователю
+                </button>
+                <button class="btn btn-secondary" id="btn-users-close">Закрыть</button>
+            </div>
+        </div>
+
+        <div class="modal" id="book-picker-modal">
+            <div class="modal-content" style="width: 560px">
+                <h3>Выбор книги</h3>
+                <p style="font-size: 12px; color: #999; margin: 6px 0 12px">
+                    Выберите из загруженных книг или загрузите новую.
+                </p>
+                <div
+                    id="book-picker-list"
+                    style="max-height: 320px; overflow-y: auto; margin-bottom: 12px"
+                ></div>
+                <div style="padding-top: 10px; border-top: 1px solid #3f3f46">
+                    <input type="file" id="book-picker-file" accept=".txt,.fb2,.epub" style="display: none" />
+                    <label for="book-picker-file" class="file-upload-btn"
+                        >📂 Загрузить книгу (.txt / .fb2 / .epub)</label
+                    >
+                    <span
+                        id="book-picker-file-name"
+                        style="font-size: 11px; color: #88ccff; margin-left: 8px"
+                    ></span>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="book-picker-detach">❌ Отвязать книгу</button>
+                    <button class="btn btn-secondary" id="book-picker-close">Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="font-picker-modal">
+            <div class="font-picker-content">
+                <div class="font-picker-header">
+                    <h3>Выбор шрифта</h3>
+                    <button class="btn btn-secondary" id="font-picker-close" title="Закрыть">✕</button>
+                </div>
+                <input
+                    type="text"
+                    id="font-picker-search"
+                    placeholder="Поиск шрифта..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <div id="font-picker-list" class="font-picker-list"></div>
+            </div>
+        </div>
+
+        <div id="connection-menu"></div>
+        <video id="hidden-video" playsinline muted></video>
+
+        <script src="data-layer.js" defer></script>
+        <script src="app.js" defer></script>
+        <script src="keepalive.js" defer></script>
+        <script src="voice.js" defer></script>
+
+        <script>
+            (function installSyncUI() {
+                'use strict';
+                function waitForData() {
+                    return new Promise((resolve) => {
+                        if (window.Data) return resolve(window.Data);
+                        const t = setInterval(() => {
+                            if (window.Data) {
+                                clearInterval(t);
+                                resolve(window.Data);
+                            }
+                        }, 50);
+                    });
+                }
+                let lastBannerState = null;
+                function renderChip(status) {
+                    const chip = document.getElementById('sync-chip');
+                    if (!chip) return;
+                    chip.classList.remove('online', 'offline', 'syncing', 'queue', 'errors');
+                    if (status.processing) {
+                        chip.textContent = '🔄 Синк…';
+                        chip.classList.add('syncing');
+                        return;
+                    }
+                    if (status.problematic > 0) {
+                        chip.textContent = `❗ ${status.problematic} ошибок`;
+                        chip.classList.add('errors');
+                        return;
+                    }
+                    if (status.queueSize > 0) {
+                        chip.textContent = `⚠️ ${status.queueSize} изм.`;
+                        chip.classList.add('queue');
+                        return;
+                    }
+                    if (status.online) {
+                        chip.textContent = '🟢 Онлайн';
+                        chip.classList.add('online');
+                    } else {
+                        chip.textContent = '📡 Офлайн';
+                        chip.classList.add('offline');
+                    }
+                }
+                function showBanner(icon, text, actionLabel, actionFn) {
+                    const banner = document.getElementById('sync-banner');
+                    const iconEl = document.getElementById('sync-banner-icon');
+                    const textEl = document.getElementById('sync-banner-text');
+                    const actionBtn = document.getElementById('sync-banner-action');
+                    if (!banner) return;
+                    iconEl.textContent = icon;
+                    textEl.textContent = text;
+                    if (actionLabel) {
+                        actionBtn.style.display = 'inline-block';
+                        actionBtn.textContent = actionLabel;
+                        actionBtn.onclick = actionFn || null;
+                    } else {
+                        actionBtn.style.display = 'none';
+                        actionBtn.onclick = null;
+                    }
+                    banner.classList.add('visible');
+                    clearTimeout(banner._hideTimer);
+                    banner._hideTimer = setTimeout(() => banner.classList.remove('visible'), 4500);
+                }
+                function hideBanner() {
+                    const b = document.getElementById('sync-banner');
+                    if (b) b.classList.remove('visible');
+                }
+                async function refreshQueueModal() {
+                    const m = document.getElementById('queue-modal');
+                    if (!m || m.style.display !== 'flex') return;
+                    const Data = window.Data;
+                    if (!Data) return;
+                    const queue = await Data.getQueue();
+                    const tbody = document.getElementById('queue-tbody');
+                    const empty = document.getElementById('queue-empty');
+                    const table = document.getElementById('queue-table');
+                    tbody.innerHTML = '';
+                    if (queue.length === 0) {
+                        table.style.display = 'none';
+                        empty.style.display = 'block';
+                        return;
+                    }
+                    table.style.display = 'table';
+                    empty.style.display = 'none';
+                    queue.forEach((item) => {
+                        const tr = document.createElement('tr');
+                        if (item.problematic) tr.classList.add('problematic');
+                        const when = new Date(item.createdAt).toLocaleTimeString('ru-RU');
+                        const statusText = item.problematic
+                            ? `❌ ${item.lastError || 'ошибка'}`
+                            : item.retries > 0
+                              ? `⏳ попыток: ${item.retries}`
+                              : '⏳ в очереди';
+                        tr.innerHTML = `<td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.action)}</td><td style="font-family:monospace;font-size:10px;">${escapeHtml(String(item.entityId || '—').slice(0, 16))}</td><td>${when}</td><td>${item.retries || 0}</td><td>${escapeHtml(statusText)}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+                function escapeHtml(s) {
+                    const d = document.createElement('div');
+                    d.textContent = String(s);
+                    return d.innerHTML;
+                }
+                async function updateAll() {
+                    const Data = window.Data;
+                    if (!Data) return;
+                    try {
+                        const status = await Data.getStatus();
+                        renderChip(status);
+                        const key = `${status.online}|${status.processing}|${status.queueSize}|${status.problematic}`;
+                        if (key !== lastBannerState) {
+                            lastBannerState = key;
+                            if (!status.online)
+                                showBanner(
+                                    '📡',
+                                    'Нет интернета. Работаем локально, данные сохраняются в браузере.',
+                                    status.queueSize > 0 ? 'Очередь' : null,
+                                    status.queueSize > 0 ? openQueueModal : null
+                                );
+                            else if (status.processing)
+                                showBanner('🔄', 'Синхронизация с облаком…', null, null);
+                            else if (status.problematic > 0)
+                                showBanner(
+                                    '❗',
+                                    `Не отправлено: ${status.problematic} записей`,
+                                    'Очередь',
+                                    openQueueModal
+                                );
+                            else if (status.queueSize > 0)
+                                showBanner(
+                                    '⚠️',
+                                    `В очереди: ${status.queueSize} записей`,
+                                    'Очередь',
+                                    openQueueModal
+                                );
+                            else if (status.online) hideBanner();
+                        }
+                    } catch (e) {
+                        console.warn('[sync-ui] updateAll:', e);
+                    }
+                }
+                function openQueueModal() {
+                    const m = document.getElementById('queue-modal');
+                    if (!m) return;
+                    m.style.display = 'flex';
+                    refreshQueueModal();
+                }
+                function closeQueueModal() {
+                    const m = document.getElementById('queue-modal');
+                    if (m) m.style.display = 'none';
+                }
+                async function bindEvents() {
+                    const Data = await waitForData();
+                    const chip = document.getElementById('sync-chip');
+                    if (chip) chip.addEventListener('click', openQueueModal);
+                    const closeBtn = document.getElementById('sync-banner-close');
+                    if (closeBtn) closeBtn.addEventListener('click', hideBanner);
+                    const qClose = document.getElementById('queue-close');
+                    if (qClose) qClose.addEventListener('click', closeQueueModal);
+                    const qModal = document.getElementById('queue-modal');
+                    if (qModal)
+                        qModal.addEventListener('click', (e) => {
+                            if (e.target === qModal) closeQueueModal();
+                        });
+                    const syncNow = document.getElementById('queue-sync-now');
+                    if (syncNow)
+                        syncNow.addEventListener('click', async () => {
+                            syncNow.disabled = true;
+                            syncNow.textContent = '⏳ Отправляю…';
+                            try {
+                                await Data.flush();
+                                await refreshQueueModal();
+                                await updateAll();
+                            } finally {
+                                syncNow.disabled = false;
+                                syncNow.textContent = '🔄 Синхронизировать сейчас';
+                            }
+                        });
+                    const clearBtn = document.getElementById('queue-clear');
+                    if (clearBtn)
+                        clearBtn.addEventListener('click', async () => {
+                            if (!confirm('Очистить всю очередь? Неотправленные изменения будут потеряны.'))
+                                return;
+                            await Data.clearQueue();
+                            await refreshQueueModal();
+                            await updateAll();
+                        });
+                    Data.onChange((type) => {
+                        if (
+                            type === 'queue-changed' ||
+                            type === 'sync-start' ||
+                            type === 'sync-end' ||
+                            type === 'online' ||
+                            type === 'offline' ||
+                            type === 'ready'
+                        ) {
+                            updateAll();
+                            refreshQueueModal();
+                        }
+                    });
+                    setInterval(updateAll, 5000);
+                    setInterval(refreshQueueModal, 5000);
+                    updateAll();
+                }
+                if (document.readyState === 'loading')
+                    document.addEventListener('DOMContentLoaded', bindEvents);
+                else bindEvents();
+            })();
+        </script>
+    </body>
 </html>

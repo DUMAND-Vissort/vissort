@@ -7,8 +7,8 @@
 // ============================================================
 'use strict';
 
-const CACHE_VERSION = 'vissort-v10';
-const CACHE_STATIC  = `${CACHE_VERSION}-static`;
+const CACHE_VERSION = 'vissort-v11';
+const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 const CACHE_SUPABASE = `${CACHE_VERSION}-supabase`;
 
@@ -28,39 +28,40 @@ const PRECACHE_URLS = [
 
 // Домены/пути, которые НЕ кэшируем
 const NEVER_CACHE_PATTERNS = [
-    /\/auth\/v1\//,          // Supabase Auth — всегда сеть
-    /\/rest\/v1\/rpc\//,     // RPC-вызовы
-    /\/storage\/v1\//        // Storage — файлы
+    /\/auth\/v1\//, // Supabase Auth — всегда сеть
+    /\/rest\/v1\/rpc\//, // RPC-вызовы
+    /\/storage\/v1\// // Storage — файлы
 ];
 
 // ============================================================
 // INSTALL: precache локальных файлов
 // ============================================================
 self.addEventListener('install', (event) => {
-    event.waitUntil((async () => {
-        const cache = await caches.open(CACHE_STATIC);
-        await Promise.allSettled(
-            PRECACHE_URLS.map(url =>
-                cache.add(new Request(url, { cache: 'reload' }))
-                    .catch(err => console.warn('[SW] precache miss:', url, err.message))
-            )
-        );
-    })());
+    event.waitUntil(
+        (async () => {
+            const cache = await caches.open(CACHE_STATIC);
+            await Promise.allSettled(
+                PRECACHE_URLS.map((url) =>
+                    cache
+                        .add(new Request(url, { cache: 'reload' }))
+                        .catch((err) => console.warn('[SW] precache miss:', url, err.message))
+                )
+            );
+        })()
+    );
 });
 
 // ============================================================
 // ACTIVATE: чистим старые версии
 // ============================================================
 self.addEventListener('activate', (event) => {
-    event.waitUntil((async () => {
-        const keys = await caches.keys();
-        await Promise.all(
-            keys
-                .filter(k => !k.startsWith(CACHE_VERSION))
-                .map(k => caches.delete(k))
-        );
-        await self.clients.claim();
-    })());
+    event.waitUntil(
+        (async () => {
+            const keys = await caches.keys();
+            await Promise.all(keys.filter((k) => !k.startsWith(CACHE_VERSION)).map((k) => caches.delete(k)));
+            await self.clients.claim();
+        })()
+    );
 });
 
 // ============================================================
@@ -71,18 +72,22 @@ self.addEventListener('message', (event) => {
     if (data.type === 'SKIP_WAITING') self.skipWaiting();
 
     if (data.type === 'CLEAR_CACHE') {
-        event.waitUntil((async () => {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-            console.log('[SW] все кэши очищены');
-        })());
+        event.waitUntil(
+            (async () => {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => caches.delete(k)));
+                console.log('[SW] все кэши очищены');
+            })()
+        );
     }
 
     if (data.type === 'CLEAR_SUPABASE_CACHE') {
-        event.waitUntil((async () => {
-            await caches.delete(CACHE_SUPABASE);
-            console.log('[SW] кэш Supabase очищен');
-        })());
+        event.waitUntil(
+            (async () => {
+                await caches.delete(CACHE_SUPABASE);
+                console.log('[SW] кэш Supabase очищен');
+            })()
+        );
     }
 });
 
@@ -100,7 +105,7 @@ self.addEventListener('fetch', (event) => {
     // ---------- 1. Supabase ----------
     if (url.hostname === 'hzvypwdpdhsjzaclxmbm.supabase.co') {
         // Никогда не кэшируем auth, rpc, storage
-        if (NEVER_CACHE_PATTERNS.some(p => p.test(url.pathname))) {
+        if (NEVER_CACHE_PATTERNS.some((p) => p.test(url.pathname))) {
             return; // пусть идёт напрямую
         }
         // REST GET — stale-while-revalidate
@@ -120,9 +125,11 @@ self.addEventListener('fetch', (event) => {
     // ---------- 3. Свой origin ----------
     if (url.origin === self.location.origin) {
         // HTML — network-first
-        if (request.mode === 'navigate' ||
+        if (
+            request.mode === 'navigate' ||
             request.destination === 'document' ||
-            url.pathname.endsWith('.html')) {
+            url.pathname.endsWith('.html')
+        ) {
             event.respondWith(networkFirstHTML(request));
             return;
         }
@@ -168,13 +175,13 @@ async function staleWhileRevalidate(request, cacheName) {
     const cached = await cache.match(request);
 
     const networkPromise = fetch(request)
-        .then(res => {
+        .then((res) => {
             if (res && res.ok && res.type !== 'opaque') {
                 cache.put(request, res.clone());
             }
             return res;
         })
-        .catch(err => {
+        .catch((err) => {
             console.warn('[SW] fetch error для', request.url, err.message);
             return cached || new Response('', { status: 503 });
         });
@@ -196,7 +203,7 @@ async function trimCache(cacheName, maxItems) {
     const keys = await cache.keys();
     if (keys.length <= maxItems) return;
     const toDelete = keys.slice(0, keys.length - maxItems);
-    await Promise.all(toDelete.map(k => cache.delete(k)));
+    await Promise.all(toDelete.map((k) => cache.delete(k)));
     console.log(`[SW] ${cacheName}: удалено ${toDelete.length} старых записей`);
 }
 
