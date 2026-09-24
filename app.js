@@ -1027,10 +1027,11 @@ function ensureBlinkCalibrationUI() {
         const anchor = document.getElementById('btn-calibrate-camera');
         if (anchor && anchor.parentNode) {
             btn = document.createElement('button');
-            btn.className = 'btn btn-warning';
+            btn.className = 'btn btn-warning btn-icon';
             btn.id = 'btn-calibrate-blink';
+            btn.title = 'Калибровка моргания';
             btn.disabled = true;
-            btn.textContent = '👁️ Калибровка моргания';
+            btn.textContent = '👁️';
             anchor.parentNode.insertBefore(btn, anchor.nextSibling);
             btn.addEventListener('click', startBlinkCalibration);
         }
