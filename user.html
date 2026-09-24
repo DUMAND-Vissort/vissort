@@ -441,7 +441,8 @@
                 }
             }
         </style>
-    </head>
+    <style id="btn-sizes">.btn-icon { width: 28px !important; min-width: 28px !important; max-width: 28px !important; padding: 0 !important; }</style>
+</head>
     <body>
         <header>
             <span class="chip" id="hdr-scenario" title="Выбрать сценарий">—</span>
@@ -456,8 +457,8 @@
             <button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
             <button class="btn btn-ghost" id="btn-history">📊 История</button>
             <button class="btn btn-primary" id="btn-player">▶ Начать</button>
-            <button class="btn btn-warn" id="btn-player-pause" disabled>⏸</button>
-            <button class="btn btn-danger" id="btn-player-stop" disabled>⏹</button>
+            <button class="btn btn-warn btn-icon" id="btn-player-pause" disabled>⏸</button>
+            <button class="btn btn-danger btn-icon" id="btn-player-stop" disabled>⏹</button>
             <span class="chip" id="hdr-user">—</span>
             <button class="btn btn-ghost" id="btn-logout">Выйти</button>
         </header>
