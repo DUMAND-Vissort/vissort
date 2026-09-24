@@ -1174,6 +1174,9 @@ function scheduleVoiceCountdown(durationMs, p) {
 
 // ==================== КАМЕРА ====================
 async function loadFaceApiModels() {
+    if (faceapi.tf) {
+        try { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch (e) {}
+    }
     const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
     await faceapi.nets.tinyFaceDetector.loadFromUri(M);
     await faceapi.nets.faceLandmark68Net.loadFromUri(M);
