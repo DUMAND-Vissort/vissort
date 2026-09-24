@@ -1,6 +1,6 @@
-// ============================================================
+﻿// ============================================================
 // header-drag.js
-// Перетаскивание кнопок в шапке. Зажал ПКМ → перетащил → отпустил.
+// Перетаскивание кнопок в шапке. ПКМ → перетащил → отпустил.
 // Порядок сохраняется в localStorage.
 // ============================================================
 (function installHeaderDrag() {
@@ -16,14 +16,12 @@
         let ghost = null;
         let startX = 0, startY = 0;
 
-        // Подавить контекстное меню на кнопках
         header.addEventListener('contextmenu', (e) => {
             if (e.target.closest('.btn, .status-chip, .counter')) {
                 e.preventDefault();
             }
         });
 
-        // ПКМ вниз — начало drag
         header.addEventListener('mousedown', (e) => {
             if (e.button !== 2) return;
             const target = e.target.closest('.btn, .status-chip, .counter');
@@ -37,7 +35,6 @@
 
             const rect = target.getBoundingClientRect();
 
-            // Ghost — копия, летит за курсором
             ghost = target.cloneNode(true);
             ghost.style.cssText = `
                 position: fixed;
@@ -50,7 +47,6 @@
                 opacity: 0.85;
                 transform: scale(1.08);
                 box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-                transition: none;
             `;
             document.body.appendChild(ghost);
 
@@ -74,26 +70,39 @@
 
         function onUp(e) {
             if (!dragEl) return;
-            cleanup();
+
+            const el = dragEl;
+            if (ghost) ghost.style.display = 'none';
 
             const under = document.elementFromPoint(e.clientX, e.clientY);
+
+            cleanup();
+
             if (!under) return;
 
             const target = under.closest('.btn, .status-chip, .counter');
             const section = under.closest('.header-section');
 
-            if (target && target !== dragEl) {
+            if (target && target !== el) {
                 const tr = target.getBoundingClientRect();
                 const midX = tr.left + tr.width / 2;
-                if (e.clientX < midX) {
-                    target.parentNode.insertBefore(dragEl, target);
-                } else {
-                    target.parentNode.insertBefore(dragEl, target.nextSibling);
+                try {
+                    if (e.clientX < midX) {
+                        target.parentNode.insertBefore(el, target);
+                    } else {
+                        target.parentNode.insertBefore(el, target.nextSibling);
+                    }
+                    saveOrder();
+                } catch (err) {
+                    console.warn('[header-drag] insertBefore failed:', err);
                 }
-                saveOrder();
-            } else if (section && section !== dragEl.closest('.header-section')) {
-                section.appendChild(dragEl);
-                saveOrder();
+            } else if (section && section !== el.parentNode) {
+                try {
+                    section.appendChild(el);
+                    saveOrder();
+                } catch (err) {
+                    console.warn('[header-drag] appendChild failed:', err);
+                }
             }
         }
 
@@ -114,7 +123,7 @@
 
         function saveOrder() {
             try {
-                const ids = Array.from(header.querySelectorAll('[id]')).map(el => el.id);
+                const ids = Array.from(header.querySelectorAll('[id]')).map(el => el.id).filter(Boolean);
                 localStorage.setItem(LS_KEY, JSON.stringify(ids));
             } catch (_) {}
         }
