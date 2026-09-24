@@ -342,7 +342,24 @@ async function onLoggedIn() {
         openScenarioPicker();
         hideStatus();
     }
-    if (userScenario?.params?.cameraCheck) enableCamera();
+    if (userScenario?.params?.cameraCheck) {
+        if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
+            try {
+                const fp = await VissortDevice.getFingerprint();
+                VissortDevice.setCurrent(fp);
+                await Onboarding.start({
+                    client: supabaseClient,
+                    userId: currentUser ? currentUser.id : null,
+                    onDone: () => enableCamera()
+                });
+            } catch (e) {
+                console.warn('[user] onboarding:', e);
+                enableCamera();
+            }
+        } else {
+            enableCamera();
+        }
+    }
 }
 async function loadUserScenarios() {
     const { data: assigns, error: e1 } = await supabaseClient
