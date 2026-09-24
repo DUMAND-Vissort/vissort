@@ -1182,7 +1182,7 @@ async function enableCamera() {
     if (cameraActive) return;
     try {
         videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+            video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } }
         });
         const h = document.getElementById('hidden-video');
         h.srcObject = videoStream;
@@ -1269,16 +1269,21 @@ function recalcSizesForNewDistance() {
         }, 60);
     }
 }
+let _frameSkipCounter = 0;
 async function processVideoFrame() {
     if (!cameraActive) {
         videoFrameId = null;
+        return;
+    }
+    if ((_frameSkipCounter = (_frameSkipCounter + 1) % 2) !== 0) {
+        videoFrameId = requestAnimationFrame(processVideoFrame);
         return;
     }
     const v = document.getElementById('hidden-video');
     if (v.readyState >= 2 && v.videoWidth > 0 && !v.paused) {
         try {
             const det = await faceapi
-                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions())
+                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
                 .withFaceLandmarks();
             const faceStatus = document.getElementById('face-status');
             const calibInd = document.getElementById('calib-face-indicator');
