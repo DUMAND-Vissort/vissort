@@ -364,15 +364,13 @@ async function onLoggedIn() {
             await Onboarding.start({
                 client: supabaseClient,
                 userId: currentUser ? currentUser.id : null,
-                onDone: () => {
-                    if (userScenario && userScenario.params && userScenario.params.cameraCheck) enableCamera();
-                }
+                onDone: () => enableCamera()
             });
         } catch (e) {
             console.warn('[player] onboarding:', e);
-            if (userScenario && userScenario.params && userScenario.params.cameraCheck) enableCamera();
+            enableCamera();
         }
-    } else if (userScenario && userScenario.params && userScenario.params.cameraCheck) {
+    } else {
         enableCamera();
     }
 }

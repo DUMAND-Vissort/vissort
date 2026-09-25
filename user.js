@@ -349,15 +349,13 @@ async function onLoggedIn() {
             await Onboarding.start({
                 client: supabaseClient,
                 userId: currentUser ? currentUser.id : null,
-                onDone: () => {
-                    if (userScenario?.params?.cameraCheck) enableCamera();
-                }
+                onDone: () => enableCamera()
             });
         } catch (e) {
             console.warn('[user] onboarding:', e);
-            if (userScenario?.params?.cameraCheck) enableCamera();
+            enableCamera();
         }
-    } else if (userScenario?.params?.cameraCheck) {
+    } else {
         enableCamera();
     }
 }
