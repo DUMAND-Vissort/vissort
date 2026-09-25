@@ -296,6 +296,7 @@ function promptLogin() {
     if (hdrUser) hdrUser.textContent = '—';
     if (hdrScenario) hdrScenario.textContent = '—';
     if (btnPlayer) btnPlayer.disabled = true;
+    document.querySelector('.counters')?.style.setProperty('display','none');
 }
 function updateAuthModal() {
     const t = $('auth-title'),
@@ -353,6 +354,7 @@ async function onLoggedIn() {
         updateCounters();
         hideStatus();
         if (btnPlayer) btnPlayer.disabled = false;
+    document.querySelector('.counters')?.style.setProperty('display','inline-flex');
     } else {
         openScenarioPicker();
         hideStatus();
@@ -422,6 +424,7 @@ function openScenarioPicker() {
             const m = $('scenario-modal');
             if (m) m.classList.remove('open');
             if (btnPlayer) btnPlayer.disabled = false;
+    document.querySelector('.counters')?.style.setProperty('display','inline-flex');
             if (s.params && s.params.cameraCheck) enableCamera();
         });
         list.appendChild(el);
@@ -2021,6 +2024,7 @@ function startPlayer() {
     currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
     if (btnPlayer) btnPlayer.disabled = true;
+    document.querySelector('.counters')?.style.setProperty('display','none');
     if (btnPlayerStop) btnPlayerStop.disabled = false;
     if (btnPlayerPause) btnPlayerPause.disabled = false;
     if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
@@ -2898,6 +2902,7 @@ function stopPlayer() {
     if (readingContentEl) readingContentEl.innerHTML = '';
     if (stimDisplay) stimDisplay.style.display = '';
     if (btnPlayer) btnPlayer.disabled = false;
+    document.querySelector('.counters')?.style.setProperty('display','inline-flex');
     if (btnPlayerStop) btnPlayerStop.disabled = true;
     if (btnPlayerPause) btnPlayerPause.disabled = true;
     document.body.style.background = '#0b0b0f';
@@ -3023,6 +3028,7 @@ function init() {
             if (hdrUser) hdrUser.textContent = '—';
             if (hdrScenario) hdrScenario.textContent = '—';
             if (btnPlayer) btnPlayer.disabled = true;
+    document.querySelector('.counters')?.style.setProperty('display','none');
             promptLogin();
         });
 

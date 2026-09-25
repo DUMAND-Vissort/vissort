@@ -1709,6 +1709,7 @@ function startPlayer() {
     currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
     btnPlayer.disabled = true;
+    document.querySelector('.counters')?.style.setProperty('display','none');
     btnPlayerStop.disabled = false;
     btnPlayerPause.disabled = false;
     if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
@@ -2461,6 +2462,7 @@ function stopPlayer() {
     readingContentEl.innerHTML = '';
     stimDisplay.style.display = '';
     btnPlayer.disabled = false;
+    document.querySelector('.counters')?.style.setProperty('display','inline-flex');
     btnPlayerStop.disabled = true;
     btnPlayerPause.disabled = true;
     document.body.style.background = '#0b0b0f';
