@@ -1697,7 +1697,7 @@ function startPlayer() {
         alert('Сценарий повреждён или содержит некорректные данные.');
         return;
     }
-    sessionId = 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    sessionId = crypto.randomUUID();
     const p = userScenario.params || {};
     playerRunning = true;
     isPaused = false;
@@ -2505,7 +2505,7 @@ async function saveResult(nodeId, reactionTimeMs, isCorrect) {
             user_id: currentUser.id,
             session_id: sessionId,
             node_id: nodeId || 'user_training',
-            response_time_ms: reactionTimeMs,
+            response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
             is_correct: isCorrect,
             created_at: new Date().toISOString()
         });
