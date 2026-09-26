@@ -1,6 +1,18 @@
 // ==================== user.js: Начало части 1 из 4 ====================
 'use strict';
 
+// ==================== PLAYER OPTIONS ====================
+(function checkPlayerOptions() {
+    const opts = window.VissortPlayerOptions || { requireDomain: false };
+    if (opts.requireDomain) {
+        const ALLOWED = ['vissort.com', 'www.vissort.com', 'localhost', '127.0.0.1'];
+        if (!ALLOWED.includes(location.hostname)) {
+            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0b12;color:#e8e8f0;font-family:sans-serif;text-align:center;padding:20px"><div><h1 style="font-size:24px;margin-bottom:12px">Access denied</h1><p style="color:#9494a8">Player only works on vissort.com</p></div></div>';
+            throw new Error('Domain not allowed');
+        }
+    }
+})();
+
 const SUPABASE_URL = 'https://hzvypwdpdhsjzaclxmbm.supabase.co';
 const SUPABASE_ANON_KEY =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';

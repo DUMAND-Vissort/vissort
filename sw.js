@@ -7,7 +7,7 @@
 // ============================================================
 'use strict';
 
-const CACHE_VERSION = 'vissort-v14';
+const CACHE_VERSION = 'vissort-v17';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 const CACHE_SUPABASE = `${CACHE_VERSION}-supabase`;
@@ -25,6 +25,7 @@ const PRECACHE_URLS = [
     '/voice.js',
     '/vissort-device.js',
     '/vissort-onboarding.js',
+    '/player-runtime.js',
     '/keepalive.js'
 ];
 

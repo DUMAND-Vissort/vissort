@@ -550,6 +550,7 @@
                 const btn = document.getElementById('btn-games');
                 const menu = document.getElementById('games-menu');
                 if (!btn || !menu) return;
+                if (window.VissortPlayerOptions && window.VissortPlayerOptions.showGamesMenu === false) { btn.style.display = 'none'; menu.style.display = 'none'; return; }
                 btn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     menu.classList.toggle('open');
