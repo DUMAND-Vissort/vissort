@@ -105,44 +105,26 @@
             };
             req.onsuccess = () => {
                 db = req.result;
-            db.onclose = () => { console.warn('[Data] IndexedDB закрыта'); db = null; };
-            db.onversionchange = () => { try { db.close(); } catch(_) {} db = null; };
                 resolve(db);
             };
             req.onerror = () => reject(req.error);
         });
     }
 
-    async function idb(store, mode, fn) {
-    if (!db) {
-        try {
-            await openDB();
-        } catch (e) {
-            throw new Error('IndexedDB не открыта: ' + e.message);
-        }
-    }
-    return new Promise((resolve, reject) => {
-        try {
-            const tx = db.transaction(store, mode);
-            const s = tx.objectStore(store);
-            const result = fn(s);
-            tx.oncomplete = () => resolve(result);
-            tx.onerror = () => reject(tx.error);
-            tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
-        } catch (e) {
-            if (e.name === 'InvalidStateError') {
-                console.warn('[Data] DB закрыта, переподключаюсь...');
-                db = null;
-                openDB()
-                    .then(() => idb(store, mode, fn))
-                    .then(resolve)
-                    .catch(reject);
-                return;
+    function idb(store, mode, fn) {
+        return new Promise((resolve, reject) => {
+            if (!db) return reject(new Error('IndexedDB не открыта'));
+            try {
+                const tx = db.transaction(store, mode);
+                const s = tx.objectStore(store);
+                const result = fn(s);
+                tx.oncomplete = () => resolve(result);
+                tx.onerror = () => reject(tx.error);
+            } catch (e) {
+                reject(e);
             }
-            reject(e);
-        }
-    });
-}
+        });
+    }
     function idbPut(store, value) {
         return idb(store, 'readwrite', (s) => s.put(value));
     }
