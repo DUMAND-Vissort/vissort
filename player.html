@@ -463,6 +463,9 @@
     })();
 </script>
 <style>.btn-icon svg{display:block;fill:currentColor;}</style>
+<style>
+#auth-modal input:focus, #auth-modal input:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); border-color: #6366f1 !important; }
+</style>
 </head>
     <body>
         <header>
@@ -548,13 +551,15 @@
         <div class="modal" id="auth-modal">
             <div class="modal-content">
                 <h3 id="auth-title">Вход</h3>
-                <label>Email</label>
+                <form id="auth-form" autocomplete="on">
+                <label for="auth-email">Email</label>
                 <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
-                <label>Пароль</label>
+                <label for="auth-password">Пароль</label>
                 <input type="password" id="auth-password" autocomplete="current-password" />
                 <div class="modal-footer">
-                    <button class="btn btn-ghost" id="auth-toggle">Регистрация</button>
-                    <button class="btn btn-primary" id="auth-submit">Войти</button>
+                    <button type="button" class="btn btn-ghost" id="auth-toggle">Регистрация</button>
+                    <button type="submit" class="btn btn-primary" id="auth-submit">Войти</button>
+                </form>
                 </div>
             </div>
         </div>

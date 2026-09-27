@@ -312,6 +312,69 @@ function updateAuthModal() {
         sb.textContent = 'Зарегистрироваться';
     }
 }
+const LS_LAST_EMAIL = 'vissort_last_email';
+
+function prefillAuthEmail() {
+    try {
+        const saved = localStorage.getItem(LS_LAST_EMAIL);
+        const el = $('auth-email');
+        if (saved && el && !el.value) el.value = saved;
+    } catch (_) {}
+}
+
+function focusAuthField() {
+    const emailEl = $('auth-email');
+    const passEl = $('auth-password');
+    if (!emailEl || !passEl) return;
+    setTimeout(() => {
+        try {
+            if (emailEl.value) {
+                passEl.focus();
+                passEl.select();
+            } else {
+                emailEl.focus();
+                emailEl.select();
+            }
+        } catch (_) {}
+    }, 150);
+}
+
+function bindAuthForm() {
+    const form = $('auth-form');
+    if (!form || form._authBound) return;
+    form._authBound = true;
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        doAuth();
+    });
+}
+
+function showAuthModal(mode) {
+    authMode = mode;
+    const t = $('auth-title');
+    const nl = $('auth-name-label');
+    const ni = $('auth-name');
+    const tb = $('auth-toggle');
+    const sb = $('auth-submit');
+    if (mode === 'signin') {
+        t.textContent = 'Вход';
+        nl.style.display = 'none';
+        ni.style.display = 'none';
+        tb.textContent = 'Нет аккаунта? Регистрация';
+        sb.textContent = 'Войти';
+    } else {
+        t.textContent = 'Регистрация';
+        nl.style.display = 'block';
+        ni.style.display = 'block';
+        tb.textContent = 'Уже есть аккаунт? Войти';
+        sb.textContent = 'Зарегистрироваться';
+    }
+    authModal.classList.add('open');
+    bindAuthForm();
+    prefillAuthEmail();
+    focusAuthField();
+}
+
 async function doAuth() {
     const email = $('auth-email').value.trim();
     const password = $('auth-password').value;
@@ -319,6 +382,7 @@ async function doAuth() {
         alert('Введите email и пароль');
         return;
     }
+    try { localStorage.setItem(LS_LAST_EMAIL, email); } catch (_) {}
     if (authMode === 'signin') {
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
