@@ -459,6 +459,7 @@
         console.log('[sentry] initialized');
     })();
 </script>
+<style>.btn-icon svg{display:block;fill:currentColor;}</style>
 </head>
     <body>
         <header>
@@ -474,8 +475,8 @@
             <button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
             <button class="btn btn-ghost" id="btn-history">📊 История</button>
             <button class="btn btn-primary" id="btn-player">▶ Начать</button>
-            <button class="btn btn-warn btn-icon" id="btn-player-pause" disabled>||</button>
-            <button class="btn btn-danger btn-icon" id="btn-player-stop" disabled>&#9632;</button>
+            <button class="btn btn-warn btn-icon" id="btn-player-pause" disabled><svg width="12" height="14" viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="1" y="1" width="3.5" height="12" rx="0.5"/><rect x="7.5" y="1" width="3.5" height="12" rx="0.5"/></svg></button>
+            <button class="btn btn-danger btn-icon" id="btn-player-stop" disabled><svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="1"/></svg></button>
             <span class="chip" id="cam-indicator">📷</span>
 <span class="chip" id="hdr-user">—</span>
             <button class="btn btn-ghost" id="btn-logout">Выйти</button>

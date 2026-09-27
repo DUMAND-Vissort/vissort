@@ -46,8 +46,7 @@
                 '<label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:4px;">Длина в мм</label>',
                 '<input type="number" id="ob-mm" value="106" min="5" max="500" step="0.5" style="width:100%;padding:10px;background:#0b0b0f;border:1px solid #2a2a35;border-radius:6px;color:#fff;font-size:16px;box-sizing:border-box;">',
                 '<div style="margin-top:10px;font-size:12px;color:#22c55e;">PPI: <b id="ob-ppi">—</b></div>',
-                '<div style="margin-top:24px;display:flex;justify-content:space-between;gap:10px;">',
-                '<button id="ob-skip-1" style="padding:10px 20px;background:transparent;color:#94a3b8;border:1px solid #3f3f46;border-radius:8px;font-size:14px;cursor:pointer;">Пропустить всё</button>',
+                '<div style="margin-top:24px;display:flex;justify-content:flex-end;">',
                 '<button id="ob-next" style="padding:10px 24px;background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Далее →</button>',
                 '</div>'
             ].join('');
@@ -81,30 +80,12 @@
                 '<div style="margin-top:16px;font-size:12px;color:#94a3b8;text-align:center;">Расстояние до камеры: <b style="color:#fff;">1.00 м</b></div>',
                 '<div style="margin-top:24px;display:flex;justify-content:space-between;gap:10px;">',
                 '<button id="ob-back" style="padding:10px 20px;background:transparent;color:#94a3b8;border:1px solid #3f3f46;border-radius:8px;font-size:14px;cursor:pointer;">← Назад</button>',
-                '<div style="display:flex;gap:8px;">',
-                '<button id="ob-skip-2" style="padding:10px 20px;background:transparent;color:#94a3b8;border:1px solid #3f3f46;border-radius:8px;font-size:14px;cursor:pointer;">Пропустить</button>',
                 '<button id="ob-done" disabled style="padding:10px 24px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;opacity:0.5;">Готово</button>',
-                '</div>',
                 '</div>'
             ].join('');
 
             startCameraForOnboarding();
 
-            function skipOnboarding() {
-                if (!confirm('Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.')) return;
-                stopCamera();
-                const data = { ppi: 96, focalLengthPx: 1 };
-                const fp = sessionStorage.getItem('vissort_fp');
-                if (fp) Device.saveLocal(fp, data);
-                Device.apply(data);
-                if (modal) modal.remove();
-                modal = null;
-                if (typeof onDone === 'function') onDone(data);
-            }
-            const skip1 = document.getElementById('ob-skip-1');
-            if (skip1) skip1.addEventListener('click', skipOnboarding);
-            const skip2 = document.getElementById('ob-skip-2');
-            if (skip2) skip2.addEventListener('click', skipOnboarding);
             document.getElementById('ob-back').addEventListener('click', () => {
                 stopCamera();
                 step = 1;

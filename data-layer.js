@@ -789,15 +789,30 @@
     // МИГРАЦИИ И ДОРАБОТКИ
     // ============================================================
     async function migrateFromV2() {
-        const flag = await idbGet(STORES.settings, 'migrated_v2_v3');
-        if (flag && flag.value === true) return;
-        log('миграция v2→v3: помечаем все scenarios как _dirty');
+        const LS_KEY = 'vissort_migration_v2_v3_done';
+        try {
+            if (localStorage.getItem(LS_KEY) === 'true') return;
+        } catch (_) {}
+
+        let flag = null;
+        try {
+            flag = await idbGet(STORES.settings, 'migrated_v2_v3');
+        } catch (_) {}
+
+        if (flag && flag.value === true) {
+            try { localStorage.setItem(LS_KEY, 'true'); } catch (_) {}
+            return;
+        }
+
+        log('миграция v2→v3: помечаем scenarios как _dirty (однократно)');
         const scenarios = await idbGetAll(STORES.scenarios);
         for (const s of scenarios) {
             if (s._dirty === undefined)
                 await idbPut(STORES.scenarios, { ...s, _dirty: true, _syncedAt: null });
         }
-        await idbPut(STORES.settings, { key: 'migrated_v2_v3', value: true });
+
+        try { await idbPut(STORES.settings, { key: 'migrated_v2_v3', value: true }); } catch (_) {}
+        try { localStorage.setItem(LS_KEY, 'true'); } catch (_) {}
     }
 
     Data.getDirtyCount = async () => {
