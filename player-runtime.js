@@ -17,6 +17,48 @@ const SUPABASE_URL = 'https://hzvypwdpdhsjzaclxmbm.supabase.co';
 const SUPABASE_ANON_KEY =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
 
+(function installAuthObserver() {
+    function bindForm() {
+        const form = document.getElementById('auth-form');
+        if (!form || form._authBound) return;
+        form._authBound = true;
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof doAuth === 'function') doAuth();
+        });
+        console.log('[auth] форма привязана');
+    }
+    function focusFirstField() {
+        const email = document.getElementById('auth-email');
+        const pass = document.getElementById('auth-password');
+        if (!email || !pass) return;
+        try {
+            if (email.value) { pass.focus(); pass.select(); }
+            else { email.focus(); email.select(); }
+        } catch (_) {}
+    }
+    function onModalOpen() {
+        bindForm();
+        setTimeout(focusFirstField, 150);
+    }
+    function attach() {
+        const modal = document.getElementById('auth-modal');
+        if (!modal) return;
+        bindForm();
+        const obs = new MutationObserver(function () {
+            if (modal.classList.contains('open')) onModalOpen();
+        });
+        obs.observe(modal, { attributes: true, attributeFilter: ['class'] });
+        if (modal.classList.contains('open')) onModalOpen();
+        console.log('[auth] observer установлен');
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attach);
+    } else {
+        attach();
+    }
+})();
 let supabaseClient = null;
 let currentUser = null;
 let userScenarios = [];
