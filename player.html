@@ -445,6 +445,7 @@
         }
         Sentry.init({
             dsn: 'https://f64db93abc3ba7bc6b4be4b31835e749@o4512152794038272.ingest.de.sentry.io/4512152834801744',
+            tunnel: 'https://hzvypwdpdhsjzaclxmbm.supabase.co/functions/v1/sentry-proxy',
             environment: (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'dev' : 'production',
             release: 'vissort-2.0.0',
             dataCollection: { userInfo: false, httpBodies: [] },
