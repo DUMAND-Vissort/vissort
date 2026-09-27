@@ -31,6 +31,8 @@ const PRECACHE_URLS = [
 
 // Домены/пути, которые НЕ кэшируем
 const NEVER_CACHE_PATTERNS = [
+    /sentry-cdn\.com/,
+    /\.sentry\.io/,
     /\/auth\/v1\//, // Supabase Auth — всегда сеть
     /\/rest\/v1\/rpc\//, // RPC-вызовы
     /\/storage\/v1\// // Storage — файлы

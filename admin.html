@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co https://cdn.jsdelivr.net; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://*.sentry.io https://*.ingest.de.sentry.io https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co https://cdn.jsdelivr.net; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
@@ -248,6 +248,33 @@ header { padding: 3px 6px; }
 }
 </style>
 <style id="btn-sizes">.header-section .btn-icon { width: 28px !important; min-width: 28px !important; max-width: 28px !important; padding: 0 !important; }</style>
+
+<!-- Sentry -->
+<script src="https://browser.sentry-cdn.com/latest/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+    (function () {
+        if (typeof Sentry === 'undefined' || !Sentry.init) {
+            console.warn('[sentry] SDK не загружен');
+            return;
+        }
+        Sentry.init({
+            dsn: 'https://f64db93abc3ba7bc6b4be4b31835e749@o4512152794038272.ingest.de.sentry.io/4512152834801744',
+            environment: (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'dev' : 'production',
+            release: 'vissort-2.0.0',
+            dataCollection: { userInfo: false, httpBodies: [] },
+            tracesSampleRate: 0,
+            beforeSend: function (event) {
+                var msg = (event.message || '') + ' ' + JSON.stringify(event.exception || {});
+                if (msg.indexOf('Domain not allowed') !== -1) return null;
+                if (msg.indexOf('validation-failed') !== -1) return null;
+                if (msg.indexOf('ResizeObserver loop') !== -1) return null;
+                if (msg.indexOf('Non-Error promise rejection') !== -1) return null;
+                return event;
+            }
+        });
+        console.log('[sentry] initialized');
+    })();
+</script>
 </head>
 <body>
 <header>
