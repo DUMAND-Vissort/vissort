@@ -7,7 +7,7 @@
 // ============================================================
 'use strict';
 
-const CACHE_VERSION = 'vissort-v17';
+const CACHE_VERSION = 'vissort-v19';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 const CACHE_SUPABASE = `${CACHE_VERSION}-supabase`;
@@ -26,7 +26,8 @@ const PRECACHE_URLS = [
     '/vissort-device.js',
     '/vissort-onboarding.js',
     '/player-runtime.js',
-    '/keepalive.js'
+    '/keepalive.js',
+    '/sentry.min.js'
 ];
 
 // Домены/пути, которые НЕ кэшируем
