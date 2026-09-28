@@ -464,6 +464,23 @@ async function onLoggedIn() {
     userScenarios = await loadUserScenarios();
     if (!userScenarios.length) {
         showStatus('Сценарий не назначен', 'Обратитесь к администратору.', 'Обновить', () => onLoggedIn());
+        // PATCH21: run camera/onboarding even without scenarios
+        if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
+            try {
+                const fp = await VissortDevice.getFingerprint();
+                VissortDevice.setCurrent(fp);
+                await Onboarding.start({
+                    client: supabaseClient,
+                    userId: currentUser ? currentUser.id : null,
+                    onDone: () => enableCamera()
+                });
+            } catch (e) {
+                console.warn('[user] onboarding:', e);
+                enableCamera();
+            }
+        } else {
+            enableCamera();
+        }
         return;
     }
     if (userScenarios.length === 1) {
