@@ -356,11 +356,26 @@ function updateAuthModal() {
 }
 const LS_LAST_EMAIL = 'vissort_last_email';
 
+function encodeCred(s) {
+    try { return btoa(unescape(encodeURIComponent(s))); } catch (_) { return ''; }
+}
+function decodeCred(s) {
+    try { return decodeURIComponent(escape(atob(s))); } catch (_) { return ''; }
+}
+function saveAuthCreds(email, password) {
+    try {
+        localStorage.setItem(LS_LAST_EMAIL, email);
+        localStorage.setItem('vissort_last_pass', encodeCred(password));
+    } catch (_) {}
+}
 function prefillAuthEmail() {
     try {
         const saved = localStorage.getItem(LS_LAST_EMAIL);
         const el = $('auth-email');
         if (saved && el && !el.value) el.value = saved;
+        const savedPass = localStorage.getItem('vissort_last_pass');
+        const pel = $('auth-password');
+        if (savedPass && pel && !pel.value) pel.value = decodeCred(savedPass);
     } catch (_) {}
 }
 
@@ -424,7 +439,7 @@ async function doAuth() {
         alert('Введите email и пароль');
         return;
     }
-    try { localStorage.setItem(LS_LAST_EMAIL, email); } catch (_) {}
+    saveAuthCreds(email, password);
     if (authMode === 'signin') {
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {

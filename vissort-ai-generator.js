@@ -74,14 +74,23 @@
         if (!Editor) throw new Error('AppEditorCore не загружен');
 
         const S = Editor.state;
-        const startX = 100;
-        const startY = 200;
-        const stepX = 400;
+        const canvas = document.getElementById('canvas');
+        const W = canvas ? canvas.clientWidth : 1400;
+        const H = canvas ? canvas.clientHeight : 800;
+        const NODE_W = 340;
+        const NODE_H = 230;
+        const cols = Math.max(1, Math.floor((W - 40) / NODE_W));
+        const startX = 40;
+        const startY = 40;
         const created = [];
 
         data.nodes.forEach((n, i) => {
             const type = mapNodeType(n.nodeType || 'STIMULUS');
-            const id = Editor.createNewNode(type, startX + i * stepX, startY);
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const x = startX + col * NODE_W;
+            const y = startY + row * NODE_H;
+            const id = Editor.createNewNode(type, x, y);
             const node = Editor.getNode(id);
 
             node.name = n.name || (type === 'READING' ? 'Чтение' : type === 'COMPARE' ? 'Сравнение' : 'Стимул');

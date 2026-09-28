@@ -7617,17 +7617,7 @@ function init() {
     document
         .getElementById('auth-toggle')
         .addEventListener('click', () => showAuthModal(authMode === 'signin' ? 'signup' : 'signin'));
-    document.getElementById('auth-submit').addEventListener('click', async () => {
-        const e = document.getElementById('auth-email').value.trim();
-        const p = document.getElementById('auth-password').value;
-        const n = document.getElementById('auth-name').value.trim();
-        if (authMode === 'signin') await signIn(e, p);
-        else {
-            if (!n) return alert('Введите имя');
-            await signUp(e, p, n);
-        }
-        document.getElementById('auth-modal').style.display = 'none';
-    });
+    // auth-submit обрабатывается через форму (bindAuthForm)
     window.addEventListener('resize', () => {
         if (readingViewportEl && readingViewportEl.style.display !== 'none') {
             const sp = readingPage;
@@ -7658,3 +7648,104 @@ function init() {
 
 // ==================== START ====================
 init();
+
+
+// ==================== ЭКСПОРТ ДЛЯ AI ГЕНЕРАТОРА ====================
+window.AppEditorCore = {
+    createNewNode,
+    getNode,
+    requestRenderGraph,
+    updateInspector,
+    defaultCompareCellParams,
+    state: {
+        get nodes() { return nodes; },
+        get connections() { return connections; },
+        get activeNodeId() { return activeNodeId; },
+        set activeNodeId(v) { activeNodeId = v; }
+    }
+};
+console.log('[app] AppEditorCore экспортирован для AI-генератора');
+
+// ==================== AUTH: SAVE + PREFILL + FOCUS ====================
+const LS_LAST_EMAIL = 'vissort_last_email';
+const LS_LAST_PASS = 'vissort_last_pass';
+
+function encodeCred(s) {
+    try { return btoa(unescape(encodeURIComponent(s))); } catch (_) { return ''; }
+}
+function decodeCred(s) {
+    try { return decodeURIComponent(escape(atob(s))); } catch (_) { return ''; }
+}
+function saveAuthCreds(email, password) {
+    try {
+        localStorage.setItem(LS_LAST_EMAIL, email);
+        localStorage.setItem(LS_LAST_PASS, encodeCred(password));
+    } catch (_) {}
+}
+function prefillAuthCreds() {
+    try {
+        const email = localStorage.getItem(LS_LAST_EMAIL);
+        const pass = localStorage.getItem(LS_LAST_PASS);
+        const eEl = document.getElementById('auth-email');
+        const pEl = document.getElementById('auth-password');
+        if (email && eEl && !eEl.value) eEl.value = email;
+        if (pass && pEl && !pEl.value) pEl.value = decodeCred(pass);
+    } catch (_) {}
+}
+function focusAuthField() {
+    const emailEl = document.getElementById('auth-email');
+    const passEl = document.getElementById('auth-password');
+    if (!emailEl || !passEl) return;
+    setTimeout(() => {
+        try {
+            if (emailEl.value) { passEl.focus(); passEl.select(); }
+            else { emailEl.focus(); emailEl.select(); }
+        } catch (_) {}
+    }, 150);
+}
+function bindAuthForm() {
+    const form = document.getElementById('auth-form');
+    if (!form || form._authBound) return;
+    form._authBound = true;
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof handleAuthSubmit === 'function') handleAuthSubmit();
+    });
+    console.log('[app] auth form привязана');
+}
+async function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const name = document.getElementById('auth-name').value.trim();
+    if (!email || !password) { alert('Введите email и пароль'); return; }
+    saveAuthCreds(email, password);
+    if (authMode === 'signin') await signIn(email, password);
+    else await signUp(email, password, name);
+    document.getElementById('auth-modal').style.display = 'none';
+}
+(function installAuthObserver() {
+    function attach() {
+        const modal = document.getElementById('auth-modal');
+        if (!modal) return;
+        bindAuthForm();
+        const obs = new MutationObserver(() => {
+            if (modal.style.display === 'flex' || modal.classList.contains('open')) {
+                bindAuthForm();
+                prefillAuthCreds();
+                focusAuthField();
+            }
+        });
+        obs.observe(modal, { attributes: true, attributeFilter: ['style', 'class'] });
+        if (modal.style.display === 'flex') {
+            prefillAuthCreds();
+            focusAuthField();
+        }
+        console.log('[app] auth observer установлен');
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attach);
+    } else {
+        attach();
+    }
+})();
