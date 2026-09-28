@@ -7655,7 +7655,7 @@ function init() {
         saveCurrentReadingBookmarkSilently();
         window.Voice?.stopReading();
     });
-    createNewNode('STIMULUS', 200, 150);
+    // PATCH19: no auto-created node on startup -- user starts from empty canvas
     switchMode('nodes');
     (async () => {
         await restoreFolderHandle();
@@ -7882,13 +7882,8 @@ async function handleAuthSubmit() {
         requestRenderGraph();
         updateInspector();
 
-        var startId = createNewNode('STIMULUS', 200, 150);
+        // PATCH19: no auto-created node -- canvas stays empty
         if (typeof switchMode === 'function' && currentMode !== 'nodes') switchMode('nodes');
-
-        if (startId && typeof getNode === 'function') {
-            var st = getNode(startId);
-            if (st) st.isStart = true;
-        }
 
         console.log('[new] new scenario created, key =', window._currentScenarioKey);
     }
