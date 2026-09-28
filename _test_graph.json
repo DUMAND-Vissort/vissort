@@ -1,0 +1,6 @@
+{
+  "model": "qwen2.5:14b",
+  "prompt": "Ты генератор сценариев для тренировки зрения. Создай JSON с 3 узлами типа STIMULUS. Каждый узел: id (строка), nodeType (STIMULUS), x, y (число), name (строка), stimAcuity (число от 0.5 до 2.0), seriesCount (5), seriesSize (6). Верни ТОЛЬКО JSON массив узлов, без пояснений.",
+  "stream": false,
+  "format": "json"
+}

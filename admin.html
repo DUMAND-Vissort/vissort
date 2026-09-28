@@ -298,6 +298,7 @@ header { padding: 3px 6px; }
 <button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
 <button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
 <button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
+<button class="btn btn-success btn-icon" id="btn-ai-generator" title="AI генератор">AI</button>
 </div>
 
 <span class="section-sep"></span>
@@ -686,6 +687,7 @@ header { padding: 3px 6px; }
 <script src="keepalive.js"></script>
 <script src="app.js"></script>
 <script src="header-drag.js"></script>
+<script src="vissort-ai-generator.js"></script>
 
 <script>
 (function installSyncUI() {
@@ -790,5 +792,6 @@ header { padding: 3px 6px; }
     else bindEvents();
 })();
 </script>
+<div class="modal" id="ai-generator-modal"><div class="modal-content" style="width:560px;"><h3>AI Генератор</h3><label>Цель</label><input type="text" id="ai-gen-goal" style="width:100%;padding:8px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;"><label>Кому</label><input type="text" id="ai-gen-target" style="width:100%;padding:8px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;"><label>Время (мин)</label><input type="number" id="ai-gen-duration" value="10" style="width:100%;padding:8px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;"><label>Узлов</label><input type="number" id="ai-gen-count" value="5" style="width:100%;padding:8px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;"><label>V старт</label><input type="number" id="ai-gen-v-start" value="0.5" step="0.1" style="width:100%;padding:8px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;"><label>V цель</label><input type="number" id="ai-gen-v-end" value="2.0" step="0.1" style="width:100%;padding:8px;background:#22222a;color:#fff;border:1px solid #3f3f46;border-radius:4px;"><div><label><input type="checkbox" id="ai-gen-type-stimulus" checked> Стимул</label> <label><input type="checkbox" id="ai-gen-type-reading" checked> Чтение</label> <label><input type="checkbox" id="ai-gen-type-compare" checked> Сравнение</label></div><div id="ai-gen-status" style="margin-top:16px;min-height:20px;"></div><div class="modal-footer"><button class="btn btn-success" id="ai-gen-submit">Сгенерировать</button><button class="btn btn-secondary" id="ai-gen-cancel">Отмена</button></div></div></div>
 </body>
 </html>
