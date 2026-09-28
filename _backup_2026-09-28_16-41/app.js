@@ -2104,8 +2104,8 @@ function createNewNode(type, x, y) {
             nodeType: 'READING',
             x: x || 100 + Math.random() * 300,
             y: y || 100 + Math.random() * 200,
-            width: 200,
-            height: 180,
+            width: 300,
+            height: 260,
             name: 'Чтение',
             bookId: null,
             bookName: '',
@@ -2148,8 +2148,8 @@ function createNewNode(type, x, y) {
             nodeType: 'COMPARE',
             x: x || 100 + Math.random() * 300,
             y: y || 100 + Math.random() * 200,
-            width: 200,
-            height: 180,
+            width: 340,
+            height: 320,
             name: 'Сравнение',
             compareMode: 'direction',
             pairsCount: 2,
@@ -2175,8 +2175,8 @@ function createNewNode(type, x, y) {
             nodeType: type,
             x: x || 100 + Math.random() * 300,
             y: y || 100 + Math.random() * 200,
-            width: 200,
-            height: 180,
+            width: 300,
+            height: 300,
             name: type === 'STIMULUS' ? 'Стимул' : type === 'LOGIC_IF' ? 'Логика' : 'Динамика',
             stimType: 'LETTER_E',
             stimDirection: 'вверх',
@@ -2524,15 +2524,12 @@ function createNodeElement(node) {
     const resize = document.createElement('div');
     resize.className = 'node-resize-handle';
     el.appendChild(resize);
-    // PATCH17: drag from anywhere on the node (except buttons/checkbox/resize handle)
-    el.addEventListener('mousedown', (e) => {
+    header.addEventListener('mousedown', (e) => {
         if (e.button !== 0 || window._pendingConnectionHandler) return;
-        if (e.target.closest('.node-btn') || e.target.closest('.start-checkbox') || e.target.closest('.node-resize-handle')) return;
         dragNodeId = node.id;
         const r = canvas.getBoundingClientRect();
-        const _zoomA = window.__vissort_zoom || 1;
-        offsetX = (e.clientX - r.left) / _zoomA - node.x;
-        offsetY = (e.clientY - r.top) / _zoomA - node.y;
+        offsetX = e.clientX - r.left - node.x;
+        offsetY = e.clientY - r.top - node.y;
         document.removeEventListener('mousemove', onDragMove);
         document.removeEventListener('mouseup', onDragEnd);
         document.addEventListener('mousemove', onDragMove);
@@ -2550,23 +2547,7 @@ function createNodeElement(node) {
         document.addEventListener('mousemove', onResizeMove);
         document.addEventListener('mouseup', onResizeEnd);
     });
-    // PATCH17: single click -- activate only, do not open inspector
     el.addEventListener('click', (e) => {
-        if (window._pendingConnectionHandler) return;
-        if (
-            e.target.closest('.node-btn') ||
-            e.target.closest('.start-checkbox') ||
-            e.target.closest('.node-resize-handle')
-        )
-            return;
-        activeNodeId = node.id;
-        window._pendingGeneratorMode = false;
-        requestRenderGraph();
-        if (inspectorEl.style.display === 'block') updateInspector();
-    });
-
-    // PATCH17: double click -- open inspector
-    el.addEventListener('dblclick', (e) => {
         if (window._pendingConnectionHandler) return;
         if (
             e.target.closest('.node-btn') ||
@@ -2893,9 +2874,8 @@ function onDragMove(e) {
     const node = getNode(dragNodeId);
     if (node) {
         const r = canvas.getBoundingClientRect();
-        const _zoomB = window.__vissort_zoom || 1;
-        node.x = (e.clientX - r.left) / _zoomB - offsetX;
-        node.y = (e.clientY - r.top) / _zoomB - offsetY;
+        node.x = e.clientX - r.left - offsetX;
+        node.y = e.clientY - r.top - offsetY;
         updateNodeElement(nodeElements.get(node.id), node);
         connections.forEach((c) => {
             if (c.fromId === node.id || c.toId === node.id)
@@ -2916,9 +2896,8 @@ function onResizeMove(e) {
     }
     const node = getNode(resizeNodeId);
     if (node) {
-        const _zoomC = window.__vissort_zoom || 1;
-        node.width = Math.max(200, startW + (e.clientX - startMouseX) / _zoomC);
-        node.height = Math.max(180, startH + (e.clientY - startMouseY) / _zoomC);
+        node.width = Math.max(200, startW + e.clientX - startMouseX);
+        node.height = Math.max(180, startH + e.clientY - startMouseY);
         updateNodeElement(nodeElements.get(node.id), node);
         connections.forEach((c) => {
             if (c.fromId === node.id || c.toId === node.id)
@@ -6545,7 +6524,6 @@ async function saveGraph() {
                     connections: JSON.parse(JSON.stringify(connections)),
                     books: JSON.parse(JSON.stringify(window._books))
                 },
-                ppi: screenPPI || 96,
                 distances: {
                     general: generalDistance,
                     reading: readingDistance,
@@ -6973,8 +6951,7 @@ function initSupabase() {
         'https://hzvypwdpdhsjzaclxmbm.supabase.co',
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac'
     );
-    window.supabaseClient = supabaseClient;
-supabaseClient.auth.getSession().then(({ data }) => {
+    supabaseClient.auth.getSession().then(({ data }) => {
         if (data?.session) {
             currentUser = data.session.user;
             window.Data.setAuth(data.session.access_token, data.session.user.id);
@@ -7771,129 +7748,4 @@ async function handleAuthSubmit() {
     } else {
         attach();
     }
-})();
-
-
-// ==================== PATCH15C: canvas zoom ====================
-(function installZoom() {
-    var ZOOM_KEY = 'vissort_canvas_zoom';
-    var MIN_ZOOM = 0.3;
-    var MAX_ZOOM = 2.0;
-    var STEP = 0.1;
-
-    var canvasEl = document.getElementById('canvas');
-    if (!canvasEl) {
-        console.warn('[zoom] canvas not found');
-        return;
-    }
-
-    var zoomLevel = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
-    window.__vissort_zoom = zoomLevel;
-
-    var btnIn = document.getElementById('btn-zoom-in');
-    var btnOut = document.getElementById('btn-zoom-out');
-    var btnReset = document.getElementById('btn-zoom-reset');
-
-    function applyZoom() {
-        zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel));
-        zoomLevel = Math.round(zoomLevel * 100) / 100;
-        window.__vissort_zoom = zoomLevel;
-        canvasEl.style.zoom = zoomLevel;
-        if (btnReset) btnReset.textContent = Math.round(zoomLevel * 100) + '%';
-        try { localStorage.setItem(ZOOM_KEY, String(zoomLevel)); } catch (_) {}
-    }
-
-    function zoomBy(delta) {
-        zoomLevel = Math.round((zoomLevel + delta) * 100) / 100;
-        applyZoom();
-    }
-
-    if (btnIn) btnIn.addEventListener('click', function () { zoomBy(STEP); });
-    if (btnOut) btnOut.addEventListener('click', function () { zoomBy(-STEP); });
-    if (btnReset) btnReset.addEventListener('click', function () {
-        zoomLevel = 1.0;
-        applyZoom();
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (!e.ctrlKey && !e.metaKey) return;
-        var t = e.target;
-        if (t && /input|textarea|select/i.test(t.tagName)) return;
-        if (e.key === '=' || e.key === '+') {
-            e.preventDefault();
-            zoomBy(STEP);
-        } else if (e.key === '-') {
-            e.preventDefault();
-            zoomBy(-STEP);
-        } else if (e.key === '0') {
-            e.preventDefault();
-            zoomLevel = 1.0;
-            applyZoom();
-        }
-    });
-
-
-    // PATCH16: Ctrl+wheel zoom
-    canvasEl.addEventListener('wheel', function (e) {
-        if (!e.ctrlKey && !e.metaKey) return;
-        e.preventDefault();
-        var delta = e.deltaY > 0 ? -STEP : STEP;
-        zoomBy(delta);
-    }, { passive: false });
-
-    applyZoom();
-    console.log('[zoom] installed, level =', zoomLevel, '[PATCH16]');
-})();
-
-
-// ==================== PATCH18B: new scenario ====================
-(function installNewScenario() {
-    var btn = document.getElementById('btn-new');
-    if (!btn) { console.warn('[new] btn-new not found'); return; }
-
-    function doNew() {
-        var hasContent = (typeof nodes !== 'undefined' && nodes.length > 0) ||
-                         (typeof connections !== 'undefined' && connections.length > 0);
-        if (hasContent) {
-            if (!confirm('Start a new scenario? Unsaved changes will be lost.')) return;
-        }
-
-        nodes.length = 0;
-        connections.length = 0;
-        window._books = {};
-        window._currentScenarioKey = generateScenarioKey();
-        window._currentScenarioId = null;
-        window._currentScenarioFileName = null;
-        activeNodeId = null;
-
-        if (typeof inspectorEl !== 'undefined' && inspectorEl) inspectorEl.style.display = 'none';
-
-        if (typeof nodeElements !== 'undefined' && nodeElements) nodeElements.clear();
-        if (typeof connectionElements !== 'undefined' && connectionElements) connectionElements.clear();
-
-        var canvasEl = document.getElementById('canvas');
-        if (canvasEl) {
-            var allNodes = canvasEl.querySelectorAll('.scenario-node');
-            for (var i = 0; i < allNodes.length; i++) allNodes[i].remove();
-            var allLines = canvasEl.querySelectorAll('.html-graph-line, .line-arrow');
-            for (var j = 0; j < allLines.length; j++) allLines[j].remove();
-        }
-
-        requestRenderGraph();
-        updateInspector();
-
-        var startId = createNewNode('STIMULUS', 200, 150);
-        if (typeof switchMode === 'function' && currentMode !== 'nodes') switchMode('nodes');
-
-        if (startId && typeof getNode === 'function') {
-            var st = getNode(startId);
-            if (st) st.isStart = true;
-        }
-
-        console.log('[new] new scenario created, key =', window._currentScenarioKey);
-    }
-
-    btn.addEventListener('click', doNew);
-    window.__vissort_newScenario = doNew;
-    console.log('[new] installed');
 })();

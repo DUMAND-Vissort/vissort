@@ -70,7 +70,7 @@ header.stimuli-mode .header-section{flex:0 0 auto;background:transparent;padding
 .counter b{color:#fff;margin-left:2px;font-weight:bold}
 .counter .label{display:inline}
 .main-layout{display:flex;flex:1;overflow:hidden}
-.graph-canvas{flex:1;background:#141419;background-image:radial-gradient(#2a2a35 1px,transparent 1px);background-size:20px 20px;position:relative;overflow:hidden;user-select:none}
+.graph-canvas{flex:1;background:#141419;background-image:radial-gradient(#2a2a35 1px,transparent 1px);background-size:20px 20px;position:relative;overflow:auto;user-select:none}
 .stim-display-area{display:none;flex:1;background:#000;position:relative;overflow:hidden}
 #stim{font-size:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center}
 #response-buttons{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:none;gap:10px;z-index:20}
@@ -95,37 +95,37 @@ header.stimuli-mode .header-section{flex:0 0 auto;background:transparent;padding
 .insp-cols{column-count:2;column-gap:10px}
 .insp-cols .panel-section{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid}
 @media (max-width:900px){.inspector-panel{width:280px}.insp-cols{column-count:1}}
-.scenario-node{position:absolute;background:#22222a;border:2px solid #3f3f46;border-radius:6px;box-shadow:0 4px 8px rgba(0,0,0,0.4);display:flex;flex-direction:column;min-width:280px;min-height:260px;z-index:10;cursor:default}
+.scenario-node{position:absolute;background:#22222a;border:2px solid #3f3f46;border-radius:6px;box-shadow:0 4px 8px rgba(0,0,0,0.4);display:flex;flex-direction:column;min-width:150px;min-height:150px;z-index:10;cursor:default}
 .scenario-node.active{border-color:#ef4444}
 .scenario-node.connection-source{border-color:#f59e0b;box-shadow:0 0 12px #f59e0b}
 .scenario-node.reading-node{border-color:#0ea5e9}
 .scenario-node.reading-node.active{border-color:#ef4444}
 .scenario-node.compare-node{border-color:#f97316}
 .scenario-node.compare-node.active{border-color:#ef4444}
-.node-header{background:#2d2d3a;padding:4px 6px;font-size:12px;font-weight:bold;text-align:center;border-bottom:1px solid #3f3f46;cursor:move;display:flex;justify-content:space-between;align-items:center}
+.node-header{background:#2d2d3a;padding:3px 5px;font-size:10px;font-weight:bold;text-align:center;border-bottom:1px solid #3f3f46;cursor:move;display:flex;justify-content:space-between;align-items:center}
 .node-header.reading-header{background:#075985}
 .node-header.compare-header{background:#7c2d12}
 .node-header span{flex:1}
 .node-header .start-checkbox{width:14px;height:14px;margin-left:5px;cursor:pointer}
 .node-content{display:flex;flex:1}
-.node-preview-area{flex:0 0 55%;display:flex;justify-content:center;align-items:center;padding:6px;background:#0b0b0d;border-right:1px solid #2a2a3a;min-height:120px;overflow:hidden}
-.node-info{flex:0 0 45%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:4px;font-size:10px;color:#a1a1aa;background:#16161e}
-.node-acuity{font-size:15px;margin-top:2px;color:#00ff88;font-weight:bold}
-.node-size-mm{font-size:13px;margin-top:3px;color:#ffcc00;font-weight:bold}
-.node-size-px{font-size:10px;color:#aa8833;margin-top:1px}
-.node-distance{font-size:11px;margin-top:3px;color:#88ccff}
-.node-inherit{font-size:12px;margin-top:2px;color:#ffaa88}
-.node-reading-book{font-size:12px;color:#7dd3fc;margin-top:3px;text-align:center;word-break:break-word;padding:0 4px}
-.node-reading-icon{font-size:56px;line-height:1}
-.node-reading-sub{font-size:10px;color:#64748b;margin-top:2px}
-.node-compare-icon{font-size:44px;line-height:1}
-.node-compare-sub{font-size:10px;color:#94a3b8;margin-top:2px;text-align:center}
-.node-body{display:flex;flex-direction:row;gap:3px;padding:4px;border-top:1px solid #2a2a3a;justify-content:center}
-.node-btn{flex:0 0 auto;padding:3px 6px;font-size:9px;border-radius:3px;border:none;cursor:pointer;font-weight:bold;color:#fff;text-align:center;position:relative;z-index:20;white-space:nowrap;font-family:inherit}
+.node-preview-area{flex:0 0 55%;display:flex;justify-content:center;align-items:center;padding:3px;background:#0b0b0d;border-right:1px solid #2a2a3a;min-height:60px;overflow:hidden}
+.node-info{flex:0 0 45%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2px;font-size:8px;color:#a1a1aa;background:#16161e;line-height:1.2}
+.node-acuity{font-size:11px;margin-top:2px;color:#00ff88;font-weight:bold}
+.node-size-mm{font-size:10px;margin-top:3px;color:#ffcc00;font-weight:bold}
+.node-size-px{font-size:8px;color:#aa8833;margin-top:1px}
+.node-distance{font-size:9px;margin-top:3px;color:#88ccff}
+.node-inherit{font-size:9px;margin-top:2px;color:#ffaa88}
+.node-reading-book{font-size:9px;color:#7dd3fc;margin-top:3px;text-align:center;word-break:break-word;padding:0 4px}
+.node-reading-icon{font-size:32px;line-height:1}
+.node-reading-sub{font-size:8px;color:#64748b;margin-top:2px}
+.node-compare-icon{font-size:28px;line-height:1}
+.node-compare-sub{font-size:8px;color:#94a3b8;margin-top:2px;text-align:center}
+.node-body{display:flex;flex-direction:row;gap:2px;padding:2px;border-top:1px solid #2a2a3a;justify-content:center;flex-wrap:wrap}
+.node-btn{flex:0 0 auto;padding:2px 4px;font-size:8px;border-radius:3px;border:none;cursor:pointer;font-weight:bold;color:#fff;text-align:center;position:relative;z-index:20;white-space:nowrap;font-family:inherit}
 .btn-node-connect{background:#10b981}
 .btn-node-loop{background:#a855f7}
 .btn-node-del{background:#dc2626}
-.node-resize-handle{position:absolute;right:0;bottom:0;width:12px;height:12px;background:#4b5563;cursor:se-resize;border-radius:4px 0 4px 0;z-index:15}
+.node-resize-handle{position:absolute;right:0;bottom:0;width:8px;height:8px;background:#4b5563;cursor:se-resize;border-radius:3px 0 3px 0;z-index:15}
 .html-graph-line{position:absolute;transform-origin:top left;z-index:5;pointer-events:auto;cursor:pointer}
 .line-solid{height:3px;background:#10b981}
 .line-dashed{height:0;border-top:3px dashed #a855f7;background:transparent}
@@ -230,10 +230,7 @@ header { padding: 3px 6px; }
 .header-section { flex: 1 1 auto !important; min-width: 0; flex-wrap: wrap; gap: 3px; }
 .section-sep, .header-sep { display: none !important; }
 .header-section .btn { padding: 0 5px; font-size: 11px; }
-@media (max-width: 1500px) {
-    .status-chip#folder-status,
-    .status-chip#templates-folder-status { display: none !important; }
-}
+/* PATCH13: folder-status and templates-folder-status are always visible */
 @media (max-width: 1300px) {
     .status-chip#camera-status,
     .status-chip#distance-display { display: none !important; }
@@ -243,7 +240,8 @@ header { padding: 3px 6px; }
     .header-section .btn { padding: 0 4px; font-size: 10px; }
 }
 @media (max-width: 900px) {
-    .status-chip { display: none !important; }
+    .status-chip:not(#folder-status):not(#templates-folder-status) { display: none !important; }
+    #folder-status, #templates-folder-status { max-width: 110px !important; font-size: 9px !important; }
     .header-section .btn-icon { padding: 0 3px; font-size: 12px; }
 }
 </style>
@@ -279,6 +277,45 @@ header { padding: 3px 6px; }
 <style>
 #auth-modal input:focus, #auth-modal input:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); border-color: #6366f1 !important; }
 </style>
+<!-- PATCH14B: compact node styles -->
+<style id="patch14b-compact-nodes">
+.scenario-node { min-width: 140px !important; min-height: 140px !important; }
+.node-header { padding: 2px 4px !important; font-size: 9px !important; }
+.node-header .start-checkbox { width: 12px !important; height: 12px !important; margin-left: 4px !important; }
+.node-preview-area { flex: 0 0 45% !important; padding: 2px !important; min-height: 40px !important; }
+.node-info { flex: 0 0 55% !important; font-size: 7px !important; padding: 1px !important; line-height: 1.1 !important; }
+.node-acuity { font-size: 10px !important; margin-top: 1px !important; }
+.node-size-mm { font-size: 9px !important; margin-top: 2px !important; }
+.node-size-px { font-size: 7px !important; }
+.node-distance { font-size: 8px !important; margin-top: 2px !important; }
+.node-inherit { font-size: 7px !important; margin-top: 1px !important; }
+.node-reading-book { font-size: 7px !important; padding: 0 2px !important; }
+.node-reading-icon { font-size: 22px !important; }
+.node-reading-sub { font-size: 7px !important; }
+.node-compare-icon { font-size: 20px !important; }
+.node-compare-sub { font-size: 7px !important; }
+.node-body { gap: 1px !important; padding: 1px !important; }
+.node-btn { padding: 1px 3px !important; font-size: 7px !important; }
+.node-resize-handle { width: 6px !important; height: 6px !important; }
+</style>
+<!-- PATCH15A: vertical node buttons -->
+<style id="patch15a-node-buttons">
+.node-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 3px !important;
+    border-top: 1px solid #2a2a3a !important;
+    flex-wrap: nowrap !important;
+}
+.node-btn {
+    width: 100% !important;
+    padding: 2px 4px !important;
+    font-size: 8px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+</style>
 </head>
 <body>
 <header>
@@ -298,6 +335,10 @@ header { padding: 3px 6px; }
 <button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
 <button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
 <button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Оценка времени сценария">⏱</button>
+<span class="header-sep"></span>
+<button class="btn btn-mode btn-icon" id="btn-zoom-out" title="Уменьшить масштаб (Ctrl+-)">−</button>
+<button class="btn btn-secondary" id="btn-zoom-reset" title="Сбросить масштаб (Ctrl+0)" style="min-width:52px;font-size:11px;">100%</button>
+<button class="btn btn-mode btn-icon" id="btn-zoom-in" title="Увеличить масштаб (Ctrl++)">+</button>
 <button class="btn btn-success btn-icon" id="btn-ai-generator" title="AI генератор">AI</button>
 </div>
 
@@ -317,6 +358,7 @@ header { padding: 3px 6px; }
 <span class="section-sep"></span>
 
 <div class="header-section section-files">
+<button class="btn btn-success btn-icon" id="btn-new" title="New scenario (clear canvas)">🆕</button>
 <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
 <button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
 <input type="file" id="file-input" accept=".json" style="display:none;">

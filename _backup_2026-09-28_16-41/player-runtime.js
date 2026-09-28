@@ -146,8 +146,6 @@ let gIndex = 0;
 let gCurrentNodeId = null;
 let gNodeAcuityCurrent = 1.0;
 let gCurrentCompareNode = null;
-let _readingFinishGuard = false;
-let _readingTimerId = null;
 
 // ==================== RATE LIMIT ====================
 let _answerTimestamps = [];
@@ -1332,14 +1330,7 @@ function disableCamera() {
     const v = document.getElementById('hidden-video');
     if (v) v.remove();
     camActive = false;
-    if (camIndicator) camIndicator.style.display = 'none';
-
-    curDistanceM = null;
-    camBaseline = null;
-    camWarnKind = null;
-    lastEyeDistPx = null;
-    _blinkIsClosed = false;
-    _blinkClosedSince = 0;
+    camIndicator.style.display = 'none';
 }
 // ==================== user.js: Конец части 1 из 4 ====================
 // ==================== user.js: Начало части 2 из 4 ====================
@@ -1813,27 +1804,13 @@ function playGraphReading(node) {
         scrollReadingToPage(0);
     }, 80);
     readingToolbarEl.style.display = 'flex';
-    _readingFinishGuard = false;
-    if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
-
     const dur = node.duration || 60000;
     if (dur > 0) {
-        _readingTimerId = setTimeout(() => {
-            _readingTimerId = null;
-            finishGraphReading(node);
-        }, dur);
-        phaseTimers.push(_readingTimerId);
+        phaseTimers.push(setTimeout(() => finishGraphReading(node), dur));
     }
 }
 
 function finishGraphReading(node) {
-    if (_readingFinishGuard) return;
-    _readingFinishGuard = true;
-
-    if (_readingTimerId) {
-        clearTimeout(_readingTimerId);
-        _readingTimerId = null;
-    }
     readingToolbarEl.style.display = 'none';
     readingViewportEl.style.display = 'none';
     readingContentEl.innerHTML = '';
@@ -1853,12 +1830,9 @@ function startPlayer() {
         alert('Сценарий повреждён или содержит некорректные данные.');
         return;
     }
-    sessionId = (window.crypto && typeof window.crypto.randomUUID === 'function')
-        ? window.crypto.randomUUID()
-        : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+    sessionId = crypto.randomUUID();
     const p = userScenario.params || {};
     playerRunning = true;
-    _frameSkipCounter = 0;
     isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
     seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
@@ -2348,8 +2322,6 @@ document.addEventListener('keydown', (e) => {
         }
     }
     if (!responsePhaseActive) return;
-    // [PATCH4C] compare-mode: ignore Up/Down (only Left/Right = Da/Net)
-    if (((graphActive && gCurrentCompareNode) || (!graphActive && userScenario?.params?.trainingType === 'compare')) && compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
@@ -2631,8 +2603,6 @@ function stopPlayer() {
     camBaseline = null;
     camWarnKind = null;
     sessionId = null;
-    _readingFinishGuard = false;
-    if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
     graphActive = false;
     gCurrentNodeId = null;
     gCurrentCompareNode = null;

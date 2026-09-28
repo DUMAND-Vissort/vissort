@@ -7,7 +7,7 @@
 // ============================================================
 'use strict';
 
-const CACHE_VERSION = 'vissort-v26';
+const CACHE_VERSION = 'vissort-v28';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 const CACHE_SUPABASE = `${CACHE_VERSION}-supabase`;
@@ -176,6 +176,24 @@ async function networkFirstHTML(request) {
 // ============================================================
 // СТРАТЕГИЯ: stale-while-revalidate
 // ============================================================
+// PATCH9: offline fallback page
+const OFFLINE_HTML = `<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Офлайн — Vissort</title>
+<style>
+body{margin:0;font-family:"Segoe UI",Tahoma,sans-serif;background:#0b0b12;color:#e8e8f0;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:20px}
+.box{max-width:400px}
+h1{font-size:22px;margin:0 0 12px}
+p{color:#9494a8;font-size:14px;line-height:1.5}
+button{margin-top:20px;padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+button:hover{background:#8b5cf6}
+</style></head><body><div class="box">
+<h1>📡 Нет соединения</h1>
+<p>Страница недоступна офлайн. Проверьте интернет и попробуйте снова.</p>
+<button onclick="location.reload()">Обновить</button>
+</div></body></html>`;
+
 async function staleWhileRevalidate(request, cacheName) {
     const cache = await caches.open(cacheName);
     const cached = await cache.match(request);
@@ -189,7 +207,16 @@ async function staleWhileRevalidate(request, cacheName) {
         })
         .catch((err) => {
             console.warn('[SW] fetch error для', request.url, err.message);
-            return cached || new Response('', { status: 503 });
+            if (cached) return cached;
+            // PATCH9: friendly offline fallback for HTML requests
+            const accept = request.headers.get('accept') || '';
+            if (request.mode === 'navigate' || accept.includes('text/html')) {
+                return new Response(OFFLINE_HTML, {
+                    status: 200,
+                    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                });
+            }
+            return new Response('', { status: 503 });
         });
 
     return cached || networkPromise;

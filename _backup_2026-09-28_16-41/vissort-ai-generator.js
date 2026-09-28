@@ -45,35 +45,17 @@
     }
 
     async function callGenerate(prompt) {
-        const sb = window.supabaseClient || (window.supabase && window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
-        if (!sb) throw new Error('Supabase client not initialized');
-        const sessionRes = await sb.auth.getSession();
-        const token = sessionRes && sessionRes.data && sessionRes.data.session && sessionRes.data.session.access_token;
-        if (!token) throw new Error('Not authorized. Please sign in as admin.');
-
         const res = await fetch(FN_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token,
-                'apikey': SUPABASE_ANON_KEY
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
             },
-            body: JSON.stringify({
-                prompt: prompt,
-                schema: { type: 'object' },
-                temperature: 0.7
-            })
+            body: JSON.stringify({ prompt })
         });
-
         if (!res.ok) {
-            let msg = 'HTTP ' + res.status;
-            try {
-                const j = await res.json();
-                if (j && j.error) msg = j.error + (j.details ? ' - ' + String(j.details).slice(0, 200) : '');
-            } catch (_) {
-                try { const t = await res.text(); if (t) msg += ': ' + t.slice(0, 200); } catch (_) {}
-            }
-            throw new Error(msg);
+            const text = await res.text();
+            throw new Error('HTTP ' + res.status + ': ' + text.slice(0, 200));
         }
         return await res.json();
     }
@@ -85,16 +67,8 @@
     }
 
     function createNodesFromAI(data) {
-        let nodesArr;
-        if (Array.isArray(data)) {
-            nodesArr = data;
-        } else if (data && Array.isArray(data.nodes)) {
-            nodesArr = data.nodes;
-        } else {
-            throw new Error('AI response does not contain nodes array');
-        }
-        if (nodesArr.length === 0) {
-            throw new Error('AI returned empty nodes array');
+        if (!data || !Array.isArray(data.nodes)) {
+            throw new Error('Нет поля nodes в ответе');
         }
         const Editor = window.AppEditorCore;
         if (!Editor) throw new Error('AppEditorCore не загружен');
@@ -110,7 +84,7 @@
         const startY = 40;
         const created = [];
 
-        nodesArr.forEach((n, i) => {
+        data.nodes.forEach((n, i) => {
             const type = mapNodeType(n.nodeType || 'STIMULUS');
             const col = i % cols;
             const row = Math.floor(i / cols);
@@ -176,37 +150,6 @@
         }
 
         Editor.requestRenderGraph();
-
-        
-// PATCH14C: auto-scroll canvas to show created nodes
-        
-if (created.length > 0) {
-        
-    const firstNode = Editor.getNode(created[0]);
-        
-    if (firstNode && canvas) {
-        
-        setTimeout(function() {
-        
-            const el = document.querySelector('.scenario-node[data-node-id="' + created[0] + '"]');
-        
-            if (el) {
-        
-                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-        
-            } else {
-        
-                canvas.scrollLeft = Math.max(0, firstNode.x - 40);
-        
-                canvas.scrollTop = Math.max(0, firstNode.y - 40);
-        
-            }
-        
-        }, 100);
-        
-    }
-        
-}
         if (window.AppEditor && typeof window.AppEditor.updateInspector === 'function') {
             window.AppEditor.updateInspector();
         }
@@ -252,7 +195,7 @@ if (created.length > 0) {
         try {
             const res = await callGenerate(prompt);
             if (!res.ok) {
-                throw new Error(res.error || 'Unknown generation error');
+                throw new Error(res.error + (res.details ? ' — ' + res.details : ''));
             }
             const count = createNodesFromAI(res.data);
             status.textContent = '✅ Создано ' + count + ' узлов';

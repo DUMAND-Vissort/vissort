@@ -36,7 +36,6 @@
     // СОСТОЯНИЕ
     // ============================================================
     let db = null;
-    let _reopenAttempts = 0;
     let authToken = null;
     let currentUserId = null;
     let autoSyncTimer = null;
@@ -106,7 +105,6 @@
             };
             req.onsuccess = () => {
                 db = req.result;
-                _reopenAttempts = 0;
             db.onclose = () => { console.warn('[Data] IndexedDB закрыта'); db = null; };
             db.onversionchange = () => { try { db.close(); } catch(_) {} db = null; };
                 resolve(db);
@@ -133,11 +131,6 @@
             tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
         } catch (e) {
             if (e.name === 'InvalidStateError') {
-                _reopenAttempts = (_reopenAttempts || 0) + 1;
-                if (_reopenAttempts > 3) {
-                    reject(new Error('IndexedDB failed to reopen after 3 attempts'));
-                    return;
-                }
                 console.warn('[Data] DB закрыта, переподключаюсь...');
                 db = null;
                 openDB()
@@ -323,13 +316,6 @@
                     await idbDelete(STORES.scenarios, oldId);
                     log(`[scenario] локальный id ${localId} → облачный ${cloudId}`);
                     emit('scenarios-changed', { id: cloudId, renamed: true });
-                } else {
-                    warn('local record not found, deleting cloud ' + cloudId);
-                    try {
-                        await sbFetch('scenarios?id=eq.' + encodeURIComponent(cloudId), { method: 'DELETE' });
-                    } catch (e) {
-                        warn('rollback failed: ' + e.message);
-                    }
                 }
             }
             return;
@@ -493,11 +479,6 @@
                     const token = parsed?.access_token || parsed?.currentSession?.access_token;
                     const uid = parsed?.user?.id || parsed?.currentSession?.user?.id;
                     if (token) {
-                        const exp = parsed && (parsed.expires_at || (parsed.currentSession && parsed.currentSession.expires_at));
-                        if (exp && exp * 1000 < Date.now()) {
-                            warn('token from localStorage expired, skipping');
-                            continue;
-                        }
                         authToken = token;
                         currentUserId = uid || null;
                         log('токен авторизации подхвачен из localStorage');

@@ -540,7 +540,7 @@
                 const rect = sceneRight.getBoundingClientRect();
                 const cw = rect.width || VIEW_W;
                 const scale = VIEW_W / cw;
-                S = Math.max(4, Math.min(60, px * scale));
+                S = Math.max(4, px * scale);
             }
 
             function applySettings() {

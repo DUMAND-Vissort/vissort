@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey'
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
             }
         });
     }
@@ -19,45 +19,6 @@ Deno.serve(async (req) => {
     if (req.method !== 'POST') {
         return json({ ok: false, error: 'Method not allowed' }, 405);
     }
-
-    // --- Auth check ---
-    const authHeader = req.headers.get('Authorization') || '';
-    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-
-    if (!token) {
-        return json({ ok: false, error: 'Authorization required' }, 401);
-    }
-    if (token === anonKey) {
-        return json({ ok: false, error: 'Anonymous access disabled' }, 403);
-    }
-
-    try {
-        const userRes = await fetch(
-            `${Deno.env.get('SUPABASE_URL')}/auth/v1/user`,
-            {
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'apikey': anonKey
-                }
-            }
-        );
-        if (!userRes.ok) {
-            return json({ ok: false, error: 'Invalid token' }, 401);
-        }
-        const user = await userRes.json();
-        if (!user || !user.id) {
-            return json({ ok: false, error: 'Invalid user' }, 401);
-        }
-        const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
-        if (user.email && !ADMIN_EMAILS.includes(user.email)) {
-            return json({ ok: false, error: 'Forbidden' }, 403);
-        }
-    } catch (e) {
-        console.error('[generate-scenario] auth check failed:', e);
-        return json({ ok: false, error: 'Auth service unavailable' }, 503);
-    }
-    // --- /Auth check ---
 
     const apiKey = Deno.env.get('DEEPSEEK_API_KEY');
     if (!apiKey) {

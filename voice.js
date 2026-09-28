@@ -324,7 +324,7 @@
                 console.warn('[voice] #reading-content не найден');
                 return;
             }
-            const text = el.innerText || el.textContent || '';
+            const text = el.textContent || el.textContent || '';
             this.readText(text, 0);
         }
     };

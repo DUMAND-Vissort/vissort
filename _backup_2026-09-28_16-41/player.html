@@ -5,18 +5,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://*.sentry.io https://*.ingest.de.sentry.io https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co https://cdn.jsdelivr.net; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://hzvypwdpdhsjzaclxmbm.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://*.sentry.io https://*.ingest.de.sentry.io https://hzvypwdpdhsjzaclxmbm.supabase.co wss://hzvypwdpdhsjzaclxmbm.supabase.co https://cdn.jsdelivr.net; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;"
         />
         <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-        <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+        <meta http-equiv="Referrer-Policy" content="no-referrer" />
         <meta
             http-equiv="Permissions-Policy"
             content="camera=(self), microphone=(), geolocation=(), payment=()"
         />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
-        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="manifest" href="/player.webmanifest" />
         <meta name="theme-color" content="#0b0b12" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Vissort" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <title>Vissort — Тренировка</title>
         <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -464,7 +467,6 @@
 #auth-modal input:focus, #auth-modal input:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); border-color: #6366f1 !important; }
 </style>
 <style id="cam-indicator-fix">#cam-indicator{width:140px !important;min-width:140px !important;max-width:140px !important;flex:0 0 140px !important;text-align:center !important;justify-content:center !important;display:inline-flex !important;align-items:center !important;box-sizing:border-box !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;}</style>
-<style id="cam-indicator-media">@media (max-width:520px){#cam-indicator{width:70px !important;min-width:70px !important;max-width:70px !important;flex:0 0 70px !important;}}</style>
 </head>
     <body>
         <header>
@@ -575,7 +577,7 @@
         <script src="vissort-onboarding.js" defer></script>
 <script src="vissort-device.js" defer></script>
 <script src="voice.js" defer></script>
-        <script src="user.js"></script>
+        <script src="player.js"></script>
         <script src="player-runtime.js" defer></script>
         <script>
             (function () {
@@ -583,14 +585,15 @@
                 const btn = document.getElementById('btn-games');
                 const menu = document.getElementById('games-menu');
                 if (!btn || !menu) return;
-                btn.addEventListener('click', (e) => {
+                if (window.VissortPlayerOptions && window.VissortPlayerOptions.showGamesMenu === false) { btn.style.display = 'none'; menu.style.display = 'none'; return; }
+                btn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     menu.classList.toggle('open');
                 });
-                document.addEventListener('click', (e) => {
+                document.addEventListener('click', function (e) {
                     if (!menu.contains(e.target) && e.target !== btn) menu.classList.remove('open');
                 });
-                document.addEventListener('keydown', (e) => {
+                document.addEventListener('keydown', function (e) {
                     if (e.key === 'Escape') menu.classList.remove('open');
                 });
             })();
