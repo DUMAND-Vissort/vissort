@@ -15,3 +15,9 @@ patch*.ps1
 /TODO.md
 /_test_graph.json
 /diff.txt
+# Supabase CLI (not source code)
+supabase.exe
+supabase/.temp/
+
+# Backup copies
+*.bak
