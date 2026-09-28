@@ -7,3 +7,11 @@ test-results/
 backups/
 # Архив (не деплоить)
 _archive/
+# Backups and one-time patch scripts
+_backup_*
+patch*.ps1
+
+# Stale root files
+/TODO.md
+/_test_graph.json
+/diff.txt
