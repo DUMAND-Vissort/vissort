@@ -215,7 +215,7 @@ window._fastLeanAt = 0;
 window._invalidAnswerCount = 0;
 
 // PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
-const _LEAN_DROP_PCT = 20; // PATCH32
+const _LEAN_DROP_PCT = 30; // PATCH33
 const _LEAN_FAST_MS = 800;
 const _LEAN_WINDOW_MS = 1500;
 const _DEVIATION_HISTORY_MS = 2000;
@@ -234,7 +234,7 @@ window._recordDeviation = function(pct) {
     if (Math.abs(pct) > _LEAN_DROP_PCT) {
         window._fastLeanAt = now;
         var _lastLeanLogAt = window._lastLeanLogAt || 0;
-        if (now - _lastLeanLogAt > 3000) {
+        if (now - _lastLeanLogAt > 10000) {
             console.warn('[lean] lean detected:', pct.toFixed(1) + '%');
             window._lastLeanLogAt = now;
         }
@@ -243,11 +243,12 @@ window._recordDeviation = function(pct) {
 
 // PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
 // PATCH32_CORE: check both current distance and recent lean
+// PATCH33: average deviation over 1 sec + current distance
 window._isAnswerInvalid = function() {
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
-    var now = performance.now();
-    // 1. Current distance far from baseline
+
+    // 1. Current distance -- immediate check
     try {
         if (typeof curDistanceM !== 'undefined' && curDistanceM != null && camBaseline != null) {
             var curDev = (curDistanceM - camBaseline) / camBaseline * 100;
@@ -256,13 +257,19 @@ window._isAnswerInvalid = function() {
             }
         }
     } catch (e) {}
-    // 2. Recent lean within 1.5 sec
-    if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
-    // 3. Max deviation in last 1.5 sec
+
+    // 2. Average deviation over last 1 sec -- filters camera noise
+    var now = performance.now();
+    var sum = 0, n = 0;
     for (var i = window._deviationHistory.length - 1; i >= 0; i--) {
         var h = window._deviationHistory[i];
-        if (now - h.t > _LEAN_WINDOW_MS) break;
-        if (Math.abs(h.dev) > _LEAN_DROP_PCT) return 'fast_lean';
+        if (now - h.t > 1000) break;
+        sum += Math.abs(h.dev);
+        n++;
+    }
+    if (n >= 3) {
+        var avg = sum / n;
+        if (avg > _LEAN_DROP_PCT) return 'fast_lean';
     }
     return null;
 };
