@@ -214,29 +214,44 @@ window._deviationHistory = [];
 window._fastLeanAt = 0;
 window._invalidAnswerCount = 0;
 
-const _LEAN_DROP_PCT = 12;
+// PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
+const _LEAN_DROP_PCT = 22;
 const _LEAN_FAST_MS = 800;
 const _LEAN_WINDOW_MS = 1500;
 const _DEVIATION_HISTORY_MS = 2000;
+const _LEAN_CONSECUTIVE_FRAMES = 3;
 
+// PATCH30_DAMPEN_FUNC: requires 3 consecutive frames, only when training
 window._recordDeviation = function(pct) {
+    // skip if not training
+    if (typeof playerRunning !== 'undefined' && !playerRunning) return;
+    if (typeof isPaused !== 'undefined' && isPaused) return;
     var now = performance.now();
     window._deviationHistory.push({ t: now, dev: pct });
     while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
         window._deviationHistory.shift();
     }
-    if (pct > _LEAN_DROP_PCT) {
+    // require 3 consecutive frames above threshold
+    var recent = window._deviationHistory.slice(-3);
+    if (recent.length < 3) return;
+    var allAbove = recent.every(function(h) { return h.dev > _LEAN_DROP_PCT; });
+    if (allAbove) {
+        var wasRecent = (now - window._fastLeanAt) < 1000;
         window._fastLeanAt = now;
-        var _lastLeanLogAt = window._lastLeanLogAt || 0;
-        var _nowT = performance.now();
-        if (_nowT - _lastLeanLogAt > 5000) {
-            console.warn('[lean] fast lean detected:', pct.toFixed(1) + '%');
-            window._lastLeanLogAt = _nowT;
+        if (!wasRecent) {
+            var _lastLeanLogAt = window._lastLeanLogAt || 0;
+            if (now - _lastLeanLogAt > 5000) {
+                console.warn('[lean] fast lean detected:', pct.toFixed(1) + '% (3 frames)');
+                window._lastLeanLogAt = now;
+            }
         }
     }
 };
 
 window._isAnswerInvalid = function() {
+    // PATCH30_DAMPEN: no check when not training
+    if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
+    if (typeof isPaused !== 'undefined' && isPaused) return null;
     var now = performance.now();
     if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
     var recent = window._deviationHistory.some(function(h) {
