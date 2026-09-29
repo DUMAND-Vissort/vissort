@@ -1323,16 +1323,35 @@ async function enableCamera() {
 }
 async function loadFaceApi() {
     if (faceapi.tf) {
-        // PATCH22E: force CPU -- Intel HD 4000 WebGL is 3x slower than CPU
+        // PATCH26_WASM: try wasm (SIMD) first, then cpu
+        var _actual = 'none';
         try {
-            await faceapi.tf.setBackend('cpu');
-            await faceapi.tf.ready();
+            if (faceapi.tf.wasm) {
+                var _wasmDir = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@1.7.4/dist/';
+                if (typeof faceapi.tf.wasm.setWasmPath === 'function') {
+                    faceapi.tf.wasm.setWasmPath(_wasmDir);
+                } else if (typeof faceapi.tf.wasm.setWasmPaths === 'function') {
+                    faceapi.tf.wasm.setWasmPaths(_wasmDir);
+                }
+                await faceapi.tf.setBackend('wasm');
+                await faceapi.tf.ready();
+                _actual = (faceapi.tf.getBackend && faceapi.tf.getBackend()) || 'unknown';
+                if (_actual !== 'wasm') _actual = 'none';
+            }
         } catch (e) {
-            console.warn('[cam] cpu backend failed:', e && e.message ? e.message : e);
+            console.warn('[cam] wasm backend failed:', e && e.message ? e.message : e);
         }
-        var _actual = (faceapi.tf.getBackend && faceapi.tf.getBackend()) || 'unknown';
+        if (_actual !== 'wasm') {
+            try {
+                await faceapi.tf.setBackend('cpu');
+                await faceapi.tf.ready();
+                _actual = 'cpu';
+            } catch (e) {
+                console.warn('[cam] cpu backend also failed:', e && e.message ? e.message : e);
+            }
+        }
         window.camStats.backend = _actual;
-        console.log('[cam] backend =', _actual, '(forced CPU)');
+        console.log('[cam] backend =', _actual, '(patch26)');
     }
     const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
     await faceapi.nets.tinyFaceDetector.loadFromUri(M);
