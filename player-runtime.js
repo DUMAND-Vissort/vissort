@@ -1361,8 +1361,8 @@ async function processCamFrame() {
         window.camStats.frames++;
         try {
             const det = await faceapi
-                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.5 }))
-                .withFaceLandmarks();
+                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.5 }));
+                // PATCH25_BBOX: landmarks disabled for performance
             const tDetect = performance.now() - tStart;
             window.camStats.detections++;
             window.camStats.totalDetectMs += tDetect;
@@ -1375,17 +1375,12 @@ async function processCamFrame() {
                 window.camStats.frames = 0;
                 window.camStats.lastFpsUpdate = now;
             }
-            if (det && det.landmarks) {
-                const le = det.landmarks.getLeftEye(),
-                    re = det.landmarks.getRightEye();
-                const lc = { x: (le[0].x + le[3].x) / 2, y: (le[0].y + le[3].y) / 2 };
-                const rc = { x: (re[0].x + re[3].x) / 2, y: (re[0].y + re[3].y) / 2 };
-                const ipd = Math.hypot(rc.x - lc.x, rc.y - lc.y);
+            if (det && det.box) {
+                // PATCH25_BBOX: estimate IPD from face box width (~0.45 * box width)
+                const ipd = det.box.width * 0.45;
                 lastEyeDistPx = ipd;
                 camIndicator.textContent = '✅ Лицо';
-                const earL = computeEAR(le),
-                    earR = computeEAR(re);
-                processBlink(earL, earR);
+                // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
