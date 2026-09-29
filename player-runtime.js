@@ -215,15 +215,15 @@ window._fastLeanAt = 0;
 window._invalidAnswerCount = 0;
 
 // PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
-const _LEAN_DROP_PCT = 18; // PATCH31
+const _LEAN_DROP_PCT = 20; // PATCH32
 const _LEAN_FAST_MS = 800;
 const _LEAN_WINDOW_MS = 1500;
 const _DEVIATION_HISTORY_MS = 2000;
 const _LEAN_CONSECUTIVE_FRAMES = 3;
 
 // PATCH30_DAMPEN_FUNC: requires 3 consecutive frames, only when training
+// PATCH32_CORE: log only, decision in _isAnswerInvalid
 window._recordDeviation = function(pct) {
-    // skip if not training
     if (typeof playerRunning !== 'undefined' && !playerRunning) return;
     if (typeof isPaused !== 'undefined' && isPaused) return;
     var now = performance.now();
@@ -231,37 +231,39 @@ window._recordDeviation = function(pct) {
     while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
         window._deviationHistory.shift();
     }
-    // require 3 consecutive frames above threshold
-    var recent = window._deviationHistory.slice(-2); // PATCH31
-    if (recent.length < 2) return; // PATCH31
-    var allAbove = recent.every(function(h) { return h.dev > _LEAN_DROP_PCT; });
-    if (allAbove) {
-        var wasRecent = (now - window._fastLeanAt) < 1000;
+    if (Math.abs(pct) > _LEAN_DROP_PCT) {
         window._fastLeanAt = now;
-        if (!wasRecent) {
-            var _lastLeanLogAt = window._lastLeanLogAt || 0;
-            if (now - _lastLeanLogAt > 5000) {
-                console.warn('[lean] fast lean detected:', pct.toFixed(1) + '% (2 frames)');
-                window._lastLeanLogAt = now;
-            }
+        var _lastLeanLogAt = window._lastLeanLogAt || 0;
+        if (now - _lastLeanLogAt > 3000) {
+            console.warn('[lean] lean detected:', pct.toFixed(1) + '%');
+            window._lastLeanLogAt = now;
         }
     }
 };
 
 // PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
+// PATCH32_CORE: check both current distance and recent lean
 window._isAnswerInvalid = function() {
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
     var now = performance.now();
-    // Fast lean in last 1.5s
-    if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
-    // Current distance far from baseline
+    // 1. Current distance far from baseline
     try {
         if (typeof curDistanceM !== 'undefined' && curDistanceM != null && camBaseline != null) {
-            var curDev = Math.abs((curDistanceM - camBaseline) / camBaseline * 100);
-            if (curDev > _LEAN_DROP_PCT) return 'off_distance';
+            var curDev = (curDistanceM - camBaseline) / camBaseline * 100;
+            if (Math.abs(curDev) > _LEAN_DROP_PCT) {
+                return curDev < 0 ? 'fast_lean' : 'off_distance';
+            }
         }
     } catch (e) {}
+    // 2. Recent lean within 1.5 sec
+    if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
+    // 3. Max deviation in last 1.5 sec
+    for (var i = window._deviationHistory.length - 1; i >= 0; i--) {
+        var h = window._deviationHistory[i];
+        if (now - h.t > _LEAN_WINDOW_MS) break;
+        if (Math.abs(h.dev) > _LEAN_DROP_PCT) return 'fast_lean';
+    }
     return null;
 };
 
@@ -429,6 +431,18 @@ function acuityToSizePx(a, d, ppi) {
     const dpr = window.devicePixelRatio || 1;
     const p = (mm * (ppi || 96)) / 25.4;
     return Math.round(Math.max(1, Math.min(3000, p / dpr)));
+}
+
+// PATCH32_6_FIX: prefer real measured distance, fall back to declared
+function _effectiveDistance(declared) {
+    try {
+        if (typeof curDistanceM !== 'undefined' && curDistanceM != null) {
+            if (curDistanceM > 0.2 && curDistanceM < 10) {
+                return curDistanceM;
+            }
+        }
+    } catch (e) {}
+    return declared || 1;
 }
 function acuityToFontSizePx(a, d, ppi) {
     const xh = acuityToSizeMm(a, d);
@@ -1731,7 +1745,7 @@ function playGraphStimulus(node) {
     } else dir = node.stimDirectionFixed || 'вверх';
     lastDirection = dir;
     currentCorrectDirection = dir;
-    const dCalc = node.stimDistance || 1;
+    const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
     const pCalc = node.stimPPI || screenPPI || 96;
     const eff = acuityToSizePx(gNodeAcuityCurrent, dCalc, pCalc);
     currentSize = eff;
@@ -1885,6 +1899,17 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!responsePhaseActive) return;
+    // PATCH32_INVALIDATE: check deviation before processing answer
+    var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv32) {
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        responsePhaseActive = false;
+        if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
+        if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
+        document.body.style.background = '#78350f';
+        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        return;
+    }
     var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv) {
         window._markAnswerInvalid(_inv);
@@ -1958,6 +1983,17 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    // PATCH32_INVALIDATE: check deviation before processing answer
+    var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv32) {
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        responsePhaseActive = false;
+        if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
+        if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
+        document.body.style.background = '#78350f';
+        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        return;
+    }
     var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv) {
         window._markAnswerInvalid(_inv);
@@ -2076,7 +2112,7 @@ function playGraphReading(node) {
         readingFontWeight: node.readingFontWeight || 'normal'
     });
     setupReadingColumns();
-    const dCalc = node.readingDistance || 1;
+    const dCalc = _effectiveDistance(node.readingDistance || 1) // PATCH32_6_FIX;
     readingContentEl.style.fontSize = acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, screenPPI) + 'px';
     setTimeout(() => {
         readingTotalPages = calcReadingTotalPages();
@@ -2195,7 +2231,7 @@ function showNextStimulus() {
     } else dir = 'вверх';
     lastDirection = dir;
     currentCorrectDirection = dir;
-    const dCalc = p.distanceMeters || 1;
+    const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
     const eff = acuityToSizePx(currentAcuity, dCalc, screenPPI);
     currentSize = eff;
     let sc = currentStimColor;
@@ -2563,6 +2599,17 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
+    // PATCH32_INVALIDATE: check deviation before processing answer
+    var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv32) {
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        responsePhaseActive = false;
+        if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
+        if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
+        document.body.style.background = '#78350f';
+        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        return;
+    }
     var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv) {
         window._markAnswerInvalid(_inv);
@@ -2582,6 +2629,17 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    // PATCH32_INVALIDATE: check deviation before processing answer
+    var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv32) {
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        responsePhaseActive = false;
+        if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
+        if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
+        document.body.style.background = '#78350f';
+        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        return;
+    }
     var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv) {
         window._markAnswerInvalid(_inv);
@@ -2677,7 +2735,7 @@ function startReading() {
     readingContentEl.style.opacity = '1';
     applyReadingFont(p);
     setupReadingColumns();
-    const dCalc = p.readingDistance || 1;
+    const dCalc = _effectiveDistance(p.readingDistance || 1) // PATCH32_6_FIX;
     readingContentEl.style.fontSize = acuityToFontSizePx(currentAcuity, dCalc, screenPPI) + 'px';
     setTimeout(() => {
         readingTotalPages = calcReadingTotalPages();
