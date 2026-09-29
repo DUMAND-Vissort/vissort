@@ -251,6 +251,18 @@ window._markAnswerInvalid = function(reason) {
     if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
 };
 
+// PATCH27C_DIM: dim stimulus only on fast lean, auto-restore after 1.5 sec
+function _updateStimulusDim() {
+    var now = performance.now();
+    var leanAge = now - (window._fastLeanAt || 0);
+    var stim = document.getElementById('stim');
+    if (!stim) return;
+    if (leanAge < 1500) {
+        stim.style.opacity = '0.7';
+    } else if (stim.style.opacity === '0.7') {
+        stim.style.opacity = '';
+    }
+}
 function _showInvalidToast(text) {
     var existing = document.getElementById('invalid-toast');
     if (existing) existing.remove();
@@ -1493,6 +1505,7 @@ function evaluateDistance() {
     const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
     // PATCH27B.2: record deviation for fast-lean detection
     if (window._recordDeviation) window._recordDeviation(dev);
+    if (window._updateStimulusDim) window._updateStimulusDim();
     const upTol = userScenario?.params?.distanceToleranceIncreasePct ?? 15;
     const dnTol = userScenario?.params?.distanceToleranceDecreasePct ?? 10;
     if (dev > upTol) {
@@ -2066,7 +2079,6 @@ function startPlayer() {
         : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
     const p = userScenario.params || {};
     playerRunning = true;
-    _frameSkipCounter = 0;
     isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
     seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
