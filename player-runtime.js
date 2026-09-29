@@ -1572,7 +1572,15 @@ function processBlink(earL, earR) {
 }
 function evaluateDistance() {
     if (!playerRunning || isPaused || curDistanceM == null) return;
-    if (camBaseline == null) camBaseline = curDistanceM;
+    // PATCH43_BASELINE: delay baseline 3s to skip noisy startup frames
+    if (camBaseline == null) {
+        if (!window._baselineWaitStart) window._baselineWaitStart = performance.now();
+        var _bw = performance.now() - window._baselineWaitStart;
+        if (_bw > 3000) {
+            camBaseline = curDistanceM;
+            console.log('[PATCH43] baseline set:', curDistanceM.toFixed(3));
+        }
+    }
     const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
     // PATCH27B.2: record deviation for fast-lean detection
     // PATCH29_GUARD: only track deviations during active training
@@ -2196,6 +2204,7 @@ function startPlayer() {
     window._fastLeanAt = 0;
     window._deviationHistory = [];
     window._distEMA = null; // PATCH42_SMOOTH
+    window._baselineWaitStart = null; // PATCH43
     // PATCH35_GRAPH_RESET: hard reset graph state
     graphActive = false;
     gNodes = [];
@@ -3024,6 +3033,7 @@ function stopPlayer() {
     window._fastLeanAt = 0;
     window._deviationHistory = [];
     window._distEMA = null; // PATCH42_SMOOTH
+    window._baselineWaitStart = null; // PATCH43
     window._invalidAnswerCount = 0;
     sessionId = null;
     _readingFinishGuard = false;
