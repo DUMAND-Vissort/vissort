@@ -67,6 +67,24 @@ let sessionId = null;
 let authMode = 'signin';
 
 let playerRunning = false;
+
+// PATCH50_LOG_FN: per-answer logging
+window._reactionLog = window._reactionLog || [];
+window._logAnswer = function(entry) {
+    window._reactionLog.push(entry);
+    var tag = entry.valid ? '[answer]' : '[invalid]';
+    var msg = tag + ' rt=' + (entry.rt != null ? Math.round(entry.rt) + 'ms' : 'n/a')
+            + ' correct=' + entry.correct;
+    if (entry.direction) msg += ' dir=' + entry.direction;
+    if (entry.reason) msg += ' reason=' + entry.reason;
+    console.log(msg);
+};
+window._reactionReport = function() {
+    var log = window._reactionLog || [];
+    var rts = log.filter(function(e){return e.rt != null && e.valid;}).map(function(e){return e.rt;});
+    console.log('Total: ' + log.length + ' | Valid: ' + rts.length);
+    if (rts.length) console.log('RT raw: [' + rts.map(function(x){return Math.round(x);}).join(', ') + ']');
+};
 let isPaused = false;
 let phaseTimers = [];
 let currentShowTimer = null;
@@ -215,7 +233,7 @@ window._fastLeanAt = 0;
 window._invalidAnswerCount = 0;
 
 // PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
-const _LEAN_DROP_PCT = 12; // PATCH36
+const _LEAN_DROP_PCT = 15; // PATCH50
 const _LEAN_FAST_MS = 800;
 const _LEAN_WINDOW_MS = 1500;
 const _DEVIATION_HISTORY_MS = 2000;
@@ -1916,7 +1934,7 @@ function finishGraphStimulusSeries(node) {
         var _avg = _recent.reduce(function(a,b){return a+b;},0) / _recent.length;
         var _min = Math.min.apply(null, _recent);
         var _max = Math.max.apply(null, _recent);
-        console.log('[PATCH35] reaction time (last 20): avg=' + Math.round(_avg) + 'ms, min=' + Math.round(_min) + 'ms, max=' + Math.round(_max) + 'ms');
+        /* PATCH50: removed spam */ void 0;
     } catch (e) {}
     if (noAnswerSeriesStreak >= 3) {
         pauseTraining();
