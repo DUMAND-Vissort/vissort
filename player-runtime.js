@@ -1578,9 +1578,13 @@ function evaluateDistance() {
         var _bw = performance.now() - window._baselineWaitStart;
         if (_bw > 3000) {
             camBaseline = curDistanceM;
+            window._fastLeanAt = 0;
+            window._deviationHistory = [];
             console.log('[PATCH43] baseline set:', curDistanceM.toFixed(3));
         }
     }
+    // PATCH44_GUARD: skip if baseline not set yet
+    if (camBaseline == null || !isFinite(camBaseline) || camBaseline <= 0.1) return;
     const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
     // PATCH27B.2: record deviation for fast-lean detection
     // PATCH29_GUARD: only track deviations during active training
