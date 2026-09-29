@@ -442,6 +442,17 @@ function _effectiveDistance(declared) {
     } catch (e) {}
     return declared || 1;
 }
+// PATCH42_SMOOTH: EMA filters bbox noise (Intel HD 4000 jump +-20%)
+window._distEMA = null;
+function _smoothDistance(raw) {
+    if (raw == null || !isFinite(raw)) return raw;
+    if (window._distEMA === null || !isFinite(window._distEMA)) {
+        window._distEMA = raw;
+    } else {
+        window._distEMA = window._distEMA * 0.75 + raw * 0.25;
+    }
+    return window._distEMA;
+}
 function acuityToFontSizePx(a, d, ppi) {
     const xh = acuityToSizeMm(a, d);
     const mm = xh / 0.5;
@@ -1527,6 +1538,7 @@ async function processCamFrame() {
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
+                    curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
                 }
@@ -2183,6 +2195,7 @@ function startPlayer() {
     playerRunning = true;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
+    window._distEMA = null; // PATCH42_SMOOTH
     // PATCH35_GRAPH_RESET: hard reset graph state
     graphActive = false;
     gNodes = [];
@@ -3010,6 +3023,7 @@ function stopPlayer() {
     camWarnKind = null;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
+    window._distEMA = null; // PATCH42_SMOOTH
     window._invalidAnswerCount = 0;
     sessionId = null;
     _readingFinishGuard = false;
