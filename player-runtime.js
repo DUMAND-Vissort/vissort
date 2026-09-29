@@ -1724,6 +1724,10 @@ function playNextGraphNode() {
 
 function playGraphStimulus(node) {
     if (!playerRunning || isPaused) return;
+    // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
+    responsePhaseActive = true;
+    responseStartTime = performance.now();
+    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     if (completedSeries >= (node.seriesCount || 5)) {
         gIndex++;
         playNextGraphNode();
@@ -1744,9 +1748,6 @@ function playGraphStimulus(node) {
     lastDirection = dir;
     currentCorrectDirection = dir;
     // PATCH34: enable phase BEFORE rendering
-    responsePhaseActive = true;
-    responseStartTime = performance.now();
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
     const pCalc = node.stimPPI || screenPPI || 96;
     const eff = acuityToSizePx(gNodeAcuityCurrent, dCalc, pCalc);
@@ -1978,9 +1979,6 @@ function playGraphCompareRound(node) {
     removeSingleGridLines();
     stimDisplay.innerHTML = '';
     stimArea.style.background = '#000';
-    responsePhaseActive = true;
-    responseStartTime = performance.now();
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     if (compareMode === 'direction') showDirectionComparison();
     else if (compareMode === 'find_same') showFindSameComparison();
     const dur = cellParams[0]?.duration || node.duration || currentDuration;
@@ -2239,6 +2237,10 @@ function startPlayer() {
 
 function showNextStimulus() {
     if (!playerRunning || isPaused) return;
+    // PATCH38_EARLY_PHASE: enable response phase immediately
+    responsePhaseActive = true;
+    responseStartTime = performance.now();
+    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const p = userScenario?.params || {};
     if (seriesStep >= (p.seriesSize || 6)) {
         finishSeries();
@@ -2255,9 +2257,6 @@ function showNextStimulus() {
     lastDirection = dir;
     currentCorrectDirection = dir;
     // PATCH35: enable phase AND start timer BEFORE render
-    responsePhaseActive = true;
-    responseStartTime = performance.now();
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
     const eff = acuityToSizePx(currentAcuity, dCalc, screenPPI);
     currentSize = eff;
@@ -2426,9 +2425,6 @@ function showNextCompareRound() {
     removeSingleGridLines();
     stimDisplay.innerHTML = '';
     stimArea.style.background = '#000';
-    responsePhaseActive = true;
-    responseStartTime = performance.now();
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     if (compareMode === 'direction') showDirectionComparison();
     else if (compareMode === 'find_same') showFindSameComparison();
     const dur = cellParams[0]?.duration || p.duration || currentDuration;
