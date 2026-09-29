@@ -452,15 +452,37 @@ function hideStatus() {
 
 function initSupabase() {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    var _onLoggedInFired = false;
+    function _safeOnLoggedIn() {
+        if (_onLoggedInFired) return;
+        _onLoggedInFired = true;
+        onLoggedIn();
+    }
     supabaseClient.auth.getSession().then(({ data }) => {
         currentUser = data?.session?.user || null;
-        if (currentUser) onLoggedIn();
+        if (currentUser) _safeOnLoggedIn();
         else promptLogin();
     });
+    // PATCH28_AUTH_FIX: handle SIGNED_IN + INITIAL_SESSION (v2 async init)
     supabaseClient.auth.onAuthStateChange((event, session) => {
         currentUser = session?.user || null;
-        if (event === 'SIGNED_OUT') promptLogin();
+        if (event === 'SIGNED_OUT') { _onLoggedInFired = false; promptLogin(); return; }
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && currentUser) {
+            _safeOnLoggedIn();
+        }
     });
+    // PATCH28_AUTH_FIX: fallback -- if getSession was too early, retry in 1.5s
+    setTimeout(async () => {
+        if (_onLoggedInFired) return;
+        try {
+            const { data } = await supabaseClient.auth.getSession();
+            if (data?.session?.user) {
+                currentUser = data.session.user;
+                console.log('[auth] PATCH28 fallback: session found, calling onLoggedIn');
+                _safeOnLoggedIn();
+            }
+        } catch (e) {}
+    }, 1500);
 }
 function promptLogin() {
     hideStatus();
