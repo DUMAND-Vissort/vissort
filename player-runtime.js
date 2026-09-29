@@ -208,6 +208,60 @@ let gIndex = 0;
 let gCurrentNodeId = null;
 let gNodeAcuityCurrent = 1.0;
 let gCurrentCompareNode = null;
+// ==================== PATCH27B: fast-lean detection ====================
+window._deviationHistory = [];
+window._fastLeanAt = 0;
+window._invalidAnswerCount = 0;
+
+const _LEAN_DROP_PCT = 12;
+const _LEAN_FAST_MS = 800;
+const _LEAN_WINDOW_MS = 1500;
+const _DEVIATION_HISTORY_MS = 2000;
+
+window._recordDeviation = function(pct) {
+    var now = performance.now();
+    window._deviationHistory.push({ t: now, dev: pct });
+    while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
+        window._deviationHistory.shift();
+    }
+    if (pct > _LEAN_DROP_PCT) {
+        window._fastLeanAt = now;
+        console.warn('[lean] fast lean detected:', pct.toFixed(1) + '%');
+    }
+};
+
+window._isAnswerInvalid = function() {
+    var now = performance.now();
+    if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
+    var recent = window._deviationHistory.some(function(h) {
+        return now - h.t < _LEAN_WINDOW_MS && Math.abs(h.dev) > _LEAN_DROP_PCT;
+    });
+    if (recent) return 'off_distance';
+    return null;
+};
+
+window._markAnswerInvalid = function(reason) {
+    window._invalidAnswerCount++;
+    var cnt = document.getElementById('cnt-invalid');
+    if (cnt) cnt.textContent = window._invalidAnswerCount;
+    var msg = reason === 'fast_lean'
+        ? '\u26A0\uFE0F \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D \u2014 \u0440\u0435\u0437\u043A\u0438\u0439 \u043D\u0430\u043A\u043B\u043E\u043D'
+        : '\u26A0\uFE0F \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D \u2014 \u0432\u0435\u0440\u043D\u0438\u0442\u0435\u0441\u044C \u043D\u0430 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0438\u044E';
+    _showInvalidToast(msg);
+    if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
+};
+
+function _showInvalidToast(text) {
+    var existing = document.getElementById('invalid-toast');
+    if (existing) existing.remove();
+    var el = document.createElement('div');
+    el.id = 'invalid-toast';
+    el.textContent = text;
+    el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(234,88,12,0.95);color:#fff;padding:14px 24px;border-radius:10px;font-size:16px;font-weight:bold;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);pointer-events:none;transition:opacity 0.3s;';
+    document.body.appendChild(el);
+    setTimeout(function() { el.style.opacity = '0'; }, 1800);
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 2200);
+}
 let _readingFinishGuard = false;
 let _readingTimerId = null;
 
@@ -1437,6 +1491,8 @@ function evaluateDistance() {
     if (!playerRunning || isPaused || curDistanceM == null) return;
     if (camBaseline == null) camBaseline = curDistanceM;
     const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
+    // PATCH27B.2: record deviation for fast-lean detection
+    if (window._recordDeviation) window._recordDeviation(dev);
     const upTol = userScenario?.params?.distanceToleranceIncreasePct ?? 15;
     const dnTol = userScenario?.params?.distanceToleranceDecreasePct ?? 10;
     if (dev > upTol) {
@@ -1766,6 +1822,13 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!responsePhaseActive) return;
+    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv) {
+        window._markAnswerInvalid(_inv);
+        responsePhaseActive = false;
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        return;
+    }
     const ok = dir === currentCorrectDirection;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
     responsePhaseActive = false;
@@ -1832,6 +1895,13 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv) {
+        window._markAnswerInvalid(_inv);
+        responsePhaseActive = false;
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        return;
+    }
     const ok = answer === currentCompareAnswer;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
     responsePhaseActive = false;
@@ -2429,6 +2499,13 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
+    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv) {
+        window._markAnswerInvalid(_inv);
+        responsePhaseActive = false;
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        return;
+    }
     const ok = direction === currentCorrectDirection;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
     responsePhaseActive = false;
@@ -2441,6 +2518,13 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
+    if (_inv) {
+        window._markAnswerInvalid(_inv);
+        responsePhaseActive = false;
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        return;
+    }
     const ok = answer === currentCompareAnswer;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
     responsePhaseActive = false;
