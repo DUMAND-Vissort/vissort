@@ -1737,7 +1737,6 @@ function playGraphStimulus(node) {
         finishGraphStimulusSeries(node);
         return;
     }
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     let dir;
     if (node.isActive) {
         const d = ['вверх', 'вниз', 'влево', 'вправо'];
@@ -2162,6 +2161,7 @@ function finishGraphReading(node) {
 
 // ==================== ЗАПУСК ====================
 function startPlayer() {
+    if (playerRunning) { console.warn('[PATCH37] already running'); return; }
     if (!userScenario) {
         alert('Сценарий не назначен');
         return;
@@ -2246,7 +2246,6 @@ function showNextStimulus() {
         finishSeries();
         return;
     }
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     let dir;
     if (p.isActive) {
         const d = ['вверх', 'вниз', 'влево', 'вправо'];
@@ -3106,7 +3105,7 @@ function init() {
         promptLogin();
     });
 
-    btnPlayer.addEventListener('click', startPlayer);
+    if (!btnPlayer.__patch37bound) { btnPlayer.addEventListener('click', startPlayer); btnPlayer.__patch37bound = true; }
     btnPlayerPause.addEventListener('click', togglePause);
     btnPlayerStop.addEventListener('click', stopPlayer);
     $('pause-continue').addEventListener('click', resumeTraining);
