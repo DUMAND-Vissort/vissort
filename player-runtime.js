@@ -215,7 +215,7 @@ window._fastLeanAt = 0;
 window._invalidAnswerCount = 0;
 
 // PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
-const _LEAN_DROP_PCT = 30; // PATCH33
+const _LEAN_DROP_PCT = 12; // PATCH36
 const _LEAN_FAST_MS = 800;
 const _LEAN_WINDOW_MS = 1500;
 const _DEVIATION_HISTORY_MS = 2000;
@@ -223,6 +223,7 @@ const _LEAN_CONSECUTIVE_FRAMES = 3;
 
 // PATCH30_DAMPEN_FUNC: requires 3 consecutive frames, only when training
 // PATCH32_CORE: log only, decision in _isAnswerInvalid
+// PATCH36: log deviations > 12% when training
 window._recordDeviation = function(pct) {
     if (typeof playerRunning !== 'undefined' && !playerRunning) return;
     if (typeof isPaused !== 'undefined' && isPaused) return;
@@ -234,8 +235,8 @@ window._recordDeviation = function(pct) {
     if (Math.abs(pct) > _LEAN_DROP_PCT) {
         window._fastLeanAt = now;
         var _lastLeanLogAt = window._lastLeanLogAt || 0;
-        if (now - _lastLeanLogAt > 10000) {
-            console.warn('[lean] lean detected:', pct.toFixed(1) + '%');
+        if (now - _lastLeanLogAt > 3000) {
+            console.warn('[lean]', pct.toFixed(1) + '%');
             window._lastLeanLogAt = now;
         }
     }
@@ -245,10 +246,11 @@ window._recordDeviation = function(pct) {
 // PATCH32_CORE: check both current distance and recent lean
 // PATCH33: average deviation over 1 sec + current distance
 // PATCH34: velocity-based detection (delta over 600ms), plus current distance
+// PATCH36: current distance OR recent lean in 2 sec
 window._isAnswerInvalid = function() {
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
-
+    var now = performance.now();
     // 1. Current distance
     try {
         if (typeof curDistanceM !== 'undefined' && curDistanceM != null && camBaseline != null) {
@@ -258,24 +260,8 @@ window._isAnswerInvalid = function() {
             }
         }
     } catch (e) {}
-
-    // 2. Velocity: sharp change over last 600ms
-    var now = performance.now();
-    var recent = [];
-    for (var i = window._deviationHistory.length - 1; i >= 0; i--) {
-        var h = window._deviationHistory[i];
-        if (now - h.t > 600) break;
-        recent.unshift(h.dev);
-    }
-    if (recent.length >= 2) {
-        var minV = Math.min.apply(null, recent);
-        var maxV = Math.max.apply(null, recent);
-        if (Math.abs(maxV - minV) > 30) return 'fast_lean';
-    }
-
-    // 3. Recent lean marker (from _recordDeviation)
-    if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
-
+    // 2. Recent lean in last 2 sec
+    if (now - window._fastLeanAt < 2000) return 'fast_lean';
     return null;
 };
 
