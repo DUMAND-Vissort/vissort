@@ -137,6 +137,67 @@ let _blinkClosedSince = 0;
 let _blinkIsClosed = false;
 const BLINK_THRESHOLD = 0.21;
 
+// ==================== PATCH22: device config ====================
+const _camDevice = (function() {
+    var ua = navigator.userAgent || '';
+    var isTablet = /iPad|Tablet|PlayBook|Silk/i.test(ua) && !/Mobile/i.test(ua);
+    var isPhone = /Android|iPhone|iPod|Mobile|Opera Mini|IEMobile/i.test(ua) && !isTablet;
+    return {
+        isPhone: isPhone,
+        isTablet: isTablet,
+        isDesktop: !isPhone && !isTablet,
+        label: isPhone ? 'phone' : (isTablet ? 'tablet' : 'desktop')
+    };
+})();
+
+const _camConfig = _camDevice.isPhone
+    ? { inputSize: 128, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
+    : _camDevice.isTablet
+    ? { inputSize: 160, intervalMs: 150, videoW: 480, videoH: 360, frameRate: 20 }
+    : { inputSize: 160, intervalMs: 100, videoW: 480, videoH: 360, frameRate: 24 };
+
+let _camLoopStarted = false;
+
+window.camStats = {
+    device: _camDevice.label,
+    backend: 'unknown',
+    inputSize: _camConfig.inputSize,
+    intervalMs: _camConfig.intervalMs,
+    videoW: _camConfig.videoW,
+    videoH: _camConfig.videoH,
+    frames: 0,
+    detections: 0,
+    fails: 0,
+    totalDetectMs: 0,
+    avgDetectMs: 0,
+    fps: 0,
+    fpsSamples: [],
+    lastFpsUpdate: 0
+};
+
+window.camReport = function() {
+    var s = window.camStats;
+    console.log('=== CAMERA STATS (PATCH22) ===');
+    console.log('Device      :', s.device);
+    console.log('Backend     :', s.backend);
+    console.log('Input size  :', s.inputSize + 'x' + s.inputSize);
+    console.log('Interval    :', s.intervalMs + ' ms');
+    console.log('Video       :', s.videoW + 'x' + s.videoH);
+    console.log('Detections  :', s.detections);
+    console.log('Fails       :', s.fails);
+    console.log('Avg detect  :', s.avgDetectMs.toFixed(1) + ' ms');
+    console.log('Last FPS    :', s.fps);
+    console.log('FPS samples :', s.fpsSamples.join(', '));
+    return s;
+};
+
+console.log('[cam] config:', JSON.stringify({
+    device: _camDevice.label,
+    inputSize: _camConfig.inputSize,
+    intervalMs: _camConfig.intervalMs,
+    video: _camConfig.videoW + 'x' + _camConfig.videoH
+}));
+
 // === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
 let graphActive = false;
 let gNodes = [];
@@ -1217,17 +1278,34 @@ function hideStimulus() {
     stimArea.style.backgroundColor = '';
 }
 
+function startCamLoop() {
+    if (_camLoopStarted) return;
+    _camLoopStarted = true;
+    if (camFrameId) clearInterval(camFrameId);
+    camFrameId = setInterval(function() {
+        if (camActive) processCamFrame();
+    }, _camConfig.intervalMs);
+    console.log('[cam] loop started @', _camConfig.intervalMs, 'ms');
+}
+
 async function enableCamera() {
     if (camActive) return;
     try {
         camStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } }
+            video: {
+                facingMode: 'user',
+                width: { ideal: _camConfig.videoW, max: _camConfig.videoW },
+                height: { ideal: _camConfig.videoH, max: _camConfig.videoH },
+                frameRate: { ideal: _camConfig.frameRate, max: _camConfig.frameRate + 4 }
+            }
         });
         const v = document.createElement('video');
         v.id = 'hidden-video';
         v.autoplay = true;
         v.muted = true;
         v.playsInline = true;
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
         v.style.cssText =
             'position:fixed;left:-9999px;top:0;width:320px;height:240px;opacity:0;pointer-events:none;';
         v.srcObject = camStream;
@@ -1237,14 +1315,30 @@ async function enableCamera() {
         await loadFaceApi();
         camIndicator.style.display = 'block';
         camIndicator.textContent = '📷 Лицо не найдено';
-        if (camFrameId) cancelAnimationFrame(camFrameId);
-        camFrameId = requestAnimationFrame(processCamFrame);
+        startCamLoop();
     } catch (e) {
         console.warn('[cam]', e);
     }
 }
 async function loadFaceApi() {
-    if (faceapi.tf) { try { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch (_) {} }
+    if (faceapi.tf) {
+        var tried = [];
+        var chosen = null;
+        var order = ['webgl', 'wasm', 'cpu'];
+        for (var i = 0; i < order.length; i++) {
+            try {
+                await faceapi.tf.setBackend(order[i]);
+                await faceapi.tf.ready();
+                chosen = order[i];
+                break;
+            } catch (e) {
+                tried.push(order[i] + ':' + (e && e.message ? String(e.message).slice(0, 40) : 'fail'));
+            }
+        }
+        window.camStats.backend = chosen || 'none';
+        if (tried.length > 0) console.log('[cam] backend attempts:', tried.join(' | '));
+        console.log('[cam] backend =', window.camStats.backend);
+    }
     const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
     await faceapi.nets.tinyFaceDetector.loadFromUri(M);
     await faceapi.nets.faceLandmark68Net.loadFromUri(M);
@@ -1265,10 +1359,24 @@ async function processCamFrame() {
     }
     const v = document.getElementById('hidden-video');
     if (v && v.readyState >= 2 && v.videoWidth > 0 && !v.paused) {
+        const tStart = performance.now();
+        window.camStats.frames++;
         try {
             const det = await faceapi
-                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.5 }))
                 .withFaceLandmarks();
+            const tDetect = performance.now() - tStart;
+            window.camStats.detections++;
+            window.camStats.totalDetectMs += tDetect;
+            window.camStats.avgDetectMs = window.camStats.totalDetectMs / window.camStats.detections;
+            const now = performance.now();
+            if (now - window.camStats.lastFpsUpdate >= 1000) {
+                window.camStats.fpsSamples.push(window.camStats.frames);
+                if (window.camStats.fpsSamples.length > 10) window.camStats.fpsSamples.shift();
+                window.camStats.fps = window.camStats.frames;
+                window.camStats.frames = 0;
+                window.camStats.lastFpsUpdate = now;
+            }
             if (det && det.landmarks) {
                 const le = det.landmarks.getLeftEye(),
                     re = det.landmarks.getRightEye();
@@ -1291,11 +1399,10 @@ async function processCamFrame() {
                 _blinkClosedSince = 0;
             }
         } catch (e) {
-            console.warn(e);
+            window.camStats.fails++;
+            console.warn('[cam] detect error:', e && e.message ? e.message : e);
         }
     }
-    if (camActive) camFrameId = requestAnimationFrame(processCamFrame);
-    else camFrameId = null;
 }
 function processBlink(earL, earR) {
     const now = performance.now();
@@ -1339,9 +1446,10 @@ function evaluateDistance() {
 }
 function disableCamera() {
     if (camFrameId) {
-        cancelAnimationFrame(camFrameId);
+        clearInterval(camFrameId);
         camFrameId = null;
     }
+    _camLoopStarted = false;
     if (camStream) {
         camStream.getTracks().forEach((t) => t.stop());
         camStream = null;
