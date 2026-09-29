@@ -2684,8 +2684,12 @@ responseButtons.addEventListener('click', (e) => {
         if (graphActive) handleGraphDirectionAnswer(btn.dataset.dir);
         else handleDirectionAnswer(btn.dataset.dir);
     } else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
+        // PATCH40_INCMP: check actual compare node, not graphActive
         const inCmp =
-            compareMode === 'direction' && (userScenario?.params?.trainingType === 'compare' || graphActive);
+            compareMode === 'direction' && (
+                (!graphActive && userScenario?.params?.trainingType === 'compare') ||
+                (graphActive && gCurrentCompareNode != null && gCurrentCompareNode.compareMode === 'direction')
+            );
         if (inCmp) {
             const val = btn.dataset.answer === 'да';
             if (graphActive) handleGraphCompareAnswer(val);
@@ -2717,8 +2721,12 @@ document.addEventListener('keydown', (e) => {
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
+        // PATCH40_INCMP: check actual compare node, not graphActive
         const inCmp =
-            compareMode === 'direction' && (userScenario?.params?.trainingType === 'compare' || graphActive);
+            compareMode === 'direction' && (
+                (!graphActive && userScenario?.params?.trainingType === 'compare') ||
+                (graphActive && gCurrentCompareNode != null && gCurrentCompareNode.compareMode === 'direction')
+            );
         if (inCmp) {
             if (e.key === 'ArrowLeft') {
                 graphActive ? handleGraphCompareAnswer(true) : handleCompareAnswer(true);
