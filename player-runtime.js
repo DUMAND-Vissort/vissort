@@ -244,11 +244,12 @@ window._recordDeviation = function(pct) {
 // PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
 // PATCH32_CORE: check both current distance and recent lean
 // PATCH33: average deviation over 1 sec + current distance
+// PATCH34: velocity-based detection (delta over 600ms), plus current distance
 window._isAnswerInvalid = function() {
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
 
-    // 1. Current distance -- immediate check
+    // 1. Current distance
     try {
         if (typeof curDistanceM !== 'undefined' && curDistanceM != null && camBaseline != null) {
             var curDev = (curDistanceM - camBaseline) / camBaseline * 100;
@@ -258,19 +259,23 @@ window._isAnswerInvalid = function() {
         }
     } catch (e) {}
 
-    // 2. Average deviation over last 1 sec -- filters camera noise
+    // 2. Velocity: sharp change over last 600ms
     var now = performance.now();
-    var sum = 0, n = 0;
+    var recent = [];
     for (var i = window._deviationHistory.length - 1; i >= 0; i--) {
         var h = window._deviationHistory[i];
-        if (now - h.t > 1000) break;
-        sum += Math.abs(h.dev);
-        n++;
+        if (now - h.t > 600) break;
+        recent.unshift(h.dev);
     }
-    if (n >= 3) {
-        var avg = sum / n;
-        if (avg > _LEAN_DROP_PCT) return 'fast_lean';
+    if (recent.length >= 2) {
+        var minV = Math.min.apply(null, recent);
+        var maxV = Math.max.apply(null, recent);
+        if (Math.abs(maxV - minV) > 30) return 'fast_lean';
     }
+
+    // 3. Recent lean marker (from _recordDeviation)
+    if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
+
     return null;
 };
 
@@ -1752,6 +1757,10 @@ function playGraphStimulus(node) {
     } else dir = node.stimDirectionFixed || 'вверх';
     lastDirection = dir;
     currentCorrectDirection = dir;
+    // PATCH34: enable phase BEFORE rendering
+    responsePhaseActive = true;
+    responseStartTime = performance.now();
+    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
     const pCalc = node.stimPPI || screenPPI || 96;
     const eff = acuityToSizePx(gNodeAcuityCurrent, dCalc, pCalc);
@@ -1820,8 +1829,7 @@ function playGraphStimulus(node) {
             count: node.blinkCount || 0
         });
     }
-    responsePhaseActive = true;
-    responseStartTime = performance.now();
+    
     document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'flex'));
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
@@ -1888,6 +1896,17 @@ function finishGraphStimulusSeries(node) {
     seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
     lastDirection = null;
     updateCounters();
+    // PATCH35: reaction time aggregate
+    try {
+        if (!window._reactionTimes) window._reactionTimes = [];
+        var _rt = lastResponse && lastResponse.reactionTimeMs;
+        if (_rt != null) window._reactionTimes.push(_rt);
+        var _recent = window._reactionTimes.slice(-20);
+        var _avg = _recent.reduce(function(a,b){return a+b;},0) / _recent.length;
+        var _min = Math.min.apply(null, _recent);
+        var _max = Math.max.apply(null, _recent);
+        console.log('[PATCH35] reaction time (last 20): avg=' + Math.round(_avg) + 'ms, min=' + Math.round(_min) + 'ms, max=' + Math.round(_max) + 'ms');
+    } catch (e) {}
     if (noAnswerSeriesStreak >= 3) {
         pauseTraining();
         return;
@@ -2174,6 +2193,17 @@ function startPlayer() {
     playerRunning = true;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
+    // PATCH35_GRAPH_RESET: hard reset graph state
+    graphActive = false;
+    gNodes = [];
+    gConnections = [];
+    gQueue = [];
+    gIndex = 0;
+    gCurrentNodeId = null;
+    gCurrentCompareNode = null;
+    window._invalidAnswerCount = 0;
+    if (window._reactionTimes) window._reactionTimes = [];
+    console.log('[PATCH35] graph state reset');
     isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
     seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
@@ -2238,6 +2268,10 @@ function showNextStimulus() {
     } else dir = 'вверх';
     lastDirection = dir;
     currentCorrectDirection = dir;
+    // PATCH35: enable phase AND start timer BEFORE render
+    responsePhaseActive = true;
+    responseStartTime = performance.now();
+    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
     const eff = acuityToSizePx(currentAcuity, dCalc, screenPPI);
     currentSize = eff;
@@ -2304,8 +2338,6 @@ function showNextStimulus() {
             count: p.blinkCount || 0
         });
     }
-    responsePhaseActive = true;
-    responseStartTime = performance.now();
     document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'flex'));
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
