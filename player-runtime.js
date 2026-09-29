@@ -1906,7 +1906,7 @@ function finishGraphStimulusSeries(node) {
     seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
     lastDirection = null;
     updateCounters();
-    if (window._reactionReport) window._reactionReport();
+    // PATCH48_NO_AVG: report disabled, per-answer log only
     // PATCH35: reaction time aggregate
     try {
         if (!window._reactionTimes) window._reactionTimes = [];
