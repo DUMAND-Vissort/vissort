@@ -2162,6 +2162,12 @@ function finishGraphReading(node) {
 // ==================== ЗАПУСК ====================
 function startPlayer() {
     if (playerRunning) { console.warn('[PATCH37] already running'); return; }
+    // PATCH41_STATUS_CLOSE: close any open status overlay (e.g. "Граф пройден")
+    var _so = document.getElementById('status-overlay');
+    if (_so && !_so.classList.contains('hidden')) {
+        console.log('[PATCH41] closing status-overlay');
+        _so.classList.add('hidden');
+    }
     if (!userScenario) {
         alert('Сценарий не назначен');
         return;
