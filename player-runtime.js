@@ -1322,22 +1322,16 @@ async function enableCamera() {
 }
 async function loadFaceApi() {
     if (faceapi.tf) {
-        var tried = [];
-        var chosen = null;
-        var order = ['webgl', 'wasm', 'cpu'];
-        for (var i = 0; i < order.length; i++) {
-            try {
-                await faceapi.tf.setBackend(order[i]);
-                await faceapi.tf.ready();
-                chosen = order[i];
-                break;
-            } catch (e) {
-                tried.push(order[i] + ':' + (e && e.message ? String(e.message).slice(0, 40) : 'fail'));
-            }
+        // PATCH22E: force CPU -- Intel HD 4000 WebGL is 3x slower than CPU
+        try {
+            await faceapi.tf.setBackend('cpu');
+            await faceapi.tf.ready();
+        } catch (e) {
+            console.warn('[cam] cpu backend failed:', e && e.message ? e.message : e);
         }
-        window.camStats.backend = chosen || 'none';
-        if (tried.length > 0) console.log('[cam] backend attempts:', tried.join(' | '));
-        console.log('[cam] backend =', window.camStats.backend);
+        var _actual = (faceapi.tf.getBackend && faceapi.tf.getBackend()) || 'unknown';
+        window.camStats.backend = _actual;
+        console.log('[cam] backend =', _actual, '(forced CPU)');
     }
     const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
     await faceapi.nets.tinyFaceDetector.loadFromUri(M);
