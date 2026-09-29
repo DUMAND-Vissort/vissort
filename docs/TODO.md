@@ -212,7 +212,14 @@
 - [x] Резиновая шапка + перетаскивание кнопок ПКМ
 - [x] Оптимизация камеры (CPU backend, пропуск кадров)
 
+
 ---
+
+
+
+
+
+
 
 ## 📝 Легенда
 
@@ -223,3 +230,46 @@
 - 📋 — запланировано
 - ⏸ — отложено
 - ✅ — готово
+
+cd D:\PROEKT\vissort
+$f = "docs/TODO.md"
+$enc = [System.Text.UTF8Encoding]::new($false)
+$raw = [System.IO.File]::ReadAllText((Resolve-Path $f), $enc)
+
+if ($raw.Contains("## 📷 Камера — итог")) {
+    Write-Host "SKIP: camera section already in TODO" -ForegroundColor Yellow
+    exit 0
+}
+
+$newSection = @'
+
+## 📷 Камера — итог оптимизации (2026-09-29)
+
+**Текущее состояние (Intel HD 4000, i5-3570K):**
+- Backend: cpu, inputSize: 128, interval: 200 мс
+- Avg detect: 275 мс, FPS: 4
+- Для тренировки зрения этого достаточно
+
+**Что сделано:**
+- [x] Патч 22 — device-aware config, setInterval вместо RAF
+- [x] Патч 22e — force CPU (WebGL на Intel HD 4000 медленнее: 303 vs 275 мс)
+- [x] Патч 24 — guard от параллельных вызовов детекции
+- [x] Патч 25 — bbox-only detection, отключены landmarks (-40% времени)
+- [x] Патч 26 — попытка WASM backend (не заработала — конфликт tf версий)
+
+**Что отложено (низкий приоритет):**
+- [ ] MediaPipe Face Mesh — 30–60 FPS на любом железе, включая Intel HD 4000 (2–3 дня)
+- [ ] WASM backend — попробовать через unpkg.com или другую версию
+- [ ] Моргание — вернуть после MediaPipe (сейчас отключено)
+
+'@
+
+# Insert before "## 📋 ЗАПЛАНИРОВАНО" if it exists, otherwise append
+if ($raw.Contains("## 📋 ЗАПЛАНИРОВАНО")) {
+    $raw = $raw.Replace("## 📋 ЗАПЛАНИРОВАНО", $newSection + "## 📋 ЗАПЛАНИРОВАНО")
+} else {
+    $raw += $newSection
+}
+
+[System.IO.File]::WriteAllText((Resolve-Path $f), $raw, $enc)
+Write-Host "OK: camera section added to TODO" -ForegroundColor Green
