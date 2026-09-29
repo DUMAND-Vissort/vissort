@@ -215,7 +215,7 @@ window._fastLeanAt = 0;
 window._invalidAnswerCount = 0;
 
 // PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
-const _LEAN_DROP_PCT = 22;
+const _LEAN_DROP_PCT = 18; // PATCH31
 const _LEAN_FAST_MS = 800;
 const _LEAN_WINDOW_MS = 1500;
 const _DEVIATION_HISTORY_MS = 2000;
@@ -232,8 +232,8 @@ window._recordDeviation = function(pct) {
         window._deviationHistory.shift();
     }
     // require 3 consecutive frames above threshold
-    var recent = window._deviationHistory.slice(-3);
-    if (recent.length < 3) return;
+    var recent = window._deviationHistory.slice(-2); // PATCH31
+    if (recent.length < 2) return; // PATCH31
     var allAbove = recent.every(function(h) { return h.dev > _LEAN_DROP_PCT; });
     if (allAbove) {
         var wasRecent = (now - window._fastLeanAt) < 1000;
@@ -241,23 +241,27 @@ window._recordDeviation = function(pct) {
         if (!wasRecent) {
             var _lastLeanLogAt = window._lastLeanLogAt || 0;
             if (now - _lastLeanLogAt > 5000) {
-                console.warn('[lean] fast lean detected:', pct.toFixed(1) + '% (3 frames)');
+                console.warn('[lean] fast lean detected:', pct.toFixed(1) + '% (2 frames)');
                 window._lastLeanLogAt = now;
             }
         }
     }
 };
 
+// PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
 window._isAnswerInvalid = function() {
-    // PATCH30_DAMPEN: no check when not training
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
     var now = performance.now();
+    // Fast lean in last 1.5s
     if (now - window._fastLeanAt < _LEAN_WINDOW_MS) return 'fast_lean';
-    var recent = window._deviationHistory.some(function(h) {
-        return now - h.t < _LEAN_WINDOW_MS && Math.abs(h.dev) > _LEAN_DROP_PCT;
-    });
-    if (recent) return 'off_distance';
+    // Current distance far from baseline
+    try {
+        if (typeof curDistanceM !== 'undefined' && curDistanceM != null && camBaseline != null) {
+            var curDev = Math.abs((curDistanceM - camBaseline) / camBaseline * 100);
+            if (curDev > _LEAN_DROP_PCT) return 'off_distance';
+        }
+    } catch (e) {}
     return null;
 };
 
@@ -269,7 +273,7 @@ window._markAnswerInvalid = function(reason) {
         ? '\u26A0\uFE0F \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D \u2014 \u0440\u0435\u0437\u043A\u0438\u0439 \u043D\u0430\u043A\u043B\u043E\u043D'
         : '\u26A0\uFE0F \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D \u2014 \u0432\u0435\u0440\u043D\u0438\u0442\u0435\u0441\u044C \u043D\u0430 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0438\u044E';
     _showInvalidToast(msg);
-    if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
+    // PATCH31: no voice from invalid-marker (toast only)
 };
 
 // PATCH27C_DIM: dim stimulus only on fast lean, auto-restore after 1.5 sec
@@ -2912,6 +2916,9 @@ function stopPlayer() {
     pauseModal.classList.remove('open');
     camBaseline = null;
     camWarnKind = null;
+    window._fastLeanAt = 0;
+    window._deviationHistory = [];
+    window._invalidAnswerCount = 0;
     sessionId = null;
     _readingFinishGuard = false;
     if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
