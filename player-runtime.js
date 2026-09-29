@@ -1906,6 +1906,7 @@ function finishGraphStimulusSeries(node) {
     seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
     lastDirection = null;
     updateCounters();
+    if (window._reactionReport) window._reactionReport();
     // PATCH35: reaction time aggregate
     try {
         if (!window._reactionTimes) window._reactionTimes = [];
@@ -1938,7 +1939,8 @@ function handleGraphDirectionAnswer(dir) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -1950,11 +1952,13 @@ function handleGraphDirectionAnswer(dir) {
     if (_inv) {
         window._markAnswerInvalid(_inv);
         responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         return;
     }
     const ok = dir === currentCorrectDirection;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -2019,7 +2023,8 @@ function handleGraphCompareAnswer(answer) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2031,11 +2036,13 @@ function handleGraphCompareAnswer(answer) {
     if (_inv) {
         window._markAnswerInvalid(_inv);
         responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         return;
     }
     const ok = answer === currentCompareAnswer;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -2208,6 +2215,7 @@ function startPlayer() {
     window._fastLeanAt = 0;
     window._deviationHistory = [];
     window._distEMA = null; // PATCH42_SMOOTH
+    window._reactionLog = []; // PATCH46
     window._baselineWaitStart = null; // PATCH43
     // PATCH35_GRAPH_RESET: hard reset graph state
     graphActive = false;
@@ -2654,7 +2662,8 @@ function handleDirectionAnswer(direction) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2666,11 +2675,13 @@ function handleDirectionAnswer(direction) {
     if (_inv) {
         window._markAnswerInvalid(_inv);
         responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         return;
     }
     const ok = direction === currentCorrectDirection;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -2684,7 +2695,8 @@ function handleCompareAnswer(answer) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 };
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2696,11 +2708,13 @@ function handleCompareAnswer(answer) {
     if (_inv) {
         window._markAnswerInvalid(_inv);
         responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv };
+        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         return;
     }
     const ok = answer === currentCompareAnswer;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime };
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -3037,6 +3051,7 @@ function stopPlayer() {
     window._fastLeanAt = 0;
     window._deviationHistory = [];
     window._distEMA = null; // PATCH42_SMOOTH
+    window._reactionLog = []; // PATCH46
     window._baselineWaitStart = null; // PATCH43
     window._invalidAnswerCount = 0;
     sessionId = null;
