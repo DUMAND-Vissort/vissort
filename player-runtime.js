@@ -227,7 +227,12 @@ window._recordDeviation = function(pct) {
     }
     if (pct > _LEAN_DROP_PCT) {
         window._fastLeanAt = now;
-        console.warn('[lean] fast lean detected:', pct.toFixed(1) + '%');
+        var _lastLeanLogAt = window._lastLeanLogAt || 0;
+        var _nowT = performance.now();
+        if (_nowT - _lastLeanLogAt > 5000) {
+            console.warn('[lean] fast lean detected:', pct.toFixed(1) + '%');
+            window._lastLeanLogAt = _nowT;
+        }
     }
 };
 
@@ -1527,8 +1532,11 @@ function evaluateDistance() {
     if (camBaseline == null) camBaseline = curDistanceM;
     const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
     // PATCH27B.2: record deviation for fast-lean detection
-    if (window._recordDeviation) window._recordDeviation(dev);
-    if (window._updateStimulusDim) window._updateStimulusDim();
+    // PATCH29_GUARD: only track deviations during active training
+    if (playerRunning && !isPaused) {
+        if (window._recordDeviation) window._recordDeviation(dev);
+        if (window._updateStimulusDim) window._updateStimulusDim();
+    }
     const upTol = userScenario?.params?.distanceToleranceIncreasePct ?? 15;
     const dnTol = userScenario?.params?.distanceToleranceDecreasePct ?? 10;
     if (dev > upTol) {
@@ -2102,6 +2110,8 @@ function startPlayer() {
         : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
     const p = userScenario.params || {};
     playerRunning = true;
+    window._fastLeanAt = 0;
+    window._deviationHistory = [];
     isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
     seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
