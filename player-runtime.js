@@ -1352,8 +1352,11 @@ async function processCamFrame() {
         camFrameId = null;
         return;
     }
+    // PATCH24_GUARD: skip frames while previous detection is in flight
+    if (window._camDetecting) return;
     const v = document.getElementById('hidden-video');
     if (v && v.readyState >= 2 && v.videoWidth > 0 && !v.paused) {
+        window._camDetecting = true;
         const tStart = performance.now();
         window.camStats.frames++;
         try {
@@ -1397,6 +1400,7 @@ async function processCamFrame() {
             window.camStats.fails++;
             console.warn('[cam] detect error:', e && e.message ? e.message : e);
         }
+        window._camDetecting = false;
     }
 }
 function processBlink(earL, earR) {
