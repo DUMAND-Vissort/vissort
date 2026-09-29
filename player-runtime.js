@@ -208,6 +208,7 @@ let gIndex = 0;
 let gCurrentNodeId = null;
 let gNodeAcuityCurrent = 1.0;
 let gCurrentCompareNode = null;
+let _frameSkipCounter = 0;
 // ==================== PATCH27B: fast-lean detection ====================
 window._deviationHistory = [];
 window._fastLeanAt = 0;
