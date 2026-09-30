@@ -1566,7 +1566,7 @@ async function processCamFrame() {
                 if (typeof playerRunning !== 'undefined' && playerRunning && !isPaused && camBaseline != null) {
                     if (!window._faceLostSince) window._faceLostSince = performance.now();
                     var _flDur = performance.now() - window._faceLostSince;
-                    if (_flDur > 1500) // PATCH56: 1500ms for stable detection {
+                    if (_flDur > 1500) { // PATCH56: 1500ms for stable detection
                         window._fastLeanAt = performance.now();
                         window._recordDeviation(-40);
                         var _lastLog = window._lastLeanLogAt || 0;
