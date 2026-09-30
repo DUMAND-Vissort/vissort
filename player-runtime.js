@@ -1565,10 +1565,10 @@ async function processCamFrame() {
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     window._rawDistance = curDistanceM; // PATCH69_RAW: before smoothing
-                    // PATCH75_INSTANT: instant hide on any distance change >2%
-                    if (_stimulusDistance && window._rawDistance) {
+                    // PATCH78_BASELINE: only after baseline + threshold 5%
+                    if (_stimulusDistance && window._rawDistance && camBaseline != null) {
                         var _dev75 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-                        if (_dev75 > 2 && responsePhaseActive) {
+                        if (_dev75 > 5 && responsePhaseActive) {
                             console.warn('[PATCH75] instant hide, dev=' + _dev75.toFixed(1) + '%');
                             if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
                             if (typeof hideStimulus === 'function') hideStimulus();
@@ -2015,7 +2015,7 @@ function handleGraphDirectionAnswer(dir) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 3) {
+    if (_p74max >= 5) { // PATCH78
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -2128,7 +2128,7 @@ function handleGraphCompareAnswer(answer) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 3) {
+    if (_p74max >= 5) { // PATCH78
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -2806,7 +2806,7 @@ function handleDirectionAnswer(direction) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 3) {
+    if (_p74max >= 5) { // PATCH78
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -2897,7 +2897,7 @@ function handleCompareAnswer(answer) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 3) {
+    if (_p74max >= 5) { // PATCH78
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -3822,6 +3822,7 @@ else init();
         var delta = Math.abs(((window._rawDistance || curDistanceM) - _stimulusDistance) / _stimulusDistance * 100); // PATCH69_RAW
         var now = performance.now();
 
+        if (camBaseline == null) { _unstableSince = 0; return; } // PATCH78_BASELINE
         if (delta > THRESHOLD || window._forceRedraw) {
             if (_unstableSince === 0) _unstableSince = now;
             hideNow();
