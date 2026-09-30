@@ -1,6 +1,22 @@
 // ==================== user.js: Начало части 1 из 4 ====================
 'use strict';
 
+// ============================================================
+// PATCH28_PHASE3: shared helpers come from vissort-core.js
+// ============================================================
+if (!window.VissortCore) {
+    throw new Error('[player] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE player-runtime.js.');
+}
+const {
+    acuityToSizeMm, acuityToSizePx, acuityToFontSizePx,
+    detectDeviceType, detectPPIHeuristic, loadPPI,
+    hexToRgb, rgbToHex, lerpColor,
+    buildGenericDynamicPhases, buildCirclePhases,
+    generateLetterE, generateLandoltRing,
+    getCircleStimulusSVG, getStimulusSVG,
+    escapeHtml, getThreshold, randomDirection
+} = window.VissortCore;
+
 // ==================== PLAYER OPTIONS ====================
 (function checkPlayerOptions() {
     const opts = window.VissortPlayerOptions || { requireDomain: false };
@@ -228,6 +244,10 @@ let gCurrentNodeId = null;
 let gNodeAcuityCurrent = 1.0;
 let gCurrentCompareNode = null;
 let _frameSkipCounter = 0;
+// PATCH28b: declarations for PATCH91 stability detection
+let _waitingStable = false;
+let _stableSince = 0;
+let _stableBuf = [];
 // ==================== PATCH27B: fast-lean detection ====================
 window._deviationHistory = [];
 window._fastLeanAt = 0;
@@ -411,57 +431,14 @@ const readingContentEl = $('reading-content');
 const readingToolbarEl = $('reading-toolbar');
 const camIndicator = $('cam-indicator');
 
-function escapeHtml(s) {
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-}
-function hexToRgb(hex) {
-    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 0, g: 0, b: 0 };
-}
-function rgbToHex(r, g, b) {
-    const s = (c) => Math.min(255, Math.max(0, c || 0));
-    return '#' + [s(r), s(g), s(b)].map((c) => c.toString(16).padStart(2, '0')).join('');
-}
-function lerpColor(a, b, t) {
-    return {
-        r: Math.round(a.r + (b.r - a.r) * t),
-        g: Math.round(a.g + (b.g - a.g) * t),
-        b: Math.round(a.b + (b.b - a.b) * t)
-    };
-}
-function getThreshold(size) {
-    switch (size) {
-        case 4:
-            return 3;
-        case 5:
-            return 4;
-        case 6:
-            return 4;
-        case 7:
-            return 5;
-        case 8:
-            return 6;
-        default:
-            return Math.ceil(size / 2);
-    }
-}
-function randomDirection() {
-    const d = ['вверх', 'вниз', 'влево', 'вправо'];
-    return d[Math.floor(Math.random() * d.length)];
-}
-function acuityToSizeMm(a, d) {
-    d = d && d > 0 ? d : 1;
-    const V = Math.max(0.01, a || 1);
-    return (d * 1.454) / V;
-}
-function acuityToSizePx(a, d, ppi) {
-    const mm = acuityToSizeMm(a, d);
-    const dpr = window.devicePixelRatio || 1;
-    const p = (mm * (ppi || 96)) / 25.4;
-    return Math.round(Math.max(1, Math.min(3000, p / dpr)));
-}
+// PATCH28_PHASE3: removed escapeHtml (now in VissortCore)
+// PATCH28_PHASE3: removed hexToRgb (now in VissortCore)
+// PATCH28_PHASE3: removed rgbToHex (now in VissortCore)
+// PATCH28_PHASE3: removed lerpColor (now in VissortCore)
+// PATCH28_PHASE3: removed getThreshold (now in VissortCore)
+// PATCH28_PHASE3: removed randomDirection (now in VissortCore)
+// PATCH28_PHASE3: removed acuityToSizeMm (now in VissortCore)
+// PATCH28_PHASE3: removed acuityToSizePx (now in VissortCore)
 
 // PATCH32_6_FIX: prefer real measured distance, fall back to declared
 function _effectiveDistance(declared) {
@@ -485,36 +462,10 @@ function _smoothDistance(raw) {
     }
     return window._distEMA;
 }
-function acuityToFontSizePx(a, d, ppi) {
-    const xh = acuityToSizeMm(a, d);
-    const mm = xh / 0.5;
-    const dpr = window.devicePixelRatio || 1;
-    const p = (mm * (ppi || 96)) / 25.4;
-    return Math.round(Math.max(8, Math.min(2000, p / dpr)));
-}
-function detectDeviceType() {
-    const ua = navigator.userAgent || '';
-    if (/iPad|Tablet|PlayBook|Silk/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
-    if (/Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(ua)) return 'mobile';
-    return 'desktop';
-}
-function detectPPIHeuristic() {
-    const t = detectDeviceType(),
-        dpr = window.devicePixelRatio || 1;
-    if (t === 'mobile') {
-        if (dpr >= 3.5) return 500;
-        if (dpr >= 3) return 460;
-        if (dpr >= 2.75) return 400;
-        if (dpr >= 2) return 320;
-        return 220;
-    }
-    if (t === 'tablet') return dpr >= 2 ? 264 : 160;
-    return Math.round(96 * dpr);
-}
-function loadPPI() {
-    const s = localStorage.getItem('screenPPI');
-    return s && !isNaN(parseInt(s)) ? parseInt(s) : detectPPIHeuristic();
-}
+// PATCH28_PHASE3: removed acuityToFontSizePx (now in VissortCore)
+// PATCH28_PHASE3: removed detectDeviceType (now in VissortCore)
+// PATCH28_PHASE3: removed detectPPIHeuristic (now in VissortCore)
+// PATCH28_PHASE3: removed loadPPI (now in VissortCore)
 let screenPPI = loadPPI();
 
 function showStatus(title, text, actionLabel, actionFn) {
@@ -858,94 +809,10 @@ function updateCounters() {
     cntNoAnswer.textContent = seriesNoAnswer;
 }
 
-function generateLetterE(size, r, g, b, angle = 0) {
-    const t = size / 5;
-    const path = `M 0 0 H ${size} V ${t} H ${t} V ${2 * t} H ${size - t} V ${3 * t} H ${t} V ${4 * t} H ${size} V ${size} H 0 Z`;
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g transform="rotate(${angle}, ${size / 2}, ${size / 2})"><path d="${path}" fill="rgb(${r},${g},${b})"/></g></svg>`;
-}
-function generateLandoltRing(diameter, gapDir, r, g, b, bgR, bgG, bgB) {
-    const sw = diameter * 0.2,
-        gw = diameter * 0.2,
-        gl = diameter * 0.23,
-        sm = Math.max(1, sw * 0.1);
-    const or_ = diameter / 2,
-        cx = diameter / 2,
-        cy = diameter / 2;
-    let rx, ry, rw, rh;
-    if (gapDir === 'вверх' || gapDir === 'вниз') {
-        rw = gw;
-        rh = gl + sm;
-        rx = cx - rw / 2;
-        ry = gapDir === 'вверх' ? cy - or_ - sm : cy + or_ - rh + sm;
-    } else {
-        rw = gl + sm;
-        rh = gw;
-        ry = cy - rh / 2;
-        rx = gapDir === 'вправо' ? cx + or_ - rw + sm : cx - or_ - sm;
-    }
-    return `<svg width="${diameter}" height="${diameter}" viewBox="0 0 ${diameter} ${diameter}" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${or_ - sw / 2}" fill="none" stroke="rgb(${r},${g},${b})" stroke-width="${sw}"/><rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="rgb(${bgR},${bgG},${bgB})"/></svg>`;
-}
-function getCircleStimulusSVG(node, size) {
-    const uid = 'cg_' + Math.random().toString(36).slice(2, 8);
-    const cx = size / 2,
-        cy = size / 2,
-        r = size / 2;
-    const iEn = node.circleInnerEnabled !== false,
-        oEn = node.circleOuterEnabled !== false;
-    const innerR = Math.max(5, Math.min(95, node.circleInnerRadiusPct ?? 40));
-    const iA = node.circleInnerColor1 || { r: 255, g: 0, b: 0 },
-        iB = node.circleInnerColor2 || { r: 0, g: 0, b: 255 };
-    const iMid = node.circleInnerMidEnabled ? node.circleInnerColor3 || { r: 255, g: 255, b: 0 } : null;
-    const innerStops = [];
-    if (iMid) {
-        innerStops.push(`<stop offset="0%" stop-color="rgb(${iA.r},${iA.g},${iA.b})"/>`);
-        innerStops.push(`<stop offset="50%" stop-color="rgb(${iMid.r},${iMid.g},${iMid.b})"/>`);
-        innerStops.push(`<stop offset="100%" stop-color="rgb(${iB.r},${iB.g},${iB.b})"/>`);
-    } else {
-        innerStops.push(`<stop offset="0%" stop-color="rgb(${iA.r},${iA.g},${iA.b})"/>`);
-        innerStops.push(`<stop offset="100%" stop-color="rgb(${iB.r},${iB.g},${iB.b})"/>`);
-    }
-    const oA = node.circleOuterColor1 || { r: 0, g: 255, b: 0 },
-        oB = node.circleOuterColor2 || { r: 0, g: 128, b: 255 };
-    const oMid = node.circleOuterMidEnabled ? node.circleOuterColor3 || { r: 0, g: 255, b: 255 } : null;
-    const outerStops = [];
-    outerStops.push(`<stop offset="0%" stop-color="rgb(${oA.r},${oA.g},${oA.b})" stop-opacity="0"/>`);
-    outerStops.push(`<stop offset="${innerR}%" stop-color="rgb(${oA.r},${oA.g},${oA.b})" stop-opacity="1"/>`);
-    if (oMid)
-        outerStops.push(
-            `<stop offset="${(innerR + 100) / 2}%" stop-color="rgb(${oMid.r},${oMid.g},${oMid.b})"/>`
-        );
-    outerStops.push(`<stop offset="100%" stop-color="rgb(${oB.r},${oB.g},${oB.b})"/>`);
-    const innerCircle = iEn
-        ? `<circle cx="${cx}" cy="${cy}" r="${(r * innerR) / 100}" fill="url(#${uid}_i)"/>`
-        : '';
-    const outerCircle = oEn ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${uid}_o)"/>` : '';
-    const html = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="${uid}_o" cx="50%" cy="50%" r="50%">${outerStops.join('')}</radialGradient><radialGradient id="${uid}_i" cx="50%" cy="50%" r="50%">${innerStops.join('')}</radialGradient></defs>${outerCircle}${innerCircle}</svg>`;
-    return { html, bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`, size };
-}
-function getStimulusSVG(node, size) {
-    if (node.singleCircleEnabled) return getCircleStimulusSVG(node, size);
-    const r = node.stimR || 255,
-        g = node.stimG || 255,
-        b = node.stimB || 255;
-    let html;
-    if (node.stimType === 'LANDOLT')
-        html = generateLandoltRing(
-            size,
-            node.stimDirection || 'вверх',
-            r,
-            g,
-            b,
-            node.bgR || 0,
-            node.bgG || 0,
-            node.bgB || 0
-        );
-    else {
-        const am = { вверх: 270, вправо: 0, вниз: 90, влево: 180 };
-        html = generateLetterE(size, r, g, b, am[node.stimDirection] || 0);
-    }
-    return { html, bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`, size };
-}
+// PATCH28_PHASE3: removed generateLetterE (now in VissortCore)
+// PATCH28_PHASE3: removed generateLandoltRing (now in VissortCore)
+// PATCH28_PHASE3: removed getCircleStimulusSVG (now in VissortCore)
+// PATCH28_PHASE3: removed getStimulusSVG (now in VissortCore)
 function setStimColorRGB(r, g, b) {
     const svg = stimDisplay.querySelector('svg');
     if (!svg) return;
@@ -956,25 +823,7 @@ function setStimColorRGB(r, g, b) {
     if (cc) cc.setAttribute('stroke', c);
 }
 
-function buildGenericDynamicPhases(c1, midEn, c3, c2, rev) {
-    const A = c1 || { r: 255, g: 0, b: 0 },
-        B = c2 || { r: 0, g: 0, b: 255 };
-    let base =
-        midEn && c3
-            ? [
-                  { from: A, to: c3 },
-                  { from: c3, to: B }
-              ]
-            : [{ from: A, to: B }];
-    if (rev === true)
-        return base.concat(
-            base
-                .slice()
-                .reverse()
-                .map((ph) => ({ from: ph.to, to: ph.from }))
-        );
-    return base;
-}
+// PATCH28_PHASE3: removed buildGenericDynamicPhases (now in VissortCore)
 function startSingleStimAnimation(p) {
     stopSingleStimAnimation();
     const ph = buildGenericDynamicPhases(
@@ -1138,23 +987,7 @@ function stopBlinkAnimation() {
     _blinkLocalState = { tick: 0, current: 'A' };
 }
 
-function buildCirclePhases(A, midEn, M, B, rev) {
-    let base =
-        midEn && M
-            ? [
-                  { from: A, to: M },
-                  { from: M, to: B }
-              ]
-            : [{ from: A, to: B }];
-    if (rev === true)
-        return base.concat(
-            base
-                .slice()
-                .reverse()
-                .map((ph) => ({ from: ph.to, to: ph.from }))
-        );
-    return base;
-}
+// PATCH28_PHASE3: removed buildCirclePhases (now in VissortCore)
 function startCircleAnimation(node) {
     stopCircleAnimation();
     const svg = stimDisplay.querySelector('svg');
