@@ -3361,7 +3361,8 @@ else init();
 
         var face = document.getElementById('cam-indicator');
         var faceText = face ? face.textContent : '';
-        var hasFace = faceText.indexOf('✅') !== -1;
+        // PATCH55_FIX: player uses 📏 when face is OK; ❌ or 📷 means lost
+        var hasFace = faceText.indexOf('📏') !== -1;
         var dev = (typeof camBaseline !== 'undefined' && camBaseline && typeof curDistanceM !== 'undefined' && curDistanceM)
             ? ((curDistanceM - camBaseline) / camBaseline * 100)
             : null;
