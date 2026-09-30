@@ -250,27 +250,8 @@ window._recordDeviation = function(pct) {
     while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
         window._deviationHistory.shift();
     }
-    // PATCH60: velocity check -- big jump between frames = lean
-    var _lastH = window._deviationHistory[window._deviationHistory.length - 2];
-    if (_lastH) {
-        var _vel = Math.abs(pct - _lastH.dev);
-        if (_vel > 8) {
-            window._fastLeanAt = now;
-            var _llog = window._lastLeanLogAt || 0;
-            if (now - _llog > 2000) {
-                console.warn('[lean] velocity', _vel.toFixed(1) + '%', '(from', _lastH.dev.toFixed(1) + ' to', pct.toFixed(1) + ')');
-                window._lastLeanLogAt = now;
-            }
-        }
-    }
-    if (Math.abs(pct) > _LEAN_DROP_PCT) {
-        window._fastLeanAt = now;
-        var _lastLeanLogAt = window._lastLeanLogAt || 0;
-        if (now - _lastLeanLogAt > 3000) {
-            console.warn('[lean]', pct.toFixed(1) + '%');
-            window._lastLeanLogAt = now;
-        }
-    }
+    // PATCH70_OFF: velocity check disabled
+    // PATCH70_OFF: lean-tracking disabled (only PATCH68 matters)
 };
 
 // PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
@@ -278,7 +259,9 @@ window._recordDeviation = function(pct) {
 // PATCH33: average deviation over 1 sec + current distance
 // PATCH34: velocity-based detection (delta over 600ms), plus current distance
 // PATCH36: current distance OR recent lean in 2 sec
+// PATCH70_OFF: disabled, PATCH68 handles everything
 window._isAnswerInvalid = function() {
+    return null; // PATCH70_OFF
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
     var now = performance.now();
@@ -1590,7 +1573,7 @@ async function processCamFrame() {
                 if (typeof playerRunning !== 'undefined' && playerRunning && !isPaused && camBaseline != null) {
                     if (!window._faceLostSince) window._faceLostSince = performance.now();
                     var _flDur = performance.now() - window._faceLostSince;
-                    if (_flDur > 1500) { // PATCH56: 1500ms for stable detection
+                    if (false) { // PATCH70_OFF: disabled
                         window._fastLeanAt = performance.now();
                         window._recordDeviation(-40);
                         var _lastLog = window._lastLeanLogAt || 0;
