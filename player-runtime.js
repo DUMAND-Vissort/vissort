@@ -1434,6 +1434,7 @@ function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
     _stimulusDistance = curDistanceM; // PATCH_CLEAN
+    _stimulusDistance = curDistanceM; // PATCH91
 }
 function hideStimulus() {
     stopSingleStimAnimation();
@@ -1583,13 +1584,53 @@ async function processCamFrame() {
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     if (curDistanceM > 0.3 && curDistanceM < 5) curDistanceM = _smoothDistance(curDistanceM);
-                    // PATCH_CLEAN: hide stimulus if distance deviates >15% from shown
-                    if (_stimulusDistance && curDistanceM && camBaseline != null && responsePhaseActive) {
+                    // PATCH91: hide on deviation >15%, cancel timers, wait stable
+                    if (_stimulusDistance && curDistanceM && camBaseline != null) {
                         var _dev = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
                         if (_dev > 15) {
-                            hideStimulus();
-                            responsePhaseActive = false;
-                            if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
+                            if (responsePhaseActive || !_waitingStable) {
+                                hideStimulus();
+                                responsePhaseActive = false;
+                                if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
+                                if (typeof currentShowTimer !== 'undefined' && currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+                                if (typeof phaseTimers !== 'undefined' && phaseTimers) {
+                                    for (var _i91 = 0; _i91 < phaseTimers.length; _i91++) clearTimeout(phaseTimers[_i91]);
+                                    phaseTimers.length = 0;
+                                }
+                                _waitingStable = true;
+                                _stableSince = 0;
+                                _stableBuf = [];
+                                console.log('[PATCH91] distance changed ' + _dev.toFixed(1) + '% -- waiting');
+                            }
+                        }
+                    }
+                    // PATCH91: watch for stability
+                    if (_waitingStable && curDistanceM) {
+                        _stableBuf.push(curDistanceM);
+                        if (_stableBuf.length > 5) _stableBuf.shift();
+                        if (_stableBuf.length === 5) {
+                            var _mn = Math.min.apply(null, _stableBuf);
+                            var _mx = Math.max.apply(null, _stableBuf);
+                            if ((_mx - _mn) / _mn * 100 < 3) {
+                                if (!_stableSince) _stableSince = performance.now();
+                                if (performance.now() - _stableSince >= 1000) {
+                                    _waitingStable = false;
+                                    _stableSince = 0;
+                                    _stableBuf = [];
+                                    _stimulusDistance = curDistanceM;
+                                    console.log('[PATCH91] stable at ' + curDistanceM.toFixed(2) + 'm -- showing');
+                                    var _n91 = null;
+                                    try { _n91 = getNode(currentPlayingNodeId); } catch(e) {}
+                                    if (_n91) {
+                                        if (_n91.nodeType === 'COMPARE') playGraphCompareRound(_n91);
+                                        else playGraphStimulus(_n91);
+                                    } else {
+                                        showNextStimulus();
+                                    }
+                                }
+                            } else {
+                                _stableSince = 0;
+                            }
                         }
                     }
                     curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
@@ -3126,6 +3167,10 @@ function stopPlayer() {
     document.body.style.background = '#0b0b0f';
     pauseModal.classList.remove('open');
     camBaseline = null;
+    _stimulusDistance = null;
+    _waitingStable = false; // PATCH91
+    _stableSince = 0;
+    _stableBuf = [];
     _stimulusDistance = null; // PATCH_CLEAN
     camWarnKind = null;
     window._fastLeanAt = 0;
