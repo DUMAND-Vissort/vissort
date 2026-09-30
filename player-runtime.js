@@ -1862,8 +1862,10 @@ function playGraphStimulus(node) {
             stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
+    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
+    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     if (node.singleGridEnabled) {
         const gx = node.singleGridX || 1,
             gy = node.singleGridY || 1;
@@ -2451,8 +2453,10 @@ function showNextStimulus() {
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, currentBgColor);
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
+    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     } else displayStimulus(svgData.html, currentBgColor);
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
+    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     if (p.singleGridEnabled) {
         const gx = p.singleGridX || 1,
             gy = p.singleGridY || 1;
