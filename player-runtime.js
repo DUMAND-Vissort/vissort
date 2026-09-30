@@ -3478,3 +3478,43 @@ else init();
         }
     }, 300);
 })();
+
+// PATCH61_FACE_PAUSE: overlay + voice when face lost >2s
+(function installFaceLostPause() {
+    function ensureOverlay() {
+        var el = document.getElementById('face-lost-overlay');
+        if (el) return el;
+        el = document.createElement('div');
+        el.id = 'face-lost-overlay';
+        el.style.cssText = 'position:fixed;inset:0;background:rgba(11,11,18,0.94);display:none;align-items:center;justify-content:center;z-index:99997;font-family:"Segoe UI",Tahoma,sans-serif;color:#fff;text-align:center;padding:20px;';
+        el.innerHTML = '<div><div style="font-size:72px;margin-bottom:24px;">&#128100;</div><h2 style="font-size:28px;margin:0 0 12px;font-weight:700;">Вернитесь в кадр</h2><p style="color:#94a3b8;font-size:15px;">Тренировка возобновится автоматически</p></div>';
+        document.body.appendChild(el);
+        return el;
+    }
+    setInterval(function() {
+        var overlay = ensureOverlay();
+        var face = document.getElementById('cam-indicator');
+        var faceText = face ? face.textContent : '';
+        var hasFace = faceText.indexOf('\uD83D\uDCCF') !== -1 || faceText.indexOf('\u2705') !== -1;
+        var training = typeof playerRunning !== 'undefined' && playerRunning && !isPaused;
+        var longLoss = false;
+        if (!hasFace && window._faceLostSince) {
+            if (performance.now() - window._faceLostSince > 2000) longLoss = true;
+        }
+        if (training && longLoss) {
+            if (overlay.style.display !== 'flex') {
+                overlay.style.display = 'flex';
+                console.warn('[PATCH61] face lost >2s -- paused');
+                if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('returnToFrame', { cancel: true });
+            }
+            window._faceLostPause = true;
+        } else {
+            if (overlay.style.display === 'flex') {
+                overlay.style.display = 'none';
+                console.log('[PATCH61] face back -- resuming');
+                if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('faceFound', { cancel: true });
+            }
+            window._faceLostPause = false;
+        }
+    }, 300);
+})();
