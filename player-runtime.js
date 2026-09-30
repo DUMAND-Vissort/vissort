@@ -1590,7 +1590,7 @@ async function processCamFrame() {
                     // PATCH78_BASELINE: only after baseline + threshold 5%
                     if (_stimulusDistance && window._rawDistance && camBaseline != null) {
                         var _dev75 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-                        if (_dev75 > 5 && responsePhaseActive) {
+                        if (_dev75 > 20 && responsePhaseActive) { // PATCH82: threshold 20%
                             console.warn('[PATCH75] instant hide, dev=' + _dev75.toFixed(1) + '%');
                             if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
                             if (typeof hideStimulus === 'function') hideStimulus();
@@ -2037,7 +2037,7 @@ function handleGraphDirectionAnswer(dir) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 5) { // PATCH78
+    if (_p74max >= 20) { // PATCH82
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -2150,7 +2150,7 @@ function handleGraphCompareAnswer(answer) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 5) { // PATCH78
+    if (_p74max >= 20) { // PATCH82
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -2828,7 +2828,7 @@ function handleDirectionAnswer(direction) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 5) { // PATCH78
+    if (_p74max >= 20) { // PATCH82
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -2919,7 +2919,7 @@ function handleCompareAnswer(answer) {
         var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
         if (_c74 > _p74max) _p74max = _c74;
     }
-    if (_p74max >= 5) { // PATCH78
+    if (_p74max >= 20) { // PATCH82
         console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
         // Скрыть стимул
         if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
@@ -3697,8 +3697,8 @@ else init();
     }, 300);
 })();
 
-// PATCH67_REDRAW: wait for distance stabilization, then redraw stimulus
-(function installDistanceRedraw() {
+// PATCH82: PATCH67 disabled -- conflicts with PATCH68/75
+(function installDistanceRedraw_DISABLED() { return;
     var CHECK_MS = 300;
     var STABILIZE_MS = 1000;
     var THRESHOLD = 10;
