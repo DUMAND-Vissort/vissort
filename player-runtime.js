@@ -481,7 +481,7 @@ function _smoothDistance(raw) {
     if (window._distEMA === null || !isFinite(window._distEMA)) {
         window._distEMA = raw;
     } else {
-        window._distEMA = window._distEMA * 0.5 + raw * 0.5 // PATCH60 faster EMA;
+        window._distEMA = window._distEMA * 0.5 + raw * 0.5; // PATCH60 faster EMA
     }
     return window._distEMA;
 }
@@ -1433,8 +1433,7 @@ function applyRandomStimulusPosition(size) {
 function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
-    _stimulusDistance = curDistanceM; // PATCH_CLEAN
-    _stimulusDistance = curDistanceM; // PATCH91
+    _stimulusDistance = curDistanceM; // PATCH23: РѕРґРЅРѕ РїСЂРёСЃРІР°РёРІР°РЅРёРµ
 }
 function hideStimulus() {
     stopSingleStimAnimation();
@@ -1537,15 +1536,8 @@ async function loadFaceApi() {
     await faceapi.nets.tinyFaceDetector.loadFromUri(M);
     await faceapi.nets.faceLandmark68Net.loadFromUri(M);
 }
-function computeEAR(e) {
-    if (!e || e.length < 6) return 0.3;
-    const [p1, p2, p3, p4, p5, p6] = e;
-    const v1 = Math.hypot(p2.x - p6.x, p2.y - p6.y);
-    const v2 = Math.hypot(p3.x - p5.x, p3.y - p5.y);
-    const h = Math.hypot(p1.x - p4.x, p1.y - p4.y);
-    if (h < 1) return 0.3;
-    return (v1 + v2) / (2 * h);
-}
+// PATCH25: computeEAR removed (landmarks disabled in PATCH25_BBOX)
+
 async function processCamFrame() {
     if (!camActive) {
         camFrameId = null;
@@ -1633,7 +1625,7 @@ async function processCamFrame() {
                             }
                         }
                     }
-                    curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
+                    // PATCH23: redundant smoothing removed
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
                 }
@@ -1663,22 +1655,8 @@ async function processCamFrame() {
         window._camDetecting = false;
     }
 }
-function processBlink(earL, earR) {
-    const now = performance.now();
-    const ear = (earL + earR) / 2;
-    const closed = ear < BLINK_THRESHOLD;
-    if (closed && !_blinkIsClosed) {
-        _blinkIsClosed = true;
-        _blinkClosedSince = now;
-    } else if (!closed && _blinkIsClosed) {
-        const dur = now - _blinkClosedSince;
-        _blinkIsClosed = false;
-        _blinkClosedSince = 0;
-        if (dur > 800 && playerRunning && !isPaused) {
-            pauseTraining();
-        }
-    }
-}
+// PATCH25: processBlink removed (landmarks disabled in PATCH25_BBOX)
+
 function evaluateDistance() {
     if (!playerRunning || isPaused || curDistanceM == null) return;
     // PATCH43_BASELINE: delay baseline 3s to skip noisy startup frames
@@ -2060,14 +2038,7 @@ function handleGraphDirectionAnswer(dir) {
         setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
         return;
     }
-    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
-    if (_inv) {
-        window._markAnswerInvalid(_inv);
-        responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        return;
-    }
+
     const ok = dir === currentCorrectDirection;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
@@ -2144,14 +2115,7 @@ function handleGraphCompareAnswer(answer) {
         setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
         return;
     }
-    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
-    if (_inv) {
-        window._markAnswerInvalid(_inv);
-        responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        return;
-    }
+
     const ok = answer === currentCompareAnswer;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
@@ -2791,14 +2755,7 @@ function handleDirectionAnswer(direction) {
         setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
         return;
     }
-    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
-    if (_inv) {
-        window._markAnswerInvalid(_inv);
-        responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        return;
-    }
+
     const ok = direction === currentCorrectDirection;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
@@ -2824,14 +2781,7 @@ function handleCompareAnswer(answer) {
         setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
         return;
     }
-    var _inv = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
-    if (_inv) {
-        window._markAnswerInvalid(_inv);
-        responsePhaseActive = false;
-        lastResponse = { answered: true, isCorrect: false, invalidReason: _inv }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        return;
-    }
+
     const ok = answer === currentCompareAnswer;
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
@@ -3541,42 +3491,4 @@ else init();
     }, 300);
 })();
 
-// PATCH61_FACE_PAUSE: overlay + voice when face lost >2s
-(function installFaceLostPause() {
-    function ensureOverlay() {
-        var el = document.getElementById('face-lost-overlay');
-        if (el) return el;
-        el = document.createElement('div');
-        el.id = 'face-lost-overlay';
-        el.style.cssText = 'position:fixed;inset:0;background:rgba(11,11,18,0.94);display:none;align-items:center;justify-content:center;z-index:99997;font-family:"Segoe UI",Tahoma,sans-serif;color:#fff;text-align:center;padding:20px;';
-        el.innerHTML = '<div><div style="font-size:72px;margin-bottom:24px;">&#128100;</div><h2 style="font-size:28px;margin:0 0 12px;font-weight:700;">Вернитесь в кадр</h2><p style="color:#94a3b8;font-size:15px;">Тренировка возобновится автоматически</p></div>';
-        document.body.appendChild(el);
-        return el;
-    }
-    setInterval(function() {
-        var overlay = ensureOverlay();
-        var face = document.getElementById('cam-indicator');
-        var faceText = face ? face.textContent : '';
-        var hasFace = faceText.indexOf('\uD83D\uDCCF') !== -1 || faceText.indexOf('\u2705') !== -1;
-        var training = typeof playerRunning !== 'undefined' && playerRunning && !isPaused;
-        var longLoss = false;
-        if (!hasFace && window._faceLostSince) {
-            if (performance.now() - window._faceLostSince > 2000) longLoss = true;
-        }
-        if (training && longLoss) {
-            if (overlay.style.display !== 'flex') {
-                overlay.style.display = 'flex';
-                console.warn('[PATCH61] face lost >2s -- paused');
-                if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('returnToFrame', { cancel: true });
-            }
-            window._faceLostPause = true;
-        } else {
-            if (overlay.style.display === 'flex') {
-                overlay.style.display = 'none';
-                console.log('[PATCH61] face back -- resuming');
-                if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('faceFound', { cancel: true });
-            }
-            window._faceLostPause = false;
-        }
-    }, 300);
-})();
+

@@ -159,31 +159,43 @@
     function idbClear(store) {
         return idb(store, 'readwrite', (s) => s.clear());
     }
-    function idbGet(store, key) {
+    // PATCH23: shared helper with DB reopen on InvalidStateError
+    async function idbRequest(store, mode, fn) {
+        if (!db) {
+            try { await openDB(); }
+            catch (e) { throw new Error('IndexedDB not open: ' + e.message); }
+        }
         return new Promise((resolve, reject) => {
-            if (!db) return reject(new Error('IndexedDB не открыта'));
             try {
-                const tx = db.transaction(store, 'readonly');
-                const r = tx.objectStore(store).get(key);
-                r.onsuccess = () => resolve(r.result);
-                r.onerror = () => reject(r.error);
+                const tx = db.transaction(store, mode);
+                const s = tx.objectStore(store);
+                const req = fn(s);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
             } catch (e) {
+                if (e.name === 'InvalidStateError') {
+                    _reopenAttempts = (_reopenAttempts || 0) + 1;
+                    if (_reopenAttempts > 3) {
+                        reject(new Error('IndexedDB failed to reopen after 3 attempts'));
+                        return;
+                    }
+                    console.warn('[Data] DB closed, reopening (idbRequest)...');
+                    db = null;
+                    openDB()
+                        .then(() => idbRequest(store, mode, fn))
+                        .then(resolve)
+                        .catch(reject);
+                    return;
+                }
                 reject(e);
             }
         });
     }
+    function idbGet(store, key) {
+        return idbRequest(store, 'readonly', (s) => s.get(key));
+    }
     function idbGetAll(store) {
-        return new Promise((resolve, reject) => {
-            if (!db) return reject(new Error('IndexedDB не открыта'));
-            try {
-                const tx = db.transaction(store, 'readonly');
-                const r = tx.objectStore(store).getAll();
-                r.onsuccess = () => resolve(r.result || []);
-                r.onerror = () => reject(r.error);
-            } catch (e) {
-                reject(e);
-            }
-        });
+        return idbRequest(store, 'readonly', (s) => s.getAll()).then((r) => r || []);
     }
 
     // ============================================================
