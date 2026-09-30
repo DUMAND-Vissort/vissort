@@ -21,3 +21,5 @@ supabase/.temp/
 
 # Backup copies
 *.bak
+# Supabase local config (cloud is source of truth)
+supabase/config.toml

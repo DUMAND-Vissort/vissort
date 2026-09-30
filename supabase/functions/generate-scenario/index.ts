@@ -1,9 +1,10 @@
 // Edge Function generate-scenario
 // Проксирует запросы к DeepSeek API. Обходит гео-блокировки.
-// Принимает от клиента: { prompt, schema }
+// Принимает от клиента: { prompt, schema, temperature }
 // Возвращает: { ok, data } или { ok: false, error }
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
+const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
 
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') {
@@ -20,10 +21,17 @@ Deno.serve(async (req) => {
         return json({ ok: false, error: 'Method not allowed' }, 405);
     }
 
+    // --- Pre-flight: env must be sane ---
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    if (!supabaseUrl || !anonKey) {
+        console.error('[generate-scenario] Missing SUPABASE_URL or SUPABASE_ANON_KEY');
+        return json({ ok: false, error: 'Server misconfigured' }, 500);
+    }
+
     // --- Auth check ---
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
     if (!token) {
         return json({ ok: false, error: 'Authorization required' }, 401);
@@ -33,15 +41,12 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const userRes = await fetch(
-            `${Deno.env.get('SUPABASE_URL')}/auth/v1/user`,
-            {
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'apikey': anonKey
-                }
+        const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'apikey': anonKey
             }
-        );
+        });
         if (!userRes.ok) {
             return json({ ok: false, error: 'Invalid token' }, 401);
         }
@@ -49,8 +54,8 @@ Deno.serve(async (req) => {
         if (!user || !user.id) {
             return json({ ok: false, error: 'Invalid user' }, 401);
         }
-        const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
-        if (user.email && !ADMIN_EMAILS.includes(user.email)) {
+        // BUG-11 FIX: require non-empty email AND whitelist match
+        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
             return json({ ok: false, error: 'Forbidden' }, 403);
         }
     } catch (e) {
@@ -75,6 +80,9 @@ Deno.serve(async (req) => {
     if (!prompt || typeof prompt !== 'string') {
         return json({ ok: false, error: 'prompt is required' }, 400);
     }
+    if (prompt.length > 8000) {
+        return json({ ok: false, error: 'prompt too long (max 8000 chars)' }, 400);
+    }
 
     const messages = [
         {
@@ -84,7 +92,7 @@ Deno.serve(async (req) => {
         { role: 'user', content: prompt }
     ];
 
-    const payload = {
+    const payload: Record<string, unknown> = {
         model: 'deepseek-chat',
         messages,
         temperature: typeof temperature === 'number' ? temperature : 0.7,
@@ -142,7 +150,7 @@ Deno.serve(async (req) => {
     }
 });
 
-function json(obj, status = 200) {
+function json(obj: unknown, status = 200) {
     return new Response(JSON.stringify(obj), {
         status,
         headers: {
