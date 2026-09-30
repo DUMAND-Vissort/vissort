@@ -1983,6 +1983,27 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!responsePhaseActive) return;
+    // PATCH73: universal movement check
+    var _p73max = 0;
+    if (_stimulusDistance && window._rawHistory) {
+        var _n73 = performance.now();
+        for (var _i73 = 0; _i73 < window._rawHistory.length; _i73++) {
+            var _h73 = window._rawHistory[_i73];
+            if (_n73 - _h73.t > 1000) continue;
+            var _d73 = Math.abs((_h73.d - _stimulusDistance) / _stimulusDistance * 100);
+            if (_d73 > _p73max) _p73max = _d73;
+        }
+    }
+    if (window._rawDistance && _stimulusDistance) {
+        var _c73 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
+        if (_c73 > _p73max) _p73max = _c73;
+    }
+    if (_p73max >= 3) {
+        console.warn('[PATCH73] movement ' + _p73max.toFixed(1) + '% -- answer rejected');
+        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
+        responsePhaseActive = false;
+        return;
+    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2067,6 +2088,27 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    // PATCH73: universal movement check
+    var _p73max = 0;
+    if (_stimulusDistance && window._rawHistory) {
+        var _n73 = performance.now();
+        for (var _i73 = 0; _i73 < window._rawHistory.length; _i73++) {
+            var _h73 = window._rawHistory[_i73];
+            if (_n73 - _h73.t > 1000) continue;
+            var _d73 = Math.abs((_h73.d - _stimulusDistance) / _stimulusDistance * 100);
+            if (_d73 > _p73max) _p73max = _d73;
+        }
+    }
+    if (window._rawDistance && _stimulusDistance) {
+        var _c73 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
+        if (_c73 > _p73max) _p73max = _c73;
+    }
+    if (_p73max >= 3) {
+        console.warn('[PATCH73] movement ' + _p73max.toFixed(1) + '% -- answer rejected');
+        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
+        responsePhaseActive = false;
+        return;
+    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2714,6 +2756,27 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
+    // PATCH73: universal movement check
+    var _p73max = 0;
+    if (_stimulusDistance && window._rawHistory) {
+        var _n73 = performance.now();
+        for (var _i73 = 0; _i73 < window._rawHistory.length; _i73++) {
+            var _h73 = window._rawHistory[_i73];
+            if (_n73 - _h73.t > 1000) continue;
+            var _d73 = Math.abs((_h73.d - _stimulusDistance) / _stimulusDistance * 100);
+            if (_d73 > _p73max) _p73max = _d73;
+        }
+    }
+    if (window._rawDistance && _stimulusDistance) {
+        var _c73 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
+        if (_c73 > _p73max) _p73max = _c73;
+    }
+    if (_p73max >= 3) {
+        console.warn('[PATCH73] movement ' + _p73max.toFixed(1) + '% -- answer rejected');
+        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
+        responsePhaseActive = false;
+        return;
+    }
     // PATCH72_HISTORY: reject if distance moved >3% in last 800ms
     if (_stimulusDistance && window._rawHistory && window._rawHistory.length > 1) {
         var _now72 = performance.now();
@@ -2776,6 +2839,27 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    // PATCH73: universal movement check
+    var _p73max = 0;
+    if (_stimulusDistance && window._rawHistory) {
+        var _n73 = performance.now();
+        for (var _i73 = 0; _i73 < window._rawHistory.length; _i73++) {
+            var _h73 = window._rawHistory[_i73];
+            if (_n73 - _h73.t > 1000) continue;
+            var _d73 = Math.abs((_h73.d - _stimulusDistance) / _stimulusDistance * 100);
+            if (_d73 > _p73max) _p73max = _d73;
+        }
+    }
+    if (window._rawDistance && _stimulusDistance) {
+        var _c73 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
+        if (_c73 > _p73max) _p73max = _c73;
+    }
+    if (_p73max >= 3) {
+        console.warn('[PATCH73] movement ' + _p73max.toFixed(1) + '% -- answer rejected');
+        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
+        responsePhaseActive = false;
+        return;
+    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
