@@ -1580,6 +1580,7 @@ async function processCamFrame() {
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
+                    window._rawDistance = curDistanceM; // PATCH69_RAW: before smoothing
                     curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
@@ -3577,7 +3578,7 @@ else init();
         if (typeof _stimulusDistance === 'undefined' || !_stimulusDistance) return;
         if (typeof curDistanceM === 'undefined' || !curDistanceM) return;
 
-        var delta = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
+        var delta = Math.abs(((window._rawDistance || curDistanceM) - _stimulusDistance) / _stimulusDistance * 100); // PATCH69_RAW
         var now = performance.now();
 
         if (delta > THRESHOLD) {
@@ -3604,7 +3605,7 @@ else init();
 
 // PATCH68_HIDE: hide stimulus immediately on distance change, show after stabilization
 (function installDistanceHide() {
-    var CHECK_MS = 200;
+    var CHECK_MS = 100; // PATCH69_RAW faster
     var STABILIZE_MS = 1000;
     var THRESHOLD = 10;
 
@@ -3645,7 +3646,7 @@ else init();
         var node = getCurrentNode();
         if (!node) return;
         console.log('[PATCH68] distance stable -- showing new stimulus');
-        _stimulusDistance = (typeof curDistanceM !== 'undefined' && curDistanceM) ? curDistanceM : null;
+        _stimulusDistance = (typeof window._rawDistance !== 'undefined' && window._rawDistance) ? window._rawDistance : ((typeof curDistanceM !== 'undefined' && curDistanceM) ? curDistanceM : null); // PATCH69_RAW
         setTimeout(function() {
             if (!playerRunning || isPaused) return;
             if (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC') {
@@ -3666,7 +3667,7 @@ else init();
         if (typeof _stimulusDistance === 'undefined' || !_stimulusDistance) return;
         if (typeof curDistanceM === 'undefined' || !curDistanceM) return;
 
-        var delta = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
+        var delta = Math.abs(((window._rawDistance || curDistanceM) - _stimulusDistance) / _stimulusDistance * 100); // PATCH69_RAW
         var now = performance.now();
 
         if (delta > THRESHOLD) {
