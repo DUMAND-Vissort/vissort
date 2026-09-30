@@ -91,6 +91,7 @@ let currentShowTimer = null;
 let responsePhaseActive = false;
 let responseStartTime = 0;
 let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+let _stimulusDistance = null; // PATCH76: declared
 let currentCorrectDirection = null;
 let lastDirection = null;
 
