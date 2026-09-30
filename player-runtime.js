@@ -3385,11 +3385,20 @@ else init();
         var base = (typeof camBaseline !== 'undefined' && camBaseline) ? camBaseline.toFixed(2) : '—';
 
         var status, border;
+        var faceLostMs = (typeof window._faceLostSince !== 'undefined' && window._faceLostSince)
+            ? (performance.now() - window._faceLostSince)
+            : 0;
         if (!hasFace) {
-            status = '\u274C \u041D\u0415\u0422 \u041B\u0418\u0426\u0410';
-            border = '#dc2626';
-            v.style.borderColor = border;
-            v.style.animation = 'camBlink 0.6s infinite alternate';
+            // PATCH59_HUD: yellow for short loss (<1.5s), red for long
+            if (faceLostMs < 1500) {
+                status = '\u26A0\uFE0F \u041B\u0418\u0426\u041E? ' + (dev != null ? dev.toFixed(1) + '%' : '');
+                border = '#eab308';
+                v.style.animation = '';
+            } else {
+                status = '\u274C \u041D\u0415\u0422 \u041B\u0418\u0426\u0410' + (dev != null ? ' ' + dev.toFixed(1) + '%' : '');
+                border = '#dc2626';
+                v.style.animation = 'camBlink 0.6s infinite alternate';
+            }
         } else if (dev != null && Math.abs(dev) > 15) {
             status = (dev < 0 ? '\u26A0\uFE0F \u0411\u041B\u0418\u0417\u041A\u041E ' : '\u26A0\uFE0F \u0414\u0410\u041B\u0415\u041A\u041E ') + dev.toFixed(1) + '%';
             border = '#eab308';
