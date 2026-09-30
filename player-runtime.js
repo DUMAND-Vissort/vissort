@@ -1564,6 +1564,20 @@ async function processCamFrame() {
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     window._rawDistance = curDistanceM; // PATCH69_RAW: before smoothing
+                    // PATCH75_INSTANT: instant hide on any distance change >2%
+                    if (_stimulusDistance && window._rawDistance) {
+                        var _dev75 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
+                        if (_dev75 > 2 && responsePhaseActive) {
+                            console.warn('[PATCH75] instant hide, dev=' + _dev75.toFixed(1) + '%');
+                            if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+                            if (typeof hideStimulus === 'function') hideStimulus();
+                            if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
+                            responsePhaseActive = false;
+                            window._forceRedraw = true;
+                            var _ci75 = document.getElementById('cam-indicator');
+                            if (_ci75) { _ci75.textContent = '📏 Ждём стабилизации…'; _ci75.style.color = '#94a3b8'; }
+                        }
+                    }
                     // PATCH72_HISTORY: keep history for fast-lean detection
                     if (!window._rawHistory) window._rawHistory = [];
                     window._rawHistory.push({ t: performance.now(), d: curDistanceM });
@@ -3817,4 +3831,26 @@ else init();
             }
         }
     }, CHECK_MS);
+})();
+
+// PATCH75_ENTER: Enter activates visible response button
+(function installEnterKey() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+        if (!responsePhaseActive) return;
+        // Найти видимую кнопку ответа
+        var btns = document.querySelectorAll('#response-buttons .btn-response, #response-buttons .btn-resp');
+        for (var i = 0; i < btns.length; i++) {
+            var b = btns[i];
+            var st = getComputedStyle(b);
+            if (st.display !== 'none' && st.visibility !== 'hidden' && b.offsetParent !== null) {
+                e.preventDefault();
+                b.click();
+                console.log('[PATCH75_ENTER] clicked:', b.textContent.trim());
+                return;
+            }
+        }
+    });
+    console.log('[PATCH75_ENTER] installed');
 })();
