@@ -1552,6 +1552,7 @@ async function processCamFrame() {
                 // PATCH25_BBOX: estimate IPD from face box width (~0.45 * box width)
                 const ipd = det.box.width * 0.45;
                 lastEyeDistPx = ipd;
+                window._faceLostSince = 0;
                 camIndicator.textContent = '✅ Лицо';
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
@@ -1561,6 +1562,20 @@ async function processCamFrame() {
                     evaluateDistance();
                 }
             } else {
+                // PATCH53_FACE_LOST: face lost >400ms during training = big lean
+                if (typeof playerRunning !== 'undefined' && playerRunning && !isPaused && camBaseline != null) {
+                    if (!window._faceLostSince) window._faceLostSince = performance.now();
+                    var _flDur = performance.now() - window._faceLostSince;
+                    if (_flDur > 400) {
+                        window._fastLeanAt = performance.now();
+                        window._recordDeviation(-40);
+                        var _lastLog = window._lastLeanLogAt || 0;
+                        if (performance.now() - _lastLog > 2000) {
+                            console.warn('[lean] face lost >400ms -- treated as lean');
+                            window._lastLeanLogAt = performance.now();
+                        }
+                    }
+                }
                 camIndicator.textContent = '❌ Нет лица';
                 _blinkIsClosed = false;
                 _blinkClosedSince = 0;
