@@ -3286,3 +3286,50 @@ async function loadSivtsevFont() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
 // ==================== user.js: Конец части 4 из 4 ====================
+
+// PATCH54_PIP: camera preview toggle in corner
+(function installCamPreview() {
+    if (document.getElementById('btn-cam-preview')) return;
+    var style = document.createElement('style');
+    style.textContent = '#hidden-video.pip-visible{position:fixed !important;right:12px !important;bottom:12px !important;left:auto !important;top:auto !important;width:240px !important;height:180px !important;opacity:1 !important;pointer-events:none !important;border:2px solid #0ea5e9;border-radius:8px;z-index:9998;transform:scaleX(-1);box-shadow:0 6px 20px rgba(0,0,0,0.6);background:#000;}';
+    document.head.appendChild(style);
+
+    // Кнопка в шапке рядом с logout
+    var anchor = document.getElementById('btn-logout');
+    if (!anchor || !anchor.parentNode) return;
+    var btn = document.createElement('button');
+    btn.id = 'btn-cam-preview';
+    btn.className = 'btn btn-ghost btn-icon';
+    btn.type = 'button';
+    btn.title = 'Показать/скрыть экран камеры (P)';
+    btn.textContent = '📹';
+    btn.style.cssText = 'margin-right:6px;';
+    anchor.parentNode.insertBefore(btn, anchor);
+
+    var KEY = 'vissort_cam_preview';
+    function apply() {
+        var v = document.getElementById('hidden-video');
+        if (!v) return;
+        var on = localStorage.getItem(KEY) === '1';
+        v.classList.toggle('pip-visible', on);
+        btn.style.background = on ? '#0ea5e9' : '';
+        btn.style.color = on ? '#fff' : '';
+    }
+    btn.addEventListener('click', function() {
+        var on = localStorage.getItem(KEY) === '1';
+        localStorage.setItem(KEY, on ? '0' : '1');
+        apply();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'p' || e.key === 'P' || e.key === 'з' || e.key === 'З') {
+            if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+            var on = localStorage.getItem(KEY) === '1';
+            localStorage.setItem(KEY, on ? '0' : '1');
+            apply();
+        }
+    });
+    // Периодически проверяем -- видео создаётся динамически
+    setInterval(apply, 1000);
+    setTimeout(apply, 500);
+    console.log('[pip] camera preview installed');
+})();
