@@ -2710,6 +2710,16 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
+    // PATCH71_FAST: reject if distance deviated >= 5% from shown stimulus
+    if (_stimulusDistance && window._rawDistance) {
+        var _dd = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
+        if (_dd >= 5) {
+            console.warn('[PATCH71] distance changed ' + _dd.toFixed(1) + '% -- answer rejected');
+            if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_changed' });
+            responsePhaseActive = false;
+            return;
+        }
+    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
