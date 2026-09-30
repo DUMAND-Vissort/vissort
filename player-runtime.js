@@ -91,6 +91,7 @@ let currentShowTimer = null;
 let responsePhaseActive = false;
 let responseStartTime = 0;
 let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+let _stimulusDistance = null; // PATCH_CLEAN
 let currentCorrectDirection = null;
 let lastDirection = null;
 
@@ -1432,6 +1433,7 @@ function applyRandomStimulusPosition(size) {
 function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
+    _stimulusDistance = curDistanceM; // PATCH_CLEAN
 }
 function hideStimulus() {
     stopSingleStimAnimation();
@@ -1580,6 +1582,16 @@ async function processCamFrame() {
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
+                    if (curDistanceM > 0.3 && curDistanceM < 5) curDistanceM = _smoothDistance(curDistanceM);
+                    // PATCH_CLEAN: hide stimulus if distance deviates >15% from shown
+                    if (_stimulusDistance && curDistanceM && camBaseline != null && responsePhaseActive) {
+                        var _dev = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
+                        if (_dev > 15) {
+                            hideStimulus();
+                            responsePhaseActive = false;
+                            if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
+                        }
+                    }
                     curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
@@ -3114,6 +3126,7 @@ function stopPlayer() {
     document.body.style.background = '#0b0b0f';
     pauseModal.classList.remove('open');
     camBaseline = null;
+    _stimulusDistance = null; // PATCH_CLEAN
     camWarnKind = null;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
