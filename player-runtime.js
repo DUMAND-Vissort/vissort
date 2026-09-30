@@ -3522,3 +3522,82 @@ else init();
         }
     }, 300);
 })();
+
+// PATCH67_REDRAW: wait for distance stabilization, then redraw stimulus
+(function installDistanceRedraw() {
+    var CHECK_MS = 300;
+    var STABILIZE_MS = 1000;
+    var THRESHOLD = 10;
+
+    var _unstableSince = 0;
+    var _waiting = false;
+
+    function getCurrentNode() {
+        try { return getNode(currentPlayingNodeId); } catch (e) { return null; }
+    }
+
+    function showWaitChip() {
+        var c = document.getElementById('cam-indicator');
+        if (!c) return;
+        c.textContent = '📏 Ждём стабилизации…';
+        c.style.color = '#94a3b8';
+    }
+
+    function redrawStimulus() {
+        var node = getCurrentNode();
+        if (!node) return;
+        console.log('[PATCH67] redrawing stimulus for new distance');
+        // Отменить текущий таймер
+        if (currentShowTimer) {
+            clearTimeout(currentShowTimer);
+            currentShowTimer = null;
+        }
+        // Скрыть текущий стимул
+        if (typeof hideStimulus === 'function') hideStimulus();
+        responsePhaseActive = false;
+        // Перезапустить через 200 мс (дать layout успокоиться)
+        setTimeout(function() {
+            if (!playerRunning || isPaused) return;
+            if (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC') {
+                playGraphStimulus(node);
+            } else if (node.nodeType === 'COMPARE') {
+                playGraphCompareRound(node);
+            } else {
+                showNextStimulus();
+            }
+        }, 200);
+    }
+
+    setInterval(function() {
+        if (typeof playerRunning === 'undefined' || !playerRunning || isPaused) {
+            _unstableSince = 0;
+            _waiting = false;
+            return;
+        }
+        if (typeof _stimulusDistance === 'undefined' || !_stimulusDistance) return;
+        if (typeof curDistanceM === 'undefined' || !curDistanceM) return;
+
+        var delta = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
+        var now = performance.now();
+
+        if (delta > THRESHOLD) {
+            if (_unstableSince === 0) _unstableSince = now;
+            var unstableMs = now - _unstableSince;
+
+            if (!_waiting) {
+                _waiting = true;
+                showWaitChip();
+                console.log('[PATCH67] distance unstable: ' + delta.toFixed(1) + '%');
+            }
+
+            if (unstableMs >= STABILIZE_MS && responsePhaseActive) {
+                _waiting = false;
+                _unstableSince = 0;
+                redrawStimulus();
+            }
+        } else {
+            _unstableSince = 0;
+            _waiting = false;
+        }
+    }, CHECK_MS);
+})();
