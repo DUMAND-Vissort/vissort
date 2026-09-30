@@ -235,7 +235,7 @@ window._invalidAnswerCount = 0;
 // PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
 const _LEAN_DROP_PCT = 15; // PATCH50
 const _LEAN_FAST_MS = 800;
-const _LEAN_WINDOW_MS = 1500;
+const _LEAN_WINDOW_MS = 4000; // PATCH60
 const _DEVIATION_HISTORY_MS = 2000;
 const _LEAN_CONSECUTIVE_FRAMES = 3;
 
@@ -249,6 +249,19 @@ window._recordDeviation = function(pct) {
     window._deviationHistory.push({ t: now, dev: pct });
     while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
         window._deviationHistory.shift();
+    }
+    // PATCH60: velocity check -- big jump between frames = lean
+    var _lastH = window._deviationHistory[window._deviationHistory.length - 2];
+    if (_lastH) {
+        var _vel = Math.abs(pct - _lastH.dev);
+        if (_vel > 8) {
+            window._fastLeanAt = now;
+            var _llog = window._lastLeanLogAt || 0;
+            if (now - _llog > 2000) {
+                console.warn('[lean] velocity', _vel.toFixed(1) + '%', '(from', _lastH.dev.toFixed(1) + ' to', pct.toFixed(1) + ')');
+                window._lastLeanLogAt = now;
+            }
+        }
     }
     if (Math.abs(pct) > _LEAN_DROP_PCT) {
         window._fastLeanAt = now;
@@ -467,7 +480,7 @@ function _smoothDistance(raw) {
     if (window._distEMA === null || !isFinite(window._distEMA)) {
         window._distEMA = raw;
     } else {
-        window._distEMA = window._distEMA * 0.75 + raw * 0.25;
+        window._distEMA = window._distEMA * 0.5 + raw * 0.5 // PATCH60 faster EMA;
     }
     return window._distEMA;
 }
