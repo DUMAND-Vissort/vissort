@@ -3333,3 +3333,68 @@ else init();
     setTimeout(apply, 500);
     console.log('[pip] camera preview installed');
 })();
+
+// PATCH55_CAM_HUD: overlay on camera preview with state (border + text)
+(function installCamHud() {
+    function ensure() {
+        var v = document.getElementById('hidden-video');
+        if (!v) return null;
+        var el = document.getElementById('cam-hud');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'cam-hud';
+            el.style.cssText = 'position:fixed;right:12px;bottom:196px;width:240px;padding:6px 8px;background:rgba(0,0,0,0.7);color:#fff;font-family:monospace;font-size:12px;border-radius:6px;z-index:9999;text-align:center;pointer-events:none;line-height:1.4;';
+            document.body.appendChild(el);
+        }
+        return el;
+    }
+    setInterval(function() {
+        var v = document.getElementById('hidden-video');
+        var el = ensure();
+        if (!v || !el) return;
+        // PiP выключен -- скрываем HUD
+        if (!v.classList.contains('pip-visible')) {
+            el.style.display = 'none';
+            return;
+        }
+        el.style.display = 'block';
+
+        var face = document.getElementById('cam-indicator');
+        var faceText = face ? face.textContent : '';
+        var hasFace = faceText.indexOf('✅') !== -1;
+        var dev = (typeof camBaseline !== 'undefined' && camBaseline && typeof curDistanceM !== 'undefined' && curDistanceM)
+            ? ((curDistanceM - camBaseline) / camBaseline * 100)
+            : null;
+        var dist = (typeof curDistanceM !== 'undefined' && curDistanceM) ? curDistanceM.toFixed(2) : '—';
+        var base = (typeof camBaseline !== 'undefined' && camBaseline) ? camBaseline.toFixed(2) : '—';
+
+        var status, border;
+        if (!hasFace) {
+            status = '\u274C \u041D\u0415\u0422 \u041B\u0418\u0426\u0410';
+            border = '#dc2626';
+            v.style.borderColor = border;
+            v.style.animation = 'camBlink 0.6s infinite alternate';
+        } else if (dev != null && Math.abs(dev) > 15) {
+            status = (dev < 0 ? '\u26A0\uFE0F \u0411\u041B\u0418\u0417\u041A\u041E ' : '\u26A0\uFE0F \u0414\u0410\u041B\u0415\u041A\u041E ') + dev.toFixed(1) + '%';
+            border = '#eab308';
+            v.style.borderColor = border;
+            v.style.animation = '';
+        } else {
+            status = '\u2705 OK ' + (dev != null ? dev.toFixed(1) + '%' : '');
+            border = '#10b981';
+            v.style.borderColor = border;
+            v.style.animation = '';
+        }
+        el.innerHTML = status + '<br>dist: ' + dist + '  base: ' + base;
+        v.style.borderColor = border;
+        v.style.borderWidth = '3px';
+        v.style.borderStyle = 'solid';
+    }, 250);
+
+    // Анимация мигания
+    var st = document.createElement('style');
+    st.textContent = '@keyframes camBlink{from{border-color:#dc2626;}to{border-color:#7f1d1d;}}';
+    document.head.appendChild(st);
+
+    console.log('[cam-hud] installed');
+})();
