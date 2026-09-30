@@ -23,3 +23,5 @@ supabase/.temp/
 *.bak
 # Supabase local config (cloud is source of truth)
 supabase/config.toml
+
+fix.ps1
