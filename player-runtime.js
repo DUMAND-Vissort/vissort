@@ -517,19 +517,20 @@ function hideStatus() {
     var url = 'https://hzvypwdpdhsjzaclxmbm.supabase.co/rest/v1/';
     var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
     var t0 = performance.now();
-    fetch(url + 'profiles?select=id&limit=1', {
-        method: 'GET',
-        headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
-    }).then(function() {
-        console.log('[PATCH79] warmup ok:', Math.round(performance.now() - t0) + 'ms');
+    // PATCH81_PING: hit /rest/v1/ root -- wakes up PostgREST without RLS check
+    fetch(url, {
+        method: 'HEAD',
+        headers: { 'apikey': key }
+    }).then(function(r) {
+        console.log('[PATCH81] warmup status:', r.status, Math.round(performance.now() - t0) + 'ms');
     }).catch(function(e) {
-        console.warn('[PATCH79] warmup fail:', e.message);
+        console.warn('[PATCH81] warmup fail:', e.message);
     });
     // Повторный warmup через 30 сек (для длинных сессий)
     setInterval(function() {
-        fetch(url + 'profiles?select=id&limit=1', {
-            method: 'GET',
-            headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+        fetch(url, {
+            method: 'HEAD',
+            headers: { 'apikey': key }
         }).catch(function() {});
     }, 60000);
 })();
