@@ -172,8 +172,8 @@ const _camDevice = (function() {
 const _camConfig = _camDevice.isPhone
     ? { inputSize: 128, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
     : _camDevice.isTablet
-    ? { inputSize: 128, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
-    : { inputSize: 128, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
+    ? { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
+    : { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
 
 let _camLoopStarted = false;
 
@@ -1566,12 +1566,12 @@ async function processCamFrame() {
                 if (typeof playerRunning !== 'undefined' && playerRunning && !isPaused && camBaseline != null) {
                     if (!window._faceLostSince) window._faceLostSince = performance.now();
                     var _flDur = performance.now() - window._faceLostSince;
-                    if (_flDur > 400) {
+                    if (_flDur > 1500) // PATCH56: 1500ms for stable detection {
                         window._fastLeanAt = performance.now();
                         window._recordDeviation(-40);
                         var _lastLog = window._lastLeanLogAt || 0;
                         if (performance.now() - _lastLog > 2000) {
-                            console.warn('[lean] face lost >400ms -- treated as lean');
+                            console.warn('[lean] face lost >1500ms -- treated as lean');
                             window._lastLeanLogAt = performance.now();
                         }
                     }
