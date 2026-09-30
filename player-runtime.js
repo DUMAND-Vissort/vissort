@@ -3601,3 +3601,88 @@ else init();
         }
     }, CHECK_MS);
 })();
+
+// PATCH68_HIDE: hide stimulus immediately on distance change, show after stabilization
+(function installDistanceHide() {
+    var CHECK_MS = 200;
+    var STABILIZE_MS = 1000;
+    var THRESHOLD = 10;
+
+    var _unstableSince = 0;
+    var _hiding = false;
+
+    function getCurrentNode() {
+        try { return getNode(currentPlayingNodeId); } catch (e) { return null; }
+    }
+
+    function hideNow() {
+        if (_hiding) return;
+        _hiding = true;
+        console.log('[PATCH68] distance changed -- hiding stimulus');
+        // Остановить показ
+        if (currentShowTimer) {
+            clearTimeout(currentShowTimer);
+            currentShowTimer = null;
+        }
+        // Запретить ответы
+        responsePhaseActive = false;
+        // Скрыть стимул и кнопки
+        if (typeof hideStimulus === 'function') hideStimulus();
+        if (typeof responseButtons !== 'undefined' && responseButtons) {
+            responseButtons.style.display = 'none';
+        }
+        // Индикатор
+        var c = document.getElementById('cam-indicator');
+        if (c) {
+            c.textContent = '📏 Ждём стабилизации…';
+            c.style.color = '#94a3b8';
+        }
+    }
+
+    function showNew() {
+        if (!_hiding) return;
+        _hiding = false;
+        var node = getCurrentNode();
+        if (!node) return;
+        console.log('[PATCH68] distance stable -- showing new stimulus');
+        _stimulusDistance = (typeof curDistanceM !== 'undefined' && curDistanceM) ? curDistanceM : null;
+        setTimeout(function() {
+            if (!playerRunning || isPaused) return;
+            if (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC') {
+                playGraphStimulus(node);
+            } else if (node.nodeType === 'COMPARE') {
+                playGraphCompareRound(node);
+            } else {
+                showNextStimulus();
+            }
+        }, 100);
+    }
+
+    setInterval(function() {
+        if (typeof playerRunning === 'undefined' || !playerRunning || isPaused) {
+            _unstableSince = 0;
+            return;
+        }
+        if (typeof _stimulusDistance === 'undefined' || !_stimulusDistance) return;
+        if (typeof curDistanceM === 'undefined' || !curDistanceM) return;
+
+        var delta = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
+        var now = performance.now();
+
+        if (delta > THRESHOLD) {
+            if (_unstableSince === 0) _unstableSince = now;
+            // Скрываем стимул сразу -- не ждём стабилизации
+            hideNow();
+            // Сбрасываем таймер стабильности пока дистанция скачет
+            _unstableSince = now;
+        } else if (_hiding) {
+            // Дистанция в норме -- но она теперь другая, ждём секунду стабильности
+            if (_unstableSince === 0) {
+                _unstableSince = now;
+            } else if (now - _unstableSince >= STABILIZE_MS) {
+                _unstableSince = 0;
+                showNew();
+            }
+        }
+    }, CHECK_MS);
+})();
