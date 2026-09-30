@@ -173,7 +173,7 @@ const _camConfig = _camDevice.isPhone
     ? { inputSize: 128, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
     : _camDevice.isTablet
     ? { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
-    : { inputSize: 160, intervalMs: 100, videoW: 480, videoH: 360, frameRate: 24 // PATCH72_HISTORY };
+    : { inputSize: 160, intervalMs: 100, videoW: 480, videoH: 360, frameRate: 24 }; // PATCH72_HISTORY
 
 let _camLoopStarted = false;
 
