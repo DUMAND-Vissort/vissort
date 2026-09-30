@@ -273,3 +273,22 @@ if ($raw.Contains("## 📋 ЗАПЛАНИРОВАНО")) {
 
 [System.IO.File]::WriteAllText((Resolve-Path $f), $raw, $enc)
 Write-Host "OK: camera section added to TODO" -ForegroundColor Green
+## 🎯 Дистанция и античит нырка — ЗАКРЫТО (2026-09-30)
+
+- [x] Детектор нырка: порог 15%, EMA + медиана 15 кадров baseline
+- [x] Face-lost >1.5 сек = сигнал нырка
+- [x] Velocity-based детекция (скачок >8% между кадрами)
+- [x] Инвалидация ответов при наклоне (4 обработчика, с `return`)
+- [x] Логирование каждой реакции `[answer] rt=Xms correct=Y dir=Z`
+- [x] Устранён двойной запуск (`playerRunning` guard + bind guard)
+- [x] Восстановление `focalLengthPx` из localStorage после Clear
+- [x] Оверлей «Вернитесь в кадр» при потере лица >2 сек
+- [x] Голос: «Вернитесь в кадр» / «Лицо найдено»
+- [x] PiP-камеры (📹 или клавиша P) с HUD (зелёный / жёлтый / красный)
+- [x] Порог `_LEAN_DROP_PCT`: 12% → 15%
+- [x] Стимул масштабируется по `curDistanceM` (патч 32.6-fix)
+
+### Отложено
+- [ ] Landmarks вернуть (для моргания) — после MediaPipe
+- [ ] Reaction time → сохранение в БД `test_results`
+- [ ] Порог настройки дистанции в админке (сейчас в коде)
