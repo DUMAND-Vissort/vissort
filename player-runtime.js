@@ -91,7 +91,6 @@ let currentShowTimer = null;
 let responsePhaseActive = false;
 let responseStartTime = 0;
 let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-let _stimulusDistance = null; // PATCH76: declared
 let currentCorrectDirection = null;
 let lastDirection = null;
 
@@ -174,7 +173,7 @@ const _camConfig = _camDevice.isPhone
     ? { inputSize: 128, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
     : _camDevice.isTablet
     ? { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
-    : { inputSize: 160, intervalMs: 100, videoW: 480, videoH: 360, frameRate: 24 }; // PATCH72_HISTORY
+    : { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
 
 let _camLoopStarted = false;
 
@@ -251,8 +250,27 @@ window._recordDeviation = function(pct) {
     while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
         window._deviationHistory.shift();
     }
-    // PATCH70_OFF: velocity check disabled
-    // PATCH70_OFF: lean-tracking disabled (only PATCH68 matters)
+    // PATCH60: velocity check -- big jump between frames = lean
+    var _lastH = window._deviationHistory[window._deviationHistory.length - 2];
+    if (_lastH) {
+        var _vel = Math.abs(pct - _lastH.dev);
+        if (_vel > 8) {
+            window._fastLeanAt = now;
+            var _llog = window._lastLeanLogAt || 0;
+            if (now - _llog > 2000) {
+                console.warn('[lean] velocity', _vel.toFixed(1) + '%', '(from', _lastH.dev.toFixed(1) + ' to', pct.toFixed(1) + ')');
+                window._lastLeanLogAt = now;
+            }
+        }
+    }
+    if (Math.abs(pct) > _LEAN_DROP_PCT) {
+        window._fastLeanAt = now;
+        var _lastLeanLogAt = window._lastLeanLogAt || 0;
+        if (now - _lastLeanLogAt > 3000) {
+            console.warn('[lean]', pct.toFixed(1) + '%');
+            window._lastLeanLogAt = now;
+        }
+    }
 };
 
 // PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
@@ -260,9 +278,7 @@ window._recordDeviation = function(pct) {
 // PATCH33: average deviation over 1 sec + current distance
 // PATCH34: velocity-based detection (delta over 600ms), plus current distance
 // PATCH36: current distance OR recent lean in 2 sec
-// PATCH70_OFF: disabled, PATCH68 handles everything
 window._isAnswerInvalid = function() {
-    return null; // PATCH70_OFF
     if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
     if (typeof isPaused !== 'undefined' && isPaused) return null;
     var now = performance.now();
@@ -512,28 +528,6 @@ function hideStatus() {
     statusOverlay.classList.add('hidden');
 }
 
-// PATCH79_WARMUP: wake up Supabase before user logs in
-(function warmupSupabase() {
-    var url = 'https://hzvypwdpdhsjzaclxmbm.supabase.co/rest/v1/';
-    var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
-    var t0 = performance.now();
-    // PATCH81_PING: hit /rest/v1/ root -- wakes up PostgREST without RLS check
-    fetch(url, {
-        method: 'HEAD',
-        headers: { 'apikey': key }
-    }).then(function(r) {
-        console.log('[PATCH81] warmup status:', r.status, Math.round(performance.now() - t0) + 'ms');
-    }).catch(function(e) {
-        console.warn('[PATCH81] warmup fail:', e.message);
-    });
-    // Повторный warmup через 30 сек (для длинных сессий)
-    setInterval(function() {
-        fetch(url, {
-            method: 'HEAD',
-            headers: { 'apikey': key }
-        }).catch(function() {});
-    }, 60000);
-})();
 function initSupabase() {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     var _onLoggedInFired = false;
@@ -1586,25 +1580,6 @@ async function processCamFrame() {
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
-                    window._rawDistance = curDistanceM; // PATCH69_RAW: before smoothing
-                    // PATCH78_BASELINE: only after baseline + threshold 5%
-                    if (_stimulusDistance && window._rawDistance && camBaseline != null) {
-                        var _dev75 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-                        if (_dev75 > 20 && responsePhaseActive) { // PATCH82: threshold 20%
-                            console.warn('[PATCH75] instant hide, dev=' + _dev75.toFixed(1) + '%');
-                            if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-                            if (typeof hideStimulus === 'function') hideStimulus();
-                            if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
-                            responsePhaseActive = false;
-                            window._forceRedraw = true;
-                            var _ci75 = document.getElementById('cam-indicator');
-                            if (_ci75) { _ci75.textContent = '📏 Ждём стабилизации…'; _ci75.style.color = '#94a3b8'; }
-                        }
-                    }
-                    // PATCH72_HISTORY: keep history for fast-lean detection
-                    if (!window._rawHistory) window._rawHistory = [];
-                    window._rawHistory.push({ t: performance.now(), d: curDistanceM });
-                    if (window._rawHistory.length > 20) window._rawHistory.shift();
                     curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
@@ -1614,7 +1589,7 @@ async function processCamFrame() {
                 if (typeof playerRunning !== 'undefined' && playerRunning && !isPaused && camBaseline != null) {
                     if (!window._faceLostSince) window._faceLostSince = performance.now();
                     var _flDur = performance.now() - window._faceLostSince;
-                    if (false) { // PATCH70_OFF: disabled
+                    if (_flDur > 1500) { // PATCH56: 1500ms for stable detection
                         window._fastLeanAt = performance.now();
                         window._recordDeviation(-40);
                         var _lastLog = window._lastLeanLogAt || 0;
@@ -1884,10 +1859,8 @@ function playGraphStimulus(node) {
             stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
-    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
-    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     if (node.singleGridEnabled) {
         const gx = node.singleGridX || 1,
             gy = node.singleGridY || 1;
@@ -2022,35 +1995,6 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!responsePhaseActive) return;
-    // PATCH74: movement >3% in last 1s -- hide stimulus AND reject answer
-    var _p74max = 0;
-    if (_stimulusDistance && window._rawHistory) {
-        var _n74 = performance.now();
-        for (var _i74 = 0; _i74 < window._rawHistory.length; _i74++) {
-            var _h74 = window._rawHistory[_i74];
-            if (_n74 - _h74.t > 1000) continue;
-            var _d74 = Math.abs((_h74.d - _stimulusDistance) / _stimulusDistance * 100);
-            if (_d74 > _p74max) _p74max = _d74;
-        }
-    }
-    if (window._rawDistance && _stimulusDistance) {
-        var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-        if (_c74 > _p74max) _p74max = _c74;
-    }
-    if (_p74max >= 20) { // PATCH82
-        console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
-        // Скрыть стимул
-        if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-        if (typeof hideStimulus === 'function') hideStimulus();
-        if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
-        var _ci = document.getElementById('cam-indicator');
-        if (_ci) { _ci.textContent = '📏 Ждём стабилизации…'; _ci.style.color = '#94a3b8'; }
-        // Отклонить ответ
-        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
-        responsePhaseActive = false;
-        window._forceRedraw = true; // PATCH74: сигнал для PATCH68
-        return;
-    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2135,35 +2079,6 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!responsePhaseActive) return;
-    // PATCH74: movement >3% in last 1s -- hide stimulus AND reject answer
-    var _p74max = 0;
-    if (_stimulusDistance && window._rawHistory) {
-        var _n74 = performance.now();
-        for (var _i74 = 0; _i74 < window._rawHistory.length; _i74++) {
-            var _h74 = window._rawHistory[_i74];
-            if (_n74 - _h74.t > 1000) continue;
-            var _d74 = Math.abs((_h74.d - _stimulusDistance) / _stimulusDistance * 100);
-            if (_d74 > _p74max) _p74max = _d74;
-        }
-    }
-    if (window._rawDistance && _stimulusDistance) {
-        var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-        if (_c74 > _p74max) _p74max = _c74;
-    }
-    if (_p74max >= 20) { // PATCH82
-        console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
-        // Скрыть стимул
-        if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-        if (typeof hideStimulus === 'function') hideStimulus();
-        if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
-        var _ci = document.getElementById('cam-indicator');
-        if (_ci) { _ci.textContent = '📏 Ждём стабилизации…'; _ci.style.color = '#94a3b8'; }
-        // Отклонить ответ
-        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
-        responsePhaseActive = false;
-        window._forceRedraw = true; // PATCH74: сигнал для PATCH68
-        return;
-    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2475,10 +2390,8 @@ function showNextStimulus() {
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, currentBgColor);
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
-    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     } else displayStimulus(svgData.html, currentBgColor);
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
-    _stimulusDistance = (window._rawDistance || curDistanceM); // PATCH77_FIX
     if (p.singleGridEnabled) {
         const gx = p.singleGridX || 1,
             gy = p.singleGridY || 1;
@@ -2813,64 +2726,6 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
-    // PATCH74: movement >3% in last 1s -- hide stimulus AND reject answer
-    var _p74max = 0;
-    if (_stimulusDistance && window._rawHistory) {
-        var _n74 = performance.now();
-        for (var _i74 = 0; _i74 < window._rawHistory.length; _i74++) {
-            var _h74 = window._rawHistory[_i74];
-            if (_n74 - _h74.t > 1000) continue;
-            var _d74 = Math.abs((_h74.d - _stimulusDistance) / _stimulusDistance * 100);
-            if (_d74 > _p74max) _p74max = _d74;
-        }
-    }
-    if (window._rawDistance && _stimulusDistance) {
-        var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-        if (_c74 > _p74max) _p74max = _c74;
-    }
-    if (_p74max >= 20) { // PATCH82
-        console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
-        // Скрыть стимул
-        if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-        if (typeof hideStimulus === 'function') hideStimulus();
-        if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
-        var _ci = document.getElementById('cam-indicator');
-        if (_ci) { _ci.textContent = '📏 Ждём стабилизации…'; _ci.style.color = '#94a3b8'; }
-        // Отклонить ответ
-        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
-        responsePhaseActive = false;
-        window._forceRedraw = true; // PATCH74: сигнал для PATCH68
-        return;
-    }
-    // PATCH72_HISTORY: reject if distance moved >3% in last 800ms
-    if (_stimulusDistance && window._rawHistory && window._rawHistory.length > 1) {
-        var _now72 = performance.now();
-        var _base72 = _stimulusDistance;
-        var _maxDev72 = 0;
-        for (var _i72 = 0; _i72 < window._rawHistory.length; _i72++) {
-            var _h72 = window._rawHistory[_i72];
-            if (_now72 - _h72.t > 800) continue;
-            if (_now72 - _h72.t < 50) continue; // skip current frame
-            var _dd72 = Math.abs((_h72.d - _base72) / _base72 * 100);
-            if (_dd72 > _maxDev72) _maxDev72 = _dd72;
-        }
-        if (_maxDev72 >= 3) {
-            console.warn('[PATCH72] movement ' + _maxDev72.toFixed(1) + '% in last 800ms -- answer rejected');
-            if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
-            responsePhaseActive = false;
-            return;
-        }
-    }
-    // PATCH71_FAST: reject if distance deviated >= 5% from shown stimulus
-    if (_stimulusDistance && window._rawDistance) {
-        var _dd = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-        if (_dd >= 5) {
-            console.warn('[PATCH71] distance changed ' + _dd.toFixed(1) + '% -- answer rejected');
-            if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_changed' });
-            responsePhaseActive = false;
-            return;
-        }
-    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2904,35 +2759,6 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!responsePhaseActive) return;
-    // PATCH74: movement >3% in last 1s -- hide stimulus AND reject answer
-    var _p74max = 0;
-    if (_stimulusDistance && window._rawHistory) {
-        var _n74 = performance.now();
-        for (var _i74 = 0; _i74 < window._rawHistory.length; _i74++) {
-            var _h74 = window._rawHistory[_i74];
-            if (_n74 - _h74.t > 1000) continue;
-            var _d74 = Math.abs((_h74.d - _stimulusDistance) / _stimulusDistance * 100);
-            if (_d74 > _p74max) _p74max = _d74;
-        }
-    }
-    if (window._rawDistance && _stimulusDistance) {
-        var _c74 = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
-        if (_c74 > _p74max) _p74max = _c74;
-    }
-    if (_p74max >= 20) { // PATCH82
-        console.warn('[PATCH74] movement ' + _p74max.toFixed(1) + '% -- hiding + rejecting');
-        // Скрыть стимул
-        if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-        if (typeof hideStimulus === 'function') hideStimulus();
-        if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
-        var _ci = document.getElementById('cam-indicator');
-        if (_ci) { _ci.textContent = '📏 Ждём стабилизации…'; _ci.style.color = '#94a3b8'; }
-        // Отклонить ответ
-        if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
-        responsePhaseActive = false;
-        window._forceRedraw = true; // PATCH74: сигнал для PATCH68
-        return;
-    }
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -3695,190 +3521,4 @@ else init();
             window._faceLostPause = false;
         }
     }, 300);
-})();
-
-// PATCH82: PATCH67 disabled -- conflicts with PATCH68/75
-(function installDistanceRedraw_DISABLED() { return;
-    var CHECK_MS = 300;
-    var STABILIZE_MS = 1000;
-    var THRESHOLD = 10;
-
-    var _unstableSince = 0;
-    var _waiting = false;
-
-    function getCurrentNode() {
-        try { return getNode(currentPlayingNodeId); } catch (e) { return null; }
-    }
-
-    function showWaitChip() {
-        var c = document.getElementById('cam-indicator');
-        if (!c) return;
-        c.textContent = '📏 Ждём стабилизации…';
-        c.style.color = '#94a3b8';
-    }
-
-    function redrawStimulus() {
-        var node = getCurrentNode();
-        if (!node) return;
-        console.log('[PATCH67] redrawing stimulus for new distance');
-        // Отменить текущий таймер
-        if (currentShowTimer) {
-            clearTimeout(currentShowTimer);
-            currentShowTimer = null;
-        }
-        // Скрыть текущий стимул
-        if (typeof hideStimulus === 'function') hideStimulus();
-        responsePhaseActive = false;
-        // Перезапустить через 200 мс (дать layout успокоиться)
-        setTimeout(function() {
-            if (!playerRunning || isPaused) return;
-            if (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC') {
-                playGraphStimulus(node);
-            } else if (node.nodeType === 'COMPARE') {
-                playGraphCompareRound(node);
-            } else {
-                showNextStimulus();
-            }
-        }, 200);
-    }
-
-    setInterval(function() {
-        if (typeof playerRunning === 'undefined' || !playerRunning || isPaused) {
-            _unstableSince = 0;
-            _waiting = false;
-            return;
-        }
-        if (typeof _stimulusDistance === 'undefined' || !_stimulusDistance) return;
-        if (typeof curDistanceM === 'undefined' || !curDistanceM) return;
-
-        var delta = Math.abs(((window._rawDistance || curDistanceM) - _stimulusDistance) / _stimulusDistance * 100); // PATCH69_RAW
-        var now = performance.now();
-
-        if (delta > THRESHOLD) {
-            if (_unstableSince === 0) _unstableSince = now;
-            var unstableMs = now - _unstableSince;
-
-            if (!_waiting) {
-                _waiting = true;
-                showWaitChip();
-                console.log('[PATCH67] distance unstable: ' + delta.toFixed(1) + '%');
-            }
-
-            if (unstableMs >= STABILIZE_MS && responsePhaseActive) {
-                _waiting = false;
-                _unstableSince = 0;
-                redrawStimulus();
-            }
-        } else {
-            _unstableSince = 0;
-            _waiting = false;
-        }
-    }, CHECK_MS);
-})();
-
-// PATCH68_HIDE: hide stimulus immediately on distance change, show after stabilization
-(function installDistanceHide() {
-    var CHECK_MS = 100; // PATCH69_RAW faster
-    var STABILIZE_MS = 1000;
-    var THRESHOLD = 10;
-
-    var _unstableSince = 0;
-    var _hiding = false;
-
-    function getCurrentNode() {
-        try { return getNode(currentPlayingNodeId); } catch (e) { return null; }
-    }
-
-    function hideNow() {
-        if (_hiding) return;
-        _hiding = true;
-        console.log('[PATCH68] distance changed -- hiding stimulus');
-        // Остановить показ
-        if (currentShowTimer) {
-            clearTimeout(currentShowTimer);
-            currentShowTimer = null;
-        }
-        // Запретить ответы
-        responsePhaseActive = false;
-        // Скрыть стимул и кнопки
-        if (typeof hideStimulus === 'function') hideStimulus();
-        if (typeof responseButtons !== 'undefined' && responseButtons) {
-            responseButtons.style.display = 'none';
-        }
-        // Индикатор
-        var c = document.getElementById('cam-indicator');
-        if (c) {
-            c.textContent = '📏 Ждём стабилизации…';
-            c.style.color = '#94a3b8';
-        }
-    }
-
-    function showNew() {
-        if (!_hiding) return;
-        _hiding = false;
-        window._forceRedraw = false; // PATCH74
-        var node = getCurrentNode();
-        if (!node) return;
-        console.log('[PATCH68] distance stable -- showing new stimulus');
-        _stimulusDistance = (typeof window._rawDistance !== 'undefined' && window._rawDistance) ? window._rawDistance : ((typeof curDistanceM !== 'undefined' && curDistanceM) ? curDistanceM : null); // PATCH69_RAW
-        setTimeout(function() {
-            if (!playerRunning || isPaused) return;
-            if (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC') {
-                playGraphStimulus(node);
-            } else if (node.nodeType === 'COMPARE') {
-                playGraphCompareRound(node);
-            } else {
-                showNextStimulus();
-            }
-        }, 100);
-    }
-
-    setInterval(function() {
-        if (typeof playerRunning === 'undefined' || !playerRunning || isPaused) {
-            _unstableSince = 0;
-            return;
-        }
-        if (typeof _stimulusDistance === 'undefined' || !_stimulusDistance) return;
-        if (typeof curDistanceM === 'undefined' || !curDistanceM) return;
-
-        var delta = Math.abs(((window._rawDistance || curDistanceM) - _stimulusDistance) / _stimulusDistance * 100); // PATCH69_RAW
-        var now = performance.now();
-
-        if (camBaseline == null) { _unstableSince = 0; return; } // PATCH78_BASELINE
-        if (delta > THRESHOLD || window._forceRedraw) {
-            if (_unstableSince === 0) _unstableSince = now;
-            hideNow();
-            _unstableSince = now;
-        } else if (_hiding) {
-            // Дистанция в норме -- но она теперь другая, ждём секунду стабильности
-            if (_unstableSince === 0) {
-                _unstableSince = now;
-            } else if (now - _unstableSince >= STABILIZE_MS) {
-                _unstableSince = 0;
-                showNew();
-            }
-        }
-    }, CHECK_MS);
-})();
-
-// PATCH75_ENTER: Enter activates visible response button
-(function installEnterKey() {
-    document.addEventListener('keydown', function(e) {
-        if (e.key !== 'Enter') return;
-        if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-        if (!responsePhaseActive) return;
-        // Найти видимую кнопку ответа
-        var btns = document.querySelectorAll('#response-buttons .btn-response, #response-buttons .btn-resp');
-        for (var i = 0; i < btns.length; i++) {
-            var b = btns[i];
-            var st = getComputedStyle(b);
-            if (st.display !== 'none' && st.visibility !== 'hidden' && b.offsetParent !== null) {
-                e.preventDefault();
-                b.click();
-                console.log('[PATCH75_ENTER] clicked:', b.textContent.trim());
-                return;
-            }
-        }
-    });
-    console.log('[PATCH75_ENTER] installed');
 })();
