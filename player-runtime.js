@@ -1858,7 +1858,9 @@ function playGraphStimulus(node) {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
+    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
     } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
+    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
     if (node.singleGridEnabled) {
         const gx = node.singleGridX || 1,
             gy = node.singleGridY || 1;
@@ -1996,7 +1998,7 @@ function handleGraphDirectionAnswer(dir) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
@@ -2014,7 +2016,7 @@ function handleGraphDirectionAnswer(dir) {
         return;
     }
     const ok = dir === currentCorrectDirection;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
@@ -2080,7 +2082,7 @@ function handleGraphCompareAnswer(answer) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
@@ -2098,7 +2100,7 @@ function handleGraphCompareAnswer(answer) {
         return;
     }
     const ok = answer === currentCompareAnswer;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
@@ -2387,7 +2389,9 @@ function showNextStimulus() {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, currentBgColor);
+    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
     } else displayStimulus(svgData.html, currentBgColor);
+    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
     if (p.singleGridEnabled) {
         const gx = p.singleGridX || 1,
             gy = p.singleGridY || 1;
@@ -2614,7 +2618,7 @@ function handleFindSameClick(idx) {
             lastResponse = {
                 answered: true,
                 isCorrect: true,
-                reactionTimeMs: performance.now() - responseStartTime
+                reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now()))
             };
             responsePhaseActive = false;
             processCompareAnswer(true);
@@ -2725,7 +2729,7 @@ function handleDirectionAnswer(direction) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
@@ -2743,7 +2747,7 @@ function handleDirectionAnswer(direction) {
         return;
     }
     const ok = direction === currentCorrectDirection;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
@@ -2758,7 +2762,7 @@ function handleCompareAnswer(answer) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: performance.now() - responseStartTime, invalidReason: _inv32 }; 
+        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
         responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
@@ -2776,7 +2780,7 @@ function handleCompareAnswer(answer) {
         return;
     }
     const ok = answer === currentCompareAnswer;
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: performance.now() - responseStartTime }; 
+    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
