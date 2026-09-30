@@ -1444,6 +1444,16 @@ function startCamLoop() {
 }
 
 async function enableCamera() {
+    // PATCH58: restore focalLengthPx from localStorage if null
+    if (!focalLengthPx || focalLengthPx <= 0) {
+        var _lsFocal = parseFloat(localStorage.getItem('focalLengthPx') || '0');
+        if (_lsFocal > 0) {
+            focalLengthPx = _lsFocal;
+            console.log('[PATCH58] focalLengthPx restored:', focalLengthPx);
+        } else {
+            console.warn('[PATCH58] focalLengthPx missing -- distance disabled');
+        }
+    }
     if (camActive) return;
     try {
         camStream = await navigator.mediaDevices.getUserMedia({
@@ -2250,6 +2260,11 @@ function startPlayer() {
     window._distEMA = null; // PATCH42_SMOOTH
     window._reactionLog = []; // PATCH46
     window._baselineWaitStart = null; // PATCH43
+    // PATCH58: restore focalLengthPx if lost
+    if (!focalLengthPx || focalLengthPx <= 0) {
+        var _lsF2 = parseFloat(localStorage.getItem('focalLengthPx') || '0');
+        if (_lsF2 > 0) focalLengthPx = _lsF2;
+    }
     // PATCH35_GRAPH_RESET: hard reset graph state
     graphActive = false;
     gNodes = [];
@@ -3362,7 +3377,7 @@ else init();
         var face = document.getElementById('cam-indicator');
         var faceText = face ? face.textContent : '';
         // PATCH55_FIX: player uses 📏 when face is OK; ❌ or 📷 means lost
-        var hasFace = faceText.indexOf('📏') !== -1;
+        var hasFace = faceText.indexOf('📏') !== -1 || faceText.indexOf('✅') !== -1; // PATCH58: ✅ or 📏
         var dev = (typeof camBaseline !== 'undefined' && camBaseline && typeof curDistanceM !== 'undefined' && curDistanceM)
             ? ((curDistanceM - camBaseline) / camBaseline * 100)
             : null;
