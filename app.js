@@ -4,6 +4,25 @@
 // ====================
 
 // ==================== НАСТРОЙКИ ====================
+// ============================================================
+// PATCH27_PHASE2: helpers now come from vissort-core.js
+// ============================================================
+if (!window.VissortCore) {
+    throw new Error('[app] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE app.js.');
+}
+const {
+    TIME_UNITS,
+    acuityToSizeMm, acuityToSizePx, acuityToFontSizePx,
+    detectDeviceType, detectPPIHeuristic, loadPPI,
+    msToUnit, unitToMs, detectUnit,
+    hexToRgb, rgbToHex, lerpColor,
+    buildGenericDynamicPhases, buildCirclePhases,
+    generateLetterE, generateLandoltRing,
+    getCircleStimulusSVG, getStimulusSVG,
+    escapeHtml, getThreshold, randomDirection,
+    hashCode, sha1
+} = window.VissortCore;
+
 const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
 const IS_DEV = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const HAS_FS_ACCESS = typeof window.showDirectoryPicker === 'function';
@@ -234,17 +253,8 @@ const readingFileInput = document.getElementById('reading-file-input');
 const readingFileName = document.getElementById('reading-file-name');
 
 // ==================== ФОРМУЛЫ ОСТРОТЫ ====================
-function acuityToSizeMm(acuity, distanceMeters) {
-    const d = distanceMeters && distanceMeters > 0 ? distanceMeters : 1;
-    const V = Math.max(0.01, acuity || 1.0);
-    return (d * 1.454) / V;
-}
-function acuityToSizePx(acuity, distanceMeters, ppi) {
-    const sizeMm = acuityToSizeMm(acuity, distanceMeters);
-    const dpr = window.devicePixelRatio || 1;
-    const physicalPx = (sizeMm * (ppi || 96)) / 25.4;
-    return Math.round(Math.max(1, Math.min(3000, physicalPx / dpr)));
-}
+// PATCH27_PHASE2: removed acuityToSizeMm (now in VissortCore)
+// PATCH27_PHASE2: removed acuityToSizePx (now in VissortCore)
 function getNodeComputedSizeMm(node) {
     return acuityToSizeMm(
         node.stimAcuity || 1.0,
@@ -258,33 +268,14 @@ function getNodeComputedSize(node) {
         node.stimPPI || trainingNode?.params?.ppi || screenPPI || 96
     );
 }
-function acuityToFontSizePx(acuity, distanceMeters, ppi) {
-    const xHeightMm = acuityToSizeMm(acuity, distanceMeters);
-    const fontSizeMm = xHeightMm / 0.5;
-    const dpr = window.devicePixelRatio || 1;
-    const physicalPx = (fontSizeMm * (ppi || 96)) / 25.4;
-    return Math.round(Math.max(8, Math.min(2000, physicalPx / dpr)));
-}
+// PATCH27_PHASE2: removed acuityToFontSizePx (now in VissortCore)
 
 // ==================== УТИЛИТЫ ====================
-const TIME_UNITS = { ms: 1, s: 1000, min: 60000 };
-function msToUnit(ms, unit) {
-    return ms / TIME_UNITS[unit];
-}
-function unitToMs(v, unit) {
-    return v * TIME_UNITS[unit];
-}
-function detectUnit(ms) {
-    if (ms >= 60000 && ms % 60000 === 0) return 'min';
-    if (ms >= 1000 && ms % 1000 === 0) return 's';
-    if (ms === 0) return 's';
-    return 'ms';
-}
-function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-}
+// PATCH27_PHASE2: TIME_UNITS now comes from VissortCore
+// PATCH27_PHASE2: removed msToUnit (now in VissortCore)
+// PATCH27_PHASE2: removed unitToMs (now in VissortCore)
+// PATCH27_PHASE2: removed detectUnit (now in VissortCore)
+// PATCH27_PHASE2: removed escapeHtml (now in VissortCore)
 function safeVal(id, defVal, parser) {
     const el = document.getElementById(id);
     if (!el) return defVal;
@@ -295,37 +286,11 @@ function safeChecked(id, defVal) {
     const el = document.getElementById(id);
     return el ? el.checked === true : defVal;
 }
-function hashCode(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) {
-        h = (h << 5) - h + str.charCodeAt(i);
-        h |= 0;
-    }
-    return Math.abs(h).toString(36);
-}
-async function sha1(str) {
-    if (!window.crypto || !window.crypto.subtle) return 'weak-' + hashCode(str);
-    const buf = new TextEncoder().encode(str);
-    const hb = await window.crypto.subtle.digest('SHA-1', buf);
-    return Array.from(new Uint8Array(hb))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-}
-function hexToRgb(hex) {
-    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 0, g: 0, b: 0 };
-}
-function rgbToHex(r, g, b) {
-    const s = (c) => Math.min(255, Math.max(0, c || 0));
-    return '#' + [s(r), s(g), s(b)].map((c) => c.toString(16).padStart(2, '0')).join('');
-}
-function lerpColor(from, to, t) {
-    return {
-        r: Math.round(from.r + (to.r - from.r) * t),
-        g: Math.round(from.g + (to.g - from.g) * t),
-        b: Math.round(from.b + (to.b - from.b) * t)
-    };
-}
+// PATCH27_PHASE2: removed hashCode (now in VissortCore)
+// PATCH27A_REMOVED_SHA1: sha1 now comes from VissortCore
+// PATCH27_PHASE2: removed hexToRgb (now in VissortCore)
+// PATCH27_PHASE2: removed rgbToHex (now in VissortCore)
+// PATCH27_PHASE2: removed lerpColor (now in VissortCore)
 
 // ==================== SCENARIO KEY / BOOKMARKS ====================
 function generateScenarioKey() {
@@ -602,25 +567,8 @@ async function extractAllHtmlFromZip(zip) {
 
 // ==================== КАЛИБРОВКА ЭКРАНА ====================
 const CALIB_BAR_PX = 400;
-function detectDeviceType() {
-    const ua = navigator.userAgent || '';
-    if (/iPad|Tablet|PlayBook|Silk/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
-    if (/Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(ua)) return 'mobile';
-    return 'desktop';
-}
-function detectPPIHeuristic() {
-    const type = detectDeviceType(),
-        dpr = window.devicePixelRatio || 1;
-    if (type === 'mobile') {
-        if (dpr >= 3.5) return 500;
-        if (dpr >= 3) return 460;
-        if (dpr >= 2.75) return 400;
-        if (dpr >= 2) return 320;
-        return 220;
-    }
-    if (type === 'tablet') return dpr >= 2 ? 264 : 160;
-    return Math.round(96 * dpr);
-}
+// PATCH27_PHASE2: removed detectDeviceType (now in VissortCore)
+// PATCH27_PHASE2: removed detectPPIHeuristic (now in VissortCore)
 function ppiFromMeasuredMm(mm) {
     if (!mm || mm <= 0) return null;
     return Math.round((CALIB_BAR_PX * (window.devicePixelRatio || 1) * 25.4) / mm);
@@ -629,10 +577,7 @@ function savePPI(ppi) {
     localStorage.setItem('screenPPI', String(ppi));
     localStorage.setItem('screenPPICalibrated', 'true');
 }
-function loadPPI() {
-    const s = localStorage.getItem('screenPPI');
-    return s && !isNaN(parseInt(s)) ? parseInt(s) : detectPPIHeuristic();
-}
+// PATCH27_PHASE2: removed loadPPI (now in VissortCore)
 function initScreenCalibration() {
     screenPPI = loadPPI();
 }
@@ -685,7 +630,7 @@ function applyScreenCalib() {
         const node = getNode(activeNodeId);
         if (node && (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC')) {
             node.stimPPI = ppi;
-            node.stimSize = getNodeComputedSize(node);
+            // PATCH25: removed unused node.stimSize (computed on the fly)
             requestRenderGraph();
             updateInspector();
         } else if (node && node.nodeType === 'READING') {
@@ -1402,103 +1347,10 @@ function calibrateFocalLength() {
 }
 
 // ==================== SVG-СТИМУЛЫ ====================
-function generateLetterE(size, r, g, b, angle = 0) {
-    const t = size / 5;
-    const path = `M 0 0 H ${size} V ${t} H ${t} V ${2 * t} H ${size - t} V ${3 * t} H ${t} V ${4 * t} H ${size} V ${size} H 0 Z`;
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g transform="rotate(${angle}, ${size / 2}, ${size / 2})"><path d="${path}" fill="rgb(${r},${g},${b})"/></g></svg>`;
-}
-function generateLandoltRing(diameter, gapDirection, r, g, b, bgR, bgG, bgB) {
-    const sw = diameter * 0.2,
-        gw = diameter * 0.2,
-        gl = diameter * 0.23,
-        sm = Math.max(1, sw * 0.1);
-    const or_ = diameter / 2,
-        cx = diameter / 2,
-        cy = diameter / 2;
-    let rx, ry, rw, rh;
-    if (gapDirection === 'вверх' || gapDirection === 'вниз') {
-        rw = gw;
-        rh = gl + sm;
-        rx = cx - rw / 2;
-        ry = gapDirection === 'вверх' ? cy - or_ - sm : cy + or_ - rh + sm;
-    } else {
-        rw = gl + sm;
-        rh = gw;
-        ry = cy - rh / 2;
-        rx = gapDirection === 'вправо' ? cx + or_ - rw + sm : cx - or_ - sm;
-    }
-    return `<svg width="${diameter}" height="${diameter}" viewBox="0 0 ${diameter} ${diameter}" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${or_ - sw / 2}" fill="none" stroke="rgb(${r},${g},${b})" stroke-width="${sw}"/><rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="rgb(${bgR},${bgG},${bgB})"/></svg>`;
-}
-function getCircleStimulusSVG(node, size) {
-    const uid = 'cg_' + Math.random().toString(36).slice(2, 8);
-    const cx = size / 2,
-        cy = size / 2,
-        r = size / 2;
-    const innerEnabled = node.circleInnerEnabled !== false;
-    const outerEnabled = node.circleOuterEnabled !== false;
-    const innerR = Math.max(5, Math.min(95, node.circleInnerRadiusPct ?? 40));
-    const innerFr = innerR / 100;
-    const iA = node.circleInnerColor1 || { r: 255, g: 0, b: 0 };
-    const iB = node.circleInnerColor2 || { r: 0, g: 0, b: 255 };
-    const iMid = node.circleInnerMidEnabled ? node.circleInnerColor3 || { r: 255, g: 255, b: 0 } : null;
-    const innerStops = [];
-    if (iMid) {
-        innerStops.push(`<stop offset="0%" stop-color="rgb(${iA.r},${iA.g},${iA.b})"/>`);
-        innerStops.push(`<stop offset="50%" stop-color="rgb(${iMid.r},${iMid.g},${iMid.b})"/>`);
-        innerStops.push(`<stop offset="100%" stop-color="rgb(${iB.r},${iB.g},${iB.b})"/>`);
-    } else {
-        innerStops.push(`<stop offset="0%" stop-color="rgb(${iA.r},${iA.g},${iA.b})"/>`);
-        innerStops.push(`<stop offset="100%" stop-color="rgb(${iB.r},${iB.g},${iB.b})"/>`);
-    }
-    const oA = node.circleOuterColor1 || { r: 0, g: 255, b: 0 };
-    const oB = node.circleOuterColor2 || { r: 0, g: 128, b: 255 };
-    const oMid = node.circleOuterMidEnabled ? node.circleOuterColor3 || { r: 0, g: 255, b: 255 } : null;
-    const outerStops = [];
-    outerStops.push(`<stop offset="0%" stop-color="rgb(${oA.r},${oA.g},${oA.b})" stop-opacity="0"/>`);
-    outerStops.push(`<stop offset="${innerR}%" stop-color="rgb(${oA.r},${oA.g},${oA.b})" stop-opacity="1"/>`);
-    if (oMid)
-        outerStops.push(
-            `<stop offset="${(innerR + 100) / 2}%" stop-color="rgb(${oMid.r},${oMid.g},${oMid.b})"/>`
-        );
-    outerStops.push(`<stop offset="100%" stop-color="rgb(${oB.r},${oB.g},${oB.b})"/>`);
-    const innerCircle = innerEnabled
-        ? `<circle cx="${cx}" cy="${cy}" r="${r * innerFr}" fill="url(#${uid}_i)"/>`
-        : '';
-    const outerCircle = outerEnabled ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${uid}_o)"/>` : '';
-    const html = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="${uid}_o" cx="50%" cy="50%" r="50%">${outerStops.join('')}</radialGradient><radialGradient id="${uid}_i" cx="50%" cy="50%" r="50%">${innerStops.join('')}</radialGradient></defs>${outerCircle}${innerCircle}</svg>`;
-    return {
-        html,
-        bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`,
-        size,
-        uid,
-        innerR,
-        outerEnabled,
-        innerEnabled
-    };
-}
-function getStimulusSVG(node, size) {
-    if (node.singleCircleEnabled) return getCircleStimulusSVG(node, size);
-    const r = node.stimR || 255,
-        g = node.stimG || 255,
-        b = node.stimB || 255;
-    let html;
-    if (node.stimType === 'LANDOLT')
-        html = generateLandoltRing(
-            size,
-            node.stimDirection || 'вверх',
-            r,
-            g,
-            b,
-            node.bgR || 0,
-            node.bgG || 0,
-            node.bgB || 0
-        );
-    else {
-        const am = { вверх: 270, вправо: 0, вниз: 90, влево: 180 };
-        html = generateLetterE(size, r, g, b, am[node.stimDirection] || 0);
-    }
-    return { html, bgColor: `rgb(${node.bgR || 0},${node.bgG || 0},${node.bgB || 0})`, size };
-}
+// PATCH27_PHASE2: removed generateLetterE (now in VissortCore)
+// PATCH27_PHASE2: removed generateLandoltRing (now in VissortCore)
+// PATCH27_PHASE2: removed getCircleStimulusSVG (now in VissortCore)
+// PATCH27_PHASE2: removed getStimulusSVG (now in VissortCore)
 function setStimColorRGB(r, g, b) {
     if (!stimDisplay) return;
     const svg = stimDisplay.querySelector('svg');
@@ -1519,23 +1371,7 @@ let _circleInnerDurationMs = 10000,
 let _circleInnerLoop = true,
     _circleOuterLoop = true;
 
-function buildCirclePhases(colorA, midEnabled, colorMid, colorB, reverse) {
-    let base;
-    if (midEnabled && colorMid)
-        base = [
-            { from: colorA, to: colorMid },
-            { from: colorMid, to: colorB }
-        ];
-    else base = [{ from: colorA, to: colorB }];
-    if (reverse === true)
-        return base.concat(
-            base
-                .slice()
-                .reverse()
-                .map((ph) => ({ from: ph.to, to: ph.from }))
-        );
-    return base;
-}
+// PATCH27_PHASE2: removed buildCirclePhases (now in VissortCore)
 function startCircleAnimation(node) {
     stopCircleAnimation();
     if (!stimDisplay) return;
@@ -1827,25 +1663,7 @@ function applyRandomStimulusPosition(size) {
 }
 
 // ==================== ДИНАМИКА ЦВЕТА ====================
-function buildGenericDynamicPhases(color1, midEnabled, color3, color2, reverse) {
-    const A = color1 || { r: 255, g: 0, b: 0 },
-        B = color2 || { r: 0, g: 0, b: 255 };
-    let base;
-    if (midEnabled && color3)
-        base = [
-            { from: A, to: color3 },
-            { from: color3, to: B }
-        ];
-    else base = [{ from: A, to: B }];
-    if (reverse === true)
-        return base.concat(
-            base
-                .slice()
-                .reverse()
-                .map((ph) => ({ from: ph.to, to: ph.from }))
-        );
-    return base;
-}
+// PATCH27_PHASE2: removed buildGenericDynamicPhases (now in VissortCore)
 function startSingleStimAnimation(params) {
     stopSingleStimAnimation();
     if (!stimDisplay) return;
@@ -1993,26 +1811,8 @@ function generateId() {
 function getNode(id) {
     return nodes.find((n) => n.id === id);
 }
-function getThreshold(size) {
-    switch (size) {
-        case 4:
-            return 3;
-        case 5:
-            return 4;
-        case 6:
-            return 4;
-        case 7:
-            return 5;
-        case 8:
-            return 6;
-        default:
-            return Math.ceil(size / 2);
-    }
-}
-function randomDirection() {
-    const d = ['вверх', 'вниз', 'влево', 'вправо'];
-    return d[Math.floor(Math.random() * d.length)];
-}
+// PATCH27_PHASE2: removed getThreshold (now in VissortCore)
+// PATCH27_PHASE2: removed randomDirection (now in VissortCore)
 function canAddConnection(fromId, toId, isLoop) {
     if (fromId === toId) return isLoop;
     if (isLoop)
