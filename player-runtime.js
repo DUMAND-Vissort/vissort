@@ -173,7 +173,7 @@ const _camConfig = _camDevice.isPhone
     ? { inputSize: 128, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
     : _camDevice.isTablet
     ? { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
-    : { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
+    : { inputSize: 160, intervalMs: 100, videoW: 480, videoH: 360, frameRate: 24 // PATCH72_HISTORY };
 
 let _camLoopStarted = false;
 
@@ -1564,6 +1564,10 @@ async function processCamFrame() {
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     window._rawDistance = curDistanceM; // PATCH69_RAW: before smoothing
+                    // PATCH72_HISTORY: keep history for fast-lean detection
+                    if (!window._rawHistory) window._rawHistory = [];
+                    window._rawHistory.push({ t: performance.now(), d: curDistanceM });
+                    if (window._rawHistory.length > 20) window._rawHistory.shift();
                     curDistanceM = _smoothDistance(curDistanceM); // PATCH42_SMOOTH
                     camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
@@ -2710,6 +2714,25 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
+    // PATCH72_HISTORY: reject if distance moved >3% in last 800ms
+    if (_stimulusDistance && window._rawHistory && window._rawHistory.length > 1) {
+        var _now72 = performance.now();
+        var _base72 = _stimulusDistance;
+        var _maxDev72 = 0;
+        for (var _i72 = 0; _i72 < window._rawHistory.length; _i72++) {
+            var _h72 = window._rawHistory[_i72];
+            if (_now72 - _h72.t > 800) continue;
+            if (_now72 - _h72.t < 50) continue; // skip current frame
+            var _dd72 = Math.abs((_h72.d - _base72) / _base72 * 100);
+            if (_dd72 > _maxDev72) _maxDev72 = _dd72;
+        }
+        if (_maxDev72 >= 3) {
+            console.warn('[PATCH72] movement ' + _maxDev72.toFixed(1) + '% in last 800ms -- answer rejected');
+            if (window._logAnswer) window._logAnswer({ rt: null, valid: false, correct: false, reason: 'distance_moved' });
+            responsePhaseActive = false;
+            return;
+        }
+    }
     // PATCH71_FAST: reject if distance deviated >= 5% from shown stimulus
     if (_stimulusDistance && window._rawDistance) {
         var _dd = Math.abs((window._rawDistance - _stimulusDistance) / _stimulusDistance * 100);
