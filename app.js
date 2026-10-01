@@ -1987,7 +1987,7 @@ function createNewNode(type, x, y) {
             bgR: 11,
             bgG: 11,
             bgB: 13,
-            stimAcuity: 1.0,
+            stimAcuity: 0.5,
             endAcuity: 1.0,
             acuityStep: 0.1,
             stimDistance: dd,
