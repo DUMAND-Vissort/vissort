@@ -1560,12 +1560,9 @@ function evaluateDistance() {
     if (playerRunning && !isPaused) {
         if (window._recordDeviation) window._recordDeviation(dev);
         if (window._updateStimulusDim) window._updateStimulusDim();
-        // PATCH30_ABORT: instant abort when deviation exceeds tolerance
-        var _tol = Math.max(
-            Math.abs(upTol != null ? upTol : 15),
-            Math.abs(dnTol != null ? dnTol : 10)
-        );
-        if (Math.abs(dev) > _tol) {
+// PATCH30b_ABORT: instant abort when deviation exceeds 15%
+        // (upTol/dnTol are declared below in this function -- TDZ prohibits using them here)
+        if (Math.abs(dev) > 15) {
             if (!_waitingStable) {
                 _abortCurrentStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
             }
