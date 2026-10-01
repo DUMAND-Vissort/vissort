@@ -3177,7 +3177,7 @@ function updateStimulusInspector(node) {
     html += `<label>Циклов в серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`; // PATCH31E_APPLIED
     html += `<label>Критерий правильности серии</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20">`;
     html += `<label><input type="checkbox" id="inp-adaptive-acuity" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`;
-    html += '</div>`;
+      html += '</div>';
     html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
     html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета</h3>';
     html += `<label>Цвет стимула (для буквы)</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
