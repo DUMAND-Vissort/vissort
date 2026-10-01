@@ -6947,6 +6947,39 @@ function init() {
     btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
+	    // PATCH32_TEST: one-click test in user.html
+    document.getElementById('btn-test')?.addEventListener('click', () => {
+        const payload = {
+            graph: {
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                connections: JSON.parse(JSON.stringify(connections)),
+                books: JSON.parse(JSON.stringify(window._books || {}))
+            },
+            trainingType: trainingNode?.params?.trainingType || 'single',
+            distances: {
+                general: generalDistance,
+                reading: readingDistance,
+                incTol: distanceToleranceIncreasePct,
+                decTol: distanceToleranceDecreasePct,
+                timeout: distanceRestoreTimeoutSec
+            },
+            blink: {
+                enabled: blinkEnabled,
+                threshold: blinkThreshold,
+                minRate: blinkMinRate,
+                window: blinkWindowSec,
+                lockShow: blinkLockShow
+            }
+        };
+        try {
+            localStorage.setItem('vissort_test_scenario', JSON.stringify(payload));
+            console.log('[test] scenario saved, opening user.html?test=1');
+            window.open('/user.html?test=1', '_blank');
+        } catch (e) {
+            alert('Не удалось: ' + e.message);
+        }
+    });
+    console.log('[test] btn-test handler installed');
     btnPlayerStop.addEventListener('click', stopPlayer);
     btnPlayerPause.addEventListener('click', togglePause);
     btnModeToggle.addEventListener('click', () => switchMode(currentMode === 'nodes' ? 'stimuli' : 'nodes'));

@@ -705,6 +705,40 @@ async function onLoggedIn() {
     authModal.classList.remove('open');
     hdrUser.textContent = currentUser.email || '—';
     showStatus('Загрузка сценария…', 'Читаем назначения.');
+	    // ==================== PATCH32_TEST: test scenario from admin ====================
+    if (location.search.includes('test=1')) {
+        try {
+            const raw = localStorage.getItem('vissort_test_scenario');
+            if (raw) {
+                const testData = JSON.parse(raw);
+                console.log('[test] loading test scenario from localStorage');
+                userScenarios = [{
+                    id: '__test__',
+                    name: '🧪 Тестовый сценарий',
+                    params: testData,
+                    trainingType: testData.trainingType || 'single'
+                }];
+                userScenario = userScenarios[0];
+                hdrScenario.textContent = userScenario.name;
+                applyScenarioDefaults();
+                updateCounters();
+                hideStatus();
+                btnPlayer.disabled = false;
+                if (typeof enableCamera === 'function') {
+                    try { enableCamera(); } catch (e) { console.warn('[test] camera:', e); }
+                }
+                console.log('[test] test scenario loaded, ready to play');
+                return;
+            } else {
+                console.warn('[test] no scenario in localStorage');
+            }
+        } catch (e) {
+            console.warn('[test] failed:', e);
+        }
+    }
+    // ==================== /PATCH32_TEST ====================
+
+    userScenarios = await loadUserScenarios();
     userScenarios = await loadUserScenarios();
     if (!userScenarios.length) {
         showStatus('Сценарий не назначен', 'Обратитесь к администратору.', 'Обновить', () => onLoggedIn());
