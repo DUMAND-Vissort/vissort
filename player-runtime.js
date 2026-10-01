@@ -248,6 +248,7 @@ let _frameSkipCounter = 0;
 let _waitingStable = false;
 let _stableSince = 0;
 let _stableBuf = [];
+let _answerBlocked = false; // PATCH31C2A_APPLIED
 
 // ==================== PATCH30_ABORT: instant stimulus abort ====================
 // Called when user's distance deviates >15%, face is lost, or face returns.
@@ -258,17 +259,22 @@ function _abortCurrentStimulus(reason) {
 
     console.log('[abort] reason=' + reason + ' (dist=' + (curDistanceM != null ? curDistanceM.toFixed(2) : '?') + 'm)');
 
-    // Cancel current show
+    // PATCH31C2A_APPLIED: stop timer, freeze animations, KEEP stimulus visible
     if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-    hideStimulus();
-    stopSingleStimAnimation();
-    stopSingleBgAnimation();
-    stopCircleAnimation();
-    stopPeripheralAnimation();
-    stopBlinkAnimation();
+
+    // Freeze animations by cancelling RAFs — last frame stays on screen
+    if (singleStimAnimId) { cancelAnimationFrame(singleStimAnimId); singleStimAnimId = null; }
+    if (singleBgAnimId)   { cancelAnimationFrame(singleBgAnimId);   singleBgAnimId = null; }
+    if (_circleAnimId)    { cancelAnimationFrame(_circleAnimId);    _circleAnimId = null; }
+    if (_periAnimId)      { cancelAnimationFrame(_periAnimId);      _periAnimId = null; }
+    if (_blinkTimerId)    { clearTimeout(_blinkTimerId);            _blinkTimerId = null; }
+    // NOTE: do NOT call hideStimulus / stopSingleStimAnimation / etc. — stimulus stays frozen.
 
     responsePhaseActive = false;
     if (responseButtons) responseButtons.style.display = 'none';
+
+    // PATCH31C2A_APPLIED: block answers
+    _answerBlocked = true;
 
     // Discard answer (unless already counted in same ms)
     if (lastResponse && lastResponse.answered) {
@@ -276,20 +282,18 @@ function _abortCurrentStimulus(reason) {
     }
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
 
-    // Do NOT touch seriesStep, seriesCorrect, seriesIncorrect, seriesNoAnswer.
-    // Do NOT touch completedSeries, noAnswerSeriesStreak, currentAcuity, gNodeAcuityCurrent.
-
     // Enter waiting-stable state
     _waitingStable = true;
     _stableSince = 0;
     _stableBuf = [];
-    _stimulusDistance = null;
+    // keep _stimulusDistance for reference; will be updated in _resumeAfterStable
 }
 
 // Called after distance is stable (5 frames within 3%).
 // Resets abort state and shows the next stimulus (or current node, if graph).
 function _resumeAfterStable() {
     _waitingStable = false;
+    _answerBlocked = false; // PATCH31C2A_APPLIED
     _stableSince = 0;
     _stableBuf = [];
     _stimulusDistance = curDistanceM;
@@ -1728,6 +1732,7 @@ function playGraphStimulus(node) {
     if (!playerRunning || isPaused) return;
     if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH61_GUARD
     if (_waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH30_ABORT
+    _answerBlocked = false; // PATCH31C2A_APPLIED: safety reset before new cycle
     // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
     responsePhaseActive = true;
     responseStartTime = performance.now();
@@ -1919,6 +1924,7 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!responsePhaseActive) return;
+    if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2010,6 +2016,7 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2663,6 +2670,7 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!responsePhaseActive) return;
+    if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2689,6 +2697,7 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!responsePhaseActive) return;
+    if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
