@@ -1846,11 +1846,12 @@ function playGraphStimulus(node) {
         if (lastResponse.answered) {
             if (lastResponse.isCorrect) seriesCorrect++;
             else seriesIncorrect++;
+            seriesStep++; // PATCH31C1_APPLIED: only answers count
         } else {
             seriesNoAnswer++;
             saveResult(node.id, null, false);
+            // PATCH31C1_APPLIED: timeout does NOT increment seriesStep
         }
-        seriesStep++;
         updateCounters();
         phaseTimers.push(
             setTimeout(() => {
@@ -1988,7 +1989,20 @@ function playGraphCompareRound(node) {
     currentShowTimer = setTimeout(() => {
         if (responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
-            processGraphCompareAnswer(false);
+            // PATCH31C1_APPLIED: timeout -> seriesNoAnswer, NOT seriesIncorrect
+            seriesNoAnswer++;
+            updateCounters();
+            saveResult(gCurrentNodeId || 'graph_compare', null, false);
+            const _n31 = gGetNode(gCurrentNodeId);
+            if (_n31) {
+                if (seriesStep >= (_n31.seriesSize || 6)) {
+                    finishGraphCompareSeries(_n31);
+                } else {
+                    phaseTimers.push(setTimeout(() => {
+                        if (playerRunning && !isPaused) playGraphCompareRound(_n31);
+                    }, _n31.delay2 || 1000));
+                }
+            }
         }
     }, dur);
     phaseTimers.push(currentShowTimer);
@@ -2364,12 +2378,13 @@ function showNextStimulus() {
         if (lastResponse.answered) {
             if (lastResponse.isCorrect) seriesCorrect++;
             else seriesIncorrect++;
+            seriesStep++; // PATCH31C1_APPLIED: only answers count
         } else {
             seriesNoAnswer++;
             if (window.Voice) window.Voice.sayKey('timeout', { cancel: true });
             saveResult('user_single', null, false);
+            // PATCH31C1_APPLIED: timeout does NOT increment seriesStep
         }
-        seriesStep++;
         updateCounters();
         phaseTimers.push(
             setTimeout(() => {
@@ -2448,7 +2463,18 @@ function showNextCompareRound() {
     currentShowTimer = setTimeout(() => {
         if (responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
-            processCompareAnswer(false);
+            // PATCH31C1_APPLIED: timeout -> seriesNoAnswer, NOT seriesIncorrect
+            seriesNoAnswer++;
+            updateCounters();
+            saveResult('user_compare', null, false);
+            const _p31 = userScenario?.params || {};
+            if (seriesStep >= (_p31.seriesSize || 6)) {
+                finishCompareSeries();
+            } else {
+                phaseTimers.push(setTimeout(() => {
+                    if (playerRunning && !isPaused) showNextCompareRound();
+                }, _p31.delay2 || 1000));
+            }
         }
     }, dur);
     phaseTimers.push(currentShowTimer);
