@@ -3270,8 +3270,7 @@ function updateStimulusInspector(node) {
     html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
     html += `<label>Серий всего</label><input type="number" id="inp-series-count" value="${node.seriesCount || 10}" min="1" max="50">`; // PATCH31E_APPLIED
     html += '</div>';
-        '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
-    inspectorEl.innerHTML = html;
+    html += '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';    inspectorEl.innerHTML = html;
     const p = document.getElementById('insp-grid-preview');
     if (p) {
         p.dataset.selected = JSON.stringify(cells);
