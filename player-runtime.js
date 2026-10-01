@@ -1831,7 +1831,7 @@ function playGraphStimulus(node) {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = node.duration || 1000;
+    let sd = (node.duration || 1000) + (node.response || 0); // PATCH31C2B_APPLIED
     if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
     if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
     if (node.singleCircleEnabled) {
@@ -1856,6 +1856,13 @@ function playGraphStimulus(node) {
             seriesNoAnswer++;
             saveResult(node.id, null, false);
             // PATCH31C1_APPLIED: timeout does NOT increment seriesStep
+            // PATCH31C2B_APPLIED: full timeout series → pause modal
+            if (seriesStep === 0 && seriesNoAnswer >= (node.seriesSize || 6)) {
+                console.log('[PATCH31C2B] full timeout series, pausing');
+                seriesNoAnswer = 0;
+                pauseTraining();
+                return;
+            }
         }
         updateCounters();
         phaseTimers.push(
@@ -1876,20 +1883,23 @@ function finishGraphStimulusSeries(node) {
     completedSeries++;
     if (ok) successfulSeries++;
     else failedSeries++;
-    if (ok) {
-        const eA = node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0;
-        if (gNodeAcuityCurrent < eA)
-            gNodeAcuityCurrent = Math.min(
-                eA,
-                Math.round((gNodeAcuityCurrent + (node.acuityStep || 0.1)) * 10) / 10
-            );
-    } else {
-        const sA = node.stimAcuity || 1.0;
-        if (gNodeAcuityCurrent > sA)
-            gNodeAcuityCurrent = Math.max(
-                sA,
-                Math.round((gNodeAcuityCurrent - (node.acuityStep || 0.1)) * 10) / 10
-            );
+    // PATCH31C2B_APPLIED: adaptiveAcuity
+    if (node.adaptiveAcuity !== false) {
+        if (ok) {
+            const eA = node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0;
+            if (gNodeAcuityCurrent < eA)
+                gNodeAcuityCurrent = Math.min(
+                    eA,
+                    Math.round((gNodeAcuityCurrent + (node.acuityStep || 0.1)) * 10) / 10
+                );
+        } else {
+            const sA = node.stimAcuity || 1.0;
+            if (gNodeAcuityCurrent > sA)
+                gNodeAcuityCurrent = Math.max(
+                    sA,
+                    Math.round((gNodeAcuityCurrent - (node.acuityStep || 0.1)) * 10) / 10
+                );
+        }
     }
     seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
     lastDirection = null;
@@ -2365,7 +2375,7 @@ function showNextStimulus() {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = currentDuration;
+    let sd = currentDuration + (p.response || 0); // PATCH31C2B_APPLIED
     if (p.singleStimDynamicEnabled) sd = Math.max(sd, p.singleStimDuration || 0);
     if (p.singleBgDynamicEnabled) sd = Math.max(sd, p.singleBgDuration || 0);
     if (p.singleCircleEnabled) {
@@ -2391,6 +2401,13 @@ function showNextStimulus() {
             if (window.Voice) window.Voice.sayKey('timeout', { cancel: true });
             saveResult('user_single', null, false);
             // PATCH31C1_APPLIED: timeout does NOT increment seriesStep
+            // PATCH31C2B_APPLIED: full timeout series → pause modal
+            if (seriesStep === 0 && seriesNoAnswer >= (p.seriesSize || 6)) {
+                console.log('[PATCH31C2B] full timeout series, pausing');
+                seriesNoAnswer = 0;
+                pauseTraining();
+                return;
+            }
         }
         updateCounters();
         phaseTimers.push(
@@ -2411,18 +2428,21 @@ function finishSeries() {
     completedSeries++;
     if (ok) successfulSeries++;
     else failedSeries++;
-    if (ok) {
-        if (currentAcuity < (p.endAcuity || 2.0))
-            currentAcuity = Math.min(
-                p.endAcuity || 2.0,
-                Math.round((currentAcuity + (p.acuityStep || 0.1)) * 10) / 10
-            );
-    } else {
-        if (currentAcuity > (p.startAcuity || 0.5))
-            currentAcuity = Math.max(
-                p.startAcuity || 0.5,
-                Math.round((currentAcuity - (p.acuityStep || 0.1)) * 10) / 10
-            );
+    // PATCH31C2B_APPLIED: adaptiveAcuity
+    if (p.adaptiveAcuity !== false) {
+        if (ok) {
+            if (currentAcuity < (p.endAcuity || 2.0))
+                currentAcuity = Math.min(
+                    p.endAcuity || 2.0,
+                    Math.round((currentAcuity + (p.acuityStep || 0.1)) * 10) / 10
+                );
+        } else {
+            if (currentAcuity > (p.startAcuity || 0.5))
+                currentAcuity = Math.max(
+                    p.startAcuity || 0.5,
+                    Math.round((currentAcuity - (p.acuityStep || 0.1)) * 10) / 10
+                );
+        }
     }
     currentSize = acuityToSizePx(currentAcuity, p.distanceMeters || 1, screenPPI);
     seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
@@ -3098,6 +3118,7 @@ async function saveResult(nodeId, reactionTimeMs, isCorrect) {
             node_id: nodeId || 'user_training',
             response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
             is_correct: isCorrect,
+            distance_m: (typeof curDistanceM !== 'undefined' && curDistanceM != null) ? curDistanceM : null, // PATCH31C2B_APPLIED
             created_at: new Date().toISOString()
         });
     } catch (e) {
