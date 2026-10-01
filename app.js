@@ -1960,9 +1960,10 @@ function createNewNode(type, x, y) {
                 { row: 0, col: 1 }
             ],
             cellParams: [defaultCompareCellParams(), defaultCompareCellParams()],
-            seriesCount: 5,
+            seriesCount: 10,
             seriesSize: 6,
             seriesThreshold: 4,
+            adaptiveAcuity: true, // PATCH31E_APPLIED
             delay1: 1000,
             duration: 2000,
             delay2: 1000,
@@ -1993,9 +1994,10 @@ function createNewNode(type, x, y) {
             stimPPI: dp,
             stimSize: 40,
             stimDirectionFixed: 'вверх',
-            seriesCount: 5,
+            seriesCount: 10,
             seriesSize: 6,
             seriesThreshold: 4,
+            adaptiveAcuity: true, // PATCH31E_APPLIED
             isActive: true,
             singleRandomPos: false,
             singleGridEnabled: false,
@@ -3171,10 +3173,11 @@ function updateStimulusInspector(node) {
         <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">📐 ${mm.toFixed(2)} мм</div>
         <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div></div></div>`;
     html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
-    html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серии</h3>';
-    html += `<label>Серий</label><input type="number" id="inp-series-count" value="${node.seriesCount || 5}" min="1" max="50">`;
-    html += `<label>Размер серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`;
-    html += `<label>Порог правильных</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20"></div>`;
+    html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
+    html += `<label>Циклов в серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`; // PATCH31E_APPLIED
+    html += `<label>Критерий правильности серии</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20">`;
+    html += `<label><input type="checkbox" id="inp-adaptive-acuity" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`;
+    html += '</div>`;
     html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
     html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета</h3>';
     html += `<label>Цвет стимула (для буквы)</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
@@ -3230,7 +3233,7 @@ function updateStimulusInspector(node) {
         { id: 'delay2', label: 'Задержка 2', value: node.delay2 || 0 }
     ];
     html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
-    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">⏱ Время</h3>';
+    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">🔄 Цикл показа</h3>';
     tf.forEach((f) => {
         const u = detectUnit(f.value),
             dv = msToUnit(f.value, u);
@@ -3263,6 +3266,10 @@ function updateStimulusInspector(node) {
     html += `<label><input type="checkbox" id="inp-bg-reverse" ${node.singleBgReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
     html += '</div>';
     html +=
+    html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
+    html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
+    html += `<label>Серий всего</label><input type="number" id="inp-series-count" value="${node.seriesCount || 10}" min="1" max="50">`; // PATCH31E_APPLIED
+    html += '</div>';
         '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
     inspectorEl.innerHTML = html;
     const p = document.getElementById('insp-grid-preview');
@@ -3351,13 +3358,21 @@ function updateCompareInspector(node) {
     html +=
         '<h3 style="color:#fde047;border-color:#eab308;">🎨 Параметры клеток</h3><div id="insp-cmp-cells"></div></div>';
     html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
-    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">📊 Серии и время</h3>';
-    html += `<label>Серий</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 5}" min="1" max="50">`;
-    html += `<label>Размер серии</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
-    html += `<label>Порог правильных</label><input type="number" id="inp-cmp-st" value="${node.seriesThreshold || 4}" min="1" max="20">`;
+    html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">🔄 Цикл показа</h3>';
     html += `<label>Задержка 1 (мс)</label><input type="number" id="inp-cmp-d1" value="${node.delay1 || 1000}" min="0" step="50">`;
     html += `<label>Время показа (мс)</label><input type="number" id="inp-cmp-dur" value="${node.duration || 2000}" min="200" step="50">`;
+    html += `<label>Ожидание ответа (мс)</label><input type="number" id="inp-cmp-resp" value="${node.response || 0}" min="0" step="50">`;
     html += `<label>Задержка 2 (мс)</label><input type="number" id="inp-cmp-d2" value="${node.delay2 || 1000}" min="0" step="50"></div>`;
+    html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
+    html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
+    html += `<label>Циклов в серии</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
+    html += `<label>Критерий правильности серии</label><input type="number" id="inp-cmp-st" value="${node.seriesThreshold || 4}" min="1" max="20">`;
+    html += `<label><input type="checkbox" id="inp-cmp-adaptive" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`; // PATCH31E_APPLIED
+    html += '</div>';
+    html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
+    html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
+    html += `<label>Серий всего</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 10}" min="1" max="50">`; // PATCH31E_APPLIED
+    html += '</div>';
     html +=
         '</div><button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
     inspectorEl.innerHTML = html;
@@ -3643,7 +3658,8 @@ function applyStimulusInspectorChanges(node) {
         node.bgG = c.g;
         node.bgB = c.b;
     }
-    if (v('inp-series-count')) node.seriesCount = Math.max(1, parseInt(v('inp-series-count').value) || 5);
+    if (v('inp-series-count')) node.seriesCount = Math.max(1, parseInt(v('inp-series-count').value) || 10);
+    if (v('inp-adaptive-acuity')) node.adaptiveAcuity = v('inp-adaptive-acuity').checked; // PATCH31A_JS_APPLIED
     if (v('inp-series-size')) node.seriesSize = Math.max(1, parseInt(v('inp-series-size').value) || 6);
     if (v('inp-series-threshold'))
         node.seriesThreshold = Math.max(1, parseInt(v('inp-series-threshold').value) || 4);
@@ -3742,7 +3758,9 @@ function applyCompareInspectorChanges(node) {
             node.cellParams = params.slice(0, node.activeCells.length);
         }
     }
-    if (v('inp-cmp-sc')) node.seriesCount = Math.max(1, parseInt(v('inp-cmp-sc').value) || 5);
+    if (v('inp-cmp-sc')) node.seriesCount = Math.max(1, parseInt(v('inp-cmp-sc').value) || 10);
+    if (v('inp-cmp-adaptive')) node.adaptiveAcuity = v('inp-cmp-adaptive').checked; // PATCH31A_JS_APPLIED
+    if (v('inp-cmp-resp')) node.response = Math.max(0, parseInt(v('inp-cmp-resp').value) || 0); // PATCH31A_JS_APPLIED
     if (v('inp-cmp-ss')) node.seriesSize = Math.max(1, parseInt(v('inp-cmp-ss').value) || 6);
     if (v('inp-cmp-st')) node.seriesThreshold = Math.max(1, parseInt(v('inp-cmp-st').value) || 4);
     if (v('inp-cmp-d1')) node.delay1 = Math.max(0, parseInt(v('inp-cmp-d1').value) || 1000);
@@ -6039,7 +6057,8 @@ function modeParamsToNode(modeParams) {
     node.bgR = modeParams.startBgColor?.r ?? 0;
     node.bgG = modeParams.startBgColor?.g ?? 0;
     node.bgB = modeParams.startBgColor?.b ?? 0;
-    node.seriesCount = modeParams.seriesCount || 5;
+    node.seriesCount = modeParams.seriesCount || 10;
+    node.adaptiveAcuity = modeParams.adaptiveAcuity !== false; // PATCH31A_JS_APPLIED
     node.seriesSize = modeParams.seriesSize || 6;
     node.seriesThreshold = modeParams.seriesThreshold || 4;
     node.isActive = modeParams.isActive !== false;
@@ -6453,6 +6472,7 @@ function loadGraph(file) {
                     if (node.seriesCount === undefined) node.seriesCount = 5;
                     if (node.seriesSize === undefined) node.seriesSize = 6;
                     if (node.seriesThreshold === undefined) node.seriesThreshold = 4;
+                    if (node.adaptiveAcuity === undefined) node.adaptiveAcuity = true; // PATCH31B_APPLIED
                     if (node.singleRandomPos === undefined) node.singleRandomPos = false;
                     if (node.singleGridEnabled === undefined) node.singleGridEnabled = false;
                     if (node.singleGridX === undefined) node.singleGridX = 3;
@@ -6552,6 +6572,7 @@ function loadGraph(file) {
                     if (node.seriesCount === undefined) node.seriesCount = 5;
                     if (node.seriesSize === undefined) node.seriesSize = 6;
                     if (node.seriesThreshold === undefined) node.seriesThreshold = 4;
+
                     if (node.delay1 === undefined) node.delay1 = 1000;
                     if (node.duration === undefined) node.duration = 2000;
                     if (node.delay2 === undefined) node.delay2 = 1000;

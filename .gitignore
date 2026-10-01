@@ -25,3 +25,5 @@ supabase/.temp/
 supabase/config.toml
 
 fix.ps1
+
+patch*.cjs
