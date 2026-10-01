@@ -3265,12 +3265,13 @@ function updateStimulusInspector(node) {
     html += `<label><input type="checkbox" id="inp-bg-loop" ${node.singleBgLoop ? 'checked' : ''}> Повторять</label>`;
     html += `<label><input type="checkbox" id="inp-bg-reverse" ${node.singleBgReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
     html += '</div>';
-    html +=
-    html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
+       html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
     html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
-    html += `<label>Серий всего</label><input type="number" id="inp-series-count" value="${node.seriesCount || 10}" min="1" max="50">`; // PATCH31E_APPLIED
+    html += `<label>Серий всего</label><input type="number" id="inp-series-count" value="${node.seriesCount || 10}" min="1" max="50">`;
     html += '</div>';
-    html += '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';    inspectorEl.innerHTML = html;
+    html += '</div>';
+    html += '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
+    inspectorEl.innerHTML = html;
     const p = document.getElementById('insp-grid-preview');
     if (p) {
         p.dataset.selected = JSON.stringify(cells);
