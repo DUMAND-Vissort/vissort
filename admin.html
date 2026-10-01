@@ -548,12 +548,13 @@ header { padding: 3px 6px; }
 <div id="reading-gradient-settings"><div class="checkbox-row"><input type="checkbox" id="gen-reading-gradient-mid-enabled" checked><label>Использовать цвет 3</label></div><div class="split-color-row"><label>Цвет 1:</label><input type="color" id="gen-reading-gradient-left-color" value="#ffffff"></div><div class="split-color-row" id="gradient-mid-row"><label>Цвет 3:</label><input type="color" id="gen-reading-gradient-mid-color" value="#cccccc"></div><label id="gradient-mid-pos-label">Позиция цвета 3 (%)</label><input type="number" id="gen-reading-gradient-mid-position" value="50" min="0" max="100" step="1"><div class="split-color-row"><label>Цвет 2:</label><input type="color" id="gen-reading-gradient-right-color" value="#000000"></div></div>
 <div id="reading-dynamic-settings"><label>Режим динамики</label><select id="gen-reading-dynamic-mode"><option value="simple" selected>Простой</option><option value="rgb">RGB-цикл</option><option value="physiological">Физиологический</option></select><div id="reading-dynamic-simple-colors"><div class="split-color-row"><label>Начальный цвет:</label><input type="color" id="gen-reading-dynamic-start-color" value="#ff0000"></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-mid-enabled"><label>Цвет 3</label></div><div class="split-color-row" id="dynamic-mid-row" style="display:none;"><label>Цвет 3:</label><input type="color" id="gen-reading-dynamic-mid-color" value="#ffff00"></div><div class="split-color-row"><label>Конечный цвет:</label><input type="color" id="gen-reading-dynamic-end-color" value="#0000ff"></div></div><div id="reading-dynamic-physio-settings" style="display:none;"><label>Шаг диоптрий</label><select id="gen-reading-dynamic-step"><option value="0.1" selected>0.1 дптр</option><option value="0.2">0.2 дптр</option><option value="0.3">0.3 дптр</option><option value="0.4">0.4 дптр</option><option value="0.5">0.5 дптр</option><option value="0.6">0.6 дптр</option><option value="0.7">0.7 дптр</option><option value="0.8">0.8 дптр</option><option value="0.9">0.9 дптр</option><option value="1.0">1.0 дптр</option><option value="1.1">1.1 дптр</option><option value="1.2">1.2 дптр</option><option value="1.3">1.3 дптр</option><option value="1.4">1.4 дптр</option><option value="1.5">1.5 дптр</option><option value="1.6">1.6 дптр</option></select><label id="gen-reading-dynamic-step-duration-label">Длительность шага</label><div class="time-group"><input type="number" id="gen-reading-dynamic-step-duration" value="1" min="0.1" step="0.1"><select id="gen-reading-dynamic-step-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-show-label" checked><label>Показывать дптр</label></div><div class="acuity-hint" id="physio-list-hint">0.0 → +1.6 дптр</div></div><div id="reading-dynamic-duration-settings"><label>Время полного цикла</label><div class="time-group"><input type="number" id="gen-reading-dynamic-duration" value="10" min="0.1" step="0.1"><select id="gen-reading-dynamic-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-loop"><label>Повторять цикл</label></div><div class="checkbox-row"><input type="checkbox" id="gen-reading-dynamic-reverse"><label>Пинг-понг</label></div></div>
 </div>
-<label>Количество серий</label>
-<input type="number" id="gen-series" value="5" min="1" max="20">
-<label>Размер серии</label>
+<label>Серий всего</label>
+<input type="number" id="gen-series" value="10" min="1" max="20">
+<label>Циклов в серии</label>
 <select id="gen-series-size"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option></select>
-<label>Порог правильных</label>
+<label>Критерий правильности серии</label>
 <input type="number" id="gen-threshold" value="4" min="1" max="8">
+<div class="checkbox-row"><input type="checkbox" id="gen-adaptive" checked><label>👁️ Адаптивная острота зрения</label></div>
 </div>
 <div class="modal-col">
 <label>Тип стимула</label>
@@ -588,6 +589,10 @@ header { padding: 3px 6px; }
 <div class="checkbox-row"><input type="checkbox" id="gen-bg-cycle" checked><label>Циклическая анимация фона</label></div>
 <label>Задержка 1</label>
 <div class="time-group"><input type="number" id="gen-delay1" value="1" min="0" step="0.1"><select id="gen-delay1-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
+<label>Время показа</label>
+<div class="time-group"><input type="number" id="gen-duration" value="1" min="0" step="0.1"><select id="gen-duration-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
+<label>Ожидание ответа</label>
+<div class="time-group"><input type="number" id="gen-response" value="0" min="0" step="0.1"><select id="gen-response-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
 <label>Задержка 2</label>
 <div class="time-group"><input type="number" id="gen-delay2" value="1" min="0" step="0.1"><select id="gen-delay2-unit"><option value="ms">мс</option><option value="s" selected>с</option><option value="min">мин</option></select></div>
 </div>

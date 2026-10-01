@@ -5904,7 +5904,7 @@ function buildModeParamsFromUI() {
     const p = {
         mode: safeVal('gen-mode', 'общая'),
         trainingType: tt,
-        seriesCount: safeVal('gen-series', 5, parseInt),
+        seriesCount: safeVal('gen-series', 10, parseInt), // PATCH31B_APPLIED
         seriesSize: ss,
         seriesThreshold: safeVal('gen-threshold', getThreshold(ss), parseInt),
         type: safeVal('gen-type', 'LETTER_E'),
@@ -5921,6 +5921,9 @@ function buildModeParamsFromUI() {
         endStimColor: hexToRgb(safeVal('gen-end-color', '#ff0000')),
         startBgColor: hexToRgb(safeVal('gen-start-bg', '#00ff00')),
         endBgColor: hexToRgb(safeVal('gen-end-bg', '#000000')),
+        duration: unitToMs(safeVal('gen-duration', 1, parseFloat), safeVal('gen-duration-unit', 's')), // PATCH31B_APPLIED
+        response: unitToMs(safeVal('gen-response', 0, parseFloat), safeVal('gen-response-unit', 's')),
+        adaptiveAcuity: safeChecked('gen-adaptive', true),
         delay1: unitToMs(safeVal('gen-delay1', 1, parseFloat), safeVal('gen-delay1-unit', 's')),
         delay2: unitToMs(safeVal('gen-delay2', 1, parseFloat), safeVal('gen-delay2-unit', 's')),
         isActive: safeChecked('gen-active', false),
