@@ -1983,6 +1983,17 @@ function handleGraphDirectionAnswer(dir) {
     }
 
     const ok = dir === currentCorrectDirection;
+
+    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
+    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
+    try { stopSingleStimAnimation(); } catch(e) {}
+    try { stopSingleBgAnimation(); } catch(e) {}
+    try { stopCircleAnimation(); } catch(e) {}
+    try { stopPeripheralAnimation(); } catch(e) {}
+    try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
@@ -2075,6 +2086,17 @@ function handleGraphCompareAnswer(answer) {
     }
 
     const ok = answer === currentCompareAnswer;
+
+    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
+    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
+    try { stopSingleStimAnimation(); } catch(e) {}
+    try { stopSingleBgAnimation(); } catch(e) {}
+    try { stopCircleAnimation(); } catch(e) {}
+    try { stopPeripheralAnimation(); } catch(e) {}
+    try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
@@ -2739,6 +2761,17 @@ function handleDirectionAnswer(direction) {
     }
 
     const ok = direction === currentCorrectDirection;
+
+    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
+    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
+    try { stopSingleStimAnimation(); } catch(e) {}
+    try { stopSingleBgAnimation(); } catch(e) {}
+    try { stopCircleAnimation(); } catch(e) {}
+    try { stopPeripheralAnimation(); } catch(e) {}
+    try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
@@ -2766,6 +2799,17 @@ function handleCompareAnswer(answer) {
     }
 
     const ok = answer === currentCompareAnswer;
+
+    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
+    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
+    try { stopSingleStimAnimation(); } catch(e) {}
+    try { stopSingleBgAnimation(); } catch(e) {}
+    try { stopCircleAnimation(); } catch(e) {}
+    try { stopPeripheralAnimation(); } catch(e) {}
+    try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     responsePhaseActive = false;
