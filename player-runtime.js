@@ -248,6 +248,65 @@ let _frameSkipCounter = 0;
 let _waitingStable = false;
 let _stableSince = 0;
 let _stableBuf = [];
+
+// ==================== PATCH30_ABORT: instant stimulus abort ====================
+// Called when user's distance deviates >15%, face is lost, or face returns.
+// Cancels current show, waits for stability, then reshows from scratch.
+function _abortCurrentStimulus(reason) {
+    if (!playerRunning || isPaused) return;
+    if (_waitingStable) return; // idempotent
+
+    console.log('[abort] reason=' + reason + ' (dist=' + (curDistanceM != null ? curDistanceM.toFixed(2) : '?') + 'm)');
+
+    // Cancel current show
+    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    hideStimulus();
+    stopSingleStimAnimation();
+    stopSingleBgAnimation();
+    stopCircleAnimation();
+    stopPeripheralAnimation();
+    stopBlinkAnimation();
+
+    responsePhaseActive = false;
+    if (responseButtons) responseButtons.style.display = 'none';
+
+    // Discard answer (unless already counted in same ms)
+    if (lastResponse && lastResponse.answered) {
+        console.log('[abort] late answer discarded');
+    }
+    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+
+    // Do NOT touch seriesStep, seriesCorrect, seriesIncorrect, seriesNoAnswer.
+    // Do NOT touch completedSeries, noAnswerSeriesStreak, currentAcuity, gNodeAcuityCurrent.
+
+    // Enter waiting-stable state
+    _waitingStable = true;
+    _stableSince = 0;
+    _stableBuf = [];
+    _stimulusDistance = null;
+}
+
+// Called after distance is stable (5 frames within 3%).
+// Resets abort state and shows the next stimulus (or current node, if graph).
+function _resumeAfterStable() {
+    _waitingStable = false;
+    _stableSince = 0;
+    _stableBuf = [];
+    _stimulusDistance = curDistanceM;
+    console.log('[abort] stable at ' + curDistanceM.toFixed(2) + 'm -- resuming');
+
+    // Prefer current graph node; fallback to flat autotraining
+    var _n = null;
+    try { _n = getNode(currentPlayingNodeId); } catch (e) { _n = null; }
+    if (_n && gNodes && gNodes.indexOf(_n) !== -1) {
+        if (_n.nodeType === 'COMPARE') playGraphCompareRound(_n);
+        else playGraphStimulus(_n);
+        return;
+    }
+    if (typeof showNextStimulus === 'function') {
+        try { showNextStimulus(); } catch (e) { console.warn('[abort] resume flat failed:', e); }
+    }
+}
 // ==================== PATCH27B: fast-lean detection ====================
 window._deviationHistory = [];
 window._fastLeanAt = 0;
@@ -1439,19 +1498,7 @@ async function processCamFrame() {
                             if ((_mx - _mn) / _mn * 100 < 3) {
                                 if (!_stableSince) _stableSince = performance.now();
                                 if (performance.now() - _stableSince >= 1000) {
-                                    _waitingStable = false;
-                                    _stableSince = 0;
-                                    _stableBuf = [];
-                                    _stimulusDistance = curDistanceM;
-                                    console.log('[PATCH91] stable at ' + curDistanceM.toFixed(2) + 'm -- showing');
-                                    var _n91 = null;
-                                    try { _n91 = getNode(currentPlayingNodeId); } catch(e) {}
-                                    if (_n91) {
-                                        if (_n91.nodeType === 'COMPARE') playGraphCompareRound(_n91);
-                                        else playGraphStimulus(_n91);
-                                    } else {
-                                        showNextStimulus();
-                                    }
+                                    _resumeAfterStable();
                                 }
                             } else {
                                 _stableSince = 0;
@@ -1470,6 +1517,8 @@ async function processCamFrame() {
                     if (_flDur > 1500) { // PATCH56: 1500ms for stable detection
                         window._fastLeanAt = performance.now();
                         window._recordDeviation(-40);
+                        // PATCH30_ABORT: instant abort on face lost
+                        if (!_waitingStable) _abortCurrentStimulus('face_lost');
                         var _lastLog = window._lastLeanLogAt || 0;
                         if (performance.now() - _lastLog > 2000) {
                             console.warn('[lean] face lost >1500ms -- treated as lean');
@@ -1511,6 +1560,16 @@ function evaluateDistance() {
     if (playerRunning && !isPaused) {
         if (window._recordDeviation) window._recordDeviation(dev);
         if (window._updateStimulusDim) window._updateStimulusDim();
+        // PATCH30_ABORT: instant abort when deviation exceeds tolerance
+        var _tol = Math.max(
+            Math.abs(upTol != null ? upTol : 15),
+            Math.abs(dnTol != null ? dnTol : 10)
+        );
+        if (Math.abs(dev) > _tol) {
+            if (!_waitingStable) {
+                _abortCurrentStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
+            }
+        }
     }
     const upTol = userScenario?.params?.distanceToleranceIncreasePct ?? 15;
     const dnTol = userScenario?.params?.distanceToleranceDecreasePct ?? 10;
@@ -1669,6 +1728,7 @@ function playNextGraphNode() {
 function playGraphStimulus(node) {
     if (!playerRunning || isPaused) return;
     if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH61_GUARD
+    if (_waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH30_ABORT
     // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
     responsePhaseActive = true;
     responseStartTime = performance.now();
@@ -1915,6 +1975,7 @@ function playGraphCompare(node) {
 
 function playGraphCompareRound(node) {
     if (!playerRunning || isPaused) return;
+    if (_waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // PATCH30_ABORT
     if (seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
         return;
@@ -2192,6 +2253,7 @@ function startPlayer() {
 function showNextStimulus() {
     if (!playerRunning || isPaused) return;
     if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // PATCH61_GUARD
+    if (_waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
     // PATCH38_EARLY_PHASE: enable response phase immediately
     responsePhaseActive = true;
     responseStartTime = performance.now();
@@ -3318,6 +3380,10 @@ else init();
                 overlay.style.display = 'none';
                 console.log('[PATCH61] face back -- resuming');
                 if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('faceFound', { cancel: true });
+                // PATCH30_ABORT: after long face loss, enter waiting-stable (like deviation)
+                if (typeof _abortCurrentStimulus === 'function') {
+                    try { _abortCurrentStimulus('face_back_after_long_loss'); } catch (e) {}
+                }
             }
             window._faceLostPause = false;
         }
