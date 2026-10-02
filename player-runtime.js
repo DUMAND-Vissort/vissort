@@ -2003,6 +2003,21 @@ function handleGraphDirectionAnswer(dir) {
         document.body.style.background = '#0b0b0f';
     }, 200);
     saveResult(gCurrentNodeId || 'graph_single', lastResponse.reactionTimeMs, ok);
+
+    // PATCH35B_APPLIED: advance series immediately
+    if (ok) seriesCorrect++; else seriesIncorrect++;
+    seriesStep++;
+    updateCounters();
+    var _n35 = gGetNode(gCurrentNodeId);
+    if (_n35) {
+        if (seriesStep >= (_n35.seriesSize || 6)) {
+            setTimeout(function () { finishGraphStimulusSeries(_n35); }, 50);
+        } else {
+            setTimeout(function () {
+                if (playerRunning && !isPaused) playGraphStimulus(_n35);
+            }, _n35.delay2 || 1000);
+        }
+    }
 }
 
 function playGraphCompare(node) {
