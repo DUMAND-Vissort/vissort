@@ -3359,10 +3359,20 @@ function updateCompareInspector(node) {
         '<h3 style="color:#fde047;border-color:#eab308;">🎨 Параметры клеток</h3><div id="insp-cmp-cells"></div></div>';
     html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
     html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">🔄 Цикл показа</h3>';
-    html += `<label>Задержка 1 (мс)</label><input type="number" id="inp-cmp-d1" value="${node.delay1 || 1000}" min="0" step="50">`;
-    html += `<label>Время показа (мс)</label><input type="number" id="inp-cmp-dur" value="${node.duration || 2000}" min="200" step="50">`;
-    html += `<label>Ожидание ответа (мс)</label><input type="number" id="inp-cmp-resp" value="${node.response || 0}" min="0" step="50">`;
-    html += `<label>Задержка 2 (мс)</label><input type="number" id="inp-cmp-d2" value="${node.delay2 || 1000}" min="0" step="50"></div>`;
+    var _tfCmp = [
+        { id: 'inp-cmp-d1',   label: 'Задержка 1',       value: node.delay1  || 0 },
+        { id: 'inp-cmp-dur',  label: 'Время показа',     value: node.duration || 0 },
+        { id: 'inp-cmp-resp', label: 'Ожидание ответа',  value: node.response || 0 },
+        { id: 'inp-cmp-d2',   label: 'Задержка 2',       value: node.delay2  || 0 }
+    ];
+    _tfCmp.forEach(function (f) {
+        var u = detectUnit(f.value), dv = msToUnit(f.value, u);
+        html += `<label>${f.label}</label><div class="time-group">
+            <input type="number" id="${f.id}" value="${dv}" step="any" min="0">
+            <select id="${f.id}-unit"><option value="ms" ${u === 'ms' ? 'selected' : ''}>мс</option><option value="s" ${u === 's' ? 'selected' : ''}>с</option><option value="min" ${u === 'min' ? 'selected' : ''}>мин</option></select>
+        </div>`;
+    });
+    html += '</div>';
     html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
     html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
     html += `<label>Циклов в серии</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
@@ -3760,12 +3770,26 @@ function applyCompareInspectorChanges(node) {
     }
     if (v('inp-cmp-sc')) node.seriesCount = Math.max(1, parseInt(v('inp-cmp-sc').value) || 10);
     if (v('inp-cmp-adaptive')) node.adaptiveAcuity = v('inp-cmp-adaptive').checked; // PATCH31A_JS_APPLIED
-    if (v('inp-cmp-resp')) node.response = Math.max(0, parseInt(v('inp-cmp-resp').value) || 0); // PATCH31A_JS_APPLIED
+    var _reEl = document.getElementById('inp-cmp-resp');
+    var _reUn = document.getElementById('inp-cmp-resp-unit');
+    if (_reEl) {
+        var _reVal = parseFloat(_reEl.value) || 0;
+        var _reUnit = _reUn ? _reUn.value : 'ms';
+        node.response = unitToMs(_reVal, _reUnit);
+    }
     if (v('inp-cmp-ss')) node.seriesSize = Math.max(1, parseInt(v('inp-cmp-ss').value) || 6);
     if (v('inp-cmp-st')) node.seriesThreshold = Math.max(1, parseInt(v('inp-cmp-st').value) || 4);
-    if (v('inp-cmp-d1')) node.delay1 = Math.max(0, parseInt(v('inp-cmp-d1').value) || 1000);
-    if (v('inp-cmp-dur')) node.duration = Math.max(200, parseInt(v('inp-cmp-dur').value) || 2000);
-    if (v('inp-cmp-d2')) node.delay2 = Math.max(0, parseInt(v('inp-cmp-d2').value) || 1000);
+    ['inp-cmp-d1', 'inp-cmp-dur', 'inp-cmp-d2'].forEach(function (id) {
+        var el = document.getElementById(id);
+        var un = document.getElementById(id + '-unit');
+        if (!el) return;
+        var val = parseFloat(el.value) || 0;
+        var unit = un ? un.value : 'ms';
+        var ms = unitToMs(val, unit);
+        if (id === 'inp-cmp-d1') node.delay1 = ms;
+        if (id === 'inp-cmp-dur') node.duration = ms;
+        if (id === 'inp-cmp-d2') node.delay2 = ms;
+    });
 }
 function applyReadingInspectorChanges(node) {
     const v = (id) => document.getElementById(id);
