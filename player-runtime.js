@@ -1790,7 +1790,7 @@ function playNextGraphNode() {
     phaseTimers.push(
         setTimeout(() => {
             if (playerRunning && !isPaused) playGraphStimulus(node);
-        }, node.delay1 || 0)
+        }, (node.delay1 != null ? node.delay1 : 0))
     );
 }
 
@@ -1994,7 +1994,7 @@ function finishGraphStimulusSeries(node) {
     phaseTimers.push(
         setTimeout(() => {
             if (playerRunning && !isPaused) playGraphStimulus(node);
-        }, node.delay2 || 500)
+        }, (node.delay2 != null ? node.delay2 : 500))
     );
 }
 
@@ -2047,7 +2047,7 @@ function handleGraphDirectionAnswer(dir) {
         } else {
             setTimeout(function () {
                 if (playerRunning && !isPaused) playGraphStimulus(_n35);
-            }, _n35.delay2 || 1000);
+            }, (_n35.delay2 != null ? _n35.delay2 : 1000));
         }
     }
 }
@@ -2077,7 +2077,7 @@ function playGraphCompare(node) {
     phaseTimers.push(
         setTimeout(() => {
             if (playerRunning && !isPaused) playGraphCompareRound(node);
-        }, node.delay1 || 0)
+        }, (node.delay1 != null ? node.delay1 : 0))
     );
 }
 
@@ -2200,7 +2200,7 @@ function finishGraphCompareSeries(node) {
     phaseTimers.push(
         setTimeout(() => {
             if (playerRunning && !isPaused) playGraphCompareRound(node);
-        }, node.delay2 || 500)
+        }, (node.delay2 != null ? node.delay2 : 500))
     );
 }
 
