@@ -544,6 +544,38 @@ function hideStatus() {
 }
 
 function initSupabase() {
+	    // PATCH_TEST_NO_LOGIN: bypass auth for test mode
+    if (location.search.indexOf('test=1') !== -1) {
+        var _raw = null;
+        try { _raw = localStorage.getItem('vissort_test_scenario'); } catch (e) {}
+        if (_raw) {
+            try {
+                var _td = JSON.parse(_raw);
+                supabaseClient = null;
+                currentUser = null;
+                sessionId = 'test_' + Date.now();
+                userScenario = {
+                    id: '__test__',
+                    name: '🧪 Тестовый сценарий',
+                    params: _td,
+                    trainingType: _td.trainingType || 'single'
+                };
+                userScenarios = [userScenario];
+                authModal.classList.remove('open');
+                hdrUser.textContent = '🧪';
+                hdrScenario.textContent = userScenario.name;
+                applyScenarioDefaults();
+                updateCounters();
+                hideStatus();
+                btnPlayer.disabled = false;
+                console.log('[test] no-login mode');
+                setTimeout(function () { try { enableCamera(); } catch (e) {} }, 100);
+                return;
+            } catch (e) {
+                console.warn('[test] no-login failed:', e);
+            }
+        }
+    }
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     var _onLoggedInFired = false;
     function _safeOnLoggedIn() {
