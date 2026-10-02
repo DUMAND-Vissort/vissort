@@ -1897,7 +1897,7 @@ function playGraphStimulus(node) {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = (node.duration || 1000) + (node.response || 0); // PATCH31C2B_APPLIED
+    let sd = (node.duration != null ? node.duration : 1000) + (node.response != null ? node.response : 0); // PATCH31C2B_APPLIED
     if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
     if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
     if (node.singleCircleEnabled) {
@@ -2478,7 +2478,7 @@ function showNextStimulus() {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = currentDuration + (p.response || 0); // PATCH31C2B_APPLIED
+    let sd = currentDuration + (p.response != null ? p.response : 0); // PATCH31C2B_APPLIED
     if (p.singleStimDynamicEnabled) sd = Math.max(sd, p.singleStimDuration || 0);
     if (p.singleBgDynamicEnabled) sd = Math.max(sd, p.singleBgDuration || 0);
     if (p.singleCircleEnabled) {
