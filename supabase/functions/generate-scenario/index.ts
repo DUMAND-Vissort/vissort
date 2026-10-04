@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     }
 
     // --- Auth check ---
+    let user: { id: string; email: string } | null = null;
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
@@ -50,19 +51,55 @@ Deno.serve(async (req) => {
         if (!userRes.ok) {
             return json({ ok: false, error: 'Invalid token' }, 401);
         }
-        const user = await userRes.json();
-        if (!user || !user.id) {
+        const u = await userRes.json();
+        if (!u || !u.id) {
             return json({ ok: false, error: 'Invalid user' }, 401);
         }
-        // BUG-11 FIX: require non-empty email AND whitelist match
-        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+        if (!u.email || !ADMIN_EMAILS.includes(u.email)) {
             return json({ ok: false, error: 'Forbidden' }, 403);
         }
+        user = { id: u.id, email: u.email };
     } catch (e) {
         console.error('[generate-scenario] auth check failed:', e);
         return json({ ok: false, error: 'Auth service unavailable' }, 503);
     }
     // --- /Auth check ---
+
+    // --- Rate limit ---
+    const AI_LIMIT_PER_HOUR = parseInt(Deno.env.get('AI_RATE_LIMIT_PER_HOUR') ?? '20', 10);
+    const AI_WINDOW_SEC = parseInt(Deno.env.get('AI_RATE_LIMIT_WINDOW_SEC') ?? '3600', 10);
+
+    try {
+        const rlRes = await fetch(`${supabaseUrl}/rest/v1/rpc/check_ai_rate_limit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'apikey': anonKey
+            },
+            body: JSON.stringify({
+                p_limit: AI_LIMIT_PER_HOUR,
+                p_window_seconds: AI_WINDOW_SEC
+            })
+        });
+        if (!rlRes.ok) {
+            const t = await rlRes.text().catch(() => '');
+            console.error('[generate-scenario] rate-limit rpc failed:', rlRes.status, t);
+            return json({ ok: false, error: 'Rate limit check failed' }, 503);
+        }
+        const allowed = await rlRes.json();
+        if (allowed !== true) {
+            console.warn('[generate-scenario] rate limit exceeded for', user.email);
+            return json({
+                ok: false,
+                error: `Rate limit exceeded: max ${AI_LIMIT_PER_HOUR} requests per hour`
+            }, 429);
+        }
+    } catch (e) {
+        console.error('[generate-scenario] rate-limit fetch error:', e);
+        return json({ ok: false, error: 'Rate limit service unavailable' }, 503);
+    }
+    // --- /Rate limit ---
 
     const apiKey = Deno.env.get('DEEPSEEK_API_KEY');
     if (!apiKey) {
