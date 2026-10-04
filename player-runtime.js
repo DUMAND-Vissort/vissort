@@ -1904,7 +1904,7 @@ function playNextGraphNode() {
     noAnswerSeriesStreak = 0;
     lastDirection = null;
     currentSingleCell = { row: 0, col: 0 };
-    gNodeAcuityCurrent = node.stimAcuity || 1.0;
+    gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
     updateCounters();
     hideStimulus();
     responseButtons.style.display = 'none';
@@ -2478,7 +2478,7 @@ function startPlayer() {
         return;
     }
 
-    if (p.trainingType !== 'reading') currentAcuity = p.startAcuity || 0.5;
+    if (p.trainingType !== 'reading') currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
     else currentAcuity = 1.0;
     currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
     currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };

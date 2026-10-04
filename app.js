@@ -3155,7 +3155,7 @@ function updateStimulusInspector(node) {
     html += `<label><input type="checkbox" id="inp-circle-enabled" ${cir ? 'checked' : ''}> 🎯 Режим «Динамика Круг»</label>`;
     html += `<label><input type="checkbox" id="inp-active" ${node.isActive ? 'checked' : ''}> Активная тренировка</label></div>`;
     let acOpts = '';
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 10; i++) {
         const v = i / 10;
         const m = acuityToSizeMm(v, 1);
         acOpts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} — ${m.toFixed(2)} мм</option>`;
@@ -3171,7 +3171,8 @@ function updateStimulusInspector(node) {
     html += `<label>PPI экрана (авто: ${screenPPI})</label><input type="number" id="inp-ppi" value="${node.stimPPI || screenPPI || 96}" min="20" max="1200" step="1">`;
     html += `<div style="margin-top:6px;padding:6px;background:#000;border-radius:3px;text-align:center;">
         <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">📐 ${mm.toFixed(2)} мм</div>
-        <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div></div></div>`;
+        <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div>
+    <div id="insp-v-warn" style="margin-top:4px;color:#f59e0b;font-size:10px;display:none;">⚠️ V > 0.8: стимул < 5 px. Нужна дистанция 1.5+ м.</div></div></div>`;
     html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
     html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
     html += `<label>Циклов в серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`; // PATCH31E_APPLIED
@@ -3281,6 +3282,8 @@ function updateStimulusInspector(node) {
         di = document.getElementById('inp-distance'),
         pp = document.getElementById('inp-ppi');
     const upd = () => {
+        var _w = document.getElementById('insp-v-warn');
+        if (_w) _w.style.display = (v > 0.8) ? 'block' : 'none';
         const v = parseFloat(ai?.value) || 1.0,
             d = parseFloat(di?.value) || 1,
             ppi = parseInt(pp?.value) || screenPPI || 96;
@@ -3480,7 +3483,7 @@ function updateCompareInspector(node) {
             const div = document.createElement('div');
             div.className = 'cmp-cell-block';
             let opts = '';
-            for (let i = 1; i <= 20; i++) {
+            for (let i = 1; i <= 10; i++) {
                 const v = i / 10;
                 opts += `<option value="${v.toFixed(1)}" ${Math.abs((p.acuity || 1) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)}</option>`;
             }
@@ -3521,7 +3524,7 @@ function updateReadingInspector(node) {
     html += `<label>Шрифт</label><input type="text" id="inp-reading-font" value="${escapeHtml(node.readingFontFamily || 'Segoe UI')}">`;
     html += `<label><input type="checkbox" id="inp-reading-bold" ${node.readingFontWeight === 'bold' ? 'checked' : ''}> Жирный</label>`;
     let acOpts = '';
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 10; i++) {
         const v = i / 10,
             m = acuityToSizeMm(v, 1);
         acOpts += `<option value="${v.toFixed(1)}" ${Math.abs((node.readingAcuity || 1.0) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)} — ${m.toFixed(2)} мм</option>`;
@@ -5838,7 +5841,7 @@ function generateCellParamsFields() {
         const div = document.createElement('div');
         div.style.cssText = 'border:1px solid #444;padding:6px;margin-top:6px;';
         let opts = '';
-        for (let i = 1; i <= 20; i++) {
+        for (let i = 1; i <= 10; i++) {
             const v = i / 10;
             const mm = acuityToSizeMm(v, 1);
             opts += `<option value="${v.toFixed(1)}">${v.toFixed(1)} — ${mm.toFixed(2)} мм</option>`;
