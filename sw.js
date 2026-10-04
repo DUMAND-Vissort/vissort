@@ -7,7 +7,7 @@
 // ============================================================
 'use strict';
 
-const CACHE_VERSION = 'vissort-v33';
+const CACHE_VERSION = 'vissort-v34';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 const CACHE_SUPABASE = `${CACHE_VERSION}-supabase`;
@@ -166,9 +166,9 @@ async function networkFirstHTML(request) {
         if (root) return root;
         const idx = await cache.match('/index.html', { ignoreSearch: true });
         if (idx) return idx;
-        return new Response('Офлайн. Откройте страницу при подключении к сети.', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        return new Response(OFFLINE_HTML, {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' }
         });
     }
 }
@@ -211,6 +211,13 @@ async function staleWhileRevalidate(request, cacheName) {
             // PATCH9: friendly offline fallback for HTML requests
             const accept = request.headers.get('accept') || '';
             if (request.mode === 'navigate' || accept.includes('text/html')) {
+                return new Response(OFFLINE_HTML, {
+                    status: 200,
+                    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                });
+            }
+            const accept2 = request.headers.get('accept') || '';
+            if (request.mode === 'navigate' || accept2.includes('text/html')) {
                 return new Response(OFFLINE_HTML, {
                     status: 200,
                     headers: { 'Content-Type': 'text/html; charset=utf-8' }
