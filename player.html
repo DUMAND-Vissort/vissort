@@ -489,6 +489,7 @@
 <span class="chip" id="hdr-user">—</span>
             <button class="btn btn-ghost" id="btn-logout">Выйти</button>
         </header>
+<div id="v-detect" style="position:fixed;top:64px;right:20px;padding:8px 14px;background:rgba(30,30,40,0.9);color:#4ade80;font-size:14px;font-weight:bold;border-radius:8px;z-index:10000;font-family:monospace;border:1px solid #3f3f46;">Устойчивость: —</div>
 
         <div class="games-menu" id="games-menu">
             <a href="/pyatnashki.html"><span class="g-icon">🔢</span><span>Пятнашки</span></a>
@@ -511,7 +512,11 @@
                     <button class="btn btn-success" id="reading-see-well">🔺 Вижу хорошо</button>
                     <button class="btn btn-primary" id="reading-finish">⏹ Закончить</button>
                 </div>
-                <div id="response-buttons">
+                <div id="stim-cam-block" style="position:absolute;bottom:20px;left:20px;display:flex;flex-direction:column;z-index:9;pointer-events:none;">
+<div id="stim-face-status" style="padding:6px 12px;background:rgba(220,38,38,0.9);color:#fff;font-size:13px;font-weight:bold;border-radius:6px 6px 0 0;text-align:center;font-family:monospace;">❌ Нет лица</div>
+<video id="stim-cam-preview" autoplay muted playsinline style="width:240px;height:180px;background:#000;border:2px solid #3f3f46;border-top:none;border-radius:0 0 8px 8px;transform:scaleX(-1);object-fit:cover;"></video>
+</div>
+<div id="response-buttons">
                     <button class="btn-resp" data-dir="вверх">▲</button>
                     <button class="btn-resp" data-dir="вниз">▼</button>
                     <button class="btn-resp" data-dir="влево">◀</button>

@@ -5941,6 +5941,7 @@ function buildModeParamsFromUI() {
         distanceToleranceDecreasePct,
         distanceRestoreTimeoutSec,
         ppi: safeVal('gen-ppi', screenPPI || 96, parseInt),
+        minDetectPct: safeVal('min-detect-pct', 80, parseInt),
         startStimColor: hexToRgb(safeVal('gen-start-color', '#00ff00')),
         endStimColor: hexToRgb(safeVal('gen-end-color', '#ff0000')),
         startBgColor: hexToRgb(safeVal('gen-start-bg', '#00ff00')),

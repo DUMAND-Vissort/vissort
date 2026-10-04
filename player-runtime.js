@@ -187,10 +187,10 @@ const _camDevice = (function() {
 
 // PATCH22F: reduce inputSize for performance
 const _camConfig = _camDevice.isPhone
-    ? { inputSize: 128, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
+    ? { inputSize: 320, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
     : _camDevice.isTablet
-    ? { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
-    : { inputSize: 160, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
+    ? { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
+    : { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
 
 let _camLoopStarted = false;
 
@@ -914,6 +914,7 @@ async function openHistory() {
 function applyScenarioDefaults() {
     const p = userScenario?.params || {};
     screenPPI = p.ppi || screenPPI || 96;
+    if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
     currentAcuity = p.trainingType === 'reading' ? 1.0 : p.startAcuity || 0.5;
     currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
     currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
@@ -1454,6 +1455,14 @@ async function enableCamera() {
         document.body.appendChild(v);
         await v.play();
         camActive = true;
+        (function(){
+            var pv = document.getElementById('stim-cam-preview');
+            if (pv) {
+                pv.srcObject = camStream;
+                var p = pv.play();
+                if (p && p.catch) p.catch(function(){});
+            }
+        })();
         await loadFaceApi();
         camIndicator.style.display = 'block';
         camIndicator.textContent = '📷 Лицо не найдено';
@@ -1500,6 +1509,115 @@ async function loadFaceApi() {
 }
 // PATCH25: computeEAR removed (landmarks disabled in PATCH25_BBOX)
 
+// === Устойчивость распознавания лица ===
+let _detWindow = [];
+const _DET_WINDOW_SIZE = 30;
+let _minDetectPct = parseFloat(localStorage.getItem('min_detect_pct') || '80') || 80;
+let _lastDistWarnAt = 0;
+let _distWarnArmed = true;
+let _lastSeenDist = null;
+
+function _faceEmoji(rate, hasFaceNow) {
+    if (!hasFaceNow && rate < 40) return { icon: '❌', color: '#ef4444', label: 'нет лица / далеко' };
+    if (rate < 40) return { icon: '❌', color: '#ef4444', label: 'далеко' };
+    if (rate < 80) return { icon: '🙂', color: '#f59e0b', label: 'нестабильно' };
+    return { icon: '😊', color: '#22c55e', label: 'устойчиво' };
+}
+
+function _pushDetection(found) {
+    _detWindow.push(found ? 1 : 0);
+    if (_detWindow.length > _DET_WINDOW_SIZE) _detWindow.shift();
+    _updateDetectUI();
+}
+
+function _detectRatePct() {
+    if (_detWindow.length === 0) return 100;
+    var sum = 0;
+    for (var i = 0; i < _detWindow.length; i++) sum += _detWindow[i];
+    return Math.round(sum / _detWindow.length * 100);
+}
+
+function _updateDetectUI() {
+    var el = document.getElementById('v-detect');
+    var rate = _detectRatePct();
+    var detCount = 0;
+    for (var i = 0; i < _detWindow.length; i++) detCount += _detWindow[i];
+    var hasFaceNow = _detWindow.length > 0 && _detWindow[_detWindow.length - 1] === 1;
+    var em = _faceEmoji(rate, hasFaceNow);
+    if (el) {
+        el.textContent = em.icon + ' ' + rate + '% (' + detCount + '/' + _detWindow.length + ') · ' + em.label;
+        el.style.color = em.color;
+    }
+    var _fs = document.getElementById('stim-face-status');
+    if (_fs) {
+        _fs.textContent = em.icon + ' ' + em.label;
+        _fs.style.background = em.color === '#22c55e' ? 'rgba(16,185,129,0.9)' :
+                                em.color === '#f59e0b' ? 'rgba(234,88,12,0.9)' :
+                                                         'rgba(220,38,38,0.9)';
+    }
+    var _ci = document.getElementById('cam-indicator');
+    if (_ci) {
+        _ci.textContent = em.icon + ' ' + rate + '%';
+        _ci.style.color = em.color;
+    }
+    if (!_distWarnArmed && rate >= _minDetectPct + 10) {
+        _distWarnArmed = true;
+    }
+    if (_detWindow.length >= _DET_WINDOW_SIZE && _distWarnArmed && rate < _minDetectPct && detCount >= 3) {
+        if (_lastSeenDist != null && _lastSeenDist < 0.85) return;
+        var now = performance.now();
+        if (now - _lastDistWarnAt > 8000) {
+            _lastDistWarnAt = now;
+            _distWarnArmed = false;
+            _showDistWarning();
+        }
+    }
+}
+
+function _showDistWarning() {
+    var el = document.getElementById('dist-warning');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'dist-warning';
+        el.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:14px 26px;background:rgba(234,88,12,0.95);color:#fff;font-size:16px;font-weight:bold;border-radius:10px;z-index:10001;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.5);font-family:Segoe UI,sans-serif;';
+        document.body.appendChild(el);
+    }
+    el.textContent = '⚠️ Уменьшите дистанцию — не видно лица';
+    el.style.display = 'block';
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(function(){ el.style.display = 'none'; }, 4500);
+    if (window.Voice && window.Voice.say) {
+        window.Voice.say('Уменьшите дистанцию, не видно лица', { cancel: true });
+    }
+}
+
+function _showDistHardBanner() {
+    var el = document.getElementById('dist-hard-banner');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'dist-hard-banner';
+        el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 40px;background:rgba(30,30,40,0.95);color:#fff;font-size:20px;font-weight:bold;border-radius:12px;z-index:10002;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.7);font-family:Segoe UI,sans-serif;line-height:1.4;border:2px solid #f59e0b;';
+        document.body.appendChild(el);
+    }
+    el.innerHTML = '📏 Уменьшите дистанцию — не видно лица';
+    el.style.display = 'block';
+}
+
+function _hideDistHardBanner() {
+    var el = document.getElementById('dist-hard-banner');
+    if (el) el.style.display = 'none';
+}
+
+function _checkHardLimit() {
+    if (curDistanceM == null) return true;
+    if (curDistanceM > 1.0) {
+        _showDistHardBanner();
+        return false;
+    }
+    _hideDistHardBanner();
+    return true;
+}
+
 async function processCamFrame() {
     if (!camActive) {
         camFrameId = null;
@@ -1514,7 +1632,7 @@ async function processCamFrame() {
         window.camStats.frames++;
         try {
             const det = await faceapi
-                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.5 }));
+                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.25 }));
                 // PATCH25_BBOX: landmarks disabled for performance
             const tDetect = performance.now() - tStart;
             window.camStats.detections++;
@@ -1534,6 +1652,8 @@ async function processCamFrame() {
                 lastEyeDistPx = ipd;
                 window._faceLostSince = 0;
                 camIndicator.textContent = '✅ Лицо';
+                _pushDetection(true);
+                if (curDistanceM != null) _lastSeenDist = curDistanceM;
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && focalLengthPx) {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
@@ -1597,6 +1717,7 @@ async function processCamFrame() {
                     }
                 }
                 camIndicator.textContent = '❌ Нет лица';
+                _pushDetection(false);
                 _blinkIsClosed = false;
                 _blinkClosedSince = 0;
             }
@@ -2344,6 +2465,7 @@ function startPlayer() {
     lastDirection = null;
     currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
+    if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
     btnPlayer.disabled = true;
     document.querySelector('.counters')?.style.setProperty('display','none');
     btnPlayerStop.disabled = false;
@@ -2384,6 +2506,7 @@ function startPlayer() {
 }
 
 function showNextStimulus() {
+    if (!_checkHardLimit()) { setTimeout(showNextStimulus, 500); return; }
     if (!playerRunning || isPaused) return;
     if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // PATCH61_GUARD
     if (_waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
