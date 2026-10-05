@@ -140,15 +140,13 @@ let _findSameState = null;
 // PATCH_PHASE1: moved to PlayerState (group: reading)
 // PATCH_PHASE1: moved to PlayerState (group: reading)
 
-let camStream = null,
-    camActive = false,
-    camFrameId = null;
-let focalLengthPx = parseFloat(localStorage.getItem('focalLengthPx') || '0') || null;
+// PATCH_PHASE1: moved to PlayerState (group: camera)
+// PATCH_PHASE1: moved to PlayerState (group: camera)
 const realIPD_MM = 63;
-let lastEyeDistPx = null;
-let curDistanceM = null;
-let camBaseline = null;
-let camWarnKind = null;
+// PATCH_PHASE1: moved to PlayerState (group: camera)
+// PATCH_PHASE1: moved to PlayerState (group: camera)
+// PATCH_PHASE1: moved to PlayerState (group: camera)
+// PATCH_PHASE1: moved to PlayerState (group: camera)
 let _blinkClosedSince = 0;
 let _blinkIsClosed = false;
 const BLINK_THRESHOLD = 0.21;
@@ -238,7 +236,7 @@ function _abortCurrentStimulus(reason) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (_waitingStable) return; // idempotent
 
-    console.log('[abort] reason=' + reason + ' (dist=' + (curDistanceM != null ? curDistanceM.toFixed(2) : '?') + 'm)');
+    console.log('[abort] reason=' + reason + ' (dist=' + (PlayerState.curDistanceM != null ? PlayerState.curDistanceM.toFixed(2) : '?') + 'm)');
 
     // PATCH31C2A_APPLIED: stop timer, freeze animations, KEEP stimulus visible
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
@@ -277,8 +275,8 @@ function _resumeAfterStable() {
     _answerBlocked = false; // PATCH31C2A_APPLIED
     _stableSince = 0;
     _stableBuf = [];
-    PlayerState._stimulusDistance = curDistanceM;
-    console.log('[abort] stable at ' + curDistanceM.toFixed(2) + 'm -- resuming');
+    PlayerState._stimulusDistance = PlayerState.curDistanceM;
+    console.log('[abort] stable at ' + PlayerState.curDistanceM.toFixed(2) + 'm -- resuming');
 
     // Prefer current graph node; fallback to flat autotraining
     var _n = null;
@@ -349,8 +347,8 @@ window._isAnswerInvalid = function() {
     var now = performance.now();
     // 1. Current distance
     try {
-        if (typeof curDistanceM !== 'undefined' && curDistanceM != null && camBaseline != null) {
-            var curDev = (curDistanceM - camBaseline) / camBaseline * 100;
+        if (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null && PlayerState.camBaseline != null) {
+            var curDev = (PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline * 100;
             if (Math.abs(curDev) > _LEAN_DROP_PCT) {
                 return curDev < 0 ? 'fast_lean' : 'off_distance';
             }
@@ -441,7 +439,7 @@ const camIndicator = $('cam-indicator');
 
 // PATCH_PHASE1: вынесено в player-utils.js
 function _effectiveDistance(declared) {
-    return window.PlayerUtils.effectiveDistance(declared, curDistanceM);
+    return window.PlayerUtils.effectiveDistance(declared, PlayerState.curDistanceM);
 }
 // PATCH_PHASE1: вынесено в player-utils.js
 window._distEMA = null;
@@ -1319,7 +1317,7 @@ function applyRandomStimulusPosition(size) {
 function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
-    PlayerState._stimulusDistance = curDistanceM; // PATCH23: РѕРґРЅРѕ РїСЂРёСЃРІР°РёРІР°РЅРёРµ
+    PlayerState._stimulusDistance = PlayerState.curDistanceM; // PATCH23: РѕРґРЅРѕ РїСЂРёСЃРІР°РёРІР°РЅРёРµ
 }
 function hideStimulus() {
     stopSingleStimAnimation();
@@ -1337,27 +1335,27 @@ function hideStimulus() {
 function startCamLoop() {
     if (_camLoopStarted) return;
     _camLoopStarted = true;
-    if (camFrameId) clearInterval(camFrameId);
-    camFrameId = setInterval(function() {
-        if (camActive) processCamFrame();
+    if (PlayerState.camFrameId) clearInterval(PlayerState.camFrameId);
+    PlayerState.camFrameId = setInterval(function() {
+        if (PlayerState.camActive) processCamFrame();
     }, _camConfig.intervalMs);
     console.log('[cam] loop started @', _camConfig.intervalMs, 'ms');
 }
 
 async function enableCamera() {
-    // PATCH58: restore focalLengthPx from localStorage if null
-    if (!focalLengthPx || focalLengthPx <= 0) {
-        var _lsFocal = parseFloat(localStorage.getItem('focalLengthPx') || '0');
+    // PATCH58: restore PlayerState.focalLengthPx from localStorage if null
+    if (!PlayerState.focalLengthPx || PlayerState.focalLengthPx <= 0) {
+        var _lsFocal = parseFloat(localStorage.getItem('PlayerState.focalLengthPx') || '0');
         if (_lsFocal > 0) {
-            focalLengthPx = _lsFocal;
-            console.log('[PATCH58] focalLengthPx restored:', focalLengthPx);
+            PlayerState.focalLengthPx = _lsFocal;
+            console.log('[PATCH58] PlayerState.focalLengthPx restored:', PlayerState.focalLengthPx);
         } else {
-            console.warn('[PATCH58] focalLengthPx missing -- distance disabled');
+            console.warn('[PATCH58] PlayerState.focalLengthPx missing -- distance disabled');
         }
     }
-    if (camActive) return;
+    if (PlayerState.camActive) return;
     try {
-        camStream = await navigator.mediaDevices.getUserMedia({
+        PlayerState.camStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'user',
                 width: { ideal: _camConfig.videoW, max: _camConfig.videoW },
@@ -1374,14 +1372,14 @@ async function enableCamera() {
         v.setAttribute('webkit-playsinline', '');
         v.style.cssText =
             'position:fixed;left:-9999px;top:0;width:320px;height:240px;opacity:0;pointer-events:none;';
-        v.srcObject = camStream;
+        v.srcObject = PlayerState.camStream;
         document.body.appendChild(v);
         await v.play();
-        camActive = true;
+        PlayerState.camActive = true;
         (function(){
             var pv = document.getElementById('stim-cam-preview');
             if (pv) {
-                pv.srcObject = camStream;
+                pv.srcObject = PlayerState.camStream;
                 var p = pv.play();
                 if (p && p.catch) p.catch(function(){});
             }
@@ -1513,8 +1511,8 @@ function _hideDistHardBanner() {
 }
 
 function _checkHardLimit() {
-    if (curDistanceM == null) return true;
-    if (curDistanceM > 1.0) {
+    if (PlayerState.curDistanceM == null) return true;
+    if (PlayerState.curDistanceM > 1.0) {
         _showDistHardBanner();
         return false;
     }
@@ -1523,8 +1521,8 @@ function _checkHardLimit() {
 }
 
 async function processCamFrame() {
-    if (!camActive) {
-        camFrameId = null;
+    if (!PlayerState.camActive) {
+        PlayerState.camFrameId = null;
         return;
     }
     // PATCH24_GUARD: skip frames while previous detection is in flight
@@ -1553,18 +1551,18 @@ async function processCamFrame() {
             if (det && det.box) {
                 // PATCH25_BBOX: estimate IPD from face box width (~0.45 * box width)
                 const ipd = det.box.width * 0.45;
-                lastEyeDistPx = ipd;
+                PlayerState.lastEyeDistPx = ipd;
                 window._faceLostSince = 0;
                 camIndicator.textContent = '✅ Лицо';
                 _pushDetection(true);
-                if (curDistanceM != null) _lastSeenDist = curDistanceM;
+                if (PlayerState.curDistanceM != null) _lastSeenDist = PlayerState.curDistanceM;
                 // PATCH25_BBOX: blink disabled (needs landmarks)
-                if (ipd > 0 && focalLengthPx) {
-                    curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
-                    if (curDistanceM > 0.3 && curDistanceM < 5) curDistanceM = _smoothDistance(curDistanceM);
+                if (ipd > 0 && PlayerState.focalLengthPx) {
+                    PlayerState.curDistanceM = (realIPD_MM * PlayerState.focalLengthPx) / ipd / 1000;
+                    if (PlayerState.curDistanceM > 0.3 && PlayerState.curDistanceM < 5) PlayerState.curDistanceM = _smoothDistance(PlayerState.curDistanceM);
                     // PATCH91: hide on deviation >15%, cancel timers, wait stable
-                    if (PlayerState._stimulusDistance && curDistanceM && camBaseline != null) {
-                        var _dev = Math.abs((curDistanceM - PlayerState._stimulusDistance) / PlayerState._stimulusDistance * 100);
+                    if (PlayerState._stimulusDistance && PlayerState.curDistanceM && PlayerState.camBaseline != null) {
+                        var _dev = Math.abs((PlayerState.curDistanceM - PlayerState._stimulusDistance) / PlayerState._stimulusDistance * 100);
                         if (_dev > 15) {
                             if (PlayerState.responsePhaseActive || !_waitingStable) {
                                 hideStimulus();
@@ -1583,8 +1581,8 @@ async function processCamFrame() {
                         }
                     }
                     // PATCH91: watch for stability
-                    if (_waitingStable && curDistanceM) {
-                        _stableBuf.push(curDistanceM);
+                    if (_waitingStable && PlayerState.curDistanceM) {
+                        _stableBuf.push(PlayerState.curDistanceM);
                         if (_stableBuf.length > 5) _stableBuf.shift();
                         if (_stableBuf.length === 5) {
                             var _mn = Math.min.apply(null, _stableBuf);
@@ -1600,12 +1598,12 @@ async function processCamFrame() {
                         }
                     }
                     // PATCH23: redundant smoothing removed
-                    camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
+                    camIndicator.textContent = `📏 ${PlayerState.curDistanceM.toFixed(2)} м`;
                     evaluateDistance();
                 }
             } else {
                 // PATCH53_FACE_LOST: face lost >400ms during training = big lean
-                if (PlayerState.playerRunning && !PlayerState.isPaused && camBaseline != null) {
+                if (PlayerState.playerRunning && !PlayerState.isPaused && PlayerState.camBaseline != null) {
                     if (!window._faceLostSince) window._faceLostSince = performance.now();
                     var _flDur = performance.now() - window._faceLostSince;
                     if (_flDur > 1500) { // PATCH56: 1500ms for stable detection
@@ -1635,21 +1633,21 @@ async function processCamFrame() {
 // PATCH25: processBlink removed (landmarks disabled in PATCH25_BBOX)
 
 function evaluateDistance() {
-    if (!PlayerState.playerRunning || PlayerState.isPaused || curDistanceM == null) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused || PlayerState.curDistanceM == null) return;
     // PATCH43_BASELINE: delay baseline 3s to skip noisy startup frames
-    if (camBaseline == null) {
+    if (PlayerState.camBaseline == null) {
         if (!window._baselineWaitStart) window._baselineWaitStart = performance.now();
         var _bw = performance.now() - window._baselineWaitStart;
         if (_bw > 3000) {
-            camBaseline = curDistanceM;
+            PlayerState.camBaseline = PlayerState.curDistanceM;
             window._fastLeanAt = 0;
             window._deviationHistory = [];
-            console.log('[PATCH43] baseline set:', curDistanceM.toFixed(3));
+            console.log('[PATCH43] baseline set:', PlayerState.curDistanceM.toFixed(3));
         }
     }
     // PATCH44_GUARD: skip if baseline not set yet
-    if (camBaseline == null || !isFinite(camBaseline) || camBaseline <= 0.1) return;
-    const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
+    if (PlayerState.camBaseline == null || !isFinite(PlayerState.camBaseline) || PlayerState.camBaseline <= 0.1) return;
+    const dev = ((PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline) * 100;
     // PATCH27B.2: record deviation for fast-lean detection
     // PATCH29_GUARD: only track deviations during active training
     if (PlayerState.playerRunning && !PlayerState.isPaused) {
@@ -1668,42 +1666,42 @@ function evaluateDistance() {
     const upTol = userScenario?.params?.distanceToleranceIncreasePct ?? 15;
     const dnTol = userScenario?.params?.distanceToleranceDecreasePct ?? 10;
     if (dev > upTol) {
-        if (camWarnKind !== 'up') {
-            camWarnKind = 'up';
+        if (PlayerState.camWarnKind !== 'up') {
+            PlayerState.camWarnKind = 'up';
             camIndicator.style.color = '#ff6666';
             camIndicator.textContent = '📏 Не отклоняйтесь';
         }
     } else if (dev < -dnTol) {
-        if (camWarnKind !== 'down') {
-            camWarnKind = 'down';
+        if (PlayerState.camWarnKind !== 'down') {
+            PlayerState.camWarnKind = 'down';
             camIndicator.style.color = '#f59e0b';
             camIndicator.textContent = '📏 Не приближайтесь';
         }
     } else {
-        camWarnKind = null;
+        PlayerState.camWarnKind = null;
         camIndicator.style.color = '#fff';
-        camIndicator.textContent = `📏 ${curDistanceM.toFixed(2)} м`;
+        camIndicator.textContent = `📏 ${PlayerState.curDistanceM.toFixed(2)} м`;
     }
 }
 function disableCamera() {
-    if (camFrameId) {
-        clearInterval(camFrameId);
-        camFrameId = null;
+    if (PlayerState.camFrameId) {
+        clearInterval(PlayerState.camFrameId);
+        PlayerState.camFrameId = null;
     }
     _camLoopStarted = false;
-    if (camStream) {
-        camStream.getTracks().forEach((t) => t.stop());
-        camStream = null;
+    if (PlayerState.camStream) {
+        PlayerState.camStream.getTracks().forEach((t) => t.stop());
+        PlayerState.camStream = null;
     }
     const v = document.getElementById('hidden-video');
     if (v) v.remove();
-    camActive = false;
+    PlayerState.camActive = false;
     if (camIndicator) camIndicator.style.display = 'none';
 
-    curDistanceM = null;
-    camBaseline = null;
-    camWarnKind = null;
-    lastEyeDistPx = null;
+    PlayerState.curDistanceM = null;
+    PlayerState.camBaseline = null;
+    PlayerState.camWarnKind = null;
+    PlayerState.lastEyeDistPx = null;
     _blinkIsClosed = false;
     _blinkClosedSince = 0;
 }
@@ -2345,10 +2343,10 @@ function startPlayer() {
     window._distEMA = null; // PATCH42_SMOOTH
     window._reactionLog = []; // PATCH46
     window._baselineWaitStart = null; // PATCH43
-    // PATCH58: restore focalLengthPx if lost
-    if (!focalLengthPx || focalLengthPx <= 0) {
-        var _lsF2 = parseFloat(localStorage.getItem('focalLengthPx') || '0');
-        if (_lsF2 > 0) focalLengthPx = _lsF2;
+    // PATCH58: restore PlayerState.focalLengthPx if lost
+    if (!PlayerState.focalLengthPx || PlayerState.focalLengthPx <= 0) {
+        var _lsF2 = parseFloat(localStorage.getItem('PlayerState.focalLengthPx') || '0');
+        if (_lsF2 > 0) PlayerState.focalLengthPx = _lsF2;
     }
     // PATCH35_GRAPH_RESET: hard reset graph state
     graphActive = false;
@@ -3131,13 +3129,13 @@ function stopPlayer() {
     btnPlayerPause.disabled = true;
     document.body.style.background = '#0b0b0f';
     pauseModal.classList.remove('open');
-    camBaseline = null;
+    PlayerState.camBaseline = null;
     PlayerState._stimulusDistance = null;
     _waitingStable = false; // PATCH91
     _stableSince = 0;
     _stableBuf = [];
     PlayerState._stimulusDistance = null; // PATCH_CLEAN
-    camWarnKind = null;
+    PlayerState.camWarnKind = null;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
     window._distEMA = null; // PATCH42_SMOOTH
@@ -3184,7 +3182,7 @@ async function saveResult(nodeId, reactionTimeMs, isCorrect) {
             node_id: nodeId || 'user_training',
             response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
             is_correct: isCorrect,
-            distance_m: (typeof curDistanceM !== 'undefined' && curDistanceM != null) ? curDistanceM : null, // PATCH31C2B_APPLIED
+            distance_m: (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null) ? PlayerState.curDistanceM : null, // PATCH31C2B_APPLIED
             created_at: new Date().toISOString()
         });
     } catch (e) {
@@ -3421,11 +3419,11 @@ else init();
         var faceText = face ? face.textContent : '';
         // PATCH55_FIX: player uses 📏 when face is OK; ❌ or 📷 means lost
         var hasFace = faceText.indexOf('📏') !== -1 || faceText.indexOf('✅') !== -1; // PATCH58: ✅ or 📏
-        var dev = (typeof camBaseline !== 'undefined' && camBaseline && typeof curDistanceM !== 'undefined' && curDistanceM)
-            ? ((curDistanceM - camBaseline) / camBaseline * 100)
+        var dev = (typeof PlayerState.camBaseline !== 'undefined' && PlayerState.camBaseline && typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM)
+            ? ((PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline * 100)
             : null;
-        var dist = (typeof curDistanceM !== 'undefined' && curDistanceM) ? curDistanceM.toFixed(2) : '—';
-        var base = (typeof camBaseline !== 'undefined' && camBaseline) ? camBaseline.toFixed(2) : '—';
+        var dist = (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM) ? PlayerState.curDistanceM.toFixed(2) : '—';
+        var base = (typeof PlayerState.camBaseline !== 'undefined' && PlayerState.camBaseline) ? PlayerState.camBaseline.toFixed(2) : '—';
 
         var status, border;
         var faceLostMs = (typeof window._faceLostSince !== 'undefined' && window._faceLostSince)

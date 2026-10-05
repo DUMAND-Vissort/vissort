@@ -23,6 +23,16 @@
         lastDirection: null,
         _stimulusDistance: null,
 
+        // Камера
+        camStream: null,
+        camActive: false,
+        camFrameId: null,
+        focalLengthPx: null,
+        lastEyeDistPx: null,
+        curDistanceM: null,
+        camBaseline: null,
+        camWarnKind: null,
+
         // Чтение
         readingPage: 0,
         readingTotalPages: 1,
@@ -81,6 +91,16 @@
         seriesStep: 0,
         noAnswerSeriesStreak: 0
     };
+
+    // Инициализация focalLengthPx из localStorage (как было в оригинале)
+    (function _loadFocalLength() {
+        try {
+            const stored = parseFloat(localStorage.getItem('focalLengthPx') || '0');
+            if (stored > 0) {
+                global.PlayerState.focalLengthPx = stored;
+            }
+        } catch (_) {}
+    })();
 
     console.log('[player-state] module installed');
 })(window);
