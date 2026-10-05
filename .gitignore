@@ -27,3 +27,6 @@ supabase/config.toml
 fix.ps1
 
 patch*.cjs
+
+# Playwright test credentials
+.env.test
