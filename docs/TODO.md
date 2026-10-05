@@ -307,3 +307,27 @@ Write-Host "OK: camera section added to TODO" -ForegroundColor Green
 - [ ] Ограничить V в редакторе до 1.0 (инспектор узлов + генератор)
 - [ ] Валидация V в плеере: `Math.max(0.1, Math.min(1.0, V))`
 - [ ] При V > 0.8 показывать админу предупреждение: "стимул < 5 px, нужна дистанция 1.5+ м"
+
+## 🔧 РЕФАКТОРИНГ player-runtime.js (Фаза 1)
+
+**Прогресс:** 3 из 8 шагов
+
+| Шаг | Модуль | Статус |
+|---|---|---|
+| 1 | player-utils.js (rate-limit, validation, distance) | ✅ |
+| 2 | player-dist-warning.js (UI дистанции) | ✅ |
+| 3 | player-reading.js (фон чтения) | ✅ |
+| 4 | player-camera.js (камера целиком) | ⏳ |
+| 5 | player-animation.js (анимации стимула) | ⏳ |
+| 6 | player-invalid-detection.js (детекция наклона) | ⏳ |
+| 7 | player-graph.js (граф) | ⏳ |
+| 8 | player-state.js (фундамент — до шагов 4–7) | ⏳ |
+
+**Созданные модули:**
+- `player-utils.js` — `window.PlayerUtils` (checkRateLimit, validateScenario, effectiveDistance, smoothDistance)
+- `player-dist-warning.js` — `window.PlayerDistWarning` (showDistWarning, showDistHardBanner, hideDistHardBanner)
+- `player-reading.js` — `window.PlayerReading` (applyBackground, startDynamicBg, stopDynamicBg)
+
+**Файл `player-runtime.js`:** 3560 → ~3420 строк.
+
+**Следующий шаг:** `player-state.js` — вынести все глобальные переменные плеера в единый объект `window.PlayerState`. Без этого шаги 4–7 невыполнимы.
