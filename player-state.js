@@ -23,6 +23,38 @@
         lastDirection: null,
         _stimulusDistance: null,
 
+        // Чтение
+        readingPage: 0,
+        readingTotalPages: 1,
+        readingPaused: false,
+        readingBgAnimId: null,
+        readingBgAnimStart: null,
+        readingBgAnimPausedAt: null,
+
+        // Анимации стимула
+        singleStimAnimId: null,
+        singleStimAnimStart: null,
+        singleBgAnimId: null,
+        singleBgAnimStart: null,
+
+        // Анимации круга
+        _circleAnimId: null,
+        _circleAnimStart: null,
+        _circleInnerPhases: null,
+        _circleOuterPhases: null,
+        _circleInnerDurationMs: 10000,
+        _circleOuterDurationMs: 10000,
+        _circleInnerLoop: true,
+        _circleOuterLoop: true,
+
+        // Анимации периферии
+        _periAnimId: null,
+        _periAnimStart: null,
+
+        // Анимации моргания
+        _blinkTimerId: null,
+        _blinkLocalState: { tick: 0, current: 'A' },
+
         // Сравнение
         compareMode: 'direction',
         gridX: 3,

@@ -125,31 +125,20 @@ window._reactionReport = function() {
 // PATCH_PHASE1: moved to PlayerState (group: compare)
 let _findSameState = null;
 
-let singleStimAnimId = null,
-    singleBgAnimId = null;
-let singleStimAnimStart = null,
-    singleBgAnimStart = null;
-let _circleAnimId = null,
-    _circleAnimStart = null;
-let _circleInnerPhases = null,
-    _circleOuterPhases = null;
-let _circleInnerDurationMs = 10000,
-    _circleOuterDurationMs = 10000;
-let _circleInnerLoop = true,
-    _circleOuterLoop = true;
-let _periAnimId = null,
-    _periAnimStart = null;
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
 
 // --- МОРГАНИЕ ---
-let _blinkTimerId = null;
-let _blinkLocalState = { tick: 0, current: 'A' };
+// PATCH_PHASE1: moved to PlayerState (group: animations)
+// PATCH_PHASE1: moved to PlayerState (group: animations)
 
-let readingPage = 0,
-    readingTotalPages = 1,
-    readingPaused = false;
-let readingBgAnimId = null,
-    readingBgAnimStart = null,
-    readingBgAnimPausedAt = null;
+// PATCH_PHASE1: moved to PlayerState (group: reading)
+// PATCH_PHASE1: moved to PlayerState (group: reading)
 
 let camStream = null,
     camActive = false,
@@ -255,11 +244,11 @@ function _abortCurrentStimulus(reason) {
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
 
     // Freeze animations by cancelling RAFs — last frame stays on screen
-    if (singleStimAnimId) { cancelAnimationFrame(singleStimAnimId); singleStimAnimId = null; }
-    if (singleBgAnimId)   { cancelAnimationFrame(singleBgAnimId);   singleBgAnimId = null; }
-    if (_circleAnimId)    { cancelAnimationFrame(_circleAnimId);    _circleAnimId = null; }
-    if (_periAnimId)      { cancelAnimationFrame(_periAnimId);      _periAnimId = null; }
-    if (_blinkTimerId)    { clearTimeout(_blinkTimerId);            _blinkTimerId = null; }
+    if (PlayerState.singleStimAnimId) { cancelAnimationFrame(PlayerState.singleStimAnimId); PlayerState.singleStimAnimId = null; }
+    if (PlayerState.singleBgAnimId)   { cancelAnimationFrame(PlayerState.singleBgAnimId);   PlayerState.singleBgAnimId = null; }
+    if (PlayerState._circleAnimId)    { cancelAnimationFrame(PlayerState._circleAnimId);    PlayerState._circleAnimId = null; }
+    if (PlayerState._periAnimId)      { cancelAnimationFrame(PlayerState._periAnimId);      PlayerState._periAnimId = null; }
+    if (PlayerState._blinkTimerId)    { clearTimeout(PlayerState._blinkTimerId);            PlayerState._blinkTimerId = null; }
     // NOTE: do NOT call hideStimulus / stopSingleStimAnimation / etc. — stimulus stays frozen.
 
     PlayerState.responsePhaseActive = false;
@@ -904,24 +893,24 @@ function startSingleStimAnimation(p) {
     const loop = p.singleStimLoop === true;
     const first = ph[0].from;
     setStimColorRGB(first.r, first.g, first.b);
-    singleStimAnimStart = null;
+    PlayerState.singleStimAnimStart = null;
     function tick(now) {
         if (!PlayerState.playerRunning || PlayerState.isPaused) {
-            singleStimAnimId = null;
+            PlayerState.singleStimAnimId = null;
             return;
         }
-        if (singleStimAnimStart === null) singleStimAnimStart = now;
-        let el = Math.max(0, now - singleStimAnimStart);
+        if (PlayerState.singleStimAnimStart === null) PlayerState.singleStimAnimStart = now;
+        let el = Math.max(0, now - PlayerState.singleStimAnimStart);
         let t = el / cycMs;
         if (t >= 1) {
             if (loop) {
-                singleStimAnimStart += Math.floor(t) * cycMs;
-                el = Math.max(0, now - singleStimAnimStart);
+                PlayerState.singleStimAnimStart += Math.floor(t) * cycMs;
+                el = Math.max(0, now - PlayerState.singleStimAnimStart);
                 t = el / cycMs;
             } else {
                 const l = ph[cnt - 1].to;
                 setStimColorRGB(l.r, l.g, l.b);
-                singleStimAnimId = null;
+                PlayerState.singleStimAnimId = null;
                 return;
             }
         }
@@ -930,19 +919,19 @@ function startSingleStimAnimation(p) {
         const pp = Math.max(0, Math.min(1, t * cnt - pi));
         const P = ph[pi];
         if (!P) {
-            singleStimAnimId = null;
+            PlayerState.singleStimAnimId = null;
             return;
         }
         const cur = lerpColor(P.from, P.to, pp);
         setStimColorRGB(cur.r, cur.g, cur.b);
-        singleStimAnimId = requestAnimationFrame(tick);
+        PlayerState.singleStimAnimId = requestAnimationFrame(tick);
     }
-    singleStimAnimId = requestAnimationFrame(tick);
+    PlayerState.singleStimAnimId = requestAnimationFrame(tick);
 }
 function stopSingleStimAnimation() {
-    if (singleStimAnimId) {
-        cancelAnimationFrame(singleStimAnimId);
-        singleStimAnimId = null;
+    if (PlayerState.singleStimAnimId) {
+        cancelAnimationFrame(PlayerState.singleStimAnimId);
+        PlayerState.singleStimAnimId = null;
     }
 }
 
@@ -962,24 +951,24 @@ function startSingleBgAnimation(p) {
     const loop = p.singleBgLoop === true;
     const first = ph[0].from;
     stimArea.style.backgroundColor = `rgb(${first.r},${first.g},${first.b})`;
-    singleBgAnimStart = null;
+    PlayerState.singleBgAnimStart = null;
     function tick(now) {
         if (!PlayerState.playerRunning || PlayerState.isPaused) {
-            singleBgAnimId = null;
+            PlayerState.singleBgAnimId = null;
             return;
         }
-        if (singleBgAnimStart === null) singleBgAnimStart = now;
-        let el = Math.max(0, now - singleBgAnimStart);
+        if (PlayerState.singleBgAnimStart === null) PlayerState.singleBgAnimStart = now;
+        let el = Math.max(0, now - PlayerState.singleBgAnimStart);
         let t = el / cycMs;
         if (t >= 1) {
             if (loop) {
-                singleBgAnimStart += Math.floor(t) * cycMs;
-                el = Math.max(0, now - singleBgAnimStart);
+                PlayerState.singleBgAnimStart += Math.floor(t) * cycMs;
+                el = Math.max(0, now - PlayerState.singleBgAnimStart);
                 t = el / cycMs;
             } else {
                 const l = ph[cnt - 1].to;
                 stimArea.style.backgroundColor = `rgb(${l.r},${l.g},${l.b})`;
-                singleBgAnimId = null;
+                PlayerState.singleBgAnimId = null;
                 return;
             }
         }
@@ -988,19 +977,19 @@ function startSingleBgAnimation(p) {
         const pp = Math.max(0, Math.min(1, t * cnt - pi));
         const P = ph[pi];
         if (!P) {
-            singleBgAnimId = null;
+            PlayerState.singleBgAnimId = null;
             return;
         }
         const cur = lerpColor(P.from, P.to, pp);
         stimArea.style.backgroundColor = `rgb(${cur.r},${cur.g},${cur.b})`;
-        singleBgAnimId = requestAnimationFrame(tick);
+        PlayerState.singleBgAnimId = requestAnimationFrame(tick);
     }
-    singleBgAnimId = requestAnimationFrame(tick);
+    PlayerState.singleBgAnimId = requestAnimationFrame(tick);
 }
 function stopSingleBgAnimation() {
-    if (singleBgAnimId) {
-        cancelAnimationFrame(singleBgAnimId);
-        singleBgAnimId = null;
+    if (PlayerState.singleBgAnimId) {
+        cancelAnimationFrame(PlayerState.singleBgAnimId);
+        PlayerState.singleBgAnimId = null;
     }
 }
 
@@ -1015,7 +1004,7 @@ function startBlinkAnimation(opts) {
     const duty = Math.max(0.05, Math.min(0.95, opts.duty ?? 0.5));
     const count = Math.max(0, opts.count || 0);
 
-    _blinkLocalState = { tick: 0, current: 'A' };
+    PlayerState._blinkLocalState = { tick: 0, current: 'A' };
 
     function apply(color) {
         if (target === 'stim' || target === 'both') setStimColorRGB(color.r, color.g, color.b);
@@ -1025,30 +1014,30 @@ function startBlinkAnimation(opts) {
 
     function tick() {
         if (!PlayerState.playerRunning || PlayerState.isPaused) {
-            _blinkTimerId = null;
+            PlayerState._blinkTimerId = null;
             return;
         }
-        const isA = _blinkLocalState.current === 'A';
+        const isA = PlayerState._blinkLocalState.current === 'A';
         apply(isA ? A : B);
-        _blinkLocalState.tick++;
-        if (count > 0 && _blinkLocalState.tick >= count) {
-            _blinkTimerId = null;
+        PlayerState._blinkLocalState.tick++;
+        if (count > 0 && PlayerState._blinkLocalState.tick >= count) {
+            PlayerState._blinkTimerId = null;
             return;
         }
         const nextIsA = !isA;
         const delay = nextIsA ? intervalMs * duty : intervalMs * (1 - duty);
-        _blinkLocalState.current = nextIsA ? 'A' : 'B';
-        _blinkTimerId = setTimeout(tick, Math.max(20, delay));
+        PlayerState._blinkLocalState.current = nextIsA ? 'A' : 'B';
+        PlayerState._blinkTimerId = setTimeout(tick, Math.max(20, delay));
     }
-    _blinkTimerId = setTimeout(tick, 0);
+    PlayerState._blinkTimerId = setTimeout(tick, 0);
 }
 
 function stopBlinkAnimation() {
-    if (_blinkTimerId) {
-        clearTimeout(_blinkTimerId);
-        _blinkTimerId = null;
+    if (PlayerState._blinkTimerId) {
+        clearTimeout(PlayerState._blinkTimerId);
+        PlayerState._blinkTimerId = null;
     }
-    _blinkLocalState = { tick: 0, current: 'A' };
+    PlayerState._blinkLocalState = { tick: 0, current: 'A' };
 }
 
 // PATCH28_PHASE3: removed buildCirclePhases (now in VissortCore)
@@ -1060,25 +1049,25 @@ function startCircleAnimation(node) {
     if (grads.length < 2) return;
     const oG = grads[0],
         iG = grads[1];
-    _circleInnerPhases = buildCirclePhases(
+    PlayerState._circleInnerPhases = buildCirclePhases(
         node.circleInnerColor1,
         node.circleInnerMidEnabled,
         node.circleInnerColor3,
         node.circleInnerColor2,
         node.circleInnerReverse
     );
-    _circleOuterPhases = buildCirclePhases(
+    PlayerState._circleOuterPhases = buildCirclePhases(
         node.circleOuterColor1,
         node.circleOuterMidEnabled,
         node.circleOuterColor3,
         node.circleOuterColor2,
         node.circleOuterReverse
     );
-    _circleInnerDurationMs = Math.max(200, node.circleInnerDuration || 10000);
-    _circleOuterDurationMs = Math.max(200, node.circleOuterDuration || 10000);
-    _circleInnerLoop = node.circleInnerLoop !== false;
-    _circleOuterLoop = node.circleOuterLoop !== false;
-    _circleAnimStart = null;
+    PlayerState._circleInnerDurationMs = Math.max(200, node.circleInnerDuration || 10000);
+    PlayerState._circleOuterDurationMs = Math.max(200, node.circleOuterDuration || 10000);
+    PlayerState._circleInnerLoop = node.circleInnerLoop !== false;
+    PlayerState._circleOuterLoop = node.circleOuterLoop !== false;
+    PlayerState._circleAnimStart = null;
     function paint(g, phases, cyc, el) {
         if (!g) return;
         const cnt = phases.length;
@@ -1100,30 +1089,30 @@ function startCircleAnimation(node) {
     }
     function tick(now) {
         if (!PlayerState.playerRunning || PlayerState.isPaused) {
-            _circleAnimId = null;
+            PlayerState._circleAnimId = null;
             return;
         }
-        if (_circleAnimStart === null) _circleAnimStart = now;
-        const el = now - _circleAnimStart;
-        const iD = !_circleInnerLoop && el > _circleInnerDurationMs;
-        const oD = !_circleOuterLoop && el > _circleOuterDurationMs;
+        if (PlayerState._circleAnimStart === null) PlayerState._circleAnimStart = now;
+        const el = now - PlayerState._circleAnimStart;
+        const iD = !PlayerState._circleInnerLoop && el > PlayerState._circleInnerDurationMs;
+        const oD = !PlayerState._circleOuterLoop && el > PlayerState._circleOuterDurationMs;
         if (iD && oD) {
-            _circleAnimId = null;
+            PlayerState._circleAnimId = null;
             return;
         }
-        if (!iD) paint(iG, _circleInnerPhases, _circleInnerDurationMs, el);
-        if (!oD) paint(oG, _circleOuterPhases, _circleOuterDurationMs, el);
-        _circleAnimId = requestAnimationFrame(tick);
+        if (!iD) paint(iG, PlayerState._circleInnerPhases, PlayerState._circleInnerDurationMs, el);
+        if (!oD) paint(oG, PlayerState._circleOuterPhases, PlayerState._circleOuterDurationMs, el);
+        PlayerState._circleAnimId = requestAnimationFrame(tick);
     }
-    _circleAnimId = requestAnimationFrame(tick);
+    PlayerState._circleAnimId = requestAnimationFrame(tick);
 }
 function stopCircleAnimation() {
-    if (_circleAnimId) {
-        cancelAnimationFrame(_circleAnimId);
-        _circleAnimId = null;
+    if (PlayerState._circleAnimId) {
+        cancelAnimationFrame(PlayerState._circleAnimId);
+        PlayerState._circleAnimId = null;
     }
-    _circleInnerPhases = null;
-    _circleOuterPhases = null;
+    PlayerState._circleInnerPhases = null;
+    PlayerState._circleOuterPhases = null;
 }
 
 function getPeripheralLayer() {
@@ -1142,11 +1131,11 @@ function clearPeripheralLayer() {
     if (l) l.innerHTML = '';
 }
 function stopPeripheralAnimation() {
-    if (_periAnimId) {
-        cancelAnimationFrame(_periAnimId);
-        _periAnimId = null;
+    if (PlayerState._periAnimId) {
+        cancelAnimationFrame(PlayerState._periAnimId);
+        PlayerState._periAnimId = null;
     }
-    _periAnimStart = null;
+    PlayerState._periAnimStart = null;
     clearPeripheralLayer();
 }
 function buildPeripheralDots(node) {
@@ -1192,17 +1181,17 @@ function buildPeripheralDots(node) {
     }
     draw(0);
     if (node.periMotion === 'static') return;
-    _periAnimStart = null;
+    PlayerState._periAnimStart = null;
     function tick(now) {
         if (!PlayerState.playerRunning || PlayerState.isPaused) {
-            _periAnimId = null;
+            PlayerState._periAnimId = null;
             return;
         }
-        if (_periAnimStart === null) _periAnimStart = now;
-        draw(now - _periAnimStart);
-        _periAnimId = requestAnimationFrame(tick);
+        if (PlayerState._periAnimStart === null) PlayerState._periAnimStart = now;
+        draw(now - PlayerState._periAnimStart);
+        PlayerState._periAnimId = requestAnimationFrame(tick);
     }
-    _periAnimId = requestAnimationFrame(tick);
+    PlayerState._periAnimId = requestAnimationFrame(tick);
 }
 
 function buildDefocusFrame(node, stimHtml) {
@@ -2282,7 +2271,7 @@ function playGraphReading(node) {
     responseButtons.style.display = 'none';
     readingViewportEl.style.display = 'block';
     readingViewportEl.scrollLeft = 0;
-    readingPaused = false;
+    PlayerState.readingPaused = false;
     const pp = $('reading-play-pause');
     if (pp) pp.textContent = '⏸ Пауза';
     readingContentEl.style.opacity = '1';
@@ -2294,8 +2283,8 @@ function playGraphReading(node) {
     const dCalc = _effectiveDistance(node.readingDistance || 1) // PATCH32_6_FIX;
     readingContentEl.style.fontSize = acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, screenPPI) + 'px';
     setTimeout(() => {
-        readingTotalPages = calcReadingTotalPages();
-        readingPage = 0;
+        PlayerState.readingTotalPages = calcReadingTotalPages();
+        PlayerState.readingPage = 0;
         scrollReadingToPage(0);
     }, 80);
     readingToolbarEl.style.display = 'flex';
@@ -2985,7 +2974,7 @@ function startReading() {
     responseButtons.style.display = 'none';
     readingViewportEl.style.display = 'block';
     readingViewportEl.scrollLeft = 0;
-    readingPaused = false;
+    PlayerState.readingPaused = false;
     const pp = $('reading-play-pause');
     if (pp) pp.textContent = '⏸ Пауза';
     readingContentEl.style.opacity = '1';
@@ -2994,8 +2983,8 @@ function startReading() {
     const dCalc = _effectiveDistance(p.readingDistance || 1) // PATCH32_6_FIX;
     readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, dCalc, screenPPI) + 'px';
     setTimeout(() => {
-        readingTotalPages = calcReadingTotalPages();
-        readingPage = 0;
+        PlayerState.readingTotalPages = calcReadingTotalPages();
+        PlayerState.readingPage = 0;
         scrollReadingToPage(0);
     }, 80);
     readingToolbarEl.style.display = 'flex';
@@ -3023,22 +3012,22 @@ function calcReadingTotalPages() {
     return Math.max(1, Math.round(readingContentEl.scrollWidth / W));
 }
 function scrollReadingToPage(page) {
-    readingTotalPages = calcReadingTotalPages();
-    readingPage = Math.max(0, Math.min(page, readingTotalPages - 1));
-    readingViewportEl.scrollLeft = readingPage * readingViewportEl.clientWidth;
+    PlayerState.readingTotalPages = calcReadingTotalPages();
+    PlayerState.readingPage = Math.max(0, Math.min(page, PlayerState.readingTotalPages - 1));
+    readingViewportEl.scrollLeft = PlayerState.readingPage * readingViewportEl.clientWidth;
     const info = $('reading-page-info');
-    if (info) info.textContent = `Стр. ${readingPage + 1} / ${readingTotalPages}`;
+    if (info) info.textContent = `Стр. ${PlayerState.readingPage + 1} / ${PlayerState.readingTotalPages}`;
 }
 function prevReadingPage() {
-    if (readingPage > 0) scrollReadingToPage(readingPage - 1);
+    if (PlayerState.readingPage > 0) scrollReadingToPage(PlayerState.readingPage - 1);
 }
 function nextReadingPage() {
-    if (readingPage < readingTotalPages - 1) scrollReadingToPage(readingPage + 1);
+    if (PlayerState.readingPage < PlayerState.readingTotalPages - 1) scrollReadingToPage(PlayerState.readingPage + 1);
 }
 function toggleReadingPause() {
-    readingPaused = !readingPaused;
+    PlayerState.readingPaused = !PlayerState.readingPaused;
     const b = $('reading-play-pause');
-    if (readingPaused) {
+    if (PlayerState.readingPaused) {
         readingContentEl.style.opacity = '0';
         if (b) b.textContent = '▶ Чтение';
     } else {
@@ -3052,7 +3041,7 @@ function applyReadingBackground(p) {
 }
 // PATCH_PHASE1: вынесено в player-reading.js
 function startReadingDynamicBg(p) {
-    window.PlayerReading.startDynamicBg(p, readingViewportEl, () => readingPaused);
+    window.PlayerReading.startDynamicBg(p, readingViewportEl, () => PlayerState.readingPaused);
 }
 // PATCH_PHASE1: вынесено в player-reading.js
 function stopReadingDynamicBg() {
@@ -3294,7 +3283,7 @@ function init() {
         const d = userScenario?.params?.readingDistance || 1;
         readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
         setTimeout(() => {
-            readingTotalPages = calcReadingTotalPages();
+            PlayerState.readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
         }, 60);
     });
@@ -3303,7 +3292,7 @@ function init() {
         const d = userScenario?.params?.readingDistance || 1;
         readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
         setTimeout(() => {
-            readingTotalPages = calcReadingTotalPages();
+            PlayerState.readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
         }, 60);
     });
@@ -3316,10 +3305,10 @@ function init() {
             const W = readingViewportEl.clientWidth;
             if (W <= 0) return;
             const np = Math.round(readingViewportEl.scrollLeft / W);
-            if (np !== readingPage) {
-                readingPage = Math.max(0, Math.min(np, readingTotalPages - 1));
+            if (np !== PlayerState.readingPage) {
+                PlayerState.readingPage = Math.max(0, Math.min(np, PlayerState.readingTotalPages - 1));
                 const info = $('reading-page-info');
-                if (info) info.textContent = `Стр. ${readingPage + 1} / ${readingTotalPages}`;
+                if (info) info.textContent = `Стр. ${PlayerState.readingPage + 1} / ${PlayerState.readingTotalPages}`;
             }
         }, 100);
     });
