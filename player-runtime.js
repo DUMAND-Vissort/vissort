@@ -105,11 +105,11 @@ window._reactionReport = function() {
 // PATCH_PHASE1: moved to PlayerState
 // PATCH_PHASE1: moved to PlayerState
 // PATCH_PHASE1: moved to PlayerState
-let responseStartTime = 0;
-let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-let _stimulusDistance = null; // PATCH_CLEAN
-let currentCorrectDirection = null;
-let lastDirection = null;
+// PATCH_PHASE1: moved to PlayerState (group: answers)
+// PATCH_PHASE1: moved to PlayerState (group: answers)
+// PATCH_PHASE1: moved to PlayerState (group: answers)
+// PATCH_PHASE1: moved to PlayerState (group: answers)
+// PATCH_PHASE1: moved to PlayerState (group: answers)
 
 // PATCH_PHASE1: moved to PlayerState (group: series)
 // PATCH_PHASE1: moved to PlayerState (group: series)
@@ -272,16 +272,16 @@ function _abortCurrentStimulus(reason) {
     _answerBlocked = true;
 
     // Discard answer (unless already counted in same ms)
-    if (lastResponse && lastResponse.answered) {
+    if (PlayerState.lastResponse && PlayerState.lastResponse.answered) {
         console.log('[abort] late answer discarded');
     }
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+    PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
 
     // Enter waiting-stable state
     _waitingStable = true;
     _stableSince = 0;
     _stableBuf = [];
-    // keep _stimulusDistance for reference; will be updated in _resumeAfterStable
+    // keep PlayerState._stimulusDistance for reference; will be updated in _resumeAfterStable
 }
 
 // Called after distance is stable (5 frames within 3%).
@@ -291,7 +291,7 @@ function _resumeAfterStable() {
     _answerBlocked = false; // PATCH31C2A_APPLIED
     _stableSince = 0;
     _stableBuf = [];
-    _stimulusDistance = curDistanceM;
+    PlayerState._stimulusDistance = curDistanceM;
     console.log('[abort] stable at ' + curDistanceM.toFixed(2) + 'm -- resuming');
 
     // Prefer current graph node; fallback to flat autotraining
@@ -1333,7 +1333,7 @@ function applyRandomStimulusPosition(size) {
 function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
-    _stimulusDistance = curDistanceM; // PATCH23: РѕРґРЅРѕ РїСЂРёСЃРІР°РёРІР°РЅРёРµ
+    PlayerState._stimulusDistance = curDistanceM; // PATCH23: РѕРґРЅРѕ РїСЂРёСЃРІР°РёРІР°РЅРёРµ
 }
 function hideStimulus() {
     stopSingleStimAnimation();
@@ -1577,8 +1577,8 @@ async function processCamFrame() {
                     curDistanceM = (realIPD_MM * focalLengthPx) / ipd / 1000;
                     if (curDistanceM > 0.3 && curDistanceM < 5) curDistanceM = _smoothDistance(curDistanceM);
                     // PATCH91: hide on deviation >15%, cancel timers, wait stable
-                    if (_stimulusDistance && curDistanceM && camBaseline != null) {
-                        var _dev = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
+                    if (PlayerState._stimulusDistance && curDistanceM && camBaseline != null) {
+                        var _dev = Math.abs((curDistanceM - PlayerState._stimulusDistance) / PlayerState._stimulusDistance * 100);
                         if (_dev > 15) {
                             if (PlayerState.responsePhaseActive || !_waitingStable) {
                                 hideStimulus();
@@ -1820,7 +1820,7 @@ function playNextGraphNode() {
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
     PlayerState.seriesStep = 0;
     PlayerState.noAnswerSeriesStreak = 0;
-    lastDirection = null;
+    PlayerState.lastDirection = null;
     PlayerState.currentSingleCell = { row: 0, col: 0 };
     gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
     updateCounters();
@@ -1840,8 +1840,8 @@ function playGraphStimulus(node) {
     _answerBlocked = false; // PATCH31C2A_APPLIED: safety reset before new cycle
     // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
     PlayerState.responsePhaseActive = true;
-    responseStartTime = performance.now();
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+    PlayerState.responseStartTime = performance.now();
+    PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
         gIndex++;
         playNextGraphNode();
@@ -1856,10 +1856,10 @@ function playGraphStimulus(node) {
         const d = ['вверх', 'вниз', 'влево', 'вправо'];
         do {
             dir = d[Math.floor(Math.random() * d.length)];
-        } while (dir === lastDirection);
+        } while (dir === PlayerState.lastDirection);
     } else dir = node.stimDirectionFixed || 'вверх';
-    lastDirection = dir;
-    currentCorrectDirection = dir;
+    PlayerState.lastDirection = dir;
+    PlayerState.currentCorrectDirection = dir;
     // PATCH34: enable phase BEFORE rendering
     const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
     const pCalc = node.stimPPI || screenPPI || 96;
@@ -1891,9 +1891,9 @@ function playGraphStimulus(node) {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
+    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
     } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
+    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
     if (node.singleGridEnabled) {
         const gx = node.singleGridX || 1,
             gy = node.singleGridY || 1;
@@ -1953,8 +1953,8 @@ function playGraphStimulus(node) {
         stopCircleAnimation();
         stopPeripheralAnimation();
         stopBlinkAnimation();
-        if (lastResponse.answered) {
-            if (lastResponse.isCorrect) PlayerState.seriesCorrect++;
+        if (PlayerState.lastResponse.answered) {
+            if (PlayerState.lastResponse.isCorrect) PlayerState.seriesCorrect++;
             else PlayerState.seriesIncorrect++;
             PlayerState.seriesStep++; // PATCH31C1_APPLIED: only answers count
         } else {
@@ -2007,13 +2007,13 @@ function finishGraphStimulusSeries(node) {
         }
     }
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
-    lastDirection = null;
+    PlayerState.lastDirection = null;
     updateCounters();
     // PATCH48_NO_AVG: report disabled, per-answer log only
     // PATCH35: reaction time aggregate
     try {
         if (!window._reactionTimes) window._reactionTimes = [];
-        var _rt = lastResponse && lastResponse.reactionTimeMs;
+        var _rt = PlayerState.lastResponse && PlayerState.lastResponse.reactionTimeMs;
         if (_rt != null) window._reactionTimes.push(_rt);
         var _recent = window._reactionTimes.slice(-20);
         var _avg = _recent.reduce(function(a,b){return a+b;},0) / _recent.length;
@@ -2043,8 +2043,8 @@ function handleGraphDirectionAnswer(dir) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2053,7 +2053,7 @@ function handleGraphDirectionAnswer(dir) {
         return;
     }
 
-    const ok = dir === currentCorrectDirection;
+    const ok = dir === PlayerState.currentCorrectDirection;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
@@ -2065,15 +2065,15 @@ function handleGraphDirectionAnswer(dir) {
     try { stopCircleAnimation(); } catch(e) {}
     try { stopPeripheralAnimation(); } catch(e) {}
     try { stopBlinkAnimation(); } catch(e) {}
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => {
         document.body.style.background = '#0b0b0f';
     }, 200);
-    saveResult(gCurrentNodeId || 'graph_single', lastResponse.reactionTimeMs, ok);
+    saveResult(gCurrentNodeId || 'graph_single', PlayerState.lastResponse.reactionTimeMs, ok);
 
     // PATCH35B_APPLIED: advance series immediately
     if (ok) PlayerState.seriesCorrect++; else PlayerState.seriesIncorrect++;
@@ -2135,7 +2135,7 @@ function playGraphCompareRound(node) {
     const dur = cellParams[0]?.duration || node.duration || PlayerState.currentDuration;
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
-            lastResponse = { answered: false, isCorrect: false };
+            PlayerState.lastResponse = { answered: false, isCorrect: false };
             // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
             PlayerState.seriesNoAnswer++;
             updateCounters();
@@ -2161,8 +2161,8 @@ function handleGraphCompareAnswer(answer) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2183,8 +2183,8 @@ function handleGraphCompareAnswer(answer) {
     try { stopCircleAnimation(); } catch(e) {}
     try { stopPeripheralAnimation(); } catch(e) {}
     try { stopBlinkAnimation(); } catch(e) {}
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -2199,7 +2199,7 @@ function processGraphCompareAnswer(isCorrect) {
     else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
-    saveResult(gCurrentNodeId || 'graph_compare', lastResponse.reactionTimeMs, isCorrect);
+    saveResult(gCurrentNodeId || 'graph_compare', PlayerState.lastResponse.reactionTimeMs, isCorrect);
     const node = gGetNode(gCurrentNodeId);
     if (!node) {
         gIndex++;
@@ -2380,7 +2380,7 @@ function startPlayer() {
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
     PlayerState.seriesStep = 0;
     PlayerState.noAnswerSeriesStreak = 0;
-    lastDirection = null;
+    PlayerState.lastDirection = null;
     PlayerState.currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
@@ -2430,8 +2430,8 @@ function showNextStimulus() {
     if (_waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
     // PATCH38_EARLY_PHASE: enable response phase immediately
     PlayerState.responsePhaseActive = true;
-    responseStartTime = performance.now();
-    lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+    PlayerState.responseStartTime = performance.now();
+    PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const p = userScenario?.params || {};
     if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishSeries();
@@ -2442,10 +2442,10 @@ function showNextStimulus() {
         const d = ['вверх', 'вниз', 'влево', 'вправо'];
         do {
             dir = d[Math.floor(Math.random() * d.length)];
-        } while (dir === lastDirection);
+        } while (dir === PlayerState.lastDirection);
     } else dir = 'вверх';
-    lastDirection = dir;
-    currentCorrectDirection = dir;
+    PlayerState.lastDirection = dir;
+    PlayerState.currentCorrectDirection = dir;
     // PATCH35: enable phase AND start timer BEFORE render
     const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
     const eff = acuityToSizePx(PlayerState.currentAcuity, dCalc, screenPPI);
@@ -2475,9 +2475,9 @@ function showNextStimulus() {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, PlayerState.currentBgColor);
-    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
+    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
     } else displayStimulus(svgData.html, PlayerState.currentBgColor);
-    responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
+    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
     if (p.singleGridEnabled) {
         const gx = p.singleGridX || 1,
             gy = p.singleGridY || 1;
@@ -2536,8 +2536,8 @@ function showNextStimulus() {
         stopCircleAnimation();
         stopPeripheralAnimation();
         stopBlinkAnimation();
-        if (lastResponse.answered) {
-            if (lastResponse.isCorrect) PlayerState.seriesCorrect++;
+        if (PlayerState.lastResponse.answered) {
+            if (PlayerState.lastResponse.isCorrect) PlayerState.seriesCorrect++;
             else PlayerState.seriesIncorrect++;
             PlayerState.seriesStep++; // PATCH31C1_APPLIED: only answers count
         } else {
@@ -2590,7 +2590,7 @@ function finishSeries() {
     }
     PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, screenPPI);
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
-    lastDirection = null;
+    PlayerState.lastDirection = null;
     updateCounters();
     if (PlayerState.completedSeries >= (p.seriesCount || 5)) {
         showFinishedReport();
@@ -2633,7 +2633,7 @@ function showNextCompareRound() {
     const dur = cellParams[0]?.duration || p.duration || PlayerState.currentDuration;
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
-            lastResponse = { answered: false, isCorrect: false };
+            PlayerState.lastResponse = { answered: false, isCorrect: false };
             // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
             PlayerState.seriesNoAnswer++;
             updateCounters();
@@ -2723,10 +2723,10 @@ function handleFindSameClick(idx) {
         flashCell(idx, 'found');
         st.firstSelectedIdx = null;
         if (st.pairs.every((p) => p.found)) {
-            lastResponse = {
+            PlayerState.lastResponse = {
                 answered: true,
                 isCorrect: true,
-                reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now()))
+                reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now()))
             };
             PlayerState.responsePhaseActive = false;
             processCompareAnswer(true);
@@ -2796,7 +2796,7 @@ function processCompareAnswer(isCorrect) {
     else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
-    saveResult('user_compare', lastResponse.reactionTimeMs, isCorrect);
+    saveResult('user_compare', PlayerState.lastResponse.reactionTimeMs, isCorrect);
     if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishCompareSeries();
         return;
@@ -2838,8 +2838,8 @@ function handleDirectionAnswer(direction) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2848,7 +2848,7 @@ function handleDirectionAnswer(direction) {
         return;
     }
 
-    const ok = direction === currentCorrectDirection;
+    const ok = direction === PlayerState.currentCorrectDirection;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
@@ -2860,15 +2860,15 @@ function handleDirectionAnswer(direction) {
     try { stopCircleAnimation(); } catch(e) {}
     try { stopPeripheralAnimation(); } catch(e) {}
     try { stopBlinkAnimation(); } catch(e) {}
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => {
         document.body.style.background = '#0b0b0f';
     }, 200);
-    saveResult('user_single', lastResponse.reactionTimeMs, ok);
+    saveResult('user_single', PlayerState.lastResponse.reactionTimeMs, ok);
 }
 function handleCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
@@ -2876,8 +2876,8 @@ function handleCompareAnswer(answer) {
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
@@ -2898,8 +2898,8 @@ function handleCompareAnswer(answer) {
     try { stopCircleAnimation(); } catch(e) {}
     try { stopPeripheralAnimation(); } catch(e) {}
     try { stopBlinkAnimation(); } catch(e) {}
-    lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
+    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -3146,11 +3146,11 @@ function stopPlayer() {
     document.body.style.background = '#0b0b0f';
     pauseModal.classList.remove('open');
     camBaseline = null;
-    _stimulusDistance = null;
+    PlayerState._stimulusDistance = null;
     _waitingStable = false; // PATCH91
     _stableSince = 0;
     _stableBuf = [];
-    _stimulusDistance = null; // PATCH_CLEAN
+    PlayerState._stimulusDistance = null; // PATCH_CLEAN
     camWarnKind = null;
     window._fastLeanAt = 0;
     window._deviationHistory = [];

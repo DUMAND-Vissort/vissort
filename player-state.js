@@ -16,6 +16,13 @@
         // Фаза ответа
         responsePhaseActive: false,
 
+        // Ответы
+        responseStartTime: 0,
+        lastResponse: { answered: false, isCorrect: false, reactionTimeMs: null },
+        currentCorrectDirection: null,
+        lastDirection: null,
+        _stimulusDistance: null,
+
         // Стимул
         currentAcuity: 1.0,
         currentStimColor: { r: 0, g: 255, b: 0 },
