@@ -6423,6 +6423,7 @@ async function saveGraph() {
 function buildScenarioPayloadFromCurrent() {
     return {
         scenarioKey: window._currentScenarioKey || generateScenarioKey(),
+        schemaVersion: 2,
         trainingType: trainingNode?.params?.trainingType || 'single',
         graph: {
             nodes: JSON.parse(JSON.stringify(nodes || [])),
@@ -6445,11 +6446,26 @@ function buildScenarioPayloadFromCurrent() {
         }
     };
 }
+const SCHEMA_VERSION = 2;
+
+function migrateScenario(data) {
+    const version = (typeof data.schemaVersion === 'number') ? data.schemaVersion : 1;
+    if (version === SCHEMA_VERSION) return data;
+    if (version === 1) {
+        console.log('[migrate] scenario v1 -> v2');
+        data.schemaVersion = 2;
+        // Миграции v1 -> v2 уже выполняются дальше в loadGraph (per-node defaults),
+        // тут фиксируем только номер версии.
+    }
+    return data;
+}
+
 function loadGraph(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const data = JSON.parse(e.target.result);
+            let data = JSON.parse(e.target.result);
+            data = migrateScenario(data);
             if (file && file.name) window._currentScenarioFileName = file.name;
             const g = data.graph || data;
             nodes = g.nodes || [];
