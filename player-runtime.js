@@ -417,55 +417,10 @@ function _showInvalidToast(text) {
 let _readingFinishGuard = false;
 let _readingTimerId = null;
 
-// ==================== RATE LIMIT ====================
-let _answerTimestamps = [];
-function checkRateLimit() {
-    const now = Date.now();
-    _answerTimestamps = _answerTimestamps.filter((t) => now - t < 60000);
-    if (_answerTimestamps.length >= 100) {
-        console.warn('[rate-limit] Слишком много ответов в минуту');
-        return false;
-    }
-    _answerTimestamps.push(now);
-    return true;
-}
-
-// ==================== SCENARIO VALIDATION ====================
-function validateScenario(scenario) {
-    if (!scenario || typeof scenario !== 'object') return false;
-    const p = scenario.params;
-    if (!p || typeof p !== 'object') return false;
-
-    if (p.graph) {
-        if (!Array.isArray(p.graph.nodes)) return false;
-        if (p.graph.nodes.length > 500) return false;
-        for (const node of p.graph.nodes) {
-            if (typeof node.id !== 'string') return false;
-            if (typeof node.x !== 'number' || node.x < -100000 || node.x > 100000) return false;
-            if (typeof node.y !== 'number' || node.y < -100000 || node.y > 100000) return false;
-            if (node.width && (node.width < 0 || node.width > 10000)) return false;
-            if (node.height && (node.height < 0 || node.height > 10000)) return false;
-            if (node.seriesCount && (node.seriesCount < 0 || node.seriesCount > 1000)) return false;
-            if (node.seriesSize && (node.seriesSize < 0 || node.seriesSize > 1000)) return false;
-            if (node.duration && (node.duration < 0 || node.duration > 3600000)) return false;
-        }
-    }
-
-    if (p.graph && p.graph.books) {
-        for (const id of Object.keys(p.graph.books)) {
-            const book = p.graph.books[id];
-            if (typeof book.text === 'string' && book.text.length > 10000000) {
-                console.warn('Книга слишком большая:', id);
-                return false;
-            }
-        }
-    }
-
-    if (p.distanceMeters && (p.distanceMeters < 0.01 || p.distanceMeters > 100)) return false;
-    if (p.ppi && (p.ppi < 20 || p.ppi > 2000)) return false;
-
-    return true;
-}
+// ==================== RATE LIMIT + SCENARIO VALIDATION ====================
+// PATCH_PHASE1: вынесено в player-utils.js
+const checkRateLimit = window.PlayerUtils.checkRateLimit;
+const validateScenario = window.PlayerUtils.validateScenario;
 
 const $ = (id) => document.getElementById(id);
 const stimDisplay = $('stim');
@@ -503,27 +458,14 @@ const camIndicator = $('cam-indicator');
 // PATCH28_PHASE3: removed acuityToSizeMm (now in VissortCore)
 // PATCH28_PHASE3: removed acuityToSizePx (now in VissortCore)
 
-// PATCH32_6_FIX: prefer real measured distance, fall back to declared
+// PATCH_PHASE1: вынесено в player-utils.js
 function _effectiveDistance(declared) {
-    try {
-        if (typeof curDistanceM !== 'undefined' && curDistanceM != null) {
-            if (curDistanceM > 0.2 && curDistanceM < 10) {
-                return curDistanceM;
-            }
-        }
-    } catch (e) {}
-    return declared || 1;
+    return window.PlayerUtils.effectiveDistance(declared, curDistanceM);
 }
-// PATCH42_SMOOTH: EMA filters bbox noise (Intel HD 4000 jump +-20%)
+// PATCH_PHASE1: вынесено в player-utils.js
 window._distEMA = null;
 function _smoothDistance(raw) {
-    if (raw == null || !isFinite(raw)) return raw;
-    if (window._distEMA === null || !isFinite(window._distEMA)) {
-        window._distEMA = raw;
-    } else {
-        window._distEMA = window._distEMA * 0.5 + raw * 0.5; // PATCH60 faster EMA
-    }
-    return window._distEMA;
+    return window.PlayerUtils.smoothDistance(raw);
 }
 // PATCH28_PHASE3: removed acuityToFontSizePx (now in VissortCore)
 // PATCH28_PHASE3: removed detectDeviceType (now in VissortCore)
