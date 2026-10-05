@@ -450,7 +450,7 @@ function _smoothDistance(raw) {
 // PATCH28_PHASE3: removed detectDeviceType (now in VissortCore)
 // PATCH28_PHASE3: removed detectPPIHeuristic (now in VissortCore)
 // PATCH28_PHASE3: removed loadPPI (now in VissortCore)
-let screenPPI = loadPPI();
+// PATCH_PHASE1: moved to PlayerState (misc-a)
 
 function showStatus(title, text, actionLabel, actionFn) {
     statusTitle.textContent = title;
@@ -834,7 +834,7 @@ async function openHistory() {
 
 function applyScenarioDefaults() {
     const p = PlayerState.userScenario?.params || {};
-    screenPPI = p.ppi || screenPPI || 96;
+    PlayerState.screenPPI = p.ppi || PlayerState.screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
     PlayerState.currentAcuity = p.trainingType === 'reading' ? 1.0 : p.startAcuity || 0.5;
     PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
@@ -1144,7 +1144,7 @@ function buildPeripheralDots(node) {
         ah = stimArea.clientHeight;
     if (aw <= 0 || ah <= 0) return;
     const count = Math.max(1, Math.min(12, node.periCount || 4));
-    const pCalc = node.stimPPI || screenPPI || 96;
+    const pCalc = node.stimPPI || PlayerState.screenPPI || 96;
     const sizePx = acuityToSizePx(node.periAcuity || 0.3, node.stimDistance || 1, pCalc);
     const half = Math.min(aw, ah) / 2;
     const rMin = ((node.periRadiusMinPct ?? 60) / 100) * half;
@@ -1197,7 +1197,7 @@ function buildDefocusFrame(node, stimHtml) {
     const aw = stimArea.clientWidth,
         ah = stimArea.clientHeight;
     if (aw <= 0 || ah <= 0) return null;
-    const pCalc = node.stimPPI || screenPPI || 96;
+    const pCalc = node.stimPPI || PlayerState.screenPPI || 96;
     const rMm = Math.max(5, node.dfCenterRadiusMm || 13);
     const rPx = Math.round((rMm * pCalc) / 25.4 / (window.devicePixelRatio || 1));
     const D = rPx * 2;
@@ -1846,7 +1846,7 @@ function playGraphStimulus(node) {
     PlayerState.currentCorrectDirection = dir;
     // PATCH34: enable phase BEFORE rendering
     const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
-    const pCalc = node.stimPPI || screenPPI || 96;
+    const pCalc = node.stimPPI || PlayerState.screenPPI || 96;
     const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent, dCalc, pCalc);
     PlayerState.currentSize = eff;
     let sc = { r: node.stimR || 255, g: node.stimG || 255, b: node.stimB || 255 };
@@ -2279,7 +2279,7 @@ function playGraphReading(node) {
     });
     setupReadingColumns();
     const dCalc = _effectiveDistance(node.readingDistance || 1) // PATCH32_6_FIX;
-    readingContentEl.style.fontSize = acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, screenPPI) + 'px';
+    readingContentEl.style.fontSize = acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, PlayerState.screenPPI) + 'px';
     setTimeout(() => {
         PlayerState.readingTotalPages = calcReadingTotalPages();
         PlayerState.readingPage = 0;
@@ -2366,7 +2366,7 @@ function startPlayer() {
     PlayerState.noAnswerSeriesStreak = 0;
     PlayerState.lastDirection = null;
     PlayerState.currentSingleCell = { row: 0, col: 0 };
-    screenPPI = p.ppi || screenPPI || 96;
+    PlayerState.screenPPI = p.ppi || PlayerState.screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
     btnPlayer.disabled = true;
     document.querySelector('.counters')?.style.setProperty('display','none');
@@ -2385,7 +2385,7 @@ function startPlayer() {
     PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
     PlayerState.currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
     PlayerState.currentDuration = 2550;
-    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, screenPPI);
+    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, PlayerState.screenPPI);
     updateCounters();
     const tt = p.trainingType || 'single';
     if (tt === 'reading') {
@@ -2432,7 +2432,7 @@ function showNextStimulus() {
     PlayerState.currentCorrectDirection = dir;
     // PATCH35: enable phase AND start timer BEFORE render
     const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
-    const eff = acuityToSizePx(PlayerState.currentAcuity, dCalc, screenPPI);
+    const eff = acuityToSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI);
     PlayerState.currentSize = eff;
     let sc = PlayerState.currentStimColor;
     if (p.singleStimDynamicEnabled && p.singleStimColor1 && !p.singleCircleEnabled) sc = p.singleStimColor1;
@@ -2572,7 +2572,7 @@ function finishSeries() {
                 );
         }
     }
-    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, screenPPI);
+    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, PlayerState.screenPPI);
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     PlayerState.lastDirection = null;
     updateCounters();
@@ -2590,7 +2590,7 @@ function finishSeries() {
 
 function defaultCellParams() {
     const d = PlayerState.userScenario?.params?.distanceMeters || 1;
-    const ppi = PlayerState.userScenario?.params?.ppi || screenPPI || 96;
+    const ppi = PlayerState.userScenario?.params?.ppi || PlayerState.screenPPI || 96;
     return {
         size: acuityToSizePx(1.0, d, ppi),
         stimR: 255,
@@ -2979,7 +2979,7 @@ function startReading() {
     applyReadingFont(p);
     setupReadingColumns();
     const dCalc = _effectiveDistance(p.readingDistance || 1) // PATCH32_6_FIX;
-    readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, dCalc, screenPPI) + 'px';
+    readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI) + 'px';
     setTimeout(() => {
         PlayerState.readingTotalPages = calcReadingTotalPages();
         PlayerState.readingPage = 0;
@@ -3279,7 +3279,7 @@ function init() {
     $('reading-not-see').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.max(0.1, Math.round((PlayerState.currentAcuity - 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
+        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
@@ -3288,7 +3288,7 @@ function init() {
     $('reading-see-well').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.min(2.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
+        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);

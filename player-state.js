@@ -7,6 +7,8 @@
     'use strict';
 
     global.PlayerState = {
+        // Прочее (a)
+        screenPPI: 96,
         // Auth / сессия
         supabaseClient: null,
         currentUser: null,
@@ -123,6 +125,15 @@
         seriesStep: 0,
         noAnswerSeriesStreak: 0
     };
+
+    // Инициализация screenPPI
+    (function _loadScreenPPI() {
+        try {
+            if (global.VissortCore && typeof global.VissortCore.loadPPI === 'function') {
+                global.PlayerState.screenPPI = global.VissortCore.loadPPI();
+            }
+        } catch (_) {}
+    })();
 
     // Инициализация _minDetectPct из localStorage
     (function _loadMinDetectPct() {
