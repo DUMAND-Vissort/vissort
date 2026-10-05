@@ -23,6 +23,14 @@
         lastDirection: null,
         _stimulusDistance: null,
 
+        // Сравнение
+        compareMode: 'direction',
+        gridX: 3,
+        gridY: 3,
+        activeCells: [],
+        cellParams: [],
+        currentCompareAnswer: null,
+
         // Стимул
         currentAcuity: 1.0,
         currentStimColor: { r: 0, g: 255, b: 0 },

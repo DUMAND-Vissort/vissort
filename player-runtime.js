@@ -120,12 +120,9 @@ window._reactionReport = function() {
 // PATCH_PHASE1: moved to PlayerState (group: stimulus)
 // PATCH_PHASE1: moved to PlayerState (group: stimulus)
 // PATCH_PHASE1: moved to PlayerState (group: stimulus)
-let compareMode = 'direction',
-    gridX = 3,
-    gridY = 3;
-let activeCells = [],
-    cellParams = [];
-let currentCompareAnswer = null;
+// PATCH_PHASE1: moved to PlayerState (group: compare)
+// PATCH_PHASE1: moved to PlayerState (group: compare)
+// PATCH_PHASE1: moved to PlayerState (group: compare)
 let _findSameState = null;
 
 let singleStimAnimId = null,
@@ -2099,17 +2096,17 @@ function playGraphCompare(node) {
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
     PlayerState.seriesStep = 0;
     PlayerState.noAnswerSeriesStreak = 0;
-    compareMode = node.compareMode || 'direction';
-    gridX = Math.max(2, Math.min(6, parseInt(node.gridX) || 3));
-    gridY = Math.max(1, Math.min(6, parseInt(node.gridY) || 3));
-    activeCells = (node.activeCells || []).slice();
-    cellParams = (node.cellParams || []).slice();
-    if (activeCells.length < 2)
-        activeCells = [
+    PlayerState.compareMode = node.compareMode || 'direction';
+    PlayerState.gridX = Math.max(2, Math.min(6, parseInt(node.gridX) || 3));
+    PlayerState.gridY = Math.max(1, Math.min(6, parseInt(node.gridY) || 3));
+    PlayerState.activeCells = (node.activeCells || []).slice();
+    PlayerState.cellParams = (node.cellParams || []).slice();
+    if (PlayerState.activeCells.length < 2)
+        PlayerState.activeCells = [
             { row: 0, col: 0 },
             { row: 0, col: 1 }
         ];
-    while (cellParams.length < activeCells.length) cellParams.push(defaultCellParams());
+    while (PlayerState.cellParams.length < PlayerState.activeCells.length) PlayerState.cellParams.push(defaultCellParams());
     updateCounters();
     hideStimulus();
     responseButtons.style.display = 'none';
@@ -2130,9 +2127,9 @@ function playGraphCompareRound(node) {
     removeSingleGridLines();
     stimDisplay.innerHTML = '';
     stimArea.style.background = '#000';
-    if (compareMode === 'direction') showDirectionComparison();
-    else if (compareMode === 'find_same') showFindSameComparison();
-    const dur = cellParams[0]?.duration || node.duration || PlayerState.currentDuration;
+    if (PlayerState.compareMode === 'direction') showDirectionComparison();
+    else if (PlayerState.compareMode === 'find_same') showFindSameComparison();
+    const dur = PlayerState.cellParams[0]?.duration || node.duration || PlayerState.currentDuration;
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             PlayerState.lastResponse = { answered: false, isCorrect: false };
@@ -2171,7 +2168,7 @@ function handleGraphCompareAnswer(answer) {
         return;
     }
 
-    const ok = answer === currentCompareAnswer;
+    const ok = answer === PlayerState.currentCompareAnswer;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
@@ -2408,17 +2405,17 @@ function startPlayer() {
         btnPlayerPause.disabled = true;
         startReading();
     } else if (tt === 'compare') {
-        compareMode = p.compareMode || 'direction';
-        gridX = Math.max(2, Math.min(6, parseInt(p.gridX) || 3));
-        gridY = Math.max(1, Math.min(6, parseInt(p.gridY) || 3));
-        activeCells = (p.activeCells || []).slice();
-        cellParams = (p.cellParams || []).slice();
-        if (activeCells.length < 2)
-            activeCells = [
+        PlayerState.compareMode = p.compareMode || 'direction';
+        PlayerState.gridX = Math.max(2, Math.min(6, parseInt(p.gridX) || 3));
+        PlayerState.gridY = Math.max(1, Math.min(6, parseInt(p.gridY) || 3));
+        PlayerState.activeCells = (p.activeCells || []).slice();
+        PlayerState.cellParams = (p.cellParams || []).slice();
+        if (PlayerState.activeCells.length < 2)
+            PlayerState.activeCells = [
                 { row: 0, col: 0 },
                 { row: 0, col: 1 }
             ];
-        while (cellParams.length < activeCells.length) cellParams.push(defaultCellParams());
+        while (PlayerState.cellParams.length < PlayerState.activeCells.length) PlayerState.cellParams.push(defaultCellParams());
         showNextCompareRound();
     } else showNextStimulus();
 }
@@ -2628,9 +2625,9 @@ function showNextCompareRound() {
     removeSingleGridLines();
     stimDisplay.innerHTML = '';
     stimArea.style.background = '#000';
-    if (compareMode === 'direction') showDirectionComparison();
-    else if (compareMode === 'find_same') showFindSameComparison();
-    const dur = cellParams[0]?.duration || p.duration || PlayerState.currentDuration;
+    if (PlayerState.compareMode === 'direction') showDirectionComparison();
+    else if (PlayerState.compareMode === 'find_same') showFindSameComparison();
+    const dur = PlayerState.cellParams[0]?.duration || p.duration || PlayerState.currentDuration;
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             PlayerState.lastResponse = { answered: false, isCorrect: false };
@@ -2651,15 +2648,15 @@ function showNextCompareRound() {
     PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
 }
 function showDirectionComparison() {
-    if (activeCells.length < 2) return;
-    const sh = activeCells.slice().sort(() => Math.random() - 0.5);
+    if (PlayerState.activeCells.length < 2) return;
+    const sh = PlayerState.activeCells.slice().sort(() => Math.random() - 0.5);
     const cA = sh[0],
         cB = sh[1];
     const d1 = randomDirection(),
         d2 = randomDirection();
-    currentCompareAnswer = d1 === d2;
-    createCellElement(cA, cellParams[0] || defaultCellParams(), d1, 0);
-    createCellElement(cB, cellParams[1] || defaultCellParams(), d2, 1);
+    PlayerState.currentCompareAnswer = d1 === d2;
+    createCellElement(cA, PlayerState.cellParams[0] || defaultCellParams(), d1, 0);
+    createCellElement(cB, PlayerState.cellParams[1] || defaultCellParams(), d2, 1);
     document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'none'));
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'flex'));
     responseButtons.style.display = 'flex';
@@ -2668,7 +2665,7 @@ function showFindSameComparison() {
     const p = userScenario?.params || {};
     const pc = Math.max(1, Math.min(20, parseInt(p.pairsCount || 2)));
     const need = pc * 2;
-    const usePc = activeCells.length < need ? Math.floor(activeCells.length / 2) : pc;
+    const usePc = PlayerState.activeCells.length < need ? Math.floor(PlayerState.activeCells.length / 2) : pc;
     if (usePc < 1) {
         processCompareAnswer(false);
         return;
@@ -2677,7 +2674,7 @@ function showFindSameComparison() {
 }
 function showFindSameComparisonInternal(pc) {
     const need = pc * 2;
-    const sh = activeCells.slice().sort(() => Math.random() - 0.5);
+    const sh = PlayerState.activeCells.slice().sort(() => Math.random() - 0.5);
     const chosen = sh.slice(0, need);
     const pairs = [];
     for (let i = 0; i < pc; i++)
@@ -2686,7 +2683,7 @@ function showFindSameComparisonInternal(pc) {
     chosen.forEach((cell, idx) => {
         const pi = Math.floor(idx / 2);
         const dir = pairs[pi].direction;
-        const params = cellParams[idx] || cellParams[cellParams.length - 1] || defaultCellParams();
+        const params = PlayerState.cellParams[idx] || PlayerState.cellParams[PlayerState.cellParams.length - 1] || defaultCellParams();
         createCellElement(cell, params, dir, idx);
     });
     responseButtons.style.display = 'none';
@@ -2761,12 +2758,12 @@ function flashCell(idx, kind) {
     }
 }
 function createCellElement(cell, params, direction, idx) {
-    const cw = stimDisplay.offsetWidth / gridX,
-        ch = stimDisplay.offsetHeight / gridY;
+    const cw = stimDisplay.offsetWidth / PlayerState.gridX,
+        ch = stimDisplay.offsetHeight / PlayerState.gridY;
     const el = document.createElement('div');
     el.className = 'grid-cell';
     el.style.cssText = `left:${cell.col * cw}px;top:${cell.row * ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR || 0},${params.bgG || 0},${params.bgB || 0});position:absolute;box-sizing:border-box;border:3px solid transparent;`;
-    el.dataset.index = idx !== undefined ? idx : activeCells.indexOf(cell);
+    el.dataset.index = idx !== undefined ? idx : PlayerState.activeCells.indexOf(cell);
     const size = params.size || PlayerState.currentSize;
     const p = userScenario?.params || {};
     const svgData = getStimulusSVG(
@@ -2886,7 +2883,7 @@ function handleCompareAnswer(answer) {
         return;
     }
 
-    const ok = answer === currentCompareAnswer;
+    const ok = answer === PlayerState.currentCompareAnswer;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
@@ -2917,7 +2914,7 @@ responseButtons.addEventListener('click', (e) => {
     } else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
         // PATCH40_INCMP: check actual compare node, not graphActive
         const inCmp =
-            compareMode === 'direction' && (
+            PlayerState.compareMode === 'direction' && (
                 (!graphActive && userScenario?.params?.trainingType === 'compare') ||
                 (graphActive && gCurrentCompareNode != null && gCurrentCompareNode.compareMode === 'direction')
             );
@@ -2948,13 +2945,13 @@ document.addEventListener('keydown', (e) => {
     }
     if (!PlayerState.responsePhaseActive) return;
     // [PATCH4C] compare-mode: ignore Up/Down (only Left/Right = Da/Net)
-    if (((graphActive && gCurrentCompareNode) || (!graphActive && userScenario?.params?.trainingType === 'compare')) && compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (((graphActive && gCurrentCompareNode) || (!graphActive && userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
         // PATCH40_INCMP: check actual compare node, not graphActive
         const inCmp =
-            compareMode === 'direction' && (
+            PlayerState.compareMode === 'direction' && (
                 (!graphActive && userScenario?.params?.trainingType === 'compare') ||
                 (graphActive && gCurrentCompareNode != null && gCurrentCompareNode.compareMode === 'direction')
             );
