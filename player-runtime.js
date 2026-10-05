@@ -393,8 +393,8 @@ function _showInvalidToast(text) {
     setTimeout(function() { el.style.opacity = '0'; }, 1800);
     setTimeout(function() { if (el.parentNode) el.remove(); }, 2200);
 }
-let _readingFinishGuard = false;
-let _readingTimerId = null;
+// PATCH_PHASE1: moved to PlayerState (misc-b)
+// PATCH_PHASE1: moved to PlayerState (misc-b)
 
 // ==================== RATE LIMIT + SCENARIO VALIDATION ====================
 // PATCH_PHASE1: вынесено в player-utils.js
@@ -2286,26 +2286,26 @@ function playGraphReading(node) {
         scrollReadingToPage(0);
     }, 80);
     readingToolbarEl.style.display = 'flex';
-    _readingFinishGuard = false;
-    if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
+    PlayerState._readingFinishGuard = false;
+    if (PlayerState._readingTimerId) { clearTimeout(PlayerState._readingTimerId); PlayerState._readingTimerId = null; }
 
     const dur = node.duration || 60000;
     if (dur > 0) {
-        _readingTimerId = setTimeout(() => {
-            _readingTimerId = null;
+        PlayerState._readingTimerId = setTimeout(() => {
+            PlayerState._readingTimerId = null;
             finishGraphReading(node);
         }, dur);
-        PlayerState.phaseTimers.push(_readingTimerId);
+        PlayerState.phaseTimers.push(PlayerState._readingTimerId);
     }
 }
 
 function finishGraphReading(node) {
-    if (_readingFinishGuard) return;
-    _readingFinishGuard = true;
+    if (PlayerState._readingFinishGuard) return;
+    PlayerState._readingFinishGuard = true;
 
-    if (_readingTimerId) {
-        clearTimeout(_readingTimerId);
-        _readingTimerId = null;
+    if (PlayerState._readingTimerId) {
+        clearTimeout(PlayerState._readingTimerId);
+        PlayerState._readingTimerId = null;
     }
     readingToolbarEl.style.display = 'none';
     readingViewportEl.style.display = 'none';
@@ -3143,8 +3143,8 @@ function stopPlayer() {
     window._baselineWaitStart = null; // PATCH43
     window._invalidAnswerCount = 0;
     PlayerState.sessionId = null;
-    _readingFinishGuard = false;
-    if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
+    PlayerState._readingFinishGuard = false;
+    if (PlayerState._readingTimerId) { clearTimeout(PlayerState._readingTimerId); PlayerState._readingTimerId = null; }
     PlayerState.graphActive = false;
     PlayerState.gCurrentNodeId = null;
     PlayerState.gCurrentCompareNode = null;

@@ -7,6 +7,16 @@
     'use strict';
 
     global.PlayerState = {
+        // Прочее (b) — чтение
+        readingFontFamily: 'Segoe UI',
+        readingFontWeight: 'normal',
+        _readingFinishGuard: false,
+        _readingTimerId: null,
+        _currentReadingNodeId: null,
+        _currentReadingBookId: null,
+        _currentReadingPage: 0,
+        _readingNodeWaiting: false,
+
         // Прочее (a)
         screenPPI: 96,
         // Auth / сессия
