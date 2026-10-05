@@ -82,7 +82,7 @@ let userScenario = null;
 let sessionId = null;
 let authMode = 'signin';
 
-let playerRunning = false;
+// PATCH_PHASE1: moved to PlayerState
 
 // PATCH50_LOG_FN: per-answer logging
 window._reactionLog = window._reactionLog || [];
@@ -101,10 +101,10 @@ window._reactionReport = function() {
     console.log('Total: ' + log.length + ' | Valid: ' + rts.length);
     if (rts.length) console.log('RT raw: [' + rts.map(function(x){return Math.round(x);}).join(', ') + ']');
 };
-let isPaused = false;
-let phaseTimers = [];
-let currentShowTimer = null;
-let responsePhaseActive = false;
+// PATCH_PHASE1: moved to PlayerState
+// PATCH_PHASE1: moved to PlayerState
+// PATCH_PHASE1: moved to PlayerState
+// PATCH_PHASE1: moved to PlayerState
 let responseStartTime = 0;
 let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
 let _stimulusDistance = null; // PATCH_CLEAN
@@ -254,13 +254,13 @@ let _answerBlocked = false; // PATCH31C2A_APPLIED
 // Called when user's distance deviates >15%, face is lost, or face returns.
 // Cancels current show, waits for stability, then reshows from scratch.
 function _abortCurrentStimulus(reason) {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (_waitingStable) return; // idempotent
 
     console.log('[abort] reason=' + reason + ' (dist=' + (curDistanceM != null ? curDistanceM.toFixed(2) : '?') + 'm)');
 
     // PATCH31C2A_APPLIED: stop timer, freeze animations, KEEP stimulus visible
-    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
+    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
 
     // Freeze animations by cancelling RAFs — last frame stays on screen
     if (singleStimAnimId) { cancelAnimationFrame(singleStimAnimId); singleStimAnimId = null; }
@@ -270,7 +270,7 @@ function _abortCurrentStimulus(reason) {
     if (_blinkTimerId)    { clearTimeout(_blinkTimerId);            _blinkTimerId = null; }
     // NOTE: do NOT call hideStimulus / stopSingleStimAnimation / etc. — stimulus stays frozen.
 
-    responsePhaseActive = false;
+    PlayerState.responsePhaseActive = false;
     if (responseButtons) responseButtons.style.display = 'none';
 
     // PATCH31C2A_APPLIED: block answers
@@ -327,8 +327,8 @@ const _LEAN_CONSECUTIVE_FRAMES = 3;
 // PATCH32_CORE: log only, decision in _isAnswerInvalid
 // PATCH36: log deviations > 12% when training
 window._recordDeviation = function(pct) {
-    if (typeof playerRunning !== 'undefined' && !playerRunning) return;
-    if (typeof isPaused !== 'undefined' && isPaused) return;
+    if (!PlayerState.playerRunning) return;
+    if (PlayerState.isPaused) return;
     var now = performance.now();
     window._deviationHistory.push({ t: now, dev: pct });
     while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
@@ -363,8 +363,8 @@ window._recordDeviation = function(pct) {
 // PATCH34: velocity-based detection (delta over 600ms), plus current distance
 // PATCH36: current distance OR recent lean in 2 sec
 window._isAnswerInvalid = function() {
-    if (typeof playerRunning !== 'undefined' && !playerRunning) return null;
-    if (typeof isPaused !== 'undefined' && isPaused) return null;
+    if (!PlayerState.playerRunning) return null;
+    if (PlayerState.isPaused) return null;
     var now = performance.now();
     // 1. Current distance
     try {
@@ -914,7 +914,7 @@ function startSingleStimAnimation(p) {
     setStimColorRGB(first.r, first.g, first.b);
     singleStimAnimStart = null;
     function tick(now) {
-        if (!playerRunning || isPaused) {
+        if (!PlayerState.playerRunning || PlayerState.isPaused) {
             singleStimAnimId = null;
             return;
         }
@@ -972,7 +972,7 @@ function startSingleBgAnimation(p) {
     stimArea.style.backgroundColor = `rgb(${first.r},${first.g},${first.b})`;
     singleBgAnimStart = null;
     function tick(now) {
-        if (!playerRunning || isPaused) {
+        if (!PlayerState.playerRunning || PlayerState.isPaused) {
             singleBgAnimId = null;
             return;
         }
@@ -1032,7 +1032,7 @@ function startBlinkAnimation(opts) {
     }
 
     function tick() {
-        if (!playerRunning || isPaused) {
+        if (!PlayerState.playerRunning || PlayerState.isPaused) {
             _blinkTimerId = null;
             return;
         }
@@ -1107,7 +1107,7 @@ function startCircleAnimation(node) {
         }
     }
     function tick(now) {
-        if (!playerRunning || isPaused) {
+        if (!PlayerState.playerRunning || PlayerState.isPaused) {
             _circleAnimId = null;
             return;
         }
@@ -1202,7 +1202,7 @@ function buildPeripheralDots(node) {
     if (node.periMotion === 'static') return;
     _periAnimStart = null;
     function tick(now) {
-        if (!playerRunning || isPaused) {
+        if (!PlayerState.playerRunning || PlayerState.isPaused) {
             _periAnimId = null;
             return;
         }
@@ -1585,14 +1585,14 @@ async function processCamFrame() {
                     if (_stimulusDistance && curDistanceM && camBaseline != null) {
                         var _dev = Math.abs((curDistanceM - _stimulusDistance) / _stimulusDistance * 100);
                         if (_dev > 15) {
-                            if (responsePhaseActive || !_waitingStable) {
+                            if (PlayerState.responsePhaseActive || !_waitingStable) {
                                 hideStimulus();
-                                responsePhaseActive = false;
+                                PlayerState.responsePhaseActive = false;
                                 if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
-                                if (typeof currentShowTimer !== 'undefined' && currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-                                if (typeof phaseTimers !== 'undefined' && phaseTimers) {
-                                    for (var _i91 = 0; _i91 < phaseTimers.length; _i91++) clearTimeout(phaseTimers[_i91]);
-                                    phaseTimers.length = 0;
+                                if (typeof PlayerState.currentShowTimer !== 'undefined' && PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
+                                if (typeof PlayerState.phaseTimers !== 'undefined' && PlayerState.phaseTimers) {
+                                    for (var _i91 = 0; _i91 < PlayerState.phaseTimers.length; _i91++) clearTimeout(PlayerState.phaseTimers[_i91]);
+                                    PlayerState.phaseTimers.length = 0;
                                 }
                                 _waitingStable = true;
                                 _stableSince = 0;
@@ -1624,7 +1624,7 @@ async function processCamFrame() {
                 }
             } else {
                 // PATCH53_FACE_LOST: face lost >400ms during training = big lean
-                if (typeof playerRunning !== 'undefined' && playerRunning && !isPaused && camBaseline != null) {
+                if (PlayerState.playerRunning && !PlayerState.isPaused && camBaseline != null) {
                     if (!window._faceLostSince) window._faceLostSince = performance.now();
                     var _flDur = performance.now() - window._faceLostSince;
                     if (_flDur > 1500) { // PATCH56: 1500ms for stable detection
@@ -1654,7 +1654,7 @@ async function processCamFrame() {
 // PATCH25: processBlink removed (landmarks disabled in PATCH25_BBOX)
 
 function evaluateDistance() {
-    if (!playerRunning || isPaused || curDistanceM == null) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused || curDistanceM == null) return;
     // PATCH43_BASELINE: delay baseline 3s to skip noisy startup frames
     if (camBaseline == null) {
         if (!window._baselineWaitStart) window._baselineWaitStart = performance.now();
@@ -1671,7 +1671,7 @@ function evaluateDistance() {
     const dev = ((curDistanceM - camBaseline) / camBaseline) * 100;
     // PATCH27B.2: record deviation for fast-lean detection
     // PATCH29_GUARD: only track deviations during active training
-    if (playerRunning && !isPaused) {
+    if (PlayerState.playerRunning && !PlayerState.isPaused) {
         if (window._recordDeviation) window._recordDeviation(dev);
         if (window._updateStimulusDim) window._updateStimulusDim();
         // PATCH30c_ABORT: asymmetric thresholds
@@ -1778,7 +1778,7 @@ function startGraphPlay(nodes, connections, books) {
 }
 
 function playNextGraphNode() {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (gIndex >= gQueue.length) {
         stopPlayer();
         showStatus('Граф пройден', `Серий: ${completedSeries}`, 'Ещё раз', () => {
@@ -1831,20 +1831,20 @@ function playNextGraphNode() {
     updateCounters();
     hideStimulus();
     responseButtons.style.display = 'none';
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) playGraphStimulus(node);
+            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
         }, (node.delay1 != null ? node.delay1 : 0))
     );
 }
 
 function playGraphStimulus(node) {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH61_GUARD
     if (_waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH30_ABORT
     _answerBlocked = false; // PATCH31C2A_APPLIED: safety reset before new cycle
     // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
-    responsePhaseActive = true;
+    PlayerState.responsePhaseActive = true;
     responseStartTime = performance.now();
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     if (completedSeries >= (node.seriesCount || 5)) {
@@ -1950,9 +1950,9 @@ function playGraphStimulus(node) {
         sd = Math.max(sd, ci, co);
     }
     scheduleVoiceCountdown(sd);
-    currentShowTimer = setTimeout(() => {
+    PlayerState.currentShowTimer = setTimeout(() => {
         hideStimulus();
-        responsePhaseActive = false;
+        PlayerState.responsePhaseActive = false;
         stopSingleStimAnimation();
         stopSingleBgAnimation();
         stopCircleAnimation();
@@ -1975,13 +1975,13 @@ function playGraphStimulus(node) {
             }
         }
         updateCounters();
-        phaseTimers.push(
+        PlayerState.phaseTimers.push(
             setTimeout(() => {
-                if (playerRunning && !isPaused) playGraphStimulus(node);
+                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
             }, node.delay2 || 1000)
         );
     }, sd);
-    phaseTimers.push(currentShowTimer);
+    PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
 }
 
 function finishGraphStimulusSeries(node) {
@@ -2035,22 +2035,22 @@ function finishGraphStimulusSeries(node) {
         playNextGraphNode();
         return;
     }
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) playGraphStimulus(node);
+            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
         }, (node.delay2 != null ? node.delay2 : 500))
     );
 }
 
 function handleGraphDirectionAnswer(dir) {
-    if (!responsePhaseActive) return;
+    if (!PlayerState.responsePhaseActive) return;
     if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        responsePhaseActive = false;
+        PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
@@ -2061,8 +2061,8 @@ function handleGraphDirectionAnswer(dir) {
     const ok = dir === currentCorrectDirection;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
-    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
     try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
     try { stopSingleStimAnimation(); } catch(e) {}
@@ -2072,7 +2072,7 @@ function handleGraphDirectionAnswer(dir) {
     try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
-    responsePhaseActive = false;
+    PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => {
@@ -2090,14 +2090,14 @@ function handleGraphDirectionAnswer(dir) {
             setTimeout(function () { finishGraphStimulusSeries(_n35); }, 50);
         } else {
             setTimeout(function () {
-                if (playerRunning && !isPaused) playGraphStimulus(_n35);
+                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(_n35);
             }, (_n35.delay2 != null ? _n35.delay2 : 1000));
         }
     }
 }
 
 function playGraphCompare(node) {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     gCurrentCompareNode = node;
     gCurrentNodeId = node.id;
     completedSeries = successfulSeries = failedSeries = 0;
@@ -2118,15 +2118,15 @@ function playGraphCompare(node) {
     updateCounters();
     hideStimulus();
     responseButtons.style.display = 'none';
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) playGraphCompareRound(node);
+            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
         }, (node.delay1 != null ? node.delay1 : 0))
     );
 }
 
 function playGraphCompareRound(node) {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (_waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // PATCH30_ABORT
     if (seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
@@ -2138,8 +2138,8 @@ function playGraphCompareRound(node) {
     if (compareMode === 'direction') showDirectionComparison();
     else if (compareMode === 'find_same') showFindSameComparison();
     const dur = cellParams[0]?.duration || node.duration || currentDuration;
-    currentShowTimer = setTimeout(() => {
-        if (responsePhaseActive) {
+    PlayerState.currentShowTimer = setTimeout(() => {
+        if (PlayerState.responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
             // PATCH31C1_APPLIED: timeout -> seriesNoAnswer, NOT seriesIncorrect
             seriesNoAnswer++;
@@ -2150,25 +2150,25 @@ function playGraphCompareRound(node) {
                 if (seriesStep >= (_n31.seriesSize || 6)) {
                     finishGraphCompareSeries(_n31);
                 } else {
-                    phaseTimers.push(setTimeout(() => {
-                        if (playerRunning && !isPaused) playGraphCompareRound(_n31);
+                    PlayerState.phaseTimers.push(setTimeout(() => {
+                        if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(_n31);
                     }, _n31.delay2 || 1000));
                 }
             }
         }
     }, dur);
-    phaseTimers.push(currentShowTimer);
+    PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
 }
 
 function handleGraphCompareAnswer(answer) {
-    if (!responsePhaseActive) return;
+    if (!PlayerState.responsePhaseActive) return;
     if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        responsePhaseActive = false;
+        PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
@@ -2179,8 +2179,8 @@ function handleGraphCompareAnswer(answer) {
     const ok = answer === currentCompareAnswer;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
-    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
     try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
     try { stopSingleStimAnimation(); } catch(e) {}
@@ -2190,7 +2190,7 @@ function handleGraphCompareAnswer(answer) {
     try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
-    responsePhaseActive = false;
+    PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => {
@@ -2215,9 +2215,9 @@ function processGraphCompareAnswer(isCorrect) {
         finishGraphCompareSeries(node);
         return;
     }
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) playGraphCompareRound(node);
+            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
         }, node.delay2 || 1000)
     );
 }
@@ -2241,15 +2241,15 @@ function finishGraphCompareSeries(node) {
         playNextGraphNode();
         return;
     }
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) playGraphCompareRound(node);
+            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
         }, (node.delay2 != null ? node.delay2 : 500))
     );
 }
 
 function playGraphReading(node) {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     gCurrentNodeId = node.id;
     let bid = node.bookId;
     if (!bid && window._books) {
@@ -2316,7 +2316,7 @@ function playGraphReading(node) {
             _readingTimerId = null;
             finishGraphReading(node);
         }, dur);
-        phaseTimers.push(_readingTimerId);
+        PlayerState.phaseTimers.push(_readingTimerId);
     }
 }
 
@@ -2339,7 +2339,7 @@ function finishGraphReading(node) {
 
 // ==================== ЗАПУСК ====================
 function startPlayer() {
-    if (playerRunning) { console.warn('[PATCH37] already running'); return; }
+    if (PlayerState.playerRunning) { console.warn('[PATCH37] already running'); return; }
     // PATCH41_STATUS_CLOSE: close any open status overlay (e.g. "Граф пройден")
     var _so = document.getElementById('status-overlay');
     if (_so && !_so.classList.contains('hidden')) {
@@ -2358,7 +2358,7 @@ function startPlayer() {
         ? window.crypto.randomUUID()
         : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
     const p = userScenario.params || {};
-    playerRunning = true;
+    PlayerState.playerRunning = true;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
     window._distEMA = null; // PATCH42_SMOOTH
@@ -2380,7 +2380,7 @@ function startPlayer() {
     window._invalidAnswerCount = 0;
     if (window._reactionTimes) window._reactionTimes = [];
     console.log('[PATCH35] graph state reset');
-    isPaused = false;
+    PlayerState.isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
     seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
     seriesStep = 0;
@@ -2430,11 +2430,11 @@ function startPlayer() {
 
 function showNextStimulus() {
     if (!_checkHardLimit()) { setTimeout(showNextStimulus, 500); return; }
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // PATCH61_GUARD
     if (_waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
     // PATCH38_EARLY_PHASE: enable response phase immediately
-    responsePhaseActive = true;
+    PlayerState.responsePhaseActive = true;
     responseStartTime = performance.now();
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const p = userScenario?.params || {};
@@ -2533,9 +2533,9 @@ function showNextStimulus() {
         sd = Math.max(sd, ci, co);
     }
     scheduleVoiceCountdown(sd);
-    currentShowTimer = setTimeout(() => {
+    PlayerState.currentShowTimer = setTimeout(() => {
         hideStimulus();
-        responsePhaseActive = false;
+        PlayerState.responsePhaseActive = false;
         stopSingleStimAnimation();
         stopSingleBgAnimation();
         stopCircleAnimation();
@@ -2559,13 +2559,13 @@ function showNextStimulus() {
             }
         }
         updateCounters();
-        phaseTimers.push(
+        PlayerState.phaseTimers.push(
             setTimeout(() => {
-                if (playerRunning && !isPaused) showNextStimulus();
+                if (PlayerState.playerRunning && !PlayerState.isPaused) showNextStimulus();
             }, p.delay2 || 1000)
         );
     }, sd);
-    phaseTimers.push(currentShowTimer);
+    PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
 }
 
 function finishSeries() {
@@ -2602,9 +2602,9 @@ function finishSeries() {
         stopPlayer();
         return;
     }
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) showNextStimulus();
+            if (PlayerState.playerRunning && !PlayerState.isPaused) showNextStimulus();
         }, p.delay2 || 1000)
     );
 }
@@ -2624,7 +2624,7 @@ function defaultCellParams() {
     };
 }
 function showNextCompareRound() {
-    if (!playerRunning || isPaused) return;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     const p = userScenario?.params || {};
     if (seriesStep >= (p.seriesSize || 6)) {
         finishCompareSeries();
@@ -2636,8 +2636,8 @@ function showNextCompareRound() {
     if (compareMode === 'direction') showDirectionComparison();
     else if (compareMode === 'find_same') showFindSameComparison();
     const dur = cellParams[0]?.duration || p.duration || currentDuration;
-    currentShowTimer = setTimeout(() => {
-        if (responsePhaseActive) {
+    PlayerState.currentShowTimer = setTimeout(() => {
+        if (PlayerState.responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
             // PATCH31C1_APPLIED: timeout -> seriesNoAnswer, NOT seriesIncorrect
             seriesNoAnswer++;
@@ -2647,13 +2647,13 @@ function showNextCompareRound() {
             if (seriesStep >= (_p31.seriesSize || 6)) {
                 finishCompareSeries();
             } else {
-                phaseTimers.push(setTimeout(() => {
-                    if (playerRunning && !isPaused) showNextCompareRound();
+                PlayerState.phaseTimers.push(setTimeout(() => {
+                    if (PlayerState.playerRunning && !PlayerState.isPaused) showNextCompareRound();
                 }, _p31.delay2 || 1000));
             }
         }
     }, dur);
-    phaseTimers.push(currentShowTimer);
+    PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
 }
 function showDirectionComparison() {
     if (activeCells.length < 2) return;
@@ -2700,7 +2700,7 @@ function showFindSameComparisonInternal(pc) {
     });
 }
 function handleFindSameClick(idx) {
-    if (!responsePhaseActive || !_findSameState || isNaN(idx)) return;
+    if (!PlayerState.responsePhaseActive || !_findSameState || isNaN(idx)) return;
     const st = _findSameState;
     const cell = st.cells[idx];
     const key = `${cell.row},${cell.col}`;
@@ -2733,7 +2733,7 @@ function handleFindSameClick(idx) {
                 isCorrect: true,
                 reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now()))
             };
-            responsePhaseActive = false;
+            PlayerState.responsePhaseActive = false;
             processCompareAnswer(true);
         }
     } else {
@@ -2791,10 +2791,10 @@ function createCellElement(cell, params, direction, idx) {
     stimDisplay.appendChild(el);
 }
 function processCompareAnswer(isCorrect) {
-    if (!playerRunning || isPaused) return;
-    if (currentShowTimer) {
-        clearTimeout(currentShowTimer);
-        currentShowTimer = null;
+    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
+    if (PlayerState.currentShowTimer) {
+        clearTimeout(PlayerState.currentShowTimer);
+        PlayerState.currentShowTimer = null;
     }
     const p = userScenario?.params || {};
     if (isCorrect) seriesCorrect++;
@@ -2806,9 +2806,9 @@ function processCompareAnswer(isCorrect) {
         finishCompareSeries();
         return;
     }
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) showNextCompareRound();
+            if (PlayerState.playerRunning && !PlayerState.isPaused) showNextCompareRound();
         }, p.delay2 || 1000)
     );
 }
@@ -2826,9 +2826,9 @@ function finishCompareSeries() {
         stopPlayer();
         return;
     }
-    phaseTimers.push(
+    PlayerState.phaseTimers.push(
         setTimeout(() => {
-            if (playerRunning && !isPaused) showNextCompareRound();
+            if (PlayerState.playerRunning && !PlayerState.isPaused) showNextCompareRound();
         }, p.delay2 || 1000)
     );
 }
@@ -2838,14 +2838,14 @@ function finishCompareSeries() {
 
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
-    if (!responsePhaseActive) return;
+    if (!PlayerState.responsePhaseActive) return;
     if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        responsePhaseActive = false;
+        PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
@@ -2856,8 +2856,8 @@ function handleDirectionAnswer(direction) {
     const ok = direction === currentCorrectDirection;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
-    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
     try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
     try { stopSingleStimAnimation(); } catch(e) {}
@@ -2867,7 +2867,7 @@ function handleDirectionAnswer(direction) {
     try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
-    responsePhaseActive = false;
+    PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => {
@@ -2876,14 +2876,14 @@ function handleDirectionAnswer(direction) {
     saveResult('user_single', lastResponse.reactionTimeMs, ok);
 }
 function handleCompareAnswer(answer) {
-    if (!responsePhaseActive) return;
+    if (!PlayerState.responsePhaseActive) return;
     if (_answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())), invalidReason: _inv32 }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: false, correct: false, reason: (lastResponse.invalidReason || 'unknown') });
-        responsePhaseActive = false;
+        PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
@@ -2894,8 +2894,8 @@ function handleCompareAnswer(answer) {
     const ok = answer === currentCompareAnswer;
 
     // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
-    if (currentShowTimer) { clearTimeout(currentShowTimer); currentShowTimer = null; }
-    if (phaseTimers && phaseTimers.length) { phaseTimers.forEach(function(t){ clearTimeout(t); }); phaseTimers = []; }
+    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
     try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
     try { stopSingleStimAnimation(); } catch(e) {}
@@ -2905,7 +2905,7 @@ function handleCompareAnswer(answer) {
     try { stopBlinkAnimation(); } catch(e) {}
     lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (responseStartTime || performance.now())) }; 
     if (window._logAnswer) window._logAnswer({ rt: lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
-    responsePhaseActive = false;
+    PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
     setTimeout(() => {
@@ -2915,7 +2915,7 @@ function handleCompareAnswer(answer) {
 }
 responseButtons.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-resp');
-    if (!btn || !responsePhaseActive) return;
+    if (!btn || !PlayerState.responsePhaseActive) return;
     if (btn.dataset.dir) {
         if (graphActive) handleGraphDirectionAnswer(btn.dataset.dir);
         else handleDirectionAnswer(btn.dataset.dir);
@@ -2951,7 +2951,7 @@ document.addEventListener('keydown', (e) => {
             return;
         }
     }
-    if (!responsePhaseActive) return;
+    if (!PlayerState.responsePhaseActive) return;
     // [PATCH4C] compare-mode: ignore Up/Down (only Left/Right = Da/Net)
     if (((graphActive && gCurrentCompareNode) || (!graphActive && userScenario?.params?.trainingType === 'compare')) && compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
@@ -3088,24 +3088,24 @@ function showFinishedReport() {
     });
 }
 function pauseTraining() {
-    phaseTimers.forEach((t) => clearTimeout(t));
-    phaseTimers = [];
-    if (currentShowTimer) clearTimeout(currentShowTimer);
+    PlayerState.phaseTimers.forEach((t) => clearTimeout(t));
+    PlayerState.phaseTimers = [];
+    if (PlayerState.currentShowTimer) clearTimeout(PlayerState.currentShowTimer);
     stopSingleStimAnimation();
     stopSingleBgAnimation();
     stopCircleAnimation();
     stopPeripheralAnimation();
     stopBlinkAnimation();
-    responsePhaseActive = false;
+    PlayerState.responsePhaseActive = false;
     hideStimulus();
     responseButtons.style.display = 'none';
-    isPaused = true;
+    PlayerState.isPaused = true;
     btnPlayerPause.disabled = true;
     pauseModal.classList.add('open');
 }
 function resumeTraining() {
     pauseModal.classList.remove('open');
-    isPaused = false;
+    PlayerState.isPaused = false;
     noAnswerSeriesStreak = 0;
     btnPlayerPause.disabled = false;
     if (graphActive) {
@@ -3125,9 +3125,9 @@ function resumeTraining() {
     } else showNextStimulus();
 }
 function stopPlayer() {
-    phaseTimers.forEach((t) => clearTimeout(t));
-    phaseTimers = [];
-    if (currentShowTimer) clearTimeout(currentShowTimer);
+    PlayerState.phaseTimers.forEach((t) => clearTimeout(t));
+    PlayerState.phaseTimers = [];
+    if (PlayerState.currentShowTimer) clearTimeout(PlayerState.currentShowTimer);
     stopSingleStimAnimation();
     stopSingleBgAnimation();
     stopCircleAnimation();
@@ -3135,9 +3135,9 @@ function stopPlayer() {
     stopBlinkAnimation();
     stopReadingDynamicBg();
     window.Voice?.stopReading();
-    playerRunning = false;
-    isPaused = false;
-    responsePhaseActive = false;
+    PlayerState.playerRunning = false;
+    PlayerState.isPaused = false;
+    PlayerState.responsePhaseActive = false;
     hideStimulus();
     responseButtons.style.display = 'none';
     readingToolbarEl.style.display = 'none';
@@ -3173,15 +3173,15 @@ function stopPlayer() {
     gIndex = 0;
 }
 function togglePause() {
-    if (!playerRunning) return;
-    if (isPaused) {
+    if (!PlayerState.playerRunning) return;
+    if (PlayerState.isPaused) {
         resumeTraining();
         return;
     }
-    isPaused = true;
-    phaseTimers.forEach((t) => clearTimeout(t));
-    phaseTimers = [];
-    if (currentShowTimer) clearTimeout(currentShowTimer);
+    PlayerState.isPaused = true;
+    PlayerState.phaseTimers.forEach((t) => clearTimeout(t));
+    PlayerState.phaseTimers = [];
+    if (PlayerState.currentShowTimer) clearTimeout(PlayerState.currentShowTimer);
     stopSingleStimAnimation();
     stopSingleBgAnimation();
     stopCircleAnimation();
@@ -3217,7 +3217,7 @@ function scheduleVoiceCountdown(durationMs) {
     if (durationMs - 5000 > 0)
         timers.push(
             setTimeout(() => {
-                if (responsePhaseActive && !isPaused) window.Voice.sayKey('countdown5');
+                if (PlayerState.responsePhaseActive && !PlayerState.isPaused) window.Voice.sayKey('countdown5');
             }, durationMs - 5000)
         );
     [3, 2, 1].forEach((s) => {
@@ -3225,12 +3225,12 @@ function scheduleVoiceCountdown(durationMs) {
         if (at > 0)
             timers.push(
                 setTimeout(() => {
-                    if (responsePhaseActive && !isPaused) window.Voice.sayKey('countdown' + s);
+                    if (PlayerState.responsePhaseActive && !PlayerState.isPaused) window.Voice.sayKey('countdown' + s);
                 }, at)
             );
     });
     const w = setInterval(() => {
-        if (!responsePhaseActive) {
+        if (!PlayerState.responsePhaseActive) {
             timers.forEach((t) => clearTimeout(t));
             clearInterval(w);
         }
@@ -3503,7 +3503,7 @@ else init();
         var face = document.getElementById('cam-indicator');
         var faceText = face ? face.textContent : '';
         var hasFace = faceText.indexOf('\uD83D\uDCCF') !== -1 || faceText.indexOf('\u2705') !== -1;
-        var training = typeof playerRunning !== 'undefined' && playerRunning && !isPaused;
+        var training = PlayerState.playerRunning && !PlayerState.isPaused;
         var longLoss = false;
         if (!hasFace && window._faceLostSince) {
             if (performance.now() - window._faceLostSince > 2000) longLoss = true;
