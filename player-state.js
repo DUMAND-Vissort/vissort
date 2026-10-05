@@ -14,7 +14,17 @@
         currentShowTimer: null,
 
         // Фаза ответа
-        responsePhaseActive: false
+        responsePhaseActive: false,
+
+        // Серия
+        completedSeries: 0,
+        successfulSeries: 0,
+        failedSeries: 0,
+        seriesCorrect: 0,
+        seriesIncorrect: 0,
+        seriesNoAnswer: 0,
+        seriesStep: 0,
+        noAnswerSeriesStreak: 0
     };
 
     console.log('[player-state] module installed');

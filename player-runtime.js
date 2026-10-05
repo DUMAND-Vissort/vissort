@@ -111,14 +111,9 @@ let _stimulusDistance = null; // PATCH_CLEAN
 let currentCorrectDirection = null;
 let lastDirection = null;
 
-let completedSeries = 0,
-    successfulSeries = 0,
-    failedSeries = 0;
-let seriesCorrect = 0,
-    seriesIncorrect = 0,
-    seriesNoAnswer = 0;
-let seriesStep = 0,
-    noAnswerSeriesStreak = 0;
+// PATCH_PHASE1: moved to PlayerState (group: series)
+// PATCH_PHASE1: moved to PlayerState (group: series)
+// PATCH_PHASE1: moved to PlayerState (group: series)
 let currentAcuity = 1.0;
 let currentStimColor = { r: 0, g: 255, b: 0 };
 let currentBgColor = { r: 0, g: 0, b: 0 };
@@ -873,12 +868,12 @@ function updateCounters() {
         acuityVal = currentAcuity;
     }
     const total = p.seriesSize || 6;
-    cntProgress.textContent = `${seriesStep}/${total}`;
+    cntProgress.textContent = `${PlayerState.seriesStep}/${total}`;
     cntAcuity.textContent =
         p.nodeType === 'READING' || p.trainingType === 'reading' ? '—' : (acuityVal || 1).toFixed(1);
-    cntCorrect.textContent = seriesCorrect;
-    cntIncorrect.textContent = seriesIncorrect;
-    cntNoAnswer.textContent = seriesNoAnswer;
+    cntCorrect.textContent = PlayerState.seriesCorrect;
+    cntIncorrect.textContent = PlayerState.seriesIncorrect;
+    cntNoAnswer.textContent = PlayerState.seriesNoAnswer;
 }
 
 // PATCH28_PHASE3: removed generateLetterE (now in VissortCore)
@@ -1781,7 +1776,7 @@ function playNextGraphNode() {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (gIndex >= gQueue.length) {
         stopPlayer();
-        showStatus('Граф пройден', `Серий: ${completedSeries}`, 'Ещё раз', () => {
+        showStatus('Граф пройден', `Серий: ${PlayerState.completedSeries}`, 'Ещё раз', () => {
             hideStatus();
             startPlayer();
         });
@@ -1821,10 +1816,10 @@ function playNextGraphNode() {
         return;
     }
     gCurrentNodeId = node.id;
-    completedSeries = successfulSeries = failedSeries = 0;
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
-    seriesStep = 0;
-    noAnswerSeriesStreak = 0;
+    PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
+    PlayerState.seriesStep = 0;
+    PlayerState.noAnswerSeriesStreak = 0;
     lastDirection = null;
     currentSingleCell = { row: 0, col: 0 };
     gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
@@ -1847,12 +1842,12 @@ function playGraphStimulus(node) {
     PlayerState.responsePhaseActive = true;
     responseStartTime = performance.now();
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-    if (completedSeries >= (node.seriesCount || 5)) {
+    if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
         gIndex++;
         playNextGraphNode();
         return;
     }
-    if (seriesStep >= (node.seriesSize || 6)) {
+    if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
         finishGraphStimulusSeries(node);
         return;
     }
@@ -1959,17 +1954,17 @@ function playGraphStimulus(node) {
         stopPeripheralAnimation();
         stopBlinkAnimation();
         if (lastResponse.answered) {
-            if (lastResponse.isCorrect) seriesCorrect++;
-            else seriesIncorrect++;
-            seriesStep++; // PATCH31C1_APPLIED: only answers count
+            if (lastResponse.isCorrect) PlayerState.seriesCorrect++;
+            else PlayerState.seriesIncorrect++;
+            PlayerState.seriesStep++; // PATCH31C1_APPLIED: only answers count
         } else {
-            seriesNoAnswer++;
+            PlayerState.seriesNoAnswer++;
             saveResult(node.id, null, false);
-            // PATCH31C1_APPLIED: timeout does NOT increment seriesStep
+            // PATCH31C1_APPLIED: timeout does NOT increment PlayerState.seriesStep
             // PATCH31C2B_APPLIED: full timeout series → pause modal
-            if (seriesStep === 0 && seriesNoAnswer >= (node.seriesSize || 6)) {
+            if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (node.seriesSize || 6)) {
                 console.log('[PATCH31C2B] full timeout series, pausing');
-                seriesNoAnswer = 0;
+                PlayerState.seriesNoAnswer = 0;
                 pauseTraining();
                 return;
             }
@@ -1986,13 +1981,13 @@ function playGraphStimulus(node) {
 
 function finishGraphStimulusSeries(node) {
     const th = node.seriesThreshold || getThreshold(node.seriesSize || 6);
-    const ok = seriesCorrect >= th;
-    const allNo = seriesNoAnswer === (node.seriesSize || 6);
-    if (allNo) noAnswerSeriesStreak++;
-    else noAnswerSeriesStreak = 0;
-    completedSeries++;
-    if (ok) successfulSeries++;
-    else failedSeries++;
+    const ok = PlayerState.seriesCorrect >= th;
+    const allNo = PlayerState.seriesNoAnswer === (node.seriesSize || 6);
+    if (allNo) PlayerState.noAnswerSeriesStreak++;
+    else PlayerState.noAnswerSeriesStreak = 0;
+    PlayerState.completedSeries++;
+    if (ok) PlayerState.successfulSeries++;
+    else PlayerState.failedSeries++;
     // PATCH31C2B_APPLIED: adaptiveAcuity
     if (node.adaptiveAcuity !== false) {
         if (ok) {
@@ -2011,7 +2006,7 @@ function finishGraphStimulusSeries(node) {
                 );
         }
     }
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     lastDirection = null;
     updateCounters();
     // PATCH48_NO_AVG: report disabled, per-answer log only
@@ -2026,11 +2021,11 @@ function finishGraphStimulusSeries(node) {
         var _max = Math.max.apply(null, _recent);
         /* PATCH50: removed spam */ void 0;
     } catch (e) {}
-    if (noAnswerSeriesStreak >= 3) {
+    if (PlayerState.noAnswerSeriesStreak >= 3) {
         pauseTraining();
         return;
     }
-    if (completedSeries >= (node.seriesCount || 5)) {
+    if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
         gIndex++;
         playNextGraphNode();
         return;
@@ -2081,12 +2076,12 @@ function handleGraphDirectionAnswer(dir) {
     saveResult(gCurrentNodeId || 'graph_single', lastResponse.reactionTimeMs, ok);
 
     // PATCH35B_APPLIED: advance series immediately
-    if (ok) seriesCorrect++; else seriesIncorrect++;
-    seriesStep++;
+    if (ok) PlayerState.seriesCorrect++; else PlayerState.seriesIncorrect++;
+    PlayerState.seriesStep++;
     updateCounters();
     var _n35 = gGetNode(gCurrentNodeId);
     if (_n35) {
-        if (seriesStep >= (_n35.seriesSize || 6)) {
+        if (PlayerState.seriesStep >= (_n35.seriesSize || 6)) {
             setTimeout(function () { finishGraphStimulusSeries(_n35); }, 50);
         } else {
             setTimeout(function () {
@@ -2100,10 +2095,10 @@ function playGraphCompare(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     gCurrentCompareNode = node;
     gCurrentNodeId = node.id;
-    completedSeries = successfulSeries = failedSeries = 0;
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
-    seriesStep = 0;
-    noAnswerSeriesStreak = 0;
+    PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
+    PlayerState.seriesStep = 0;
+    PlayerState.noAnswerSeriesStreak = 0;
     compareMode = node.compareMode || 'direction';
     gridX = Math.max(2, Math.min(6, parseInt(node.gridX) || 3));
     gridY = Math.max(1, Math.min(6, parseInt(node.gridY) || 3));
@@ -2128,7 +2123,7 @@ function playGraphCompare(node) {
 function playGraphCompareRound(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (_waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // PATCH30_ABORT
-    if (seriesStep >= (node.seriesSize || 6)) {
+    if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
         return;
     }
@@ -2141,13 +2136,13 @@ function playGraphCompareRound(node) {
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
-            // PATCH31C1_APPLIED: timeout -> seriesNoAnswer, NOT seriesIncorrect
-            seriesNoAnswer++;
+            // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
+            PlayerState.seriesNoAnswer++;
             updateCounters();
             saveResult(gCurrentNodeId || 'graph_compare', null, false);
             const _n31 = gGetNode(gCurrentNodeId);
             if (_n31) {
-                if (seriesStep >= (_n31.seriesSize || 6)) {
+                if (PlayerState.seriesStep >= (_n31.seriesSize || 6)) {
                     finishGraphCompareSeries(_n31);
                 } else {
                     PlayerState.phaseTimers.push(setTimeout(() => {
@@ -2200,9 +2195,9 @@ function handleGraphCompareAnswer(answer) {
 }
 
 function processGraphCompareAnswer(isCorrect) {
-    if (isCorrect) seriesCorrect++;
-    else seriesIncorrect++;
-    seriesStep++;
+    if (isCorrect) PlayerState.seriesCorrect++;
+    else PlayerState.seriesIncorrect++;
+    PlayerState.seriesStep++;
     updateCounters();
     saveResult(gCurrentNodeId || 'graph_compare', lastResponse.reactionTimeMs, isCorrect);
     const node = gGetNode(gCurrentNodeId);
@@ -2211,7 +2206,7 @@ function processGraphCompareAnswer(isCorrect) {
         playNextGraphNode();
         return;
     }
-    if (seriesStep >= (node.seriesSize || 6)) {
+    if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
         return;
     }
@@ -2229,13 +2224,13 @@ function finishGraphCompareSeries(node) {
         return;
     }
     const th = node.seriesThreshold || getThreshold(node.seriesSize || 6);
-    const ok = seriesCorrect >= th;
-    completedSeries++;
-    if (ok) successfulSeries++;
-    else failedSeries++;
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
+    const ok = PlayerState.seriesCorrect >= th;
+    PlayerState.completedSeries++;
+    if (ok) PlayerState.successfulSeries++;
+    else PlayerState.failedSeries++;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     updateCounters();
-    if (completedSeries >= (node.seriesCount || 5)) {
+    if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
         gCurrentCompareNode = null;
         gIndex++;
         playNextGraphNode();
@@ -2381,10 +2376,10 @@ function startPlayer() {
     if (window._reactionTimes) window._reactionTimes = [];
     console.log('[PATCH35] graph state reset');
     PlayerState.isPaused = false;
-    completedSeries = successfulSeries = failedSeries = 0;
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = 0;
-    seriesStep = 0;
-    noAnswerSeriesStreak = 0;
+    PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
+    PlayerState.seriesStep = 0;
+    PlayerState.noAnswerSeriesStreak = 0;
     lastDirection = null;
     currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
@@ -2438,7 +2433,7 @@ function showNextStimulus() {
     responseStartTime = performance.now();
     lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     const p = userScenario?.params || {};
-    if (seriesStep >= (p.seriesSize || 6)) {
+    if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishSeries();
         return;
     }
@@ -2542,18 +2537,18 @@ function showNextStimulus() {
         stopPeripheralAnimation();
         stopBlinkAnimation();
         if (lastResponse.answered) {
-            if (lastResponse.isCorrect) seriesCorrect++;
-            else seriesIncorrect++;
-            seriesStep++; // PATCH31C1_APPLIED: only answers count
+            if (lastResponse.isCorrect) PlayerState.seriesCorrect++;
+            else PlayerState.seriesIncorrect++;
+            PlayerState.seriesStep++; // PATCH31C1_APPLIED: only answers count
         } else {
-            seriesNoAnswer++;
+            PlayerState.seriesNoAnswer++;
             if (window.Voice) window.Voice.sayKey('timeout', { cancel: true });
             saveResult('user_single', null, false);
-            // PATCH31C1_APPLIED: timeout does NOT increment seriesStep
+            // PATCH31C1_APPLIED: timeout does NOT increment PlayerState.seriesStep
             // PATCH31C2B_APPLIED: full timeout series → pause modal
-            if (seriesStep === 0 && seriesNoAnswer >= (p.seriesSize || 6)) {
+            if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (p.seriesSize || 6)) {
                 console.log('[PATCH31C2B] full timeout series, pausing');
-                seriesNoAnswer = 0;
+                PlayerState.seriesNoAnswer = 0;
                 pauseTraining();
                 return;
             }
@@ -2571,12 +2566,12 @@ function showNextStimulus() {
 function finishSeries() {
     const p = userScenario?.params || {};
     const th = p.seriesThreshold || getThreshold(p.seriesSize || 6);
-    const ok = seriesCorrect >= th;
-    if (seriesNoAnswer === (p.seriesSize || 6)) noAnswerSeriesStreak++;
-    else noAnswerSeriesStreak = 0;
-    completedSeries++;
-    if (ok) successfulSeries++;
-    else failedSeries++;
+    const ok = PlayerState.seriesCorrect >= th;
+    if (PlayerState.seriesNoAnswer === (p.seriesSize || 6)) PlayerState.noAnswerSeriesStreak++;
+    else PlayerState.noAnswerSeriesStreak = 0;
+    PlayerState.completedSeries++;
+    if (ok) PlayerState.successfulSeries++;
+    else PlayerState.failedSeries++;
     // PATCH31C2B_APPLIED: adaptiveAcuity
     if (p.adaptiveAcuity !== false) {
         if (ok) {
@@ -2594,10 +2589,10 @@ function finishSeries() {
         }
     }
     currentSize = acuityToSizePx(currentAcuity, p.distanceMeters || 1, screenPPI);
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     lastDirection = null;
     updateCounters();
-    if (completedSeries >= (p.seriesCount || 5)) {
+    if (PlayerState.completedSeries >= (p.seriesCount || 5)) {
         showFinishedReport();
         stopPlayer();
         return;
@@ -2626,7 +2621,7 @@ function defaultCellParams() {
 function showNextCompareRound() {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     const p = userScenario?.params || {};
-    if (seriesStep >= (p.seriesSize || 6)) {
+    if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishCompareSeries();
         return;
     }
@@ -2639,12 +2634,12 @@ function showNextCompareRound() {
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
-            // PATCH31C1_APPLIED: timeout -> seriesNoAnswer, NOT seriesIncorrect
-            seriesNoAnswer++;
+            // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
+            PlayerState.seriesNoAnswer++;
             updateCounters();
             saveResult('user_compare', null, false);
             const _p31 = userScenario?.params || {};
-            if (seriesStep >= (_p31.seriesSize || 6)) {
+            if (PlayerState.seriesStep >= (_p31.seriesSize || 6)) {
                 finishCompareSeries();
             } else {
                 PlayerState.phaseTimers.push(setTimeout(() => {
@@ -2797,12 +2792,12 @@ function processCompareAnswer(isCorrect) {
         PlayerState.currentShowTimer = null;
     }
     const p = userScenario?.params || {};
-    if (isCorrect) seriesCorrect++;
-    else seriesIncorrect++;
-    seriesStep++;
+    if (isCorrect) PlayerState.seriesCorrect++;
+    else PlayerState.seriesIncorrect++;
+    PlayerState.seriesStep++;
     updateCounters();
     saveResult('user_compare', lastResponse.reactionTimeMs, isCorrect);
-    if (seriesStep >= (p.seriesSize || 6)) {
+    if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishCompareSeries();
         return;
     }
@@ -2815,13 +2810,13 @@ function processCompareAnswer(isCorrect) {
 function finishCompareSeries() {
     const p = userScenario?.params || {};
     const th = p.seriesThreshold || getThreshold(p.seriesSize || 6);
-    const ok = seriesCorrect >= th;
-    completedSeries++;
-    if (ok) successfulSeries++;
-    else failedSeries++;
-    seriesCorrect = seriesIncorrect = seriesNoAnswer = seriesStep = 0;
+    const ok = PlayerState.seriesCorrect >= th;
+    PlayerState.completedSeries++;
+    if (ok) PlayerState.successfulSeries++;
+    else PlayerState.failedSeries++;
+    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     updateCounters();
-    if (completedSeries >= (p.seriesCount || 5)) {
+    if (PlayerState.completedSeries >= (p.seriesCount || 5)) {
         showFinishedReport();
         stopPlayer();
         return;
@@ -3067,8 +3062,8 @@ function stopReadingDynamicBg() {
     window.PlayerReading.stopDynamicBg();
 }
 function finishReading() {
-    completedSeries++;
-    successfulSeries++;
+    PlayerState.completedSeries++;
+    PlayerState.successfulSeries++;
     updateCounters();
     stopPlayer();
     showStatus('Чтение завершено', 'Тренировка окончена.', 'Ещё раз', () => {
@@ -3080,7 +3075,7 @@ function finishReading() {
 // ==================== ФИНАЛ / ПАУЗА ====================
 function showFinishedReport() {
     const p = userScenario?.params || {};
-    let txt = `Серий: ${completedSeries} · Успешных: ${successfulSeries} · Неуспешных: ${failedSeries}`;
+    let txt = `Серий: ${PlayerState.completedSeries} · Успешных: ${PlayerState.successfulSeries} · Неуспешных: ${PlayerState.failedSeries}`;
     if (p.trainingType !== 'reading' && !graphActive) txt += ` · Итоговая V: ${currentAcuity.toFixed(1)}`;
     showStatus('Готово!', txt, 'Ещё раз', () => {
         hideStatus();
@@ -3106,7 +3101,7 @@ function pauseTraining() {
 function resumeTraining() {
     pauseModal.classList.remove('open');
     PlayerState.isPaused = false;
-    noAnswerSeriesStreak = 0;
+    PlayerState.noAnswerSeriesStreak = 0;
     btnPlayerPause.disabled = false;
     if (graphActive) {
         const node = gGetNode(gCurrentNodeId);
