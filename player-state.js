@@ -16,6 +16,14 @@
         // Фаза ответа
         responsePhaseActive: false,
 
+        // Стимул
+        currentAcuity: 1.0,
+        currentStimColor: { r: 0, g: 255, b: 0 },
+        currentBgColor: { r: 0, g: 0, b: 0 },
+        currentSize: 27,
+        currentDuration: 2550,
+        currentSingleCell: { row: 0, col: 0 },
+
         // Серия
         completedSeries: 0,
         successfulSeries: 0,

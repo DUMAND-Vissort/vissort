@@ -114,12 +114,12 @@ let lastDirection = null;
 // PATCH_PHASE1: moved to PlayerState (group: series)
 // PATCH_PHASE1: moved to PlayerState (group: series)
 // PATCH_PHASE1: moved to PlayerState (group: series)
-let currentAcuity = 1.0;
-let currentStimColor = { r: 0, g: 255, b: 0 };
-let currentBgColor = { r: 0, g: 0, b: 0 };
-let currentSize = 27;
-let currentDuration = 2550;
-let currentSingleCell = { row: 0, col: 0 };
+// PATCH_PHASE1: moved to PlayerState (group: stimulus)
+// PATCH_PHASE1: moved to PlayerState (group: stimulus)
+// PATCH_PHASE1: moved to PlayerState (group: stimulus)
+// PATCH_PHASE1: moved to PlayerState (group: stimulus)
+// PATCH_PHASE1: moved to PlayerState (group: stimulus)
+// PATCH_PHASE1: moved to PlayerState (group: stimulus)
 let compareMode = 'direction',
     gridX = 3,
     gridY = 3;
@@ -852,9 +852,9 @@ function applyScenarioDefaults() {
     const p = userScenario?.params || {};
     screenPPI = p.ppi || screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
-    currentAcuity = p.trainingType === 'reading' ? 1.0 : p.startAcuity || 0.5;
-    currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
-    currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
+    PlayerState.currentAcuity = p.trainingType === 'reading' ? 1.0 : p.startAcuity || 0.5;
+    PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
+    PlayerState.currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
 }
 
 function updateCounters() {
@@ -865,7 +865,7 @@ function updateCounters() {
         acuityVal = gNodeAcuityCurrent;
     } else {
         p = userScenario?.params || {};
-        acuityVal = currentAcuity;
+        acuityVal = PlayerState.currentAcuity;
     }
     const total = p.seriesSize || 6;
     cntProgress.textContent = `${PlayerState.seriesStep}/${total}`;
@@ -1310,8 +1310,8 @@ function pickSingleGridCell(gx, gy, rand, avoid, fx, fy, cells) {
     } while (
         avoid &&
         att < 25 &&
-        cell.row === currentSingleCell.row &&
-        cell.col === currentSingleCell.col &&
+        cell.row === PlayerState.currentSingleCell.row &&
+        cell.col === PlayerState.currentSingleCell.col &&
         allowed.length > 1
     );
     return cell;
@@ -1821,7 +1821,7 @@ function playNextGraphNode() {
     PlayerState.seriesStep = 0;
     PlayerState.noAnswerSeriesStreak = 0;
     lastDirection = null;
-    currentSingleCell = { row: 0, col: 0 };
+    PlayerState.currentSingleCell = { row: 0, col: 0 };
     gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
     updateCounters();
     hideStimulus();
@@ -1864,7 +1864,7 @@ function playGraphStimulus(node) {
     const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
     const pCalc = node.stimPPI || screenPPI || 96;
     const eff = acuityToSizePx(gNodeAcuityCurrent, dCalc, pCalc);
-    currentSize = eff;
+    PlayerState.currentSize = eff;
     let sc = { r: node.stimR || 255, g: node.stimG || 255, b: node.stimB || 255 };
     if (node.singleStimDynamicEnabled && node.singleStimColor1 && !node.singleCircleEnabled)
         sc = node.singleStimColor1;
@@ -1906,7 +1906,7 @@ function playGraphStimulus(node) {
             node.singleGridFixedCol || 0,
             node.singleGridCells || []
         );
-        currentSingleCell = cell;
+        PlayerState.currentSingleCell = cell;
         applySingleGridPosition(eff, gx, gy, cell.row, cell.col, node.singleGridShowLines === true);
     } else if (node.singleRandomPos) applyRandomStimulusPosition(eff);
     buildPeripheralDots(node);
@@ -2132,7 +2132,7 @@ function playGraphCompareRound(node) {
     stimArea.style.background = '#000';
     if (compareMode === 'direction') showDirectionComparison();
     else if (compareMode === 'find_same') showFindSameComparison();
-    const dur = cellParams[0]?.duration || node.duration || currentDuration;
+    const dur = cellParams[0]?.duration || node.duration || PlayerState.currentDuration;
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
@@ -2381,7 +2381,7 @@ function startPlayer() {
     PlayerState.seriesStep = 0;
     PlayerState.noAnswerSeriesStreak = 0;
     lastDirection = null;
-    currentSingleCell = { row: 0, col: 0 };
+    PlayerState.currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
     btnPlayer.disabled = true;
@@ -2396,12 +2396,12 @@ function startPlayer() {
         return;
     }
 
-    if (p.trainingType !== 'reading') currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
-    else currentAcuity = 1.0;
-    currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
-    currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
-    currentDuration = 2550;
-    currentSize = acuityToSizePx(currentAcuity, p.distanceMeters || 1, screenPPI);
+    if (p.trainingType !== 'reading') PlayerState.currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
+    else PlayerState.currentAcuity = 1.0;
+    PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
+    PlayerState.currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
+    PlayerState.currentDuration = 2550;
+    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, screenPPI);
     updateCounters();
     const tt = p.trainingType || 'single';
     if (tt === 'reading') {
@@ -2448,9 +2448,9 @@ function showNextStimulus() {
     currentCorrectDirection = dir;
     // PATCH35: enable phase AND start timer BEFORE render
     const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
-    const eff = acuityToSizePx(currentAcuity, dCalc, screenPPI);
-    currentSize = eff;
-    let sc = currentStimColor;
+    const eff = acuityToSizePx(PlayerState.currentAcuity, dCalc, screenPPI);
+    PlayerState.currentSize = eff;
+    let sc = PlayerState.currentStimColor;
     if (p.singleStimDynamicEnabled && p.singleStimColor1 && !p.singleCircleEnabled) sc = p.singleStimColor1;
     let svgData;
     if (p.singleCircleEnabled) svgData = getCircleStimulusSVG(p, eff);
@@ -2462,9 +2462,9 @@ function showNextStimulus() {
                 stimR: sc.r,
                 stimG: sc.g,
                 stimB: sc.b,
-                bgR: currentBgColor.r,
-                bgG: currentBgColor.g,
-                bgB: currentBgColor.b
+                bgR: PlayerState.currentBgColor.r,
+                bgG: PlayerState.currentBgColor.g,
+                bgB: PlayerState.currentBgColor.b
             },
             eff
         );
@@ -2474,9 +2474,9 @@ function showNextStimulus() {
             stimDisplay.innerHTML = '';
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
-        } else displayStimulus(svgData.html, currentBgColor);
+        } else displayStimulus(svgData.html, PlayerState.currentBgColor);
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
-    } else displayStimulus(svgData.html, currentBgColor);
+    } else displayStimulus(svgData.html, PlayerState.currentBgColor);
     responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
     if (p.singleGridEnabled) {
         const gx = p.singleGridX || 1,
@@ -2490,7 +2490,7 @@ function showNextStimulus() {
             p.singleGridFixedCol || 0,
             p.singleGridCells || []
         );
-        currentSingleCell = cell;
+        PlayerState.currentSingleCell = cell;
         applySingleGridPosition(eff, gx, gy, cell.row, cell.col, p.singleGridShowLines === true);
     } else if (p.singleRandomPos) applyRandomStimulusPosition(eff);
     buildPeripheralDots(p);
@@ -2519,7 +2519,7 @@ function showNextStimulus() {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = currentDuration + (p.response != null ? p.response : 0); // PATCH31C2B_APPLIED
+    let sd = PlayerState.currentDuration + (p.response != null ? p.response : 0); // PATCH31C2B_APPLIED
     if (p.singleStimDynamicEnabled) sd = Math.max(sd, p.singleStimDuration || 0);
     if (p.singleBgDynamicEnabled) sd = Math.max(sd, p.singleBgDuration || 0);
     if (p.singleCircleEnabled) {
@@ -2575,20 +2575,20 @@ function finishSeries() {
     // PATCH31C2B_APPLIED: adaptiveAcuity
     if (p.adaptiveAcuity !== false) {
         if (ok) {
-            if (currentAcuity < (p.endAcuity || 2.0))
-                currentAcuity = Math.min(
+            if (PlayerState.currentAcuity < (p.endAcuity || 2.0))
+                PlayerState.currentAcuity = Math.min(
                     p.endAcuity || 2.0,
-                    Math.round((currentAcuity + (p.acuityStep || 0.1)) * 10) / 10
+                    Math.round((PlayerState.currentAcuity + (p.acuityStep || 0.1)) * 10) / 10
                 );
         } else {
-            if (currentAcuity > (p.startAcuity || 0.5))
-                currentAcuity = Math.max(
+            if (PlayerState.currentAcuity > (p.startAcuity || 0.5))
+                PlayerState.currentAcuity = Math.max(
                     p.startAcuity || 0.5,
-                    Math.round((currentAcuity - (p.acuityStep || 0.1)) * 10) / 10
+                    Math.round((PlayerState.currentAcuity - (p.acuityStep || 0.1)) * 10) / 10
                 );
         }
     }
-    currentSize = acuityToSizePx(currentAcuity, p.distanceMeters || 1, screenPPI);
+    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, screenPPI);
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     lastDirection = null;
     updateCounters();
@@ -2630,7 +2630,7 @@ function showNextCompareRound() {
     stimArea.style.background = '#000';
     if (compareMode === 'direction') showDirectionComparison();
     else if (compareMode === 'find_same') showFindSameComparison();
-    const dur = cellParams[0]?.duration || p.duration || currentDuration;
+    const dur = cellParams[0]?.duration || p.duration || PlayerState.currentDuration;
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             lastResponse = { answered: false, isCorrect: false };
@@ -2767,7 +2767,7 @@ function createCellElement(cell, params, direction, idx) {
     el.className = 'grid-cell';
     el.style.cssText = `left:${cell.col * cw}px;top:${cell.row * ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR || 0},${params.bgG || 0},${params.bgB || 0});position:absolute;box-sizing:border-box;border:3px solid transparent;`;
     el.dataset.index = idx !== undefined ? idx : activeCells.indexOf(cell);
-    const size = params.size || currentSize;
+    const size = params.size || PlayerState.currentSize;
     const p = userScenario?.params || {};
     const svgData = getStimulusSVG(
         {
@@ -2995,7 +2995,7 @@ function startReading() {
     applyReadingFont(p);
     setupReadingColumns();
     const dCalc = _effectiveDistance(p.readingDistance || 1) // PATCH32_6_FIX;
-    readingContentEl.style.fontSize = acuityToFontSizePx(currentAcuity, dCalc, screenPPI) + 'px';
+    readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, dCalc, screenPPI) + 'px';
     setTimeout(() => {
         readingTotalPages = calcReadingTotalPages();
         readingPage = 0;
@@ -3076,7 +3076,7 @@ function finishReading() {
 function showFinishedReport() {
     const p = userScenario?.params || {};
     let txt = `Серий: ${PlayerState.completedSeries} · Успешных: ${PlayerState.successfulSeries} · Неуспешных: ${PlayerState.failedSeries}`;
-    if (p.trainingType !== 'reading' && !graphActive) txt += ` · Итоговая V: ${currentAcuity.toFixed(1)}`;
+    if (p.trainingType !== 'reading' && !graphActive) txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
     showStatus('Готово!', txt, 'Ещё раз', () => {
         hideStatus();
         startPlayer();
@@ -3293,18 +3293,18 @@ function init() {
         } else finishReading();
     });
     $('reading-not-see').addEventListener('click', () => {
-        currentAcuity = Math.max(0.1, Math.round((currentAcuity - 0.1) * 10) / 10);
+        PlayerState.currentAcuity = Math.max(0.1, Math.round((PlayerState.currentAcuity - 0.1) * 10) / 10);
         const d = userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize = acuityToFontSizePx(currentAcuity, d, screenPPI) + 'px';
+        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
         setTimeout(() => {
             readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
         }, 60);
     });
     $('reading-see-well').addEventListener('click', () => {
-        currentAcuity = Math.min(2.0, Math.round((currentAcuity + 0.1) * 10) / 10);
+        PlayerState.currentAcuity = Math.min(2.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
         const d = userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize = acuityToFontSizePx(currentAcuity, d, screenPPI) + 'px';
+        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
         setTimeout(() => {
             readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
