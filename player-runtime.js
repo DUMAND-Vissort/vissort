@@ -214,14 +214,14 @@ console.log('[cam] config:', JSON.stringify({
 }));
 
 // === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
-let graphActive = false;
-let gNodes = [];
-let gConnections = [];
-let gQueue = [];
-let gIndex = 0;
-let gCurrentNodeId = null;
-let gNodeAcuityCurrent = 1.0;
-let gCurrentCompareNode = null;
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
+// PATCH_PHASE1: moved to PlayerState (group: graph)
 let _frameSkipCounter = 0;
 // PATCH28b: declarations for PATCH91 stability detection
 let _waitingStable = false;
@@ -281,7 +281,7 @@ function _resumeAfterStable() {
     // Prefer current graph node; fallback to flat autotraining
     var _n = null;
     try { _n = getNode(currentPlayingNodeId); } catch (e) { _n = null; }
-    if (_n && gNodes && gNodes.indexOf(_n) !== -1) {
+    if (_n && PlayerState.gNodes && PlayerState.gNodes.indexOf(_n) !== -1) {
         if (_n.nodeType === 'COMPARE') playGraphCompareRound(_n);
         else playGraphStimulus(_n);
         return;
@@ -843,10 +843,10 @@ function applyScenarioDefaults() {
 
 function updateCounters() {
     let p, acuityVal;
-    if (graphActive && gCurrentNodeId) {
-        const n = gGetNode(gCurrentNodeId);
+    if (PlayerState.graphActive && PlayerState.gCurrentNodeId) {
+        const n = gGetNode(PlayerState.gCurrentNodeId);
         p = n || {};
-        acuityVal = gNodeAcuityCurrent;
+        acuityVal = PlayerState.gNodeAcuityCurrent;
     } else {
         p = userScenario?.params || {};
         acuityVal = PlayerState.currentAcuity;
@@ -1710,28 +1710,28 @@ function disableCamera() {
 
 // ==================== ПЛЕЕР ГРАФА ====================
 function gGetNode(id) {
-    return gNodes.find((n) => n.id === id);
+    return PlayerState.gNodes.find((n) => n.id === id);
 }
 
 function buildGraphQueue() {
-    gQueue = [];
-    if (!gNodes.length) return;
-    const startNode = gNodes.find((n) => n.isStart === true) || gNodes[0];
+    PlayerState.gQueue = [];
+    if (!PlayerState.gNodes.length) return;
+    const startNode = PlayerState.gNodes.find((n) => n.isStart === true) || PlayerState.gNodes[0];
     const visited = new Set();
     function visit(nodeId, connection = null, fromNodeId = null) {
         if (visited.has(nodeId)) return;
         visited.add(nodeId);
-        gQueue.push({ nodeId, connection, fromNodeId });
-        gConnections
+        PlayerState.gQueue.push({ nodeId, connection, fromNodeId });
+        PlayerState.gConnections
             .filter((c) => c.fromId === nodeId && c.isLoop && c.toId !== nodeId)
             .forEach((loop) => {
                 const lim = loop.loopLimit || 1;
                 for (let i = 0; i < lim; i++) {
-                    gQueue.push({ nodeId: loop.toId, connection: loop, fromNodeId: nodeId });
-                    gQueue.push({ nodeId: nodeId, connection: loop, fromNodeId: loop.toId });
+                    PlayerState.gQueue.push({ nodeId: loop.toId, connection: loop, fromNodeId: nodeId });
+                    PlayerState.gQueue.push({ nodeId: nodeId, connection: loop, fromNodeId: loop.toId });
                 }
             });
-        gConnections
+        PlayerState.gConnections
             .filter((c) => c.fromId === nodeId && !c.isLoop && c.toId !== nodeId)
             .forEach((conn) => visit(conn.toId, conn, nodeId));
     }
@@ -1739,26 +1739,26 @@ function buildGraphQueue() {
 }
 
 function startGraphPlay(nodes, connections, books) {
-    graphActive = true;
-    gNodes = nodes || [];
-    gConnections = connections || [];
+    PlayerState.graphActive = true;
+    PlayerState.gNodes = nodes || [];
+    PlayerState.gConnections = connections || [];
     if (books && typeof books === 'object') {
         window._books = window._books || {};
         Object.assign(window._books, books);
     }
     buildGraphQueue();
-    if (!gQueue.length) {
+    if (!PlayerState.gQueue.length) {
         stopPlayer();
         return;
     }
-    gIndex = 0;
-    gCurrentNodeId = null;
+    PlayerState.gIndex = 0;
+    PlayerState.gCurrentNodeId = null;
     playNextGraphNode();
 }
 
 function playNextGraphNode() {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (gIndex >= gQueue.length) {
+    if (PlayerState.gIndex >= PlayerState.gQueue.length) {
         stopPlayer();
         showStatus('Граф пройден', `Серий: ${PlayerState.completedSeries}`, 'Ещё раз', () => {
             hideStatus();
@@ -1766,15 +1766,15 @@ function playNextGraphNode() {
         });
         return;
     }
-    const item = gQueue[gIndex];
+    const item = PlayerState.gQueue[PlayerState.gIndex];
     const node = gGetNode(item.nodeId);
     if (!node) {
-        gIndex++;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
     if (node.isActive === false && node.nodeType !== 'LOGIC_IF') {
-        gIndex++;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
@@ -1799,14 +1799,14 @@ function playNextGraphNode() {
         playGraphCompare(node);
         return;
     }
-    gCurrentNodeId = node.id;
+    PlayerState.gCurrentNodeId = node.id;
     PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
     PlayerState.seriesStep = 0;
     PlayerState.noAnswerSeriesStreak = 0;
     PlayerState.lastDirection = null;
     PlayerState.currentSingleCell = { row: 0, col: 0 };
-    gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
+    PlayerState.gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
     updateCounters();
     hideStimulus();
     responseButtons.style.display = 'none';
@@ -1827,7 +1827,7 @@ function playGraphStimulus(node) {
     PlayerState.responseStartTime = performance.now();
     PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
     if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
-        gIndex++;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
@@ -1847,7 +1847,7 @@ function playGraphStimulus(node) {
     // PATCH34: enable phase BEFORE rendering
     const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
     const pCalc = node.stimPPI || screenPPI || 96;
-    const eff = acuityToSizePx(gNodeAcuityCurrent, dCalc, pCalc);
+    const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent, dCalc, pCalc);
     PlayerState.currentSize = eff;
     let sc = { r: node.stimR || 255, g: node.stimG || 255, b: node.stimB || 255 };
     if (node.singleStimDynamicEnabled && node.singleStimColor1 && !node.singleCircleEnabled)
@@ -1976,17 +1976,17 @@ function finishGraphStimulusSeries(node) {
     if (node.adaptiveAcuity !== false) {
         if (ok) {
             const eA = node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0;
-            if (gNodeAcuityCurrent < eA)
-                gNodeAcuityCurrent = Math.min(
+            if (PlayerState.gNodeAcuityCurrent < eA)
+                PlayerState.gNodeAcuityCurrent = Math.min(
                     eA,
-                    Math.round((gNodeAcuityCurrent + (node.acuityStep || 0.1)) * 10) / 10
+                    Math.round((PlayerState.gNodeAcuityCurrent + (node.acuityStep || 0.1)) * 10) / 10
                 );
         } else {
             const sA = node.stimAcuity || 1.0;
-            if (gNodeAcuityCurrent > sA)
-                gNodeAcuityCurrent = Math.max(
+            if (PlayerState.gNodeAcuityCurrent > sA)
+                PlayerState.gNodeAcuityCurrent = Math.max(
                     sA,
-                    Math.round((gNodeAcuityCurrent - (node.acuityStep || 0.1)) * 10) / 10
+                    Math.round((PlayerState.gNodeAcuityCurrent - (node.acuityStep || 0.1)) * 10) / 10
                 );
         }
     }
@@ -2010,7 +2010,7 @@ function finishGraphStimulusSeries(node) {
         return;
     }
     if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
-        gIndex++;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
@@ -2057,13 +2057,13 @@ function handleGraphDirectionAnswer(dir) {
     setTimeout(() => {
         document.body.style.background = '#0b0b0f';
     }, 200);
-    saveResult(gCurrentNodeId || 'graph_single', PlayerState.lastResponse.reactionTimeMs, ok);
+    saveResult(PlayerState.gCurrentNodeId || 'graph_single', PlayerState.lastResponse.reactionTimeMs, ok);
 
     // PATCH35B_APPLIED: advance series immediately
     if (ok) PlayerState.seriesCorrect++; else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
-    var _n35 = gGetNode(gCurrentNodeId);
+    var _n35 = gGetNode(PlayerState.gCurrentNodeId);
     if (_n35) {
         if (PlayerState.seriesStep >= (_n35.seriesSize || 6)) {
             setTimeout(function () { finishGraphStimulusSeries(_n35); }, 50);
@@ -2077,8 +2077,8 @@ function handleGraphDirectionAnswer(dir) {
 
 function playGraphCompare(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    gCurrentCompareNode = node;
-    gCurrentNodeId = node.id;
+    PlayerState.gCurrentCompareNode = node;
+    PlayerState.gCurrentNodeId = node.id;
     PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
     PlayerState.seriesStep = 0;
@@ -2123,8 +2123,8 @@ function playGraphCompareRound(node) {
             // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
             PlayerState.seriesNoAnswer++;
             updateCounters();
-            saveResult(gCurrentNodeId || 'graph_compare', null, false);
-            const _n31 = gGetNode(gCurrentNodeId);
+            saveResult(PlayerState.gCurrentNodeId || 'graph_compare', null, false);
+            const _n31 = gGetNode(PlayerState.gCurrentNodeId);
             if (_n31) {
                 if (PlayerState.seriesStep >= (_n31.seriesSize || 6)) {
                     finishGraphCompareSeries(_n31);
@@ -2183,10 +2183,10 @@ function processGraphCompareAnswer(isCorrect) {
     else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
-    saveResult(gCurrentNodeId || 'graph_compare', PlayerState.lastResponse.reactionTimeMs, isCorrect);
-    const node = gGetNode(gCurrentNodeId);
+    saveResult(PlayerState.gCurrentNodeId || 'graph_compare', PlayerState.lastResponse.reactionTimeMs, isCorrect);
+    const node = gGetNode(PlayerState.gCurrentNodeId);
     if (!node) {
-        gIndex++;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
@@ -2203,7 +2203,7 @@ function processGraphCompareAnswer(isCorrect) {
 
 function finishGraphCompareSeries(node) {
     if (!node) {
-        gIndex++;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
@@ -2215,8 +2215,8 @@ function finishGraphCompareSeries(node) {
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     updateCounters();
     if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
-        gCurrentCompareNode = null;
-        gIndex++;
+        PlayerState.gCurrentCompareNode = null;
+        PlayerState.gIndex++;
         playNextGraphNode();
         return;
     }
@@ -2229,7 +2229,7 @@ function finishGraphCompareSeries(node) {
 
 function playGraphReading(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    gCurrentNodeId = node.id;
+    PlayerState.gCurrentNodeId = node.id;
     let bid = node.bookId;
     if (!bid && window._books) {
         const keys = Object.keys(window._books);
@@ -2312,7 +2312,7 @@ function finishGraphReading(node) {
     readingContentEl.innerHTML = '';
     stimDisplay.style.display = '';
     stopReadingDynamicBg();
-    gIndex++;
+    PlayerState.gIndex++;
     playNextGraphNode();
 }
 
@@ -2349,13 +2349,13 @@ function startPlayer() {
         if (_lsF2 > 0) PlayerState.focalLengthPx = _lsF2;
     }
     // PATCH35_GRAPH_RESET: hard reset graph state
-    graphActive = false;
-    gNodes = [];
-    gConnections = [];
-    gQueue = [];
-    gIndex = 0;
-    gCurrentNodeId = null;
-    gCurrentCompareNode = null;
+    PlayerState.graphActive = false;
+    PlayerState.gNodes = [];
+    PlayerState.gConnections = [];
+    PlayerState.gQueue = [];
+    PlayerState.gIndex = 0;
+    PlayerState.gCurrentNodeId = null;
+    PlayerState.gCurrentCompareNode = null;
     window._invalidAnswerCount = 0;
     if (window._reactionTimes) window._reactionTimes = [];
     console.log('[PATCH35] graph state reset');
@@ -2896,18 +2896,18 @@ responseButtons.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-resp');
     if (!btn || !PlayerState.responsePhaseActive) return;
     if (btn.dataset.dir) {
-        if (graphActive) handleGraphDirectionAnswer(btn.dataset.dir);
+        if (PlayerState.graphActive) handleGraphDirectionAnswer(btn.dataset.dir);
         else handleDirectionAnswer(btn.dataset.dir);
     } else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
-        // PATCH40_INCMP: check actual compare node, not graphActive
+        // PATCH40_INCMP: check actual compare node, not PlayerState.graphActive
         const inCmp =
             PlayerState.compareMode === 'direction' && (
-                (!graphActive && userScenario?.params?.trainingType === 'compare') ||
-                (graphActive && gCurrentCompareNode != null && gCurrentCompareNode.compareMode === 'direction')
+                (!PlayerState.graphActive && userScenario?.params?.trainingType === 'compare') ||
+                (PlayerState.graphActive && PlayerState.gCurrentCompareNode != null && PlayerState.gCurrentCompareNode.compareMode === 'direction')
             );
         if (inCmp) {
             const val = btn.dataset.answer === 'да';
-            if (graphActive) handleGraphCompareAnswer(val);
+            if (PlayerState.graphActive) handleGraphCompareAnswer(val);
             else handleCompareAnswer(val);
         }
     }
@@ -2932,24 +2932,24 @@ document.addEventListener('keydown', (e) => {
     }
     if (!PlayerState.responsePhaseActive) return;
     // [PATCH4C] compare-mode: ignore Up/Down (only Left/Right = Da/Net)
-    if (((graphActive && gCurrentCompareNode) || (!graphActive && userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (((PlayerState.graphActive && PlayerState.gCurrentCompareNode) || (!PlayerState.graphActive && userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
-        // PATCH40_INCMP: check actual compare node, not graphActive
+        // PATCH40_INCMP: check actual compare node, not PlayerState.graphActive
         const inCmp =
             PlayerState.compareMode === 'direction' && (
-                (!graphActive && userScenario?.params?.trainingType === 'compare') ||
-                (graphActive && gCurrentCompareNode != null && gCurrentCompareNode.compareMode === 'direction')
+                (!PlayerState.graphActive && userScenario?.params?.trainingType === 'compare') ||
+                (PlayerState.graphActive && PlayerState.gCurrentCompareNode != null && PlayerState.gCurrentCompareNode.compareMode === 'direction')
             );
         if (inCmp) {
             if (e.key === 'ArrowLeft') {
-                graphActive ? handleGraphCompareAnswer(true) : handleCompareAnswer(true);
+                PlayerState.graphActive ? handleGraphCompareAnswer(true) : handleCompareAnswer(true);
             } else if (e.key === 'ArrowRight') {
-                graphActive ? handleGraphCompareAnswer(false) : handleCompareAnswer(false);
+                PlayerState.graphActive ? handleGraphCompareAnswer(false) : handleCompareAnswer(false);
             }
         } else {
-            if (graphActive) handleGraphDirectionAnswer(map[e.key]);
+            if (PlayerState.graphActive) handleGraphDirectionAnswer(map[e.key]);
             else handleDirectionAnswer(map[e.key]);
         }
     }
@@ -3060,7 +3060,7 @@ function finishReading() {
 function showFinishedReport() {
     const p = userScenario?.params || {};
     let txt = `Серий: ${PlayerState.completedSeries} · Успешных: ${PlayerState.successfulSeries} · Неуспешных: ${PlayerState.failedSeries}`;
-    if (p.trainingType !== 'reading' && !graphActive) txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
+    if (p.trainingType !== 'reading' && !PlayerState.graphActive) txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
     showStatus('Готово!', txt, 'Ещё раз', () => {
         hideStatus();
         startPlayer();
@@ -3087,8 +3087,8 @@ function resumeTraining() {
     PlayerState.isPaused = false;
     PlayerState.noAnswerSeriesStreak = 0;
     btnPlayerPause.disabled = false;
-    if (graphActive) {
-        const node = gGetNode(gCurrentNodeId);
+    if (PlayerState.graphActive) {
+        const node = gGetNode(PlayerState.gCurrentNodeId);
         if (node) {
             if (node.nodeType === 'COMPARE') playGraphCompareRound(node);
             else if (node.nodeType === 'READING') {
@@ -3145,11 +3145,11 @@ function stopPlayer() {
     sessionId = null;
     _readingFinishGuard = false;
     if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
-    graphActive = false;
-    gCurrentNodeId = null;
-    gCurrentCompareNode = null;
-    gQueue = [];
-    gIndex = 0;
+    PlayerState.graphActive = false;
+    PlayerState.gCurrentNodeId = null;
+    PlayerState.gCurrentCompareNode = null;
+    PlayerState.gQueue = [];
+    PlayerState.gIndex = 0;
 }
 function togglePause() {
     if (!PlayerState.playerRunning) return;
@@ -3271,8 +3271,8 @@ function init() {
     $('reading-next').addEventListener('click', nextReadingPage);
     $('reading-play-pause').addEventListener('click', toggleReadingPause);
     $('reading-finish').addEventListener('click', () => {
-        if (graphActive && gCurrentNodeId) {
-            const n = gGetNode(gCurrentNodeId);
+        if (PlayerState.graphActive && PlayerState.gCurrentNodeId) {
+            const n = gGetNode(PlayerState.gCurrentNodeId);
             finishGraphReading(n);
         } else finishReading();
     });

@@ -23,6 +23,16 @@
         lastDirection: null,
         _stimulusDistance: null,
 
+        // Граф
+        graphActive: false,
+        gNodes: [],
+        gConnections: [],
+        gQueue: [],
+        gIndex: 0,
+        gCurrentNodeId: null,
+        gNodeAcuityCurrent: 1.0,
+        gCurrentCompareNode: null,
+
         // Камера
         camStream: null,
         camActive: false,
