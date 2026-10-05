@@ -224,17 +224,17 @@ console.log('[cam] config:', JSON.stringify({
 // PATCH_PHASE1: moved to PlayerState (group: graph)
 let _frameSkipCounter = 0;
 // PATCH28b: declarations for PATCH91 stability detection
-let _waitingStable = false;
-let _stableSince = 0;
-let _stableBuf = [];
-let _answerBlocked = false; // PATCH31C2A_APPLIED
+// PATCH_PHASE1: moved to PlayerState (group: stability)
+// PATCH_PHASE1: moved to PlayerState (group: stability)
+// PATCH_PHASE1: moved to PlayerState (group: stability)
+// PATCH_PHASE1: moved to PlayerState (group: stability)
 
 // ==================== PATCH30_ABORT: instant stimulus abort ====================
 // Called when user's distance deviates >15%, face is lost, or face returns.
 // Cancels current show, waits for stability, then reshows from scratch.
 function _abortCurrentStimulus(reason) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (_waitingStable) return; // idempotent
+    if (PlayerState._waitingStable) return; // idempotent
 
     console.log('[abort] reason=' + reason + ' (dist=' + (PlayerState.curDistanceM != null ? PlayerState.curDistanceM.toFixed(2) : '?') + 'm)');
 
@@ -253,7 +253,7 @@ function _abortCurrentStimulus(reason) {
     if (responseButtons) responseButtons.style.display = 'none';
 
     // PATCH31C2A_APPLIED: block answers
-    _answerBlocked = true;
+    PlayerState._answerBlocked = true;
 
     // Discard answer (unless already counted in same ms)
     if (PlayerState.lastResponse && PlayerState.lastResponse.answered) {
@@ -262,19 +262,19 @@ function _abortCurrentStimulus(reason) {
     PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
 
     // Enter waiting-stable state
-    _waitingStable = true;
-    _stableSince = 0;
-    _stableBuf = [];
+    PlayerState._waitingStable = true;
+    PlayerState._stableSince = 0;
+    PlayerState._stableBuf = [];
     // keep PlayerState._stimulusDistance for reference; will be updated in _resumeAfterStable
 }
 
 // Called after distance is stable (5 frames within 3%).
 // Resets abort state and shows the next stimulus (or current node, if graph).
 function _resumeAfterStable() {
-    _waitingStable = false;
-    _answerBlocked = false; // PATCH31C2A_APPLIED
-    _stableSince = 0;
-    _stableBuf = [];
+    PlayerState._waitingStable = false;
+    PlayerState._answerBlocked = false; // PATCH31C2A_APPLIED
+    PlayerState._stableSince = 0;
+    PlayerState._stableBuf = [];
     PlayerState._stimulusDistance = PlayerState.curDistanceM;
     console.log('[abort] stable at ' + PlayerState.curDistanceM.toFixed(2) + 'm -- resuming');
 
@@ -835,7 +835,7 @@ async function openHistory() {
 function applyScenarioDefaults() {
     const p = userScenario?.params || {};
     screenPPI = p.ppi || screenPPI || 96;
-    if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
+    if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
     PlayerState.currentAcuity = p.trainingType === 'reading' ? 1.0 : p.startAcuity || 0.5;
     PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
     PlayerState.currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
@@ -1431,12 +1431,12 @@ async function loadFaceApi() {
 // PATCH25: computeEAR removed (landmarks disabled in PATCH25_BBOX)
 
 // === Устойчивость распознавания лица ===
-let _detWindow = [];
-const _DET_WINDOW_SIZE = 30;
-let _minDetectPct = parseFloat(localStorage.getItem('min_detect_pct') || '80') || 80;
-let _lastDistWarnAt = 0;
-let _distWarnArmed = true;
-let _lastSeenDist = null;
+// PATCH_PHASE1: moved to PlayerState (group: face-detection)
+// PATCH_PHASE1: moved to PlayerState (group: face-detection)
+// PATCH_PHASE1: moved to PlayerState (group: face-detection)
+// PATCH_PHASE1: moved to PlayerState (group: face-detection)
+// PATCH_PHASE1: moved to PlayerState (group: face-detection)
+// PATCH_PHASE1: moved to PlayerState (group: face-detection)
 
 function _faceEmoji(rate, hasFaceNow) {
     if (!hasFaceNow && rate < 40) return { icon: '❌', color: '#ef4444', label: 'нет лица / далеко' };
@@ -1446,27 +1446,27 @@ function _faceEmoji(rate, hasFaceNow) {
 }
 
 function _pushDetection(found) {
-    _detWindow.push(found ? 1 : 0);
-    if (_detWindow.length > _DET_WINDOW_SIZE) _detWindow.shift();
+    PlayerState._detWindow.push(found ? 1 : 0);
+    if (PlayerState._detWindow.length > PlayerState._DET_WINDOW_SIZE) PlayerState._detWindow.shift();
     _updateDetectUI();
 }
 
 function _detectRatePct() {
-    if (_detWindow.length === 0) return 100;
+    if (PlayerState._detWindow.length === 0) return 100;
     var sum = 0;
-    for (var i = 0; i < _detWindow.length; i++) sum += _detWindow[i];
-    return Math.round(sum / _detWindow.length * 100);
+    for (var i = 0; i < PlayerState._detWindow.length; i++) sum += PlayerState._detWindow[i];
+    return Math.round(sum / PlayerState._detWindow.length * 100);
 }
 
 function _updateDetectUI() {
     var el = document.getElementById('v-detect');
     var rate = _detectRatePct();
     var detCount = 0;
-    for (var i = 0; i < _detWindow.length; i++) detCount += _detWindow[i];
-    var hasFaceNow = _detWindow.length > 0 && _detWindow[_detWindow.length - 1] === 1;
+    for (var i = 0; i < PlayerState._detWindow.length; i++) detCount += PlayerState._detWindow[i];
+    var hasFaceNow = PlayerState._detWindow.length > 0 && PlayerState._detWindow[PlayerState._detWindow.length - 1] === 1;
     var em = _faceEmoji(rate, hasFaceNow);
     if (el) {
-        el.textContent = em.icon + ' ' + rate + '% (' + detCount + '/' + _detWindow.length + ') · ' + em.label;
+        el.textContent = em.icon + ' ' + rate + '% (' + detCount + '/' + PlayerState._detWindow.length + ') · ' + em.label;
         el.style.color = em.color;
     }
     var _fs = document.getElementById('stim-face-status');
@@ -1481,15 +1481,15 @@ function _updateDetectUI() {
         _ci.textContent = em.icon + ' ' + rate + '%';
         _ci.style.color = em.color;
     }
-    if (!_distWarnArmed && rate >= _minDetectPct + 10) {
-        _distWarnArmed = true;
+    if (!PlayerState._distWarnArmed && rate >= PlayerState._minDetectPct + 10) {
+        PlayerState._distWarnArmed = true;
     }
-    if (_detWindow.length >= _DET_WINDOW_SIZE && _distWarnArmed && rate < _minDetectPct && detCount >= 3) {
-        if (_lastSeenDist != null && _lastSeenDist < 0.85) return;
+    if (PlayerState._detWindow.length >= PlayerState._DET_WINDOW_SIZE && PlayerState._distWarnArmed && rate < PlayerState._minDetectPct && detCount >= 3) {
+        if (PlayerState._lastSeenDist != null && PlayerState._lastSeenDist < 0.85) return;
         var now = performance.now();
-        if (now - _lastDistWarnAt > 8000) {
-            _lastDistWarnAt = now;
-            _distWarnArmed = false;
+        if (now - PlayerState._lastDistWarnAt > 8000) {
+            PlayerState._lastDistWarnAt = now;
+            PlayerState._distWarnArmed = false;
             _showDistWarning();
         }
     }
@@ -1555,7 +1555,7 @@ async function processCamFrame() {
                 window._faceLostSince = 0;
                 camIndicator.textContent = '✅ Лицо';
                 _pushDetection(true);
-                if (PlayerState.curDistanceM != null) _lastSeenDist = PlayerState.curDistanceM;
+                if (PlayerState.curDistanceM != null) PlayerState._lastSeenDist = PlayerState.curDistanceM;
                 // PATCH25_BBOX: blink disabled (needs landmarks)
                 if (ipd > 0 && PlayerState.focalLengthPx) {
                     PlayerState.curDistanceM = (realIPD_MM * PlayerState.focalLengthPx) / ipd / 1000;
@@ -1564,7 +1564,7 @@ async function processCamFrame() {
                     if (PlayerState._stimulusDistance && PlayerState.curDistanceM && PlayerState.camBaseline != null) {
                         var _dev = Math.abs((PlayerState.curDistanceM - PlayerState._stimulusDistance) / PlayerState._stimulusDistance * 100);
                         if (_dev > 15) {
-                            if (PlayerState.responsePhaseActive || !_waitingStable) {
+                            if (PlayerState.responsePhaseActive || !PlayerState._waitingStable) {
                                 hideStimulus();
                                 PlayerState.responsePhaseActive = false;
                                 if (typeof responseButtons !== 'undefined' && responseButtons) responseButtons.style.display = 'none';
@@ -1573,27 +1573,27 @@ async function processCamFrame() {
                                     for (var _i91 = 0; _i91 < PlayerState.phaseTimers.length; _i91++) clearTimeout(PlayerState.phaseTimers[_i91]);
                                     PlayerState.phaseTimers.length = 0;
                                 }
-                                _waitingStable = true;
-                                _stableSince = 0;
-                                _stableBuf = [];
+                                PlayerState._waitingStable = true;
+                                PlayerState._stableSince = 0;
+                                PlayerState._stableBuf = [];
                                 console.log('[PATCH91] distance changed ' + _dev.toFixed(1) + '% -- waiting');
                             }
                         }
                     }
                     // PATCH91: watch for stability
-                    if (_waitingStable && PlayerState.curDistanceM) {
-                        _stableBuf.push(PlayerState.curDistanceM);
-                        if (_stableBuf.length > 5) _stableBuf.shift();
-                        if (_stableBuf.length === 5) {
-                            var _mn = Math.min.apply(null, _stableBuf);
-                            var _mx = Math.max.apply(null, _stableBuf);
+                    if (PlayerState._waitingStable && PlayerState.curDistanceM) {
+                        PlayerState._stableBuf.push(PlayerState.curDistanceM);
+                        if (PlayerState._stableBuf.length > 5) PlayerState._stableBuf.shift();
+                        if (PlayerState._stableBuf.length === 5) {
+                            var _mn = Math.min.apply(null, PlayerState._stableBuf);
+                            var _mx = Math.max.apply(null, PlayerState._stableBuf);
                             if ((_mx - _mn) / _mn * 100 < 3) {
-                                if (!_stableSince) _stableSince = performance.now();
-                                if (performance.now() - _stableSince >= 1000) {
+                                if (!PlayerState._stableSince) PlayerState._stableSince = performance.now();
+                                if (performance.now() - PlayerState._stableSince >= 1000) {
                                     _resumeAfterStable();
                                 }
                             } else {
-                                _stableSince = 0;
+                                PlayerState._stableSince = 0;
                             }
                         }
                     }
@@ -1610,7 +1610,7 @@ async function processCamFrame() {
                         window._fastLeanAt = performance.now();
                         window._recordDeviation(-40);
                         // PATCH30_ABORT: instant abort on face lost
-                        if (!_waitingStable) _abortCurrentStimulus('face_lost');
+                        if (!PlayerState._waitingStable) _abortCurrentStimulus('face_lost');
                         var _lastLog = window._lastLeanLogAt || 0;
                         if (performance.now() - _lastLog > 2000) {
                             console.warn('[lean] face lost >1500ms -- treated as lean');
@@ -1658,7 +1658,7 @@ function evaluateDistance() {
         // (upTol/dnTol declared below in this function -- TDZ prohibits using them here)
         var _tol = dev < 0 ? 10 : 15;
         if (Math.abs(dev) > _tol) {
-            if (!_waitingStable) {
+            if (!PlayerState._waitingStable) {
                 _abortCurrentStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
             }
         }
@@ -1820,8 +1820,8 @@ function playNextGraphNode() {
 function playGraphStimulus(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH61_GUARD
-    if (_waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH30_ABORT
-    _answerBlocked = false; // PATCH31C2A_APPLIED: safety reset before new cycle
+    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH30_ABORT
+    PlayerState._answerBlocked = false; // PATCH31C2A_APPLIED: safety reset before new cycle
     // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
@@ -2023,7 +2023,7 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!PlayerState.responsePhaseActive) return;
-    if (_answerBlocked) return; // PATCH31C2A_APPLIED
+    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2106,7 +2106,7 @@ function playGraphCompare(node) {
 
 function playGraphCompareRound(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (_waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // PATCH30_ABORT
+    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // PATCH30_ABORT
     if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
         return;
@@ -2141,7 +2141,7 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
-    if (_answerBlocked) return; // PATCH31C2A_APPLIED
+    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2367,7 +2367,7 @@ function startPlayer() {
     PlayerState.lastDirection = null;
     PlayerState.currentSingleCell = { row: 0, col: 0 };
     screenPPI = p.ppi || screenPPI || 96;
-    if (p.minDetectPct && !isNaN(p.minDetectPct)) _minDetectPct = parseFloat(p.minDetectPct);
+    if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
     btnPlayer.disabled = true;
     document.querySelector('.counters')?.style.setProperty('display','none');
     btnPlayerStop.disabled = false;
@@ -2411,7 +2411,7 @@ function showNextStimulus() {
     if (!_checkHardLimit()) { setTimeout(showNextStimulus, 500); return; }
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // PATCH61_GUARD
-    if (_waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
+    if (PlayerState._waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
     // PATCH38_EARLY_PHASE: enable response phase immediately
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
@@ -2818,7 +2818,7 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!PlayerState.responsePhaseActive) return;
-    if (_answerBlocked) return; // PATCH31C2A_APPLIED
+    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -2856,7 +2856,7 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
-    if (_answerBlocked) return; // PATCH31C2A_APPLIED
+    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
     // PATCH32_INVALIDATE: check deviation before processing answer
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
@@ -3131,9 +3131,9 @@ function stopPlayer() {
     pauseModal.classList.remove('open');
     PlayerState.camBaseline = null;
     PlayerState._stimulusDistance = null;
-    _waitingStable = false; // PATCH91
-    _stableSince = 0;
-    _stableBuf = [];
+    PlayerState._waitingStable = false; // PATCH91
+    PlayerState._stableSince = 0;
+    PlayerState._stableBuf = [];
     PlayerState._stimulusDistance = null; // PATCH_CLEAN
     PlayerState.camWarnKind = null;
     window._fastLeanAt = 0;

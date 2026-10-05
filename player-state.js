@@ -23,6 +23,20 @@
         lastDirection: null,
         _stimulusDistance: null,
 
+        // Face detection
+        _detWindow: [],
+        _DET_WINDOW_SIZE: 30,
+        _minDetectPct: 80,
+        _lastDistWarnAt: 0,
+        _distWarnArmed: true,
+        _lastSeenDist: null,
+
+        // Стабилизация (детекция наклона)
+        _waitingStable: false,
+        _stableSince: 0,
+        _stableBuf: [],
+        _answerBlocked: false,
+
         // Граф
         graphActive: false,
         gNodes: [],
@@ -101,6 +115,16 @@
         seriesStep: 0,
         noAnswerSeriesStreak: 0
     };
+
+    // Инициализация _minDetectPct из localStorage
+    (function _loadMinDetectPct() {
+        try {
+            const v = parseFloat(localStorage.getItem('min_detect_pct') || '80');
+            if (!isNaN(v) && v >= 30 && v <= 100) {
+                global.PlayerState._minDetectPct = v;
+            }
+        } catch (_) {}
+    })();
 
     // Инициализация focalLengthPx из localStorage (как было в оригинале)
     (function _loadFocalLength() {
