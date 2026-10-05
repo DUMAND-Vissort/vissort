@@ -7,6 +7,14 @@
     'use strict';
 
     global.PlayerState = {
+        // Auth / сессия
+        supabaseClient: null,
+        currentUser: null,
+        userScenarios: [],
+        userScenario: null,
+        sessionId: null,
+        authMode: 'signin',
+
         // Управление плеером
         playerRunning: false,
         isPaused: false,

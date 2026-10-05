@@ -75,12 +75,12 @@ const SUPABASE_ANON_KEY =
         attach();
     }
 })();
-let supabaseClient = null;
-let currentUser = null;
-let userScenarios = [];
-let userScenario = null;
-let sessionId = null;
-let authMode = 'signin';
+// PATCH_PHASE1: moved to PlayerState (group: auth)
+// PATCH_PHASE1: moved to PlayerState (group: auth)
+// PATCH_PHASE1: moved to PlayerState (group: auth)
+// PATCH_PHASE1: moved to PlayerState (group: auth)
+// PATCH_PHASE1: moved to PlayerState (group: auth)
+// PATCH_PHASE1: moved to PlayerState (group: auth)
 
 // PATCH_PHASE1: moved to PlayerState
 
@@ -472,19 +472,19 @@ function initSupabase() {
         if (_raw) {
             try {
                 var _td = JSON.parse(_raw);
-                supabaseClient = null;
-                currentUser = null;
-                sessionId = 'test_' + Date.now();
-                userScenario = {
+                PlayerState.supabaseClient = null;
+                PlayerState.currentUser = null;
+                PlayerState.sessionId = 'test_' + Date.now();
+                PlayerState.userScenario = {
                     id: '__test__',
                     name: '🧪 Тестовый сценарий',
                     params: _td,
                     trainingType: _td.trainingType || 'single'
                 };
-                userScenarios = [userScenario];
+                PlayerState.userScenarios = [PlayerState.userScenario];
                 authModal.classList.remove('open');
                 hdrUser.textContent = '🧪';
-                hdrScenario.textContent = userScenario.name;
+                hdrScenario.textContent = PlayerState.userScenario.name;
                 applyScenarioDefaults();
                 updateCounters();
                 hideStatus();
@@ -497,23 +497,23 @@ function initSupabase() {
             }
         }
     }
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    PlayerState.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     var _onLoggedInFired = false;
     function _safeOnLoggedIn() {
         if (_onLoggedInFired) return;
         _onLoggedInFired = true;
         onLoggedIn();
     }
-    supabaseClient.auth.getSession().then(({ data }) => {
-        currentUser = data?.session?.user || null;
-        if (currentUser) _safeOnLoggedIn();
+    PlayerState.supabaseClient.auth.getSession().then(({ data }) => {
+        PlayerState.currentUser = data?.session?.user || null;
+        if (PlayerState.currentUser) _safeOnLoggedIn();
         else promptLogin();
     });
     // PATCH28_AUTH_FIX: handle SIGNED_IN + INITIAL_SESSION (v2 async init)
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        currentUser = session?.user || null;
+    PlayerState.supabaseClient.auth.onAuthStateChange((event, session) => {
+        PlayerState.currentUser = session?.user || null;
         if (event === 'SIGNED_OUT') { _onLoggedInFired = false; promptLogin(); return; }
-        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && currentUser) {
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && PlayerState.currentUser) {
             _safeOnLoggedIn();
         }
     });
@@ -521,9 +521,9 @@ function initSupabase() {
     setTimeout(async () => {
         if (_onLoggedInFired) return;
         try {
-            const { data } = await supabaseClient.auth.getSession();
+            const { data } = await PlayerState.supabaseClient.auth.getSession();
             if (data?.session?.user) {
-                currentUser = data.session.user;
+                PlayerState.currentUser = data.session.user;
                 console.log('[auth] PATCH28 fallback: session found, calling onLoggedIn');
                 _safeOnLoggedIn();
             }
@@ -532,7 +532,7 @@ function initSupabase() {
 }
 function promptLogin() {
     hideStatus();
-    authMode = 'signin';
+    PlayerState.authMode = 'signin';
     updateAuthModal();
     authModal.classList.add('open');
     hdrUser.textContent = '—';
@@ -543,7 +543,7 @@ function updateAuthModal() {
     const t = $('auth-title'),
         tb = $('auth-toggle'),
         sb = $('auth-submit');
-    if (authMode === 'signin') {
+    if (PlayerState.authMode === 'signin') {
         t.textContent = 'Вход';
         tb.textContent = 'Регистрация';
         sb.textContent = 'Войти';
@@ -606,7 +606,7 @@ function bindAuthForm() {
 }
 
 function showAuthModal(mode) {
-    authMode = mode;
+    PlayerState.authMode = mode;
     const t = $('auth-title');
     const nl = $('auth-name-label');
     const ni = $('auth-name');
@@ -639,14 +639,14 @@ async function doAuth() {
         return;
     }
     saveAuthCreds(email, password);
-    if (authMode === 'signin') {
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (PlayerState.authMode === 'signin') {
+        const { error } = await PlayerState.supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
             alert('Ошибка: ' + error.message);
             return;
         }
     } else {
-        const { error } = await supabaseClient.auth.signUp({ email, password });
+        const { error } = await PlayerState.supabaseClient.auth.signUp({ email, password });
         if (error) {
             alert('Ошибка: ' + error.message);
             return;
@@ -656,7 +656,7 @@ async function doAuth() {
 }
 async function onLoggedIn() {
     authModal.classList.remove('open');
-    hdrUser.textContent = currentUser.email || '—';
+    hdrUser.textContent = PlayerState.currentUser.email || '—';
     showStatus('Загрузка сценария…', 'Читаем назначения.');
 	    // ==================== PATCH32_TEST: test scenario from admin ====================
     if (location.search.includes('test=1')) {
@@ -665,14 +665,14 @@ async function onLoggedIn() {
             if (raw) {
                 const testData = JSON.parse(raw);
                 console.log('[test] loading test scenario from localStorage');
-                userScenarios = [{
+                PlayerState.userScenarios = [{
                     id: '__test__',
                     name: '🧪 Тестовый сценарий',
                     params: testData,
                     trainingType: testData.trainingType || 'single'
                 }];
-                userScenario = userScenarios[0];
-                hdrScenario.textContent = userScenario.name;
+                PlayerState.userScenario = PlayerState.userScenarios[0];
+                hdrScenario.textContent = PlayerState.userScenario.name;
                 applyScenarioDefaults();
                 updateCounters();
                 hideStatus();
@@ -691,9 +691,9 @@ async function onLoggedIn() {
     }
     // ==================== /PATCH32_TEST ====================
 
-    userScenarios = await loadUserScenarios();
-    userScenarios = await loadUserScenarios();
-    if (!userScenarios.length) {
+    PlayerState.userScenarios = await loadUserScenarios();
+    PlayerState.userScenarios = await loadUserScenarios();
+    if (!PlayerState.userScenarios.length) {
         showStatus('Сценарий не назначен', 'Обратитесь к администратору.', 'Обновить', () => onLoggedIn());
         // PATCH21: run camera/onboarding even without scenarios
         if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
@@ -701,8 +701,8 @@ async function onLoggedIn() {
                 const fp = await VissortDevice.getFingerprint();
                 VissortDevice.setCurrent(fp);
                 await Onboarding.start({
-                    client: supabaseClient,
-                    userId: currentUser ? currentUser.id : null,
+                    client: PlayerState.supabaseClient,
+                    userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
                     onDone: () => enableCamera()
                 });
             } catch (e) {
@@ -714,9 +714,9 @@ async function onLoggedIn() {
         }
         return;
     }
-    if (userScenarios.length === 1) {
-        userScenario = userScenarios[0];
-        hdrScenario.textContent = userScenario.name || 'Сценарий';
+    if (PlayerState.userScenarios.length === 1) {
+        PlayerState.userScenario = PlayerState.userScenarios[0];
+        hdrScenario.textContent = PlayerState.userScenario.name || 'Сценарий';
         applyScenarioDefaults();
         updateCounters();
         hideStatus();
@@ -730,8 +730,8 @@ async function onLoggedIn() {
             const fp = await VissortDevice.getFingerprint();
             VissortDevice.setCurrent(fp);
             await Onboarding.start({
-                client: supabaseClient,
-                userId: currentUser ? currentUser.id : null,
+                client: PlayerState.supabaseClient,
+                userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
                 onDone: () => enableCamera()
             });
         } catch (e) {
@@ -743,17 +743,17 @@ async function onLoggedIn() {
     }
 }
 async function loadUserScenarios() {
-    const { data: assigns, error: e1 } = await supabaseClient
+    const { data: assigns, error: e1 } = await PlayerState.supabaseClient
         .from('user_scenarios')
         .select('scenario_id')
-        .eq('user_id', currentUser.id);
+        .eq('user_id', PlayerState.currentUser.id);
     if (e1) {
         console.error('[user] user_scenarios:', e1);
         return [];
     }
     if (!assigns || !assigns.length) return [];
     const ids = assigns.map((a) => a.scenario_id);
-    const { data: list, error: e2 } = await supabaseClient
+    const { data: list, error: e2 } = await PlayerState.supabaseClient
         .from('scenarios')
         .select('id,name,training_type,params')
         .in('id', ids);
@@ -772,12 +772,12 @@ async function loadUserScenarios() {
 function openScenarioPicker() {
     const list = $('scenario-list');
     list.innerHTML = '';
-    userScenarios.forEach((s) => {
+    PlayerState.userScenarios.forEach((s) => {
         const el = document.createElement('div');
-        el.className = 'scenario-item' + (userScenario && userScenario.id === s.id ? ' active' : '');
+        el.className = 'scenario-item' + (PlayerState.userScenario && PlayerState.userScenario.id === s.id ? ' active' : '');
         el.innerHTML = `<div><div style="font-weight:600">${escapeHtml(s.name)}</div><div style="font-size:11px;color:#9ca3af">${escapeHtml(s.trainingType || 'single')}</div></div><div>▶</div>`;
         el.addEventListener('click', () => {
-            userScenario = s;
+            PlayerState.userScenario = s;
             hdrScenario.textContent = s.name;
             applyScenarioDefaults();
             updateCounters();
@@ -794,10 +794,10 @@ async function openHistory() {
     $('history-modal').classList.add('open');
     const body = $('history-body');
     body.textContent = 'Загрузка…';
-    const { data, error } = await supabaseClient
+    const { data, error } = await PlayerState.supabaseClient
         .from('test_results')
         .select('session_id,node_id,response_time_ms,is_correct,created_at')
-        .eq('user_id', currentUser.id)
+        .eq('user_id', PlayerState.currentUser.id)
         .order('created_at', { ascending: false })
         .limit(200);
     if (error) {
@@ -833,7 +833,7 @@ async function openHistory() {
 }
 
 function applyScenarioDefaults() {
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     screenPPI = p.ppi || screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
     PlayerState.currentAcuity = p.trainingType === 'reading' ? 1.0 : p.startAcuity || 0.5;
@@ -848,7 +848,7 @@ function updateCounters() {
         p = n || {};
         acuityVal = PlayerState.gNodeAcuityCurrent;
     } else {
-        p = userScenario?.params || {};
+        p = PlayerState.userScenario?.params || {};
         acuityVal = PlayerState.currentAcuity;
     }
     const total = p.seriesSize || 6;
@@ -1663,8 +1663,8 @@ function evaluateDistance() {
             }
         }
     }
-    const upTol = userScenario?.params?.distanceToleranceIncreasePct ?? 15;
-    const dnTol = userScenario?.params?.distanceToleranceDecreasePct ?? 10;
+    const upTol = PlayerState.userScenario?.params?.distanceToleranceIncreasePct ?? 15;
+    const dnTol = PlayerState.userScenario?.params?.distanceToleranceDecreasePct ?? 10;
     if (dev > upTol) {
         if (PlayerState.camWarnKind !== 'up') {
             PlayerState.camWarnKind = 'up';
@@ -2325,18 +2325,18 @@ function startPlayer() {
         console.log('[PATCH41] closing status-overlay');
         _so.classList.add('hidden');
     }
-    if (!userScenario) {
+    if (!PlayerState.userScenario) {
         alert('Сценарий не назначен');
         return;
     }
-    if (!validateScenario(userScenario)) {
+    if (!validateScenario(PlayerState.userScenario)) {
         alert('Сценарий повреждён или содержит некорректные данные.');
         return;
     }
-    sessionId = (window.crypto && typeof window.crypto.randomUUID === 'function')
+    PlayerState.sessionId = (window.crypto && typeof window.crypto.randomUUID === 'function')
         ? window.crypto.randomUUID()
         : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
-    const p = userScenario.params || {};
+    const p = PlayerState.userScenario.params || {};
     PlayerState.playerRunning = true;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
@@ -2416,7 +2416,7 @@ function showNextStimulus() {
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
     PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishSeries();
         return;
@@ -2548,7 +2548,7 @@ function showNextStimulus() {
 }
 
 function finishSeries() {
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     const th = p.seriesThreshold || getThreshold(p.seriesSize || 6);
     const ok = PlayerState.seriesCorrect >= th;
     if (PlayerState.seriesNoAnswer === (p.seriesSize || 6)) PlayerState.noAnswerSeriesStreak++;
@@ -2589,8 +2589,8 @@ function finishSeries() {
 }
 
 function defaultCellParams() {
-    const d = userScenario?.params?.distanceMeters || 1;
-    const ppi = userScenario?.params?.ppi || screenPPI || 96;
+    const d = PlayerState.userScenario?.params?.distanceMeters || 1;
+    const ppi = PlayerState.userScenario?.params?.ppi || screenPPI || 96;
     return {
         size: acuityToSizePx(1.0, d, ppi),
         stimR: 255,
@@ -2604,7 +2604,7 @@ function defaultCellParams() {
 }
 function showNextCompareRound() {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     if (PlayerState.seriesStep >= (p.seriesSize || 6)) {
         finishCompareSeries();
         return;
@@ -2622,7 +2622,7 @@ function showNextCompareRound() {
             PlayerState.seriesNoAnswer++;
             updateCounters();
             saveResult('user_compare', null, false);
-            const _p31 = userScenario?.params || {};
+            const _p31 = PlayerState.userScenario?.params || {};
             if (PlayerState.seriesStep >= (_p31.seriesSize || 6)) {
                 finishCompareSeries();
             } else {
@@ -2649,7 +2649,7 @@ function showDirectionComparison() {
     responseButtons.style.display = 'flex';
 }
 function showFindSameComparison() {
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     const pc = Math.max(1, Math.min(20, parseInt(p.pairsCount || 2)));
     const need = pc * 2;
     const usePc = PlayerState.activeCells.length < need ? Math.floor(PlayerState.activeCells.length / 2) : pc;
@@ -2752,7 +2752,7 @@ function createCellElement(cell, params, direction, idx) {
     el.style.cssText = `left:${cell.col * cw}px;top:${cell.row * ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR || 0},${params.bgG || 0},${params.bgB || 0});position:absolute;box-sizing:border-box;border:3px solid transparent;`;
     el.dataset.index = idx !== undefined ? idx : PlayerState.activeCells.indexOf(cell);
     const size = params.size || PlayerState.currentSize;
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     const svgData = getStimulusSVG(
         {
             stimType: p.type || 'LETTER_E',
@@ -2775,7 +2775,7 @@ function processCompareAnswer(isCorrect) {
         clearTimeout(PlayerState.currentShowTimer);
         PlayerState.currentShowTimer = null;
     }
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     if (isCorrect) PlayerState.seriesCorrect++;
     else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
@@ -2792,7 +2792,7 @@ function processCompareAnswer(isCorrect) {
     );
 }
 function finishCompareSeries() {
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     const th = p.seriesThreshold || getThreshold(p.seriesSize || 6);
     const ok = PlayerState.seriesCorrect >= th;
     PlayerState.completedSeries++;
@@ -2902,7 +2902,7 @@ responseButtons.addEventListener('click', (e) => {
         // PATCH40_INCMP: check actual compare node, not PlayerState.graphActive
         const inCmp =
             PlayerState.compareMode === 'direction' && (
-                (!PlayerState.graphActive && userScenario?.params?.trainingType === 'compare') ||
+                (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
                 (PlayerState.graphActive && PlayerState.gCurrentCompareNode != null && PlayerState.gCurrentCompareNode.compareMode === 'direction')
             );
         if (inCmp) {
@@ -2932,14 +2932,14 @@ document.addEventListener('keydown', (e) => {
     }
     if (!PlayerState.responsePhaseActive) return;
     // [PATCH4C] compare-mode: ignore Up/Down (only Left/Right = Da/Net)
-    if (((PlayerState.graphActive && PlayerState.gCurrentCompareNode) || (!PlayerState.graphActive && userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (((PlayerState.graphActive && PlayerState.gCurrentCompareNode) || (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
         // PATCH40_INCMP: check actual compare node, not PlayerState.graphActive
         const inCmp =
             PlayerState.compareMode === 'direction' && (
-                (!PlayerState.graphActive && userScenario?.params?.trainingType === 'compare') ||
+                (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
                 (PlayerState.graphActive && PlayerState.gCurrentCompareNode != null && PlayerState.gCurrentCompareNode.compareMode === 'direction')
             );
         if (inCmp) {
@@ -2957,7 +2957,7 @@ document.addEventListener('keydown', (e) => {
 
 // ==================== ЧТЕНИЕ (плоский режим) ====================
 function startReading() {
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     const text = p.text || '';
     const pars = text
         .split(/\n+/)
@@ -3058,7 +3058,7 @@ function finishReading() {
 
 // ==================== ФИНАЛ / ПАУЗА ====================
 function showFinishedReport() {
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     let txt = `Серий: ${PlayerState.completedSeries} · Успешных: ${PlayerState.successfulSeries} · Неуспешных: ${PlayerState.failedSeries}`;
     if (p.trainingType !== 'reading' && !PlayerState.graphActive) txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
     showStatus('Готово!', txt, 'Ещё раз', () => {
@@ -3098,7 +3098,7 @@ function resumeTraining() {
         playNextGraphNode();
         return;
     }
-    const p = userScenario?.params || {};
+    const p = PlayerState.userScenario?.params || {};
     if (p.trainingType === 'compare') showNextCompareRound();
     else if (p.trainingType === 'reading') {
     } else showNextStimulus();
@@ -3142,7 +3142,7 @@ function stopPlayer() {
     window._reactionLog = []; // PATCH46
     window._baselineWaitStart = null; // PATCH43
     window._invalidAnswerCount = 0;
-    sessionId = null;
+    PlayerState.sessionId = null;
     _readingFinishGuard = false;
     if (_readingTimerId) { clearTimeout(_readingTimerId); _readingTimerId = null; }
     PlayerState.graphActive = false;
@@ -3174,11 +3174,11 @@ function togglePause() {
 // ==================== SAVE RESULT ====================
 async function saveResult(nodeId, reactionTimeMs, isCorrect) {
     if (!checkRateLimit()) return;
-    if (!supabaseClient || !currentUser || !sessionId) return;
+    if (!PlayerState.supabaseClient || !PlayerState.currentUser || !PlayerState.sessionId) return;
     try {
-        await supabaseClient.from('test_results').insert({
-            user_id: currentUser.id,
-            session_id: sessionId,
+        await PlayerState.supabaseClient.from('test_results').insert({
+            user_id: PlayerState.currentUser.id,
+            session_id: PlayerState.sessionId,
             node_id: nodeId || 'user_training',
             response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
             is_correct: isCorrect,
@@ -3223,7 +3223,7 @@ function scheduleVoiceCountdown(durationMs) {
 function init() {
     $('auth-submit').addEventListener('click', doAuth);
     $('auth-toggle').addEventListener('click', () => {
-        authMode = authMode === 'signin' ? 'signup' : 'signin';
+        PlayerState.authMode = PlayerState.authMode === 'signin' ? 'signup' : 'signin';
         updateAuthModal();
     });
     $('auth-email').addEventListener('keydown', (e) => {
@@ -3240,11 +3240,11 @@ function init() {
             disableCamera();
         } catch (e) {}
         try {
-            await supabaseClient.auth.signOut();
+            await PlayerState.supabaseClient.auth.signOut();
         } catch (e) {}
-        currentUser = null;
-        userScenario = null;
-        userScenarios = [];
+        PlayerState.currentUser = null;
+        PlayerState.userScenario = null;
+        PlayerState.userScenarios = [];
         hdrUser.textContent = '—';
         hdrScenario.textContent = '—';
         btnPlayer.disabled = true;
@@ -3261,7 +3261,7 @@ function init() {
     });
 
     hdrScenario.addEventListener('click', () => {
-        if (userScenarios.length > 0) openScenarioPicker();
+        if (PlayerState.userScenarios.length > 0) openScenarioPicker();
     });
     $('scenario-close').addEventListener('click', () => $('scenario-modal').classList.remove('open'));
     btnHistory.addEventListener('click', openHistory);
@@ -3278,7 +3278,7 @@ function init() {
     });
     $('reading-not-see').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.max(0.1, Math.round((PlayerState.currentAcuity - 0.1) * 10) / 10);
-        const d = userScenario?.params?.readingDistance || 1;
+        const d = PlayerState.userScenario?.params?.readingDistance || 1;
         readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
@@ -3287,7 +3287,7 @@ function init() {
     });
     $('reading-see-well').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.min(2.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
-        const d = userScenario?.params?.readingDistance || 1;
+        const d = PlayerState.userScenario?.params?.readingDistance || 1;
         readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
