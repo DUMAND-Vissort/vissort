@@ -2,7 +2,6 @@
 'use strict';
 
 // ============================================================
-// PATCH28_PHASE3: shared helpers come from vissort-core.js
 // ============================================================
 if (!window.VissortCore) {
     throw new Error('[player] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE player-runtime.js.');
@@ -77,7 +76,7 @@ const SUPABASE_ANON_KEY =
 })();
 
 
-// PATCH50_LOG_FN: per-answer logging
+// Логирование каждого ответа
 window._reactionLog = window._reactionLog || [];
 window._logAnswer = function(entry) {
     window._reactionLog.push(entry);
@@ -106,13 +105,11 @@ let _blinkClosedSince = 0;
 let _blinkIsClosed = false;
 const BLINK_THRESHOLD = 0.21;
 
-// ==================== PATCH22: device config ====================
 
 // === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
 let _frameSkipCounter = 0;
-// PATCH28b: declarations for PATCH91 stability detection
 
-// ==================== PATCH30_ABORT: instant stimulus abort ====================
+// Принудительная отмена стимула при отклонении
 // Called when user's distance deviates >15%, face is lost, or face returns.
 // Cancels current show, waits for stability, then reshows from scratch.
 
@@ -155,14 +152,6 @@ const readingContentEl = $('reading-content');
 const readingToolbarEl = $('reading-toolbar');
 const camIndicator = $('cam-indicator');
 
-// PATCH28_PHASE3: removed escapeHtml (now in VissortCore)
-// PATCH28_PHASE3: removed hexToRgb (now in VissortCore)
-// PATCH28_PHASE3: removed rgbToHex (now in VissortCore)
-// PATCH28_PHASE3: removed lerpColor (now in VissortCore)
-// PATCH28_PHASE3: removed getThreshold (now in VissortCore)
-// PATCH28_PHASE3: removed randomDirection (now in VissortCore)
-// PATCH28_PHASE3: removed acuityToSizeMm (now in VissortCore)
-// PATCH28_PHASE3: removed acuityToSizePx (now in VissortCore)
 
 function _effectiveDistance(declared) {
     return window.PlayerUtils.effectiveDistance(declared, PlayerState.curDistanceM);
@@ -171,10 +160,6 @@ window._distEMA = null;
 function _smoothDistance(raw) {
     return window.PlayerUtils.smoothDistance(raw);
 }
-// PATCH28_PHASE3: removed acuityToFontSizePx (now in VissortCore)
-// PATCH28_PHASE3: removed detectDeviceType (now in VissortCore)
-// PATCH28_PHASE3: removed detectPPIHeuristic (now in VissortCore)
-// PATCH28_PHASE3: removed loadPPI (now in VissortCore)
 
 function showStatus(title, text, actionLabel, actionFn) {
     statusTitle.textContent = title;
@@ -233,7 +218,7 @@ function initSupabase() {
         if (PlayerState.currentUser) _safeOnLoggedIn();
         else promptLogin();
     });
-    // PATCH28_AUTH_FIX: handle SIGNED_IN + INITIAL_SESSION (v2 async init)
+    // Обработка SIGNED_IN и INITIAL_SESSION
     PlayerState.supabaseClient.auth.onAuthStateChange((event, session) => {
         PlayerState.currentUser = session?.user || null;
         if (event === 'SIGNED_OUT') { _onLoggedInFired = false; promptLogin(); return; }
@@ -241,14 +226,14 @@ function initSupabase() {
             _safeOnLoggedIn();
         }
     });
-    // PATCH28_AUTH_FIX: fallback -- if getSession was too early, retry in 1.5s
+    // Fallback: если getSession сработал слишком рано, повторить через 1.5с
     setTimeout(async () => {
         if (_onLoggedInFired) return;
         try {
             const { data } = await PlayerState.supabaseClient.auth.getSession();
             if (data?.session?.user) {
                 PlayerState.currentUser = data.session.user;
-                console.log('[auth] PATCH28 fallback: session found, calling onLoggedIn');
+                console.log('[auth] fallback: сессия найдена, вызов onLoggedIn');
                 _safeOnLoggedIn();
             }
         } catch (e) {}
@@ -382,7 +367,7 @@ async function onLoggedIn() {
     authModal.classList.remove('open');
     hdrUser.textContent = PlayerState.currentUser.email || '—';
     showStatus('Загрузка сценария…', 'Читаем назначения.');
-	    // ==================== PATCH32_TEST: test scenario from admin ====================
+	    // ==== Тестовый сценарий из админки (player.html?test=1) ====
     if (location.search.includes('test=1')) {
         try {
             const raw = localStorage.getItem('vissort_test_scenario');
@@ -413,13 +398,13 @@ async function onLoggedIn() {
             console.warn('[test] failed:', e);
         }
     }
-    // ==================== /PATCH32_TEST ====================
+    // ==== /Тестовый сценарий ====
 
     PlayerState.userScenarios = await loadUserScenarios();
     PlayerState.userScenarios = await loadUserScenarios();
     if (!PlayerState.userScenarios.length) {
         showStatus('Сценарий не назначен', 'Обратитесь к администратору.', 'Обновить', () => onLoggedIn());
-        // PATCH21: run camera/onboarding even without scenarios
+        // Запустить камеру и онбординг даже без сценариев
         if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
             try {
                 const fp = await VissortDevice.getFingerprint();
@@ -584,10 +569,6 @@ function updateCounters() {
     cntNoAnswer.textContent = PlayerState.seriesNoAnswer;
 }
 
-// PATCH28_PHASE3: removed generateLetterE (now in VissortCore)
-// PATCH28_PHASE3: removed generateLandoltRing (now in VissortCore)
-// PATCH28_PHASE3: removed getCircleStimulusSVG (now in VissortCore)
-// PATCH28_PHASE3: removed getStimulusSVG (now in VissortCore)
 function setStimColorRGB(r, g, b) {
     const svg = stimDisplay.querySelector('svg');
     if (!svg) return;
@@ -598,7 +579,6 @@ function setStimColorRGB(r, g, b) {
     if (cc) cc.setAttribute('stroke', c);
 }
 
-// PATCH28_PHASE3: removed buildGenericDynamicPhases (now in VissortCore)
 
 function startSingleStimAnimation(p) { return window.PlayerAnimation.startSingleStimAnimation(p); }
 function stopSingleStimAnimation() { return window.PlayerAnimation.stopSingleStimAnimation(); }
@@ -620,7 +600,7 @@ function applyRandomStimulusPosition(size) { return window.PlayerAnimation.apply
 function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
-    PlayerState._stimulusDistance = PlayerState.curDistanceM; // PATCH23: РѕРґРЅРѕ РїСЂРёСЃРІР°РёРІР°РЅРёРµ
+    PlayerState._stimulusDistance = PlayerState.curDistanceM;
 }
 function hideStimulus() {
     stopSingleStimAnimation();
