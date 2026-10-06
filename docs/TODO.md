@@ -1,333 +1,74 @@
 # Vissort — TODO
 
-- [ ] sw.js: HTML fallback вместо пустого 503 (сделать вручную через Notepad++)
+> Статус: Фазы 0, 1, 2 закрыты (2026-10-06)
+> Связанные: PLAN.md (карта), HANDOFF.md (контекст)
 
-> Последнее обновление: 2026-09-28 (объединён с аудитом)
-> Единственный актуальный TODO. Файл `TODO.md` в корне удалён.
+## ✅ ЗАКРЫТО
 
----
+### Фаза 0 — фундамент
+- [x] Playwright: 28 тестов + CI
+- [x] schemaVersion: 2 + migrateScenario
+- [x] README + ARCHITECTURE + DEPLOY
 
-## 🔴 СРОЧНО — БЕЗОПАСНОСТЬ
+### Фаза 1 — рефакторинг player-runtime.js
+- [x] player-state.js (93 переменные)
+- [x] player-utils.js (rate-limit, validation, distance)
+- [x] player-dist-warning.js (UI дистанции)
+- [x] player-reading.js (фон чтения)
+- [x] player-camera.js (камера, callbacks)
+- [x] player-animation.js (анимации, callbacks)
+- [x] player-invalid-detection.js (детекция наклона)
+- Граф оставлен в player-runtime.js (осознанно — «дирижёр» плеера)
 
-- [ ] **Отозвать скомпрометированный ключ DeepSeek**
-      Известные скомпрометированные ключи:
-        • `sk-5008ba...` (упоминался в старом TODO)
-        • `cf7e5e754ebddf74380fca7b40474f3c6f1607da9df2e25d9e636e94e50f97d3` (показан 2026-09-28)
-      Где отозвать: https://platform.deepseek.com/api_keys → Revoke/Delete
-
-- [ ] **Создать новый ключ DeepSeek** (формат `sk-...`)
-      https://platform.deepseek.com/api_keys → Create new API key
-
-- [ ] **Обновить секрет в Supabase**
-      `.\supabase.exe secrets set DEEPSEEK_API_KEY=sk-новый_ключ`
-      Проверить: https://supabase.com/dashboard/project/hzvypwdpdhsjzaclxmbm/functions/secrets
-
-- [ ] **Передеплоить функцию**
-      `.\supabase.exe functions deploy generate-scenario`
+### Фаза 2 — чистка кода
+- [x] Убрать PATCH* / BUG-* (228 вхождений)
 
 ---
 
-## 🚧 В РАБОТЕ
+## 🚧 В РАБОТЕ (остаток Фазы 2)
 
-### AI-генератор сценариев (Edge Function + модалка)
-- [x] Аккаунт DeepSeek + баланс $2
-- [x] API key получен
-- [x] Edge Function `generate-scenario` создана
-- [x] Секрет `DEEPSEEK_API_KEY` установлен в Supabase
-- [x] Функция задеплоена (v1 без auth → v2 с auth 2026-09-28)
-- [x] Модалка «🤖 AI» в `admin.html`
-- [x] Кнопка + prompt-форма
-- [x] Парсинг JSON → граф на холст (`createNodesFromAI`)
-- [x] Auth-проверка JWT в Edge Function (патч 1)
-- [x] Передача `schema` в DeepSeek (патч 3)
-- [x] Принимаем и `{nodes:[]}`, и `[]` (патч 3)
-- [x] **Тест генератора** — ✅ работает (28.09.2026)
-- [x] Отозван старый ключ `sk-5008ba...` и `cf7e5e...`, создан новый `sk-...`
-- [x] Секрет `DEEPSEEK_API_KEY` пересоздан в Supabase через дашборд
-- [x] Edge Function передеплоена с auth-проверкой
-- [ ] Rate-limit на стороне Edge Function (не более N запросов в час на user_id)
+- [ ] Устранить дублирование app.js ↔ player-runtime.js
+- [ ] Prettier + ESLint clean (0 warnings)
+- [ ] Уборка корня (patch*.ps1, _test_graph.json, diff.txt)
 
 ---
 
- ## 🟠 АУДИТ 2026-09-28 — ПАКЕТ №2 (существенное)
+## 📋 ФАЗА 3 — доработки
 
-- [x] `_frameSkipCounter` не сбрасывался между сессиями → Патч 8
-- [x] `voice.js`: `el.innerText` → `el.textContent` → Патч 10
-- [x] `knightTour(12)` в «Пятнашках» — увеличено до 2000 попыток → Патч 11
-- [x] `differences-wolf.html`: убран верхний предел S (был `Math.min(60, ...)`) → Патч 12
-- [x] Скрытые chip'ы в `admin.html`: folder-status теперь всегда виден → Патч 13
-
-### Отложено
-- [ ] **`sw.js` fallback на офлайн-страницу** — патч 9 не сработал в PS 5.1 (кириллица + `<html>` в here-string). Сделать вручную в Notepad++ либо через base64-обёртку.
-      Критичность низкая: пользователь видит пустую 503 только если одновременно нет сети и нет кэша.
-- [ ] **`visited` в `buildGraphQueue`** — не критично для текущих сценариев (простые цепочки). Проявится только при сложных графах с петлями.
-- [ ] **CSP без `unsafe-inline`** — требует выноса inline-скриптов из 3 HTML-файлов (Sentry init, installSyncUI, games-menu). Отдельная задача.
-### UI-улучшения (сессия 2026-09-28, вторая половина дня)
-- [x] Патч 14a — унифицированы размеры узлов (STIMULUS/READING/COMPARE → 200×180)
-- [x] Патч 14b — компактный CSS для узлов (шрифты 7–10px, отступы 1–2px)
-- [x] Патч 14c — автоскролл canvas к созданным AI-узлам
-- [x] Патч 15a — кнопки внутри узла идут вертикально (Связать/Петля/В заготовки/Удалить)
-- [x] Патч 15b — кнопки зума в шапке (`+` / `−` / `100%`)
-- [x] Патч 15c — логика зума + коррекция drag/resize под масштаб (`window.__vissort_zoom`)
-- [x] Патч 16 — Ctrl + колесо мыши для зума
-- [x] Патч 17 — drag по всей площади узла, single-click = активация, double-click = инспектор
-- [x] Патч 18a — кнопка 🆕 «Новый сценарий» в шапке
-- [x] Патч 18b — логика очистки холста (`installNewScenario`)
-- [x] Патч 18c — фикс эмодзи после PS 5.1 (через `[char]::ConvertFromUtf32`)
-### Проверка прода (28.09.2026, вечер)
-- [x] `https://vissort.com/admin.html` — открывается, всё работает
-- [x] Узлы 200×180, кнопки зума, кнопка 🆕 — на месте
-- [x] AI-генератор на проде — работает
-- [x] Новый `DEEPSEEK_API_KEY` установлен, старый отозван
----
-
-## 🟡 АУДИТ 2026-09-28 — ПАКЕТ №3 (техдолг)
-
-- [ ] Разделить `player-runtime.js` (2700 строк) на модули:
-      `player-core.js`, `player-flat.js`, `player-graph.js`, `player-camera.js`
-- [ ] Переименовать `player.js` → `player-config.js`, `user.js` → `user-config.js`
-- [ ] Применить Prettier (`npm run format`) — местами >110 символов
-- [ ] `package.json` `"type": "module"` конфликтует с ESLint `sourceType: 'script'`
-- [ ] Вынести `_test_graph.json`, `diff.txt` из корня в `tests/` или `_archive/`
-- [ ] Удалить патч-файлы `patch1-*.ps1` … `patch6-*.ps1` после проверки
-- [ ] Удалить `TODO.md` в корне (этот файл — в `docs/`)
-
----
-## 🌱 Геймификация — растение/сад (приоритет: высокий)
-
-> Идея: дофаминовая мотивация через «живую» метафору. Не лутбоксы, не скины —
-> только честные механики: видимый прогресс, streak, эмоциональная привязка.
-
-### Этап 1 — базовое дерево + streak (1 сессия)
-- [ ] SVG-дерево в 10 стадий: семечко → росток → стебель → листья → цветок → дерево → …
-- [ ] Компонент на главном экране `user.html` (в центре, над кнопкой ▶)
-- [ ] Streak-счётчик в шапке + «заморозка» (1 раз в месяц, чтобы не терять серию)
-- [ ] Прогресс-бар дня (минуты занятия)
-- [ ] Поля в `profiles`: `tree_stage` (1–10), `tree_growth` (0–100), `streak_days`, `streak_freeze_available`
-- [ ] Формула роста: +1% за 3 минуты занятия, +3% за streak-день, −1% за пропуск (медленное увядание, без «смерти»)
-- [ ] Edge Function (cron, раз в день) — пересчёт `tree_growth` и `tree_stage`
-
-### Этап 2 — сад достижений (2–3 сессии)
-- [ ] 5–10 видов растений-ачивок вокруг главного дерева:
-      ромашка (первая неделя), роза (месяц), кактус (30-дневный streak),
-      ива (100 страниц), сакура (365 дней), бонсай (100 дней)
-- [ ] Таблица `achievements (user_id, code, unlocked_at)`
-- [ ] Визуализация сада вокруг дерева (SVG-композиция)
-- [ ] Ачивки показывают условие заранее («собери все виды»)
-
-### Этап 3 — микро-дофамин в плеере (отдельная сессия)
-- [ ] Прогресс-бар серии: `▓▓▓░░` заполняется после каждого ответа
-- [ ] Combo: 3 подряд → ×2, 5 подряд → ×3, 7 подряд → 🔥 «Идеально»
-- [ ] Всплывающие очки `+2`, `+5` с анимацией (150 мс)
-- [ ] Короткий звук на правильный ответ (free-звуки с Freesound)
-- [ ] Ритуал входа: приветствие + «День 4 из 7 — почти 🥈»
-
-### Этап 4 — уведомления (после Telegram-бота)
-- [ ] Уведомление после сессии: «Отлично, сделай паузу от экрана»
-- [ ] Раз в день в удобное время: «Твой росток ждёт»
-- [ ] При ачивке: «🏆 Ты открыл „Читатель"»
-- [ ] Правило: не более 1 уведомления в день
-
-### Что НЕ делаем (этический фильтр)
-- ❌ Лутбоксы, скины, платные бусты
-- ❌ Публичные рейтинги (зрение — интимно)
-- ❌ Случайные награды, «открой ящик»
-- ❌ Наказание за пропуск («всё пропало»)
-
-### Что ещё можно рассмотреть (низкий приоритет)
-- [ ] Гибрид: разные виды деревьев за разные типы занятий (вишня — чтение, клён — игры, дуб — стимулы)
-- [ ] Огород: выбор что посадить (ромашки или розы)
-- [ ] Soft-социал: обмен семенами между друзьями (не рейтинг)
-
-## 📋 ЗАПЛАНИРОВАНО
-
-### Адаптивность тренировки
-- [ ] Собрать данные из `test_results`
-- [ ] Локальная модель (TensorFlow.js) для предсказания индивидуальной кривой V
-- [ ] Встроить в плеер
-
-### MediaPipe (gaze-tracking)
-- [ ] Отдельный проект `D:\PROEKT\gaze-test`
-- [ ] MediaPipe Face Mesh
-- [ ] Калибровка + замер точности
-- [ ] Если ОК — интеграция в Vissort для игр
-
-### Telegram-уведомления Sentry
-- [ ] Sentry → Settings → Integrations → Telegram Alerts Bot
-- [ ] Создать Alert Rule с действием Notify → Telegram
-
-### Петли (приоритет низкий)
-- [ ] Фикс `buildGraphQueue` — `visited` блокирует промежуточные узлы
-- [ ] Динамическое наследование V (от финальной, а не от стартовой)
-- [ ] Если ИИ генерирует сценарии — петли вручную могут не понадобиться
+- [ ] Два режима контроля дистанции («авто-пересчёт» / «возврат»)
+- [ ] Reaction time → test_results (в БД)
+- [ ] Порог дистанции в админке (UI)
+- [ ] Landmarks вернуть для моргания
+- [ ] Порог устойчивости в редакторе
 
 ---
 
-## ⏸ ОТЛОЖЕНО
+## 📋 ФАЗА 4 — безопасность и надёжность
 
-### OCR старых книг
-- [ ] Tesseract.js — локально, бесплатно
-- [ ] Парсинг PDF/JPEG-сканов
-- [ ] Не критично
-
-### VPS с Ollama
-- [ ] Если понадобится локальная LLM 24/7
-- [ ] ~500₽/мес
+- [ ] RLS-аудит Supabase
+- [ ] Логирование Edge Functions
+- [ ] Бэкап БД (cron + Storage)
 
 ---
 
-## ✅ ГОТОВО (архив)
+## 📋 ФАЗА 5 — производительность
 
-### Аудит 2026-09-28 — пакет №1 (критичное)
-- [x] Патч 1 — Edge Function `generate-scenario`: auth-проверка JWT + admin emails
-- [x] Патч 2 — `app.js`: `window.supabaseClient`, `params.ppi` в `saveGraph`
-- [x] Патч 3 — `vissort-ai-generator.js`: session token, schema, массив/объект, мёртвый код
-- [x] Патч 4 — `player-runtime.js`: `sessionId` fallback, guard `finishGraphReading`, `disableCamera` сброс, `keydown` в compare
-- [x] Патч 5 — `data-layer.js`: `_reopenAttempts`, expired token, orphan cleanup
-- [x] Патч 6 — HTML: адаптивный `#cam-indicator` (media-query 520px)
-- [x] Патч 7 — деплой Edge Functions (`generate-scenario` v2 с auth)
-
-### Инфраструктура
-- [x] ESLint + Prettier (0 errors)
-- [x] Sentry через Supabase-прокси (обход гео-блока)
-- [x] Email-уведомления Sentry
-- [x] Cloudflare R2 отложен — бэкап вручную
-- [x] RLS-политики, миграции, роли БД (созданы через дашборд)
-
-### Код
-- [x] `player.js` + `user.js` → `player-runtime.js` (единый) — в последствии разбить (см. Пакет №3)
-- [x] Домен-лок + меню игр через `VissortPlayerOptions`
-- [x] Онбординг: калибровка экрана + камеры
-- [x] Fingerprint устройства + Supabase sync
-- [x] Модалка «Это то же устройство?»
-- [x] Кнопка «Пропустить» в онбординге
-- [x] Флаг миграции v2→v3 (localStorage fallback)
-- [x] IndexedDB reconnect on close (усилено патчем 5)
-- [x] `session_id` → UUID, `response_time_ms` → Math.round
-- [x] CSP для Sentry + Supabase
-- [x] SVG-иконки pause/stop
-- [x] Автофокус + Enter в форме логина
-- [x] Кнопка «← Назад» в играх
-- [x] Фиксированная ширина чипа камеры (адаптив — патч 6)
-- [x] Резиновая шапка + перетаскивание кнопок ПКМ
-- [x] Оптимизация камеры (CPU backend, пропуск кадров)
-
+- [ ] Аудит app.js
+- [ ] Кэш SW — авто-bump версии
+- [ ] Sentry performance (tracesSampleRate 0.1)
 
 ---
 
+## 📋 ФАЗА 6 — клинический редактор
 
+- [ ] Модель данных (organizations, methods, courses, audit_log)
+- [ ] Библиотека методик (5 базовых)
+- [ ] Интерфейс врача
+- [ ] Интерфейс пациента
+- [ ] Версионирование методик
+- [ ] Аудит + PDF
+- [ ] Мультитенантность
 
+---
 
-
-
-
-## 📝 Легенда
-
-- 🔴 — сделать сегодня
-- 🚧 — в работе сейчас
-- 🟠 — существенное, но не срочное
-- 🟡 — техдолг
-- 📋 — запланировано
-- ⏸ — отложено
-- ✅ — готово
-
-cd D:\PROEKT\vissort
-$f = "docs/TODO.md"
-$enc = [System.Text.UTF8Encoding]::new($false)
-$raw = [System.IO.File]::ReadAllText((Resolve-Path $f), $enc)
-
-if ($raw.Contains("## 📷 Камера — итог")) {
-    Write-Host "SKIP: camera section already in TODO" -ForegroundColor Yellow
-    exit 0
-}
-
-$newSection = @'
-
-## 📷 Камера — итог оптимизации (2026-09-29)
-
-**Текущее состояние (Intel HD 4000, i5-3570K):**
-- Backend: cpu, inputSize: 128, interval: 200 мс
-- Avg detect: 275 мс, FPS: 4
-- Для тренировки зрения этого достаточно
-
-**Что сделано:**
-- [x] Патч 22 — device-aware config, setInterval вместо RAF
-- [x] Патч 22e — force CPU (WebGL на Intel HD 4000 медленнее: 303 vs 275 мс)
-- [x] Патч 24 — guard от параллельных вызовов детекции
-- [x] Патч 25 — bbox-only detection, отключены landmarks (-40% времени)
-- [x] Патч 26 — попытка WASM backend (не заработала — конфликт tf версий)
-
-**Что отложено (низкий приоритет):**
-- [ ] MediaPipe Face Mesh — 30–60 FPS на любом железе, включая Intel HD 4000 (2–3 дня)
-- [ ] WASM backend — попробовать через unpkg.com или другую версию
-- [ ] Моргание — вернуть после MediaPipe (сейчас отключено)
-
-'@
-
-# Insert before "## 📋 ЗАПЛАНИРОВАНО" if it exists, otherwise append
-if ($raw.Contains("## 📋 ЗАПЛАНИРОВАНО")) {
-    $raw = $raw.Replace("## 📋 ЗАПЛАНИРОВАНО", $newSection + "## 📋 ЗАПЛАНИРОВАНО")
-} else {
-    $raw += $newSection
-}
-
-[System.IO.File]::WriteAllText((Resolve-Path $f), $raw, $enc)
-Write-Host "OK: camera section added to TODO" -ForegroundColor Green
-## 🎯 Дистанция и античит нырка — ЗАКРЫТО (2026-09-30)
-
-- [x] Детектор нырка: порог 15%, EMA + медиана 15 кадров baseline
-- [x] Face-lost >1.5 сек = сигнал нырка
-- [x] Velocity-based детекция (скачок >8% между кадрами)
-- [x] Инвалидация ответов при наклоне (4 обработчика, с `return`)
-- [x] Логирование каждой реакции `[answer] rt=Xms correct=Y dir=Z`
-- [x] Устранён двойной запуск (`playerRunning` guard + bind guard)
-- [x] Восстановление `focalLengthPx` из localStorage после Clear
-- [x] Оверлей «Вернитесь в кадр» при потере лица >2 сек
-- [x] Голос: «Вернитесь в кадр» / «Лицо найдено»
-- [x] PiP-камеры (📹 или клавиша P) с HUD (зелёный / жёлтый / красный)
-- [x] Порог `_LEAN_DROP_PCT`: 12% → 15%
-- [x] Стимул масштабируется по `curDistanceM` (патч 32.6-fix)
-
-### Отложено
-- [ ] Landmarks вернуть (для моргания) — после MediaPipe
-- [ ] Reaction time → сохранение в БД `test_results`
-- [ ] Порог настройки дистанции в админке (сейчас в коде)
-## Родительский контроль — видеозапись тренировок
-
-- [ ] Чекбокс «📹 Запись видео тренировки» в плеере
-- [ ] По умолчанию: **5 fps** (минимум для оценки поведения ребёнка)
-- [ ] Опция «Детальная запись»: **10 fps** для отдельных сессий
-- [ ] Формат: WebM (VP9 → VP8 fallback)
-- [ ] Разрешение: 480×360
-- [ ] Автозапуск при старте сессии, автоскачивание при стопе
-- [ ] Имя файла: `vissort-training-YYYY-MM-DDTHH-MM-SS.webm`
-- [ ] Хранение: локально (скачивание на устройство родителя)
-- [ ] Позже (если нужно): загрузка в Supabase Storage для облачной истории
-
-- [ ] Ограничить V в редакторе до 1.0 (инспектор узлов + генератор)
-- [ ] Валидация V в плеере: `Math.max(0.1, Math.min(1.0, V))`
-- [ ] При V > 0.8 показывать админу предупреждение: "стимул < 5 px, нужна дистанция 1.5+ м"
-
-## 🔧 РЕФАКТОРИНГ player-runtime.js (Фаза 1)
-
-**Прогресс:** 3 из 8 шагов
-
-| Шаг | Модуль | Статус |
-|---|---|---|
-| 1 | player-utils.js (rate-limit, validation, distance) | ✅ |
-| 2 | player-dist-warning.js (UI дистанции) | ✅ |
-| 3 | player-reading.js (фон чтения) | ✅ |
-| 4 | player-camera.js (камера целиком) | ⏳ |
-| 5 | player-animation.js (анимации стимула) | ⏳ |
-| 6 | player-invalid-detection.js (детекция наклона) | ⏳ |
-| 7 | player-graph.js (граф) | ⏳ |
-| 8 | player-state.js (фундамент — до шагов 4–7) | ⏳ |
-
-**Созданные модули:**
-- `player-utils.js` — `window.PlayerUtils` (checkRateLimit, validateScenario, effectiveDistance, smoothDistance)
-- `player-dist-warning.js` — `window.PlayerDistWarning` (showDistWarning, showDistHardBanner, hideDistHardBanner)
-- `player-reading.js` — `window.PlayerReading` (applyBackground, startDynamicBg, stopDynamicBg)
-
-**Файл `player-runtime.js`:** 3560 → ~3420 строк.
-
-**Следующий шаг:** `player-state.js` — вынести все глобальные переменные плеера в единый объект `window.PlayerState`. Без этого шаги 4–7 невыполнимы.
+*Обновлять после каждой сессии.*

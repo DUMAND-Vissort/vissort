@@ -96,43 +96,34 @@
 
 Детальные задачи — в TODO.md. Здесь — общая структура.
 
-### Фаза 0. Фундамент (1 неделя)
+### Фаза 0. Фундамент ✅ ЗАКРЫТА (2026-10-05)
 
-**Цель:** превратить проект из «работает, но страшно трогать» в «можно рефакторить».
+- ✅ Playwright: 28 тестов + CI
+- ✅ schemaVersion: 2 + migrateScenario
+- ✅ README + ARCHITECTURE + DEPLOY
 
-- Playwright: 15 тестов критичного пути
-- CI через GitHub Actions
-- schemaVersion в сценариях + миграция
-- README + ARCHITECTURE + DEPLOY
+### Фаза 1. Рефакторинг player-runtime.js ✅ ЗАКРЫТА (2026-10-06)
 
-**Критерий:** тесты зелёные, документация есть, сценарии версионируются.
-
-### Фаза 1. Рефакторинг player-runtime.js (2 недели)
-
-**Цель:** из 5100 строк монолита — 5 модулей по 700-900.
-
-- player-state.js
-- player-camera.js
-- player-graph.js
-- player-flat.js
+Создано 7 модулей:
+- player-state.js (93 переменные)
+- player-utils.js
+- player-dist-warning.js
 - player-reading.js
+- player-camera.js
+- player-animation.js
+- player-invalid-detection.js
 
-**Критерий:** player-runtime.js меньше 800 строк, тесты зелёные.
+player-runtime.js: 3560 → ~2700 строк.
+Граф оставлен в player-runtime.js (осознанно).
 
-### Фаза 2. Чистка кода (1 неделя)
+### Фаза 2. Чистка кода ✅ ЗАКРЫТА (частично, 2026-10-06)
 
-- Убрать PATCH* и BUG-* комментарии
-- Устранить дублирование app.js и player-runtime.js
-- Prettier + ESLint clean
-- Уборка корня
+- ✅ Убрать PATCH* / BUG-* (228 вхождений → 0)
+- ⏳ Устранить дублирование app.js ↔ player-runtime.js
+- ⏳ Prettier + ESLint clean
+- ⏳ Уборка корня
 
-### Фаза 3. Доработка существующего (1 неделя)
-
-- Два режима контроля дистанции
-- Reaction time в test_results
-- Порог дистанции в админке
-- Landmarks вернуть для моргания
-- Порог устойчивости в редакторе
+### Фаза 3. Доработка существующего ⏳
 
 ### Фаза 4. Безопасность и надёжность (3 дня)
 

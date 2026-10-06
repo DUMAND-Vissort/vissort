@@ -84,27 +84,23 @@
 
 ## Что в работе
 
-### Фаза 1 — рефакторинг player-runtime.js (3 из 8 шагов)
+### Фазы 0, 1, 2 — ЗАКРЫТЫ (2026-10-06)
 
-**Созданные модули:**
-- ✅ `player-utils.js` — checkRateLimit, validateScenario, effectiveDistance, smoothDistance
-- ✅ `player-dist-warning.js` — showDistWarning, showDistHardBanner, hideDistHardBanner
-- ✅ `player-reading.js` — applyBackground, startDynamicBg, stopDynamicBg
+- ✅ Фаза 0: Playwright + CI, schemaVersion, документация
+- ✅ Фаза 1: 7 модулей, player-runtime.js 3560 → 2700 строк
+- ✅ Фаза 2: 228 PATCH/BUG комментариев заменены
 
-**Следующие шаги:**
-- ⏳ `player-state.js` — вынести все глобальные переменные в window.PlayerState (фундамент!)
-- ⏳ `player-camera.js` — камера целиком
-- ⏳ `player-animation.js` — анимации стимула
-- ⏳ `player-invalid-detection.js` — детекция наклона
-- ⏳ `player-graph.js` — граф
+### Следующее
 
-**Проблема:** шаги 4-7 невозможны без `player-state.js`. Все переменные объявлены как `let/const` внутри IIFE — модули не могут их читать.
+**Остаток Фазы 2:** дублирование app.js ↔ player-runtime.js, Prettier+ESLint, уборка корня.
 
-### Фаза 0 (закрыта 2026-10-05)
+**Фаза 3 — доработки:**
+1. Два режима контроля дистанции
+2. Reaction time в test_results
+3. Порог дистанции в админке
+4. Landmarks для моргания
+5. Порог устойчивости в редакторе
 
-- ✅ Playwright: 28 тестов + CI
-- ✅ schemaVersion: 2 + migrateScenario
-- ✅ README + ARCHITECTURE + DEPLOY
 
 ## Принципы работы
 
