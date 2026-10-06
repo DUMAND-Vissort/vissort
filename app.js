@@ -5,7 +5,6 @@
 
 // ==================== НАСТРОЙКИ ====================
 // ============================================================
-// PATCH27_PHASE2: helpers now come from vissort-core.js
 // ============================================================
 if (!window.VissortCore) {
     throw new Error('[app] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE app.js.');
@@ -253,8 +252,6 @@ const readingFileInput = document.getElementById('reading-file-input');
 const readingFileName = document.getElementById('reading-file-name');
 
 // ==================== ФОРМУЛЫ ОСТРОТЫ ====================
-// PATCH27_PHASE2: removed acuityToSizeMm (now in VissortCore)
-// PATCH27_PHASE2: removed acuityToSizePx (now in VissortCore)
 function getNodeComputedSizeMm(node) {
     return acuityToSizeMm(
         node.stimAcuity || 1.0,
@@ -268,14 +265,8 @@ function getNodeComputedSize(node) {
         node.stimPPI || trainingNode?.params?.ppi || screenPPI || 96
     );
 }
-// PATCH27_PHASE2: removed acuityToFontSizePx (now in VissortCore)
 
 // ==================== УТИЛИТЫ ====================
-// PATCH27_PHASE2: TIME_UNITS now comes from VissortCore
-// PATCH27_PHASE2: removed msToUnit (now in VissortCore)
-// PATCH27_PHASE2: removed unitToMs (now in VissortCore)
-// PATCH27_PHASE2: removed detectUnit (now in VissortCore)
-// PATCH27_PHASE2: removed escapeHtml (now in VissortCore)
 function safeVal(id, defVal, parser) {
     const el = document.getElementById(id);
     if (!el) return defVal;
@@ -286,11 +277,6 @@ function safeChecked(id, defVal) {
     const el = document.getElementById(id);
     return el ? el.checked === true : defVal;
 }
-// PATCH27_PHASE2: removed hashCode (now in VissortCore)
-// PATCH27A_REMOVED_SHA1: sha1 now comes from VissortCore
-// PATCH27_PHASE2: removed hexToRgb (now in VissortCore)
-// PATCH27_PHASE2: removed rgbToHex (now in VissortCore)
-// PATCH27_PHASE2: removed lerpColor (now in VissortCore)
 
 // ==================== SCENARIO KEY / BOOKMARKS ====================
 function generateScenarioKey() {
@@ -567,8 +553,6 @@ async function extractAllHtmlFromZip(zip) {
 
 // ==================== КАЛИБРОВКА ЭКРАНА ====================
 const CALIB_BAR_PX = 400;
-// PATCH27_PHASE2: removed detectDeviceType (now in VissortCore)
-// PATCH27_PHASE2: removed detectPPIHeuristic (now in VissortCore)
 function ppiFromMeasuredMm(mm) {
     if (!mm || mm <= 0) return null;
     return Math.round((CALIB_BAR_PX * (window.devicePixelRatio || 1) * 25.4) / mm);
@@ -577,7 +561,6 @@ function savePPI(ppi) {
     localStorage.setItem('screenPPI', String(ppi));
     localStorage.setItem('screenPPICalibrated', 'true');
 }
-// PATCH27_PHASE2: removed loadPPI (now in VissortCore)
 function initScreenCalibration() {
     screenPPI = loadPPI();
 }
@@ -630,7 +613,6 @@ function applyScreenCalib() {
         const node = getNode(activeNodeId);
         if (node && (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC')) {
             node.stimPPI = ppi;
-            // PATCH25: removed unused node.stimSize (computed on the fly)
             requestRenderGraph();
             updateInspector();
         } else if (node && node.nodeType === 'READING') {
@@ -1347,10 +1329,6 @@ function calibrateFocalLength() {
 }
 
 // ==================== SVG-СТИМУЛЫ ====================
-// PATCH27_PHASE2: removed generateLetterE (now in VissortCore)
-// PATCH27_PHASE2: removed generateLandoltRing (now in VissortCore)
-// PATCH27_PHASE2: removed getCircleStimulusSVG (now in VissortCore)
-// PATCH27_PHASE2: removed getStimulusSVG (now in VissortCore)
 function setStimColorRGB(r, g, b) {
     if (!stimDisplay) return;
     const svg = stimDisplay.querySelector('svg');
@@ -1371,7 +1349,6 @@ let _circleInnerDurationMs = 10000,
 let _circleInnerLoop = true,
     _circleOuterLoop = true;
 
-// PATCH27_PHASE2: removed buildCirclePhases (now in VissortCore)
 function startCircleAnimation(node) {
     stopCircleAnimation();
     if (!stimDisplay) return;
@@ -1663,7 +1640,6 @@ function applyRandomStimulusPosition(size) {
 }
 
 // ==================== ДИНАМИКА ЦВЕТА ====================
-// PATCH27_PHASE2: removed buildGenericDynamicPhases (now in VissortCore)
 function startSingleStimAnimation(params) {
     stopSingleStimAnimation();
     if (!stimDisplay) return;
@@ -1811,8 +1787,6 @@ function generateId() {
 function getNode(id) {
     return nodes.find((n) => n.id === id);
 }
-// PATCH27_PHASE2: removed getThreshold (now in VissortCore)
-// PATCH27_PHASE2: removed randomDirection (now in VissortCore)
 function canAddConnection(fromId, toId, isLoop) {
     if (fromId === toId) return isLoop;
     if (isLoop)
@@ -1963,7 +1937,7 @@ function createNewNode(type, x, y) {
             seriesCount: 10,
             seriesSize: 6,
             seriesThreshold: 4,
-            adaptiveAcuity: true, // PATCH31E_APPLIED
+            adaptiveAcuity: true, // адаптивная острота
             delay1: 1000,
             duration: 2000,
             delay2: 1000,
@@ -1997,7 +1971,7 @@ function createNewNode(type, x, y) {
             seriesCount: 10,
             seriesSize: 6,
             seriesThreshold: 4,
-            adaptiveAcuity: true, // PATCH31E_APPLIED
+            adaptiveAcuity: true, // адаптивная острота
             isActive: true,
             singleRandomPos: false,
             singleGridEnabled: false,
@@ -2326,7 +2300,7 @@ function createNodeElement(node) {
     const resize = document.createElement('div');
     resize.className = 'node-resize-handle';
     el.appendChild(resize);
-    // PATCH17: drag from anywhere on the node (except buttons/checkbox/resize handle)
+    // Перетаскивание по всей площади узла
     el.addEventListener('mousedown', (e) => {
         if (e.button !== 0 || window._pendingConnectionHandler) return;
         if (e.target.closest('.node-btn') || e.target.closest('.start-checkbox') || e.target.closest('.node-resize-handle')) return;
@@ -2352,7 +2326,7 @@ function createNodeElement(node) {
         document.addEventListener('mousemove', onResizeMove);
         document.addEventListener('mouseup', onResizeEnd);
     });
-    // PATCH17: single click -- activate only, do not open inspector
+    // Один клик — только активация
     el.addEventListener('click', (e) => {
         if (window._pendingConnectionHandler) return;
         if (
@@ -2367,7 +2341,7 @@ function createNodeElement(node) {
         if (inspectorEl.style.display === 'block') updateInspector();
     });
 
-    // PATCH17: double click -- open inspector
+    // Двойной клик — открыть инспектор
     el.addEventListener('dblclick', (e) => {
         if (window._pendingConnectionHandler) return;
         if (
@@ -3175,7 +3149,7 @@ function updateStimulusInspector(node) {
     <div id="insp-v-warn" style="margin-top:4px;color:#f59e0b;font-size:10px;display:none;">⚠️ V > 0.8: стимул < 5 px. Нужна дистанция 1.5+ м.</div></div></div>`;
     html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
     html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
-    html += `<label>Циклов в серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`; // PATCH31E_APPLIED
+    html += `<label>Циклов в серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`; // адаптивная острота
     html += `<label>Критерий правильности серии</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20">`;
     html += `<label><input type="checkbox" id="inp-adaptive-acuity" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`;
       html += '</div>';
@@ -3380,11 +3354,11 @@ function updateCompareInspector(node) {
     html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
     html += `<label>Циклов в серии</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
     html += `<label>Критерий правильности серии</label><input type="number" id="inp-cmp-st" value="${node.seriesThreshold || 4}" min="1" max="20">`;
-    html += `<label><input type="checkbox" id="inp-cmp-adaptive" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`; // PATCH31E_APPLIED
+    html += `<label><input type="checkbox" id="inp-cmp-adaptive" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`; // адаптивная острота
     html += '</div>';
     html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
     html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
-    html += `<label>Серий всего</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 10}" min="1" max="50">`; // PATCH31E_APPLIED
+    html += `<label>Серий всего</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 10}" min="1" max="50">`; // адаптивная острота
     html += '</div>';
     html +=
         '</div><button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
@@ -3672,7 +3646,7 @@ function applyStimulusInspectorChanges(node) {
         node.bgB = c.b;
     }
     if (v('inp-series-count')) node.seriesCount = Math.max(1, parseInt(v('inp-series-count').value) || 10);
-    if (v('inp-adaptive-acuity')) node.adaptiveAcuity = v('inp-adaptive-acuity').checked; // PATCH31A_JS_APPLIED
+    if (v('inp-adaptive-acuity')) node.adaptiveAcuity = v('inp-adaptive-acuity').checked; // адаптивная острота
     if (v('inp-series-size')) node.seriesSize = Math.max(1, parseInt(v('inp-series-size').value) || 6);
     if (v('inp-series-threshold'))
         node.seriesThreshold = Math.max(1, parseInt(v('inp-series-threshold').value) || 4);
@@ -3772,7 +3746,7 @@ function applyCompareInspectorChanges(node) {
         }
     }
     if (v('inp-cmp-sc')) node.seriesCount = Math.max(1, parseInt(v('inp-cmp-sc').value) || 10);
-    if (v('inp-cmp-adaptive')) node.adaptiveAcuity = v('inp-cmp-adaptive').checked; // PATCH31A_JS_APPLIED
+    if (v('inp-cmp-adaptive')) node.adaptiveAcuity = v('inp-cmp-adaptive').checked; // адаптивная острота
     var _reEl = document.getElementById('inp-cmp-resp');
     var _reUn = document.getElementById('inp-cmp-resp-unit');
     if (_reEl) {
@@ -5931,7 +5905,7 @@ function buildModeParamsFromUI() {
     const p = {
         mode: safeVal('gen-mode', 'общая'),
         trainingType: tt,
-        seriesCount: safeVal('gen-series', 10, parseInt), // PATCH31B_APPLIED
+        seriesCount: safeVal('gen-series', 10, parseInt), // серий всего
         seriesSize: ss,
         seriesThreshold: safeVal('gen-threshold', getThreshold(ss), parseInt),
         type: safeVal('gen-type', 'LETTER_E'),
@@ -5949,7 +5923,7 @@ function buildModeParamsFromUI() {
         endStimColor: hexToRgb(safeVal('gen-end-color', '#ff0000')),
         startBgColor: hexToRgb(safeVal('gen-start-bg', '#00ff00')),
         endBgColor: hexToRgb(safeVal('gen-end-bg', '#000000')),
-        duration: unitToMs(safeVal('gen-duration', 1, parseFloat), safeVal('gen-duration-unit', 's')), // PATCH31B_APPLIED
+        duration: unitToMs(safeVal('gen-duration', 1, parseFloat), safeVal('gen-duration-unit', 's')), // серий всего
         response: unitToMs(safeVal('gen-response', 0, parseFloat), safeVal('gen-response-unit', 's')),
         adaptiveAcuity: safeChecked('gen-adaptive', true),
         delay1: unitToMs(safeVal('gen-delay1', 1, parseFloat), safeVal('gen-delay1-unit', 's')),
@@ -6089,7 +6063,7 @@ function modeParamsToNode(modeParams) {
     node.bgG = modeParams.startBgColor?.g ?? 0;
     node.bgB = modeParams.startBgColor?.b ?? 0;
     node.seriesCount = modeParams.seriesCount || 10;
-    node.adaptiveAcuity = modeParams.adaptiveAcuity !== false; // PATCH31A_JS_APPLIED
+    node.adaptiveAcuity = modeParams.adaptiveAcuity !== false; // адаптивная острота
     node.seriesSize = modeParams.seriesSize || 6;
     node.seriesThreshold = modeParams.seriesThreshold || 4;
     node.isActive = modeParams.isActive !== false;
@@ -6519,7 +6493,7 @@ function loadGraph(file) {
                     if (node.seriesCount === undefined) node.seriesCount = 5;
                     if (node.seriesSize === undefined) node.seriesSize = 6;
                     if (node.seriesThreshold === undefined) node.seriesThreshold = 4;
-                    if (node.adaptiveAcuity === undefined) node.adaptiveAcuity = true; // PATCH31B_APPLIED
+                    if (node.adaptiveAcuity === undefined) node.adaptiveAcuity = true; // серий всего
                     if (node.singleRandomPos === undefined) node.singleRandomPos = false;
                     if (node.singleGridEnabled === undefined) node.singleGridEnabled = false;
                     if (node.singleGridX === undefined) node.singleGridX = 3;
@@ -6991,7 +6965,7 @@ function init() {
     btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
-	    // PATCH32_TEST: one-click test in user.html
+	    // Кнопка теста в player.html (?test=1)
     document.getElementById('btn-test')?.addEventListener('click', () => {
         const payload = {
             graph: {
@@ -7556,7 +7530,7 @@ function init() {
         saveCurrentReadingBookmarkSilently();
         window.Voice?.stopReading();
     });
-    // PATCH19: no auto-created node on startup -- user starts from empty canvas
+    // Пустой холст при старте
     switchMode('nodes');
     (async () => {
         await restoreFolderHandle();
@@ -7675,7 +7649,7 @@ async function handleAuthSubmit() {
 })();
 
 
-// ==================== PATCH15C: canvas zoom ====================
+// ==================== Масштаб холста ====================
 (function installZoom() {
     var ZOOM_KEY = 'vissort_canvas_zoom';
     var MIN_ZOOM = 0.3;
@@ -7734,7 +7708,7 @@ async function handleAuthSubmit() {
     });
 
 
-    // PATCH16: Ctrl+wheel zoom
+    // Ctrl + колесо мыши — масштаб
     canvasEl.addEventListener('wheel', function (e) {
         if (!e.ctrlKey && !e.metaKey) return;
         e.preventDefault();
@@ -7743,11 +7717,11 @@ async function handleAuthSubmit() {
     }, { passive: false });
 
     applyZoom();
-    console.log('[zoom] installed, level =', zoomLevel, '[PATCH16]');
+    console.log('[zoom] installed, level =', zoomLevel, '');
 })();
 
 
-// ==================== PATCH18B: new scenario ====================
+// ==================== Новый сценарий ====================
 (function installNewScenario() {
     var btn = document.getElementById('btn-new');
     if (!btn) { console.warn('[new] btn-new not found'); return; }
@@ -7783,7 +7757,7 @@ async function handleAuthSubmit() {
         requestRenderGraph();
         updateInspector();
 
-        // PATCH19: no auto-created node -- canvas stays empty
+        // Пустой холст — узлы не создаются
         if (typeof switchMode === 'function' && currentMode !== 'nodes') switchMode('nodes');
 
         console.log('[new] new scenario created, key =', window._currentScenarioKey);
