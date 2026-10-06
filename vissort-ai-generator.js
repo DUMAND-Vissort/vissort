@@ -178,7 +178,7 @@
         Editor.requestRenderGraph();
 
         
-// PATCH14C: auto-scroll canvas to show created nodes
+// Автоскролл к созданным узлам
         
 if (created.length > 0) {
         

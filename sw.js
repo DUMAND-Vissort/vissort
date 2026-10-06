@@ -176,7 +176,7 @@ async function networkFirstHTML(request) {
 // ============================================================
 // СТРАТЕГИЯ: stale-while-revalidate
 // ============================================================
-// PATCH9: offline fallback page
+// Офлайн-fallback страница
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="ru"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -208,7 +208,7 @@ async function staleWhileRevalidate(request, cacheName) {
         .catch((err) => {
             console.warn('[SW] fetch error для', request.url, err.message);
             if (cached) return cached;
-            // PATCH9: friendly offline fallback for HTML requests
+            // Дружелюбный офлайн-fallback для HTML-запросов
             const accept = request.headers.get('accept') || '';
             if (request.mode === 'navigate' || accept.includes('text/html')) {
                 return new Response(OFFLINE_HTML, {

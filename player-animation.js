@@ -196,7 +196,7 @@ function stopBlinkAnimation() {
     PlayerState._blinkLocalState = { tick: 0, current: 'A' };
 }
 
-// PATCH28_PHASE3: removed buildCirclePhases (now in VissortCore)
+
 function startCircleAnimation(node) {
     stopCircleAnimation();
     const svg = stimDisplay.querySelector('svg');

@@ -26,7 +26,7 @@
         _callbacks = Object.assign({}, _callbacks, cb || {});
     }
 
-    // ==================== PATCH30_ABORT: instant stimulus abort ====================
+    // ==================== Мгновенная отмена стимула ====================
     function _abortCurrentStimulus(reason) {
         if (!PS.playerRunning || PS.isPaused) return;
         if (PS._waitingStable) return;
@@ -53,7 +53,7 @@
         PS._stableBuf = [];
     }
 
-    // ==================== PATCH30_DAMPEN: fast-lean detection ====================
+    // ==================== Детекция быстрого наклона ====================
     window._deviationHistory = window._deviationHistory || [];
     window._fastLeanAt = window._fastLeanAt || 0;
     window._invalidAnswerCount = window._invalidAnswerCount || 0;

@@ -159,7 +159,7 @@
     function idbClear(store) {
         return idb(store, 'readwrite', (s) => s.clear());
     }
-    // PATCH23: shared helper with DB reopen on InvalidStateError
+    // Общий helper с переоткрытием БД при InvalidStateError
     async function idbRequest(store, mode, fn) {
         if (!db) {
             try { await openDB(); }

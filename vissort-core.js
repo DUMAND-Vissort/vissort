@@ -2,7 +2,7 @@
 // vissort-core.js
 // Shared utilities for Vissort Studio (admin + player).
 // All functions are exposed via window.VissortCore.
-// PATCH26 (Phase 1): extracted from app.js + player-runtime.js.
+// Извлечено из app.js и player-runtime.js.
 // Load BEFORE app.js / player-runtime.js.
 // ============================================================
 (function (global) {
