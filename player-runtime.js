@@ -742,10 +742,10 @@ function playNextGraphNode() {
 
 function playGraphStimulus(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH61_GUARD
-    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // PATCH30_ABORT
-    PlayerState._answerBlocked = false; // PATCH31C2A_APPLIED: safety reset before new cycle
-    // PATCH38_EARLY_PHASE: enable response phase immediately -- user sees stimulus faster than JS
+    if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // пауза при потере лица
+    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // отмена при отклонении
+    PlayerState._answerBlocked = false; // Сброс блокировки перед новым циклом
+    // Ранняя активация фазы ответа
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
     PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
@@ -767,8 +767,8 @@ function playGraphStimulus(node) {
     } else dir = node.stimDirectionFixed || 'вверх';
     PlayerState.lastDirection = dir;
     PlayerState.currentCorrectDirection = dir;
-    // PATCH34: enable phase BEFORE rendering
-    const dCalc = _effectiveDistance(node.stimDistance || 1) // PATCH32_6_FIX;
+    // Включить фазу ответа до рендера
+    const dCalc = _effectiveDistance(node.stimDistance || 1) // Приоритет измеренной дистанции;
     const pCalc = node.stimPPI || PlayerState.screenPPI || 96;
     const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent, dCalc, pCalc);
     PlayerState.currentSize = eff;
@@ -798,9 +798,9 @@ function playGraphStimulus(node) {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
+    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
     } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (graph)
+    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
     if (node.singleGridEnabled) {
         const gx = node.singleGridX || 1,
             gy = node.singleGridY || 1;
@@ -843,7 +843,7 @@ function playGraphStimulus(node) {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = (node.duration != null ? node.duration : 1000) + (node.response != null ? node.response : 0); // PATCH31C2B_APPLIED
+    let sd = (node.duration != null ? node.duration : 1000) + (node.response != null ? node.response : 0); // Полная серия без ответов → пауза
     if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
     if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
     if (node.singleCircleEnabled) {
@@ -863,14 +863,14 @@ function playGraphStimulus(node) {
         if (PlayerState.lastResponse.answered) {
             if (PlayerState.lastResponse.isCorrect) PlayerState.seriesCorrect++;
             else PlayerState.seriesIncorrect++;
-            PlayerState.seriesStep++; // PATCH31C1_APPLIED: only answers count
+            PlayerState.seriesStep++; // Только ответы считаются
         } else {
             PlayerState.seriesNoAnswer++;
             saveResult(node.id, null, false);
-            // PATCH31C1_APPLIED: timeout does NOT increment PlayerState.seriesStep
-            // PATCH31C2B_APPLIED: full timeout series → pause modal
+            // Таймаут не увеличивает seriesStep
+            // Полная серия без ответов → пауза
             if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (node.seriesSize || 6)) {
-                console.log('[PATCH31C2B] full timeout series, pausing');
+                console.log('[pause] полная серия без ответов, пауза');
                 PlayerState.seriesNoAnswer = 0;
                 pauseTraining();
                 return;
@@ -895,7 +895,7 @@ function finishGraphStimulusSeries(node) {
     PlayerState.completedSeries++;
     if (ok) PlayerState.successfulSeries++;
     else PlayerState.failedSeries++;
-    // PATCH31C2B_APPLIED: adaptiveAcuity
+    // Адаптивная острота зрения
     if (node.adaptiveAcuity !== false) {
         if (ok) {
             const eA = node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0;
@@ -916,8 +916,8 @@ function finishGraphStimulusSeries(node) {
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
     PlayerState.lastDirection = null;
     updateCounters();
-    // PATCH48_NO_AVG: report disabled, per-answer log only
-    // PATCH35: reaction time aggregate
+    // Отчёт отключён, только лог ответов
+    // Агрегат времени реакции
     try {
         if (!window._reactionTimes) window._reactionTimes = [];
         var _rt = PlayerState.lastResponse && PlayerState.lastResponse.reactionTimeMs;
@@ -926,7 +926,7 @@ function finishGraphStimulusSeries(node) {
         var _avg = _recent.reduce(function(a,b){return a+b;},0) / _recent.length;
         var _min = Math.min.apply(null, _recent);
         var _max = Math.max.apply(null, _recent);
-        /* PATCH50: removed spam */ void 0;
+        
     } catch (e) {}
     if (PlayerState.noAnswerSeriesStreak >= 3) {
         pauseTraining();
@@ -946,8 +946,8 @@ function finishGraphStimulusSeries(node) {
 
 function handleGraphDirectionAnswer(dir) {
     if (!PlayerState.responsePhaseActive) return;
-    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
-    // PATCH32_INVALIDATE: check deviation before processing answer
+    if (PlayerState._answerBlocked) return; // Блокировка ответов при заморозке
+    // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
@@ -962,7 +962,7 @@ function handleGraphDirectionAnswer(dir) {
 
     const ok = dir === PlayerState.currentCorrectDirection;
 
-    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    // Очистка таймера и DOM сразу после ответа
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
     if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
@@ -982,7 +982,7 @@ function handleGraphDirectionAnswer(dir) {
     }, 200);
     saveResult(PlayerState.gCurrentNodeId || 'graph_single', PlayerState.lastResponse.reactionTimeMs, ok);
 
-    // PATCH35B_APPLIED: advance series immediately
+    // Продвижение серии сразу
     if (ok) PlayerState.seriesCorrect++; else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
@@ -1029,7 +1029,7 @@ function playGraphCompare(node) {
 
 function playGraphCompareRound(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // PATCH30_ABORT
+    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // отмена при отклонении
     if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
         return;
@@ -1043,7 +1043,7 @@ function playGraphCompareRound(node) {
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             PlayerState.lastResponse = { answered: false, isCorrect: false };
-            // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
+            // Таймаут → seriesNoAnswer, не seriesIncorrect
             PlayerState.seriesNoAnswer++;
             updateCounters();
             saveResult(PlayerState.gCurrentNodeId || 'graph_compare', null, false);
@@ -1064,8 +1064,8 @@ function playGraphCompareRound(node) {
 
 function handleGraphCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
-    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
-    // PATCH32_INVALIDATE: check deviation before processing answer
+    if (PlayerState._answerBlocked) return; // Блокировка ответов при заморозке
+    // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
@@ -1080,7 +1080,7 @@ function handleGraphCompareAnswer(answer) {
 
     const ok = answer === PlayerState.currentCompareAnswer;
 
-    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    // Очистка таймера и DOM сразу после ответа
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
     if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
@@ -1201,7 +1201,7 @@ function playGraphReading(node) {
         readingFontWeight: node.readingFontWeight || 'normal'
     });
     setupReadingColumns();
-    const dCalc = _effectiveDistance(node.readingDistance || 1) // PATCH32_6_FIX;
+    const dCalc = _effectiveDistance(node.readingDistance || 1) // Приоритет измеренной дистанции;
     readingContentEl.style.fontSize = acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, PlayerState.screenPPI) + 'px';
     setTimeout(() => {
         PlayerState.readingTotalPages = calcReadingTotalPages();
@@ -1241,11 +1241,11 @@ function finishGraphReading(node) {
 
 // ==================== ЗАПУСК ====================
 function startPlayer() {
-    if (PlayerState.playerRunning) { console.warn('[PATCH37] already running'); return; }
-    // PATCH41_STATUS_CLOSE: close any open status overlay (e.g. "Граф пройден")
+    if (PlayerState.playerRunning) { console.warn('[player] уже запущен'); return; }
+    // Закрыть status-overlay если открыт
     var _so = document.getElementById('status-overlay');
     if (_so && !_so.classList.contains('hidden')) {
-        console.log('[PATCH41] closing status-overlay');
+        console.log('[player] закрываю status-overlay');
         _so.classList.add('hidden');
     }
     if (!PlayerState.userScenario) {
@@ -1263,15 +1263,15 @@ function startPlayer() {
     PlayerState.playerRunning = true;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
-    window._distEMA = null; // PATCH42_SMOOTH
-    window._reactionLog = []; // PATCH46
-    window._baselineWaitStart = null; // PATCH43
-    // PATCH58: restore PlayerState.focalLengthPx if lost
+    window._distEMA = null; // EMA-фильтр дистанции
+    window._reactionLog = []; // Логирование реакций
+    window._baselineWaitStart = null; // baseline
+    // Восстановить PlayerState.focalLengthPx если потерян
     if (!PlayerState.focalLengthPx || PlayerState.focalLengthPx <= 0) {
         var _lsF2 = parseFloat(localStorage.getItem('PlayerState.focalLengthPx') || '0');
         if (_lsF2 > 0) PlayerState.focalLengthPx = _lsF2;
     }
-    // PATCH35_GRAPH_RESET: hard reset graph state
+    // Жёсткий сброс состояния графа
     PlayerState.graphActive = false;
     PlayerState.gNodes = [];
     PlayerState.gConnections = [];
@@ -1281,7 +1281,7 @@ function startPlayer() {
     PlayerState.gCurrentCompareNode = null;
     window._invalidAnswerCount = 0;
     if (window._reactionTimes) window._reactionTimes = [];
-    console.log('[PATCH35] graph state reset');
+    console.log('[graph] state reset');
     PlayerState.isPaused = false;
     PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
@@ -1333,9 +1333,9 @@ function startPlayer() {
 function showNextStimulus() {
     if (!_checkHardLimit()) { setTimeout(showNextStimulus, 500); return; }
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // PATCH61_GUARD
-    if (PlayerState._waitingStable) { setTimeout(showNextStimulus, 500); return; } // PATCH30_ABORT
-    // PATCH38_EARLY_PHASE: enable response phase immediately
+    if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // пауза при потере лица
+    if (PlayerState._waitingStable) { setTimeout(showNextStimulus, 500); return; } // отмена при отклонении
+    // Ранняя активация фазы ответа
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
     PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
@@ -1353,8 +1353,8 @@ function showNextStimulus() {
     } else dir = 'вверх';
     PlayerState.lastDirection = dir;
     PlayerState.currentCorrectDirection = dir;
-    // PATCH35: enable phase AND start timer BEFORE render
-    const dCalc = _effectiveDistance(p.distanceMeters || 1) // PATCH32_6_FIX;
+    // Включить фазу и таймер до рендера
+    const dCalc = _effectiveDistance(p.distanceMeters || 1) // Приоритет измеренной дистанции;
     const eff = acuityToSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI);
     PlayerState.currentSize = eff;
     let sc = PlayerState.currentStimColor;
@@ -1382,9 +1382,9 @@ function showNextStimulus() {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, PlayerState.currentBgColor);
-    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
+    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (single)
     } else displayStimulus(svgData.html, PlayerState.currentBgColor);
-    PlayerState.responseStartTime = performance.now(); // PATCH65_RT: mark start after display (single)
+    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (single)
     if (p.singleGridEnabled) {
         const gx = p.singleGridX || 1,
             gy = p.singleGridY || 1;
@@ -1426,7 +1426,7 @@ function showNextStimulus() {
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = PlayerState.currentDuration + (p.response != null ? p.response : 0); // PATCH31C2B_APPLIED
+    let sd = PlayerState.currentDuration + (p.response != null ? p.response : 0); // Полная серия без ответов → пауза
     if (p.singleStimDynamicEnabled) sd = Math.max(sd, p.singleStimDuration || 0);
     if (p.singleBgDynamicEnabled) sd = Math.max(sd, p.singleBgDuration || 0);
     if (p.singleCircleEnabled) {
@@ -1446,15 +1446,15 @@ function showNextStimulus() {
         if (PlayerState.lastResponse.answered) {
             if (PlayerState.lastResponse.isCorrect) PlayerState.seriesCorrect++;
             else PlayerState.seriesIncorrect++;
-            PlayerState.seriesStep++; // PATCH31C1_APPLIED: only answers count
+            PlayerState.seriesStep++; // Только ответы считаются
         } else {
             PlayerState.seriesNoAnswer++;
             if (window.Voice) window.Voice.sayKey('timeout', { cancel: true });
             saveResult('user_single', null, false);
-            // PATCH31C1_APPLIED: timeout does NOT increment PlayerState.seriesStep
-            // PATCH31C2B_APPLIED: full timeout series → pause modal
+            // Таймаут не увеличивает seriesStep
+            // Полная серия без ответов → пауза
             if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (p.seriesSize || 6)) {
-                console.log('[PATCH31C2B] full timeout series, pausing');
+                console.log('[pause] полная серия без ответов, пауза');
                 PlayerState.seriesNoAnswer = 0;
                 pauseTraining();
                 return;
@@ -1479,7 +1479,7 @@ function finishSeries() {
     PlayerState.completedSeries++;
     if (ok) PlayerState.successfulSeries++;
     else PlayerState.failedSeries++;
-    // PATCH31C2B_APPLIED: adaptiveAcuity
+    // Адаптивная острота зрения
     if (p.adaptiveAcuity !== false) {
         if (ok) {
             if (PlayerState.currentAcuity < (p.endAcuity || 2.0))
@@ -1541,7 +1541,7 @@ function showNextCompareRound() {
     PlayerState.currentShowTimer = setTimeout(() => {
         if (PlayerState.responsePhaseActive) {
             PlayerState.lastResponse = { answered: false, isCorrect: false };
-            // PATCH31C1_APPLIED: timeout -> PlayerState.seriesNoAnswer, NOT PlayerState.seriesIncorrect
+            // Таймаут → seriesNoAnswer, не seriesIncorrect
             PlayerState.seriesNoAnswer++;
             updateCounters();
             saveResult('user_compare', null, false);
@@ -1741,8 +1741,8 @@ function finishCompareSeries() {
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!PlayerState.responsePhaseActive) return;
-    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
-    // PATCH32_INVALIDATE: check deviation before processing answer
+    if (PlayerState._answerBlocked) return; // Блокировка ответов при заморозке
+    // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
@@ -1757,7 +1757,7 @@ function handleDirectionAnswer(direction) {
 
     const ok = direction === PlayerState.currentCorrectDirection;
 
-    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    // Очистка таймера и DOM сразу после ответа
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
     if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
@@ -1779,8 +1779,8 @@ function handleDirectionAnswer(direction) {
 }
 function handleCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
-    if (PlayerState._answerBlocked) return; // PATCH31C2A_APPLIED
-    // PATCH32_INVALIDATE: check deviation before processing answer
+    if (PlayerState._answerBlocked) return; // Блокировка ответов при заморозке
+    // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
         PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
@@ -1795,7 +1795,7 @@ function handleCompareAnswer(answer) {
 
     const ok = answer === PlayerState.currentCompareAnswer;
 
-    // PATCH34_APPLIED: stop timer + clear stimulus DOM immediately
+    // Очистка таймера и DOM сразу после ответа
     if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
     if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
     try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
@@ -1822,7 +1822,7 @@ responseButtons.addEventListener('click', (e) => {
         if (PlayerState.graphActive) handleGraphDirectionAnswer(btn.dataset.dir);
         else handleDirectionAnswer(btn.dataset.dir);
     } else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
-        // PATCH40_INCMP: check actual compare node, not PlayerState.graphActive
+        // Проверка узла сравнения, а не graphActive
         const inCmp =
             PlayerState.compareMode === 'direction' && (
                 (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
@@ -1854,12 +1854,12 @@ document.addEventListener('keydown', (e) => {
         }
     }
     if (!PlayerState.responsePhaseActive) return;
-    // [PATCH4C] compare-mode: ignore Up/Down (only Left/Right = Da/Net)
+    // В режиме сравнения игнорировать Up/Down, только Left/Right = Да/Нет
     if (((PlayerState.graphActive && PlayerState.gCurrentCompareNode) || (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
-        // PATCH40_INCMP: check actual compare node, not PlayerState.graphActive
+        // Проверка узла сравнения, а не graphActive
         const inCmp =
             PlayerState.compareMode === 'direction' && (
                 (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
@@ -1901,7 +1901,7 @@ function startReading() {
     readingContentEl.style.opacity = '1';
     applyReadingFont(p);
     setupReadingColumns();
-    const dCalc = _effectiveDistance(p.readingDistance || 1) // PATCH32_6_FIX;
+    const dCalc = _effectiveDistance(p.readingDistance || 1) // Приоритет измеренной дистанции;
     readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI) + 'px';
     setTimeout(() => {
         PlayerState.readingTotalPages = calcReadingTotalPages();
@@ -2051,16 +2051,16 @@ function stopPlayer() {
     pauseModal.classList.remove('open');
     PlayerState.camBaseline = null;
     PlayerState._stimulusDistance = null;
-    PlayerState._waitingStable = false; // PATCH91
+    PlayerState._waitingStable = false; // ожидание стабилизации
     PlayerState._stableSince = 0;
     PlayerState._stableBuf = [];
     PlayerState._stimulusDistance = null; // PATCH_CLEAN
     PlayerState.camWarnKind = null;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
-    window._distEMA = null; // PATCH42_SMOOTH
-    window._reactionLog = []; // PATCH46
-    window._baselineWaitStart = null; // PATCH43
+    window._distEMA = null; // EMA-фильтр дистанции
+    window._reactionLog = []; // Логирование реакций
+    window._baselineWaitStart = null; // baseline
     window._invalidAnswerCount = 0;
     PlayerState.sessionId = null;
     PlayerState._readingFinishGuard = false;
@@ -2102,7 +2102,7 @@ async function saveResult(nodeId, reactionTimeMs, isCorrect) {
             node_id: nodeId || 'user_training',
             response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
             is_correct: isCorrect,
-            distance_m: (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null) ? PlayerState.curDistanceM : null, // PATCH31C2B_APPLIED
+            distance_m: (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null) ? PlayerState.curDistanceM : null, // Полная серия без ответов → пауза
             created_at: new Date().toISOString()
         });
     } catch (e) {
@@ -2196,7 +2196,7 @@ function init() {
         promptLogin();
     });
 
-    if (!btnPlayer.__patch37bound) { btnPlayer.addEventListener('click', startPlayer); btnPlayer.__patch37bound = true; }
+    if (!btnPlayer.__playerBound) { btnPlayer.addEventListener('click', startPlayer); btnPlayer.__playerBound = true; }
     btnPlayerPause.addEventListener('click', togglePause);
     btnPlayerStop.addEventListener('click', stopPlayer);
     $('pause-continue').addEventListener('click', resumeTraining);
@@ -2288,7 +2288,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else init();
 // ==================== user.js: Конец части 4 из 4 ====================
 
-// PATCH54_PIP: camera preview toggle in corner
+// Переключатель превью камеры в углу (P)
 (function installCamPreview() {
     if (document.getElementById('btn-cam-preview')) return;
     var style = document.createElement('style');
@@ -2335,7 +2335,7 @@ else init();
     console.log('[pip] camera preview installed');
 })();
 
-// PATCH55_CAM_HUD: overlay on camera preview with state (border + text)
+// HUD-оверлей на превью камеры (цвет + текст)
 (function installCamHud() {
     function ensure() {
         var v = document.getElementById('hidden-video');
@@ -2362,8 +2362,8 @@ else init();
 
         var face = document.getElementById('cam-indicator');
         var faceText = face ? face.textContent : '';
-        // PATCH55_FIX: player uses 📏 when face is OK; ❌ or 📷 means lost
-        var hasFace = faceText.indexOf('📏') !== -1 || faceText.indexOf('✅') !== -1; // PATCH58: ✅ or 📏
+        // Определение лица по иконке в cam-indicator
+        var hasFace = faceText.indexOf('📏') !== -1 || faceText.indexOf('✅') !== -1; // ✅ или 📏 означают, что лицо найдено
         var dev = (typeof PlayerState.camBaseline !== 'undefined' && PlayerState.camBaseline && typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM)
             ? ((PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline * 100)
             : null;
@@ -2375,7 +2375,7 @@ else init();
             ? (performance.now() - window._faceLostSince)
             : 0;
         if (!hasFace) {
-            // PATCH59_HUD: yellow for short loss (<1.5s), red for long
+            // HUD: жёлтый при короткой потере (<1.5с), красный при долгой
             if (faceLostMs < 1500) {
                 status = '\u26A0\uFE0F \u041B\u0418\u0426\u041E? ' + (dev != null ? dev.toFixed(1) + '%' : '');
                 border = '#eab308';
@@ -2410,7 +2410,7 @@ else init();
     console.log('[cam-hud] installed');
 })();
 
-// PATCH61_FACE_PAUSE: overlay + voice when face lost >2s
+// Пауза и голос при потере лица >2с
 (function installFaceLostPause() {
     function ensureOverlay() {
         var el = document.getElementById('face-lost-overlay');
@@ -2435,16 +2435,16 @@ else init();
         if (training && longLoss) {
             if (overlay.style.display !== 'flex') {
                 overlay.style.display = 'flex';
-                console.warn('[PATCH61] face lost >2s -- paused');
+                console.warn('[face] потеряно >2с — пауза');
                 if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('returnToFrame', { cancel: true });
             }
             window._faceLostPause = true;
         } else {
             if (overlay.style.display === 'flex') {
                 overlay.style.display = 'none';
-                console.log('[PATCH61] face back -- resuming');
+                console.log('[face] лицо вернулось — продолжаем');
                 if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('faceFound', { cancel: true });
-                // PATCH30_ABORT: after long face loss, enter waiting-stable (like deviation)
+                // После долгой потери лица — ожидание стабилизации (like deviation)
                 if (typeof _abortCurrentStimulus === 'function') {
                     try { _abortCurrentStimulus('face_back_after_long_loss'); } catch (e) {}
                 }
