@@ -174,169 +174,16 @@ let _frameSkipCounter = 0;
 // ==================== PATCH30_ABORT: instant stimulus abort ====================
 // Called when user's distance deviates >15%, face is lost, or face returns.
 // Cancels current show, waits for stability, then reshows from scratch.
-function _abortCurrentStimulus(reason) {
-    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (PlayerState._waitingStable) return; // idempotent
+// ==================== PATCH_PHASE1: ИНВАЛИДАЦИЯ ВЫНЕСЕНА ====================
+// Логика в player-invalid-detection.js.
 
-    console.log('[abort] reason=' + reason + ' (dist=' + (PlayerState.curDistanceM != null ? PlayerState.curDistanceM.toFixed(2) : '?') + 'm)');
-
-    // PATCH31C2A_APPLIED: stop timer, freeze animations, KEEP stimulus visible
-    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
-
-    // Freeze animations by cancelling RAFs — last frame stays on screen
-    if (PlayerState.singleStimAnimId) { cancelAnimationFrame(PlayerState.singleStimAnimId); PlayerState.singleStimAnimId = null; }
-    if (PlayerState.singleBgAnimId)   { cancelAnimationFrame(PlayerState.singleBgAnimId);   PlayerState.singleBgAnimId = null; }
-    if (PlayerState._circleAnimId)    { cancelAnimationFrame(PlayerState._circleAnimId);    PlayerState._circleAnimId = null; }
-    if (PlayerState._periAnimId)      { cancelAnimationFrame(PlayerState._periAnimId);      PlayerState._periAnimId = null; }
-    if (PlayerState._blinkTimerId)    { clearTimeout(PlayerState._blinkTimerId);            PlayerState._blinkTimerId = null; }
-    // NOTE: do NOT call hideStimulus / stopSingleStimAnimation / etc. — stimulus stays frozen.
-
-    PlayerState.responsePhaseActive = false;
-    if (responseButtons) responseButtons.style.display = 'none';
-
-    // PATCH31C2A_APPLIED: block answers
-    PlayerState._answerBlocked = true;
-
-    // Discard answer (unless already counted in same ms)
-    if (PlayerState.lastResponse && PlayerState.lastResponse.answered) {
-        console.log('[abort] late answer discarded');
-    }
-    PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-
-    // Enter waiting-stable state
-    PlayerState._waitingStable = true;
-    PlayerState._stableSince = 0;
-    PlayerState._stableBuf = [];
-    // keep PlayerState._stimulusDistance for reference; will be updated in _resumeAfterStable
-}
-
-// Called after distance is stable (5 frames within 3%).
-// Resets abort state and shows the next stimulus (or current node, if graph).
-function _resumeAfterStable() {
-    PlayerState._waitingStable = false;
-    PlayerState._answerBlocked = false; // PATCH31C2A_APPLIED
-    PlayerState._stableSince = 0;
-    PlayerState._stableBuf = [];
-    PlayerState._stimulusDistance = PlayerState.curDistanceM;
-    console.log('[abort] stable at ' + PlayerState.curDistanceM.toFixed(2) + 'm -- resuming');
-
-    // Prefer current graph node; fallback to flat autotraining
-    var _n = null;
-    try { _n = getNode(currentPlayingNodeId); } catch (e) { _n = null; }
-    if (_n && PlayerState.gNodes && PlayerState.gNodes.indexOf(_n) !== -1) {
-        if (_n.nodeType === 'COMPARE') playGraphCompareRound(_n);
-        else playGraphStimulus(_n);
-        return;
-    }
-    if (typeof showNextStimulus === 'function') {
-        try { showNextStimulus(); } catch (e) { console.warn('[abort] resume flat failed:', e); }
-    }
-}
-// ==================== PATCH27B: fast-lean detection ====================
-window._deviationHistory = [];
-window._fastLeanAt = 0;
-window._invalidAnswerCount = 0;
-
-// PATCH30_DAMPEN: raise threshold, require 3 consecutive frames (camera noise filter)
-const _LEAN_DROP_PCT = 15; // PATCH50
-const _LEAN_FAST_MS = 800;
-const _LEAN_WINDOW_MS = 4000; // PATCH60
-const _DEVIATION_HISTORY_MS = 2000;
-const _LEAN_CONSECUTIVE_FRAMES = 3;
-
-// PATCH30_DAMPEN_FUNC: requires 3 consecutive frames, only when training
-// PATCH32_CORE: log only, decision in _isAnswerInvalid
-// PATCH36: log deviations > 12% when training
-window._recordDeviation = function(pct) {
-    if (!PlayerState.playerRunning) return;
-    if (PlayerState.isPaused) return;
-    var now = performance.now();
-    window._deviationHistory.push({ t: now, dev: pct });
-    while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
-        window._deviationHistory.shift();
-    }
-    // PATCH60: velocity check -- big jump between frames = lean
-    var _lastH = window._deviationHistory[window._deviationHistory.length - 2];
-    if (_lastH) {
-        var _vel = Math.abs(pct - _lastH.dev);
-        if (_vel > 8) {
-            window._fastLeanAt = now;
-            var _llog = window._lastLeanLogAt || 0;
-            if (now - _llog > 2000) {
-                console.warn('[lean] velocity', _vel.toFixed(1) + '%', '(from', _lastH.dev.toFixed(1) + ' to', pct.toFixed(1) + ')');
-                window._lastLeanLogAt = now;
-            }
-        }
-    }
-    if (Math.abs(pct) > _LEAN_DROP_PCT) {
-        window._fastLeanAt = now;
-        var _lastLeanLogAt = window._lastLeanLogAt || 0;
-        if (now - _lastLeanLogAt > 3000) {
-            console.warn('[lean]', pct.toFixed(1) + '%');
-            window._lastLeanLogAt = now;
-        }
-    }
-};
-
-// PATCH31: simpler logic -- only fast lean (fresh) + current off-distance
-// PATCH32_CORE: check both current distance and recent lean
-// PATCH33: average deviation over 1 sec + current distance
-// PATCH34: velocity-based detection (delta over 600ms), plus current distance
-// PATCH36: current distance OR recent lean in 2 sec
-window._isAnswerInvalid = function() {
-    if (!PlayerState.playerRunning) return null;
-    if (PlayerState.isPaused) return null;
-    var now = performance.now();
-    // 1. Current distance
-    try {
-        if (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null && PlayerState.camBaseline != null) {
-            var curDev = (PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline * 100;
-            if (Math.abs(curDev) > _LEAN_DROP_PCT) {
-                return curDev < 0 ? 'fast_lean' : 'off_distance';
-            }
-        }
-    } catch (e) {}
-    // 2. Recent lean in last 2 sec
-    if (now - window._fastLeanAt < 2000) return 'fast_lean';
-    return null;
-};
-
-window._markAnswerInvalid = function(reason) {
-    window._invalidAnswerCount++;
-    var cnt = document.getElementById('cnt-invalid');
-    if (cnt) cnt.textContent = window._invalidAnswerCount;
-    var msg = reason === 'fast_lean'
-        ? '\u26A0\uFE0F \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D \u2014 \u0440\u0435\u0437\u043A\u0438\u0439 \u043D\u0430\u043A\u043B\u043E\u043D'
-        : '\u26A0\uFE0F \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D \u2014 \u0432\u0435\u0440\u043D\u0438\u0442\u0435\u0441\u044C \u043D\u0430 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0438\u044E';
-    _showInvalidToast(msg);
-    // PATCH31: no voice from invalid-marker (toast only)
-};
-
-// PATCH27C_DIM: dim stimulus only on fast lean, auto-restore after 1.5 sec
-function _updateStimulusDim() {
-    var now = performance.now();
-    var leanAge = now - (window._fastLeanAt || 0);
-    var stim = document.getElementById('stim');
-    if (!stim) return;
-    if (leanAge < 1500) {
-        stim.style.opacity = '0.7';
-    } else if (stim.style.opacity === '0.7') {
-        stim.style.opacity = '';
-    }
-}
-function _showInvalidToast(text) {
-    var existing = document.getElementById('invalid-toast');
-    if (existing) existing.remove();
-    var el = document.createElement('div');
-    el.id = 'invalid-toast';
-    el.textContent = text;
-    el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(234,88,12,0.95);color:#fff;padding:14px 24px;border-radius:10px;font-size:16px;font-weight:bold;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);pointer-events:none;transition:opacity 0.3s;';
-    document.body.appendChild(el);
-    setTimeout(function() { el.style.opacity = '0'; }, 1800);
-    setTimeout(function() { if (el.parentNode) el.remove(); }, 2200);
-}
-// PATCH_PHASE1: moved to PlayerState (misc-b)
-// PATCH_PHASE1: moved to PlayerState (misc-b)
+function _abortCurrentStimulus(reason) { return window.PlayerInvalidDetection._abortCurrentStimulus(reason); }
+function _resumeAfterStable() { return window.PlayerInvalidDetection._resumeAfterStable(); }
+function _updateStimulusDim() { return window.PlayerInvalidDetection._updateStimulusDim(); }
+function _showInvalidToast(text) { return window.PlayerInvalidDetection._showInvalidToast(text); }
+function _recordDeviation(pct) { return window.PlayerInvalidDetection._recordDeviation(pct); }
+function _isAnswerInvalid() { return window.PlayerInvalidDetection._isAnswerInvalid(); }
+function _markAnswerInvalid(reason) { return window.PlayerInvalidDetection._markAnswerInvalid(reason); }
 
 // ==================== RATE LIMIT + SCENARIO VALIDATION ====================
 // PATCH_PHASE1: вынесено в player-utils.js
@@ -2397,6 +2244,16 @@ function init() {
         window.PlayerAnimation.setCallbacks({
             onSetStimColor: setStimColorRGB
         });
+    if (window.PlayerInvalidDetection && typeof window.PlayerInvalidDetection.setCallbacks === 'function') {
+        window.PlayerInvalidDetection.setCallbacks({
+            onHideStimulus: hideStimulus,
+            onPlayGraphStimulus: (node) => playGraphStimulus(node),
+            onPlayGraphCompareRound: (node) => playGraphCompareRound(node),
+            onShowNextStimulus: () => showNextStimulus(),
+            onGetNode: (id) => getNode(id)
+        });
+        console.log('[player-runtime] PlayerInvalidDetection callbacks registered');
+    }
         console.log('[player-runtime] PlayerAnimation callbacks registered');
     }
         console.log('[player-runtime] PlayerCamera callbacks registered');
