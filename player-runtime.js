@@ -75,14 +75,7 @@ const SUPABASE_ANON_KEY =
         attach();
     }
 })();
-// PATCH_PHASE1: moved to PlayerState (group: auth)
-// PATCH_PHASE1: moved to PlayerState (group: auth)
-// PATCH_PHASE1: moved to PlayerState (group: auth)
-// PATCH_PHASE1: moved to PlayerState (group: auth)
-// PATCH_PHASE1: moved to PlayerState (group: auth)
-// PATCH_PHASE1: moved to PlayerState (group: auth)
 
-// PATCH_PHASE1: moved to PlayerState
 
 // PATCH50_LOG_FN: per-answer logging
 window._reactionLog = window._reactionLog || [];
@@ -101,81 +94,27 @@ window._reactionReport = function() {
     console.log('Total: ' + log.length + ' | Valid: ' + rts.length);
     if (rts.length) console.log('RT raw: [' + rts.map(function(x){return Math.round(x);}).join(', ') + ']');
 };
-// PATCH_PHASE1: moved to PlayerState
-// PATCH_PHASE1: moved to PlayerState
-// PATCH_PHASE1: moved to PlayerState
-// PATCH_PHASE1: moved to PlayerState
-// PATCH_PHASE1: moved to PlayerState (group: answers)
-// PATCH_PHASE1: moved to PlayerState (group: answers)
-// PATCH_PHASE1: moved to PlayerState (group: answers)
-// PATCH_PHASE1: moved to PlayerState (group: answers)
-// PATCH_PHASE1: moved to PlayerState (group: answers)
 
-// PATCH_PHASE1: moved to PlayerState (group: series)
-// PATCH_PHASE1: moved to PlayerState (group: series)
-// PATCH_PHASE1: moved to PlayerState (group: series)
-// PATCH_PHASE1: moved to PlayerState (group: stimulus)
-// PATCH_PHASE1: moved to PlayerState (group: stimulus)
-// PATCH_PHASE1: moved to PlayerState (group: stimulus)
-// PATCH_PHASE1: moved to PlayerState (group: stimulus)
-// PATCH_PHASE1: moved to PlayerState (group: stimulus)
-// PATCH_PHASE1: moved to PlayerState (group: stimulus)
-// PATCH_PHASE1: moved to PlayerState (group: compare)
-// PATCH_PHASE1: moved to PlayerState (group: compare)
-// PATCH_PHASE1: moved to PlayerState (group: compare)
 let _findSameState = null;
 
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
 
 // --- МОРГАНИЕ ---
-// PATCH_PHASE1: moved to PlayerState (group: animations)
-// PATCH_PHASE1: moved to PlayerState (group: animations)
 
-// PATCH_PHASE1: moved to PlayerState (group: reading)
-// PATCH_PHASE1: moved to PlayerState (group: reading)
 
-// PATCH_PHASE1: moved to PlayerState (group: camera)
-// PATCH_PHASE1: moved to PlayerState (group: camera)
 const realIPD_MM = 63;
-// PATCH_PHASE1: moved to PlayerState (group: camera)
-// PATCH_PHASE1: moved to PlayerState (group: camera)
-// PATCH_PHASE1: moved to PlayerState (group: camera)
-// PATCH_PHASE1: moved to PlayerState (group: camera)
 let _blinkClosedSince = 0;
 let _blinkIsClosed = false;
 const BLINK_THRESHOLD = 0.21;
 
 // ==================== PATCH22: device config ====================
-// ==================== PATCH_PHASE1: КОНФИГ КАМЕРЫ ВЫНЕСЕН ====================
-// _camDevice, _camConfig, _camLoopStarted, window.camStats, window.camReport — в player-camera.js
 
 // === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
-// PATCH_PHASE1: moved to PlayerState (group: graph)
 let _frameSkipCounter = 0;
 // PATCH28b: declarations for PATCH91 stability detection
-// PATCH_PHASE1: moved to PlayerState (group: stability)
-// PATCH_PHASE1: moved to PlayerState (group: stability)
-// PATCH_PHASE1: moved to PlayerState (group: stability)
-// PATCH_PHASE1: moved to PlayerState (group: stability)
 
 // ==================== PATCH30_ABORT: instant stimulus abort ====================
 // Called when user's distance deviates >15%, face is lost, or face returns.
 // Cancels current show, waits for stability, then reshows from scratch.
-// ==================== PATCH_PHASE1: ИНВАЛИДАЦИЯ ВЫНЕСЕНА ====================
-// Логика в player-invalid-detection.js.
 
 function _abortCurrentStimulus(reason) { return window.PlayerInvalidDetection._abortCurrentStimulus(reason); }
 function _resumeAfterStable() { return window.PlayerInvalidDetection._resumeAfterStable(); }
@@ -186,7 +125,6 @@ function _isAnswerInvalid() { return window.PlayerInvalidDetection._isAnswerInva
 function _markAnswerInvalid(reason) { return window.PlayerInvalidDetection._markAnswerInvalid(reason); }
 
 // ==================== RATE LIMIT + SCENARIO VALIDATION ====================
-// PATCH_PHASE1: вынесено в player-utils.js
 const checkRateLimit = window.PlayerUtils.checkRateLimit;
 const validateScenario = window.PlayerUtils.validateScenario;
 
@@ -226,11 +164,9 @@ const camIndicator = $('cam-indicator');
 // PATCH28_PHASE3: removed acuityToSizeMm (now in VissortCore)
 // PATCH28_PHASE3: removed acuityToSizePx (now in VissortCore)
 
-// PATCH_PHASE1: вынесено в player-utils.js
 function _effectiveDistance(declared) {
     return window.PlayerUtils.effectiveDistance(declared, PlayerState.curDistanceM);
 }
-// PATCH_PHASE1: вынесено в player-utils.js
 window._distEMA = null;
 function _smoothDistance(raw) {
     return window.PlayerUtils.smoothDistance(raw);
@@ -239,7 +175,6 @@ function _smoothDistance(raw) {
 // PATCH28_PHASE3: removed detectDeviceType (now in VissortCore)
 // PATCH28_PHASE3: removed detectPPIHeuristic (now in VissortCore)
 // PATCH28_PHASE3: removed loadPPI (now in VissortCore)
-// PATCH_PHASE1: moved to PlayerState (misc-a)
 
 function showStatus(title, text, actionLabel, actionFn) {
     statusTitle.textContent = title;
@@ -664,8 +599,6 @@ function setStimColorRGB(r, g, b) {
 }
 
 // PATCH28_PHASE3: removed buildGenericDynamicPhases (now in VissortCore)
-// ==================== PATCH_PHASE1: АНИМАЦИИ ВЫНЕСЕНЫ ====================
-// Логика в player-animation.js.
 
 function startSingleStimAnimation(p) { return window.PlayerAnimation.startSingleStimAnimation(p); }
 function stopSingleStimAnimation() { return window.PlayerAnimation.stopSingleStimAnimation(); }
@@ -702,8 +635,6 @@ function hideStimulus() {
     stimArea.style.backgroundColor = '';
 }
 
-// ==================== PATCH_PHASE1: КАМЕРА ВЫНЕСЕНА В player-camera.js ====================
-// Обёртки для обратной совместимости.
 
 function _faceEmoji(rate, hasFaceNow) { return window.PlayerCamera._faceEmoji(rate, hasFaceNow); }
 function _pushDetection(found) { return window.PlayerCamera._pushDetection(found); }
@@ -2045,15 +1976,12 @@ function toggleReadingPause() {
         if (b) b.textContent = '⏸ Пауза';
     }
 }
-// PATCH_PHASE1: вынесено в player-reading.js
 function applyReadingBackground(p) {
     window.PlayerReading.applyBackground(p, readingViewportEl);
 }
-// PATCH_PHASE1: вынесено в player-reading.js
 function startReadingDynamicBg(p) {
     window.PlayerReading.startDynamicBg(p, readingViewportEl, () => PlayerState.readingPaused);
 }
-// PATCH_PHASE1: вынесено в player-reading.js
 function stopReadingDynamicBg() {
     window.PlayerReading.stopDynamicBg();
 }
@@ -2233,7 +2161,7 @@ function scheduleVoiceCountdown(durationMs) {
 
 // ==================== INIT ====================
 function init() {
-    // PATCH_PHASE1: регистрация callbacks для player-camera.js
+    // Регистрация callbacks для плеера-камеры
     if (window.PlayerCamera && typeof window.PlayerCamera.setCallbacks === 'function') {
         window.PlayerCamera.setCallbacks({
             onStimulusHide: hideStimulus,
