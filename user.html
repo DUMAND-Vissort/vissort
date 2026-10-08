@@ -234,7 +234,14 @@
                 z-index: 30;
                 display: none;
             }
-            header #cam-indicator { position: static; padding: 4px 10px; background: #1e1e28; color: #9ca3af; font-size: 12px; max-width: 180px; }
+            header #cam-indicator {
+                position: static;
+                padding: 4px 10px;
+                background: #1e1e28;
+                color: #9ca3af;
+                font-size: 12px;
+                max-width: 180px;
+            }
             #response-buttons {
                 position: absolute;
                 bottom: 30px;
@@ -430,42 +437,90 @@
                 }
             }
         </style>
-    <style id="btn-sizes">.btn-icon { justify-content: center !important; text-align: center !important; line-height: 1 !important; width: 28px !important; min-width: 28px !important; max-width: 28px !important; padding: 0 !important; }</style>
-
-<!-- Sentry -->
-<script src="sentry.min.js" crossorigin="anonymous"></script>
-<script>
-    (function () {
-        if (typeof Sentry === 'undefined' || !Sentry.init) {
-            console.warn('[sentry] SDK не загружен');
-            return;
-        }
-        Sentry.init({
-            dsn: 'https://f64db93abc3ba7bc6b4be4b31835e749@o4512152794038272.ingest.de.sentry.io/4512152834801744',
-            tunnel: 'https://hzvypwdpdhsjzaclxmbm.supabase.co/functions/v1/sentry-proxy',
-            environment: (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'dev' : 'production',
-            release: 'vissort-2.0.0',
-            dataCollection: { userInfo: false, httpBodies: [] },
-            tracesSampleRate: 0,
-            beforeSend: function (event) {
-                var msg = (event.message || '') + ' ' + JSON.stringify(event.exception || {});
-                if (msg.indexOf('Domain not allowed') !== -1) return null;
-                if (msg.indexOf('validation-failed') !== -1) return null;
-                if (msg.indexOf('ResizeObserver loop') !== -1) return null;
-                if (msg.indexOf('Non-Error promise rejection') !== -1) return null;
-                return event;
+        <style id="btn-sizes">
+            .btn-icon {
+                justify-content: center !important;
+                text-align: center !important;
+                line-height: 1 !important;
+                width: 28px !important;
+                min-width: 28px !important;
+                max-width: 28px !important;
+                padding: 0 !important;
             }
-        });
-        console.log('[sentry] initialized');
-    })();
-</script>
-<style>.btn-icon svg{display:block;fill:currentColor;}</style>
-<style>
-#auth-modal input:focus, #auth-modal input:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); border-color: #6366f1 !important; }
-</style>
-<style id="cam-indicator-fix">#cam-indicator{width:140px !important;min-width:140px !important;max-width:140px !important;flex:0 0 140px !important;text-align:center !important;justify-content:center !important;display:inline-flex !important;align-items:center !important;box-sizing:border-box !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;}</style>
-<style id="cam-indicator-media">@media (max-width:520px){#cam-indicator{width:70px !important;min-width:70px !important;max-width:70px !important;flex:0 0 70px !important;}}</style>
-</head>
+        </style>
+
+        <!-- Sentry -->
+        <script src="sentry.min.js" crossorigin="anonymous"></script>
+        <script>
+            (function () {
+                if (typeof Sentry === 'undefined' || !Sentry.init) {
+                    console.warn('[sentry] SDK не загружен');
+                    return;
+                }
+                Sentry.init({
+                    dsn: 'https://f64db93abc3ba7bc6b4be4b31835e749@o4512152794038272.ingest.de.sentry.io/4512152834801744',
+                    tunnel: 'https://hzvypwdpdhsjzaclxmbm.supabase.co/functions/v1/sentry-proxy',
+                    environment:
+                        location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+                            ? 'dev'
+                            : 'production',
+                    release: 'vissort-2.0.0',
+                    dataCollection: { userInfo: false, httpBodies: [] },
+                    tracesSampleRate: 0,
+                    beforeSend: function (event) {
+                        var msg = (event.message || '') + ' ' + JSON.stringify(event.exception || {});
+                        if (msg.indexOf('Domain not allowed') !== -1) return null;
+                        if (msg.indexOf('validation-failed') !== -1) return null;
+                        if (msg.indexOf('ResizeObserver loop') !== -1) return null;
+                        if (msg.indexOf('Non-Error promise rejection') !== -1) return null;
+                        return event;
+                    }
+                });
+                console.log('[sentry] initialized');
+            })();
+        </script>
+        <style>
+            .btn-icon svg {
+                display: block;
+                fill: currentColor;
+            }
+        </style>
+        <style>
+            #auth-modal input:focus,
+            #auth-modal input:focus-visible {
+                outline: 2px solid #6366f1;
+                outline-offset: 1px;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                border-color: #6366f1 !important;
+            }
+        </style>
+        <style id="cam-indicator-fix">
+            #cam-indicator {
+                width: 140px !important;
+                min-width: 140px !important;
+                max-width: 140px !important;
+                flex: 0 0 140px !important;
+                text-align: center !important;
+                justify-content: center !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                box-sizing: border-box !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+        </style>
+        <style id="cam-indicator-media">
+            @media (max-width: 520px) {
+                #cam-indicator {
+                    width: 70px !important;
+                    min-width: 70px !important;
+                    max-width: 70px !important;
+                    flex: 0 0 70px !important;
+                }
+            }
+        </style>
+    </head>
     <body>
         <header>
             <span class="chip" id="hdr-scenario" title="Выбрать сценарий">—</span>
@@ -480,10 +535,31 @@
             <button class="btn btn-games" id="btn-games">🎮 Игры ▾</button>
             <button class="btn btn-ghost" id="btn-history">📊 История</button>
             <button class="btn btn-primary" id="btn-player">▶ Начать</button>
-            <button class="btn btn-warn btn-icon" id="btn-player-pause" disabled><svg width="12" height="14" viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="1" y="1" width="3.5" height="12" rx="0.5"/><rect x="7.5" y="1" width="3.5" height="12" rx="0.5"/></svg></button>
-            <button class="btn btn-danger btn-icon" id="btn-player-stop" disabled><svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="1"/></svg></button>
+            <button class="btn btn-warn btn-icon" id="btn-player-pause" disabled>
+                <svg
+                    width="12"
+                    height="14"
+                    viewBox="0 0 12 14"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                >
+                    <rect x="1" y="1" width="3.5" height="12" rx="0.5" />
+                    <rect x="7.5" y="1" width="3.5" height="12" rx="0.5" />
+                </svg>
+            </button>
+            <button class="btn btn-danger btn-icon" id="btn-player-stop" disabled>
+                <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                >
+                    <rect x="1" y="1" width="10" height="10" rx="1" />
+                </svg>
+            </button>
             <span class="chip" id="cam-indicator">📷</span>
-<span class="chip" id="hdr-user">—</span>
+            <span class="chip" id="hdr-user">—</span>
             <button class="btn btn-ghost" id="btn-logout">Выйти</button>
         </header>
 
@@ -551,14 +627,14 @@
             <div class="modal-content">
                 <h3 id="auth-title">Вход</h3>
                 <form id="auth-form" autocomplete="on">
-                <label for="auth-email">Email</label>
-                <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
-                <label for="auth-password">Пароль</label>
-                <input type="password" id="auth-password" autocomplete="current-password" />
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-ghost" id="auth-toggle">Регистрация</button>
-                    <button type="submit" class="btn btn-primary" id="auth-submit">Войти</button>
-                </div>
+                    <label for="auth-email">Email</label>
+                    <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
+                    <label for="auth-password">Пароль</label>
+                    <input type="password" id="auth-password" autocomplete="current-password" />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-ghost" id="auth-toggle">Регистрация</button>
+                        <button type="submit" class="btn btn-primary" id="auth-submit">Войти</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -573,18 +649,18 @@
         </div>
 
         <script src="vissort-onboarding.js" defer></script>
-<script src="vissort-device.js" defer></script>
-<script src="voice.js" defer></script>
+        <script src="vissort-device.js" defer></script>
+        <script src="voice.js" defer></script>
         <script src="user.js"></script>
         <script src="vissort-core.js" defer></script>
-<script src="player-state.js" defer></script>
-<script src="player-camera.js" defer></script>
-<script src="player-animation.js" defer></script>
-<script src="player-invalid-detection.js" defer></script>
-<script src="player-utils.js" defer></script>
-<script src="player-dist-warning.js" defer></script>
-<script src="player-reading.js" defer></script>
-<script src="player-runtime.js" defer></script>
+        <script src="player-state.js" defer></script>
+        <script src="player-camera.js" defer></script>
+        <script src="player-animation.js" defer></script>
+        <script src="player-invalid-detection.js" defer></script>
+        <script src="player-utils.js" defer></script>
+        <script src="player-dist-warning.js" defer></script>
+        <script src="player-reading.js" defer></script>
+        <script src="player-runtime.js" defer></script>
         <script>
             (function () {
                 'use strict';
