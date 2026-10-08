@@ -107,8 +107,16 @@
             req.onsuccess = () => {
                 db = req.result;
                 _reopenAttempts = 0;
-            db.onclose = () => { console.warn('[Data] IndexedDB закрыта'); db = null; };
-            db.onversionchange = () => { try { db.close(); } catch(_) {} db = null; };
+                db.onclose = () => {
+                    console.warn('[Data] IndexedDB закрыта');
+                    db = null;
+                };
+                db.onversionchange = () => {
+                    try {
+                        db.close();
+                    } catch (_) {}
+                    db = null;
+                };
                 resolve(db);
             };
             req.onerror = () => reject(req.error);
@@ -116,40 +124,40 @@
     }
 
     async function idb(store, mode, fn) {
-    if (!db) {
-        try {
-            await openDB();
-        } catch (e) {
-            throw new Error('IndexedDB не открыта: ' + e.message);
+        if (!db) {
+            try {
+                await openDB();
+            } catch (e) {
+                throw new Error('IndexedDB не открыта: ' + e.message);
+            }
         }
-    }
-    return new Promise((resolve, reject) => {
-        try {
-            const tx = db.transaction(store, mode);
-            const s = tx.objectStore(store);
-            const result = fn(s);
-            tx.oncomplete = () => resolve(result);
-            tx.onerror = () => reject(tx.error);
-            tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
-        } catch (e) {
-            if (e.name === 'InvalidStateError') {
-                _reopenAttempts = (_reopenAttempts || 0) + 1;
-                if (_reopenAttempts > 3) {
-                    reject(new Error('IndexedDB failed to reopen after 3 attempts'));
+        return new Promise((resolve, reject) => {
+            try {
+                const tx = db.transaction(store, mode);
+                const s = tx.objectStore(store);
+                const result = fn(s);
+                tx.oncomplete = () => resolve(result);
+                tx.onerror = () => reject(tx.error);
+                tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+            } catch (e) {
+                if (e.name === 'InvalidStateError') {
+                    _reopenAttempts = (_reopenAttempts || 0) + 1;
+                    if (_reopenAttempts > 3) {
+                        reject(new Error('IndexedDB failed to reopen after 3 attempts'));
+                        return;
+                    }
+                    console.warn('[Data] DB закрыта, переподключаюсь...');
+                    db = null;
+                    openDB()
+                        .then(() => idb(store, mode, fn))
+                        .then(resolve)
+                        .catch(reject);
                     return;
                 }
-                console.warn('[Data] DB закрыта, переподключаюсь...');
-                db = null;
-                openDB()
-                    .then(() => idb(store, mode, fn))
-                    .then(resolve)
-                    .catch(reject);
-                return;
+                reject(e);
             }
-            reject(e);
-        }
-    });
-}
+        });
+    }
     function idbPut(store, value) {
         return idb(store, 'readwrite', (s) => s.put(value));
     }
@@ -162,8 +170,11 @@
     // Общий helper с переоткрытием БД при InvalidStateError
     async function idbRequest(store, mode, fn) {
         if (!db) {
-            try { await openDB(); }
-            catch (e) { throw new Error('IndexedDB not open: ' + e.message); }
+            try {
+                await openDB();
+            } catch (e) {
+                throw new Error('IndexedDB not open: ' + e.message);
+            }
         }
         return new Promise((resolve, reject) => {
             try {
@@ -505,7 +516,10 @@
                     const token = parsed?.access_token || parsed?.currentSession?.access_token;
                     const uid = parsed?.user?.id || parsed?.currentSession?.user?.id;
                     if (token) {
-                        const exp = parsed && (parsed.expires_at || (parsed.currentSession && parsed.currentSession.expires_at));
+                        const exp =
+                            parsed &&
+                            (parsed.expires_at ||
+                                (parsed.currentSession && parsed.currentSession.expires_at));
                         if (exp && exp * 1000 < Date.now()) {
                             warn('token from localStorage expired, skipping');
                             continue;
@@ -831,7 +845,9 @@
         } catch (_) {}
 
         if (flag && flag.value === true) {
-            try { localStorage.setItem(LS_KEY, 'true'); } catch (_) {}
+            try {
+                localStorage.setItem(LS_KEY, 'true');
+            } catch (_) {}
             return;
         }
 
@@ -842,8 +858,12 @@
                 await idbPut(STORES.scenarios, { ...s, _dirty: true, _syncedAt: null });
         }
 
-        try { await idbPut(STORES.settings, { key: 'migrated_v2_v3', value: true }); } catch (_) {}
-        try { localStorage.setItem(LS_KEY, 'true'); } catch (_) {}
+        try {
+            await idbPut(STORES.settings, { key: 'migrated_v2_v3', value: true });
+        } catch (_) {}
+        try {
+            localStorage.setItem(LS_KEY, 'true');
+        } catch (_) {}
     }
 
     Data.getDirtyCount = async () => {

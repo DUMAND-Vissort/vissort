@@ -13,9 +13,9 @@
 
     // Cyrillic direction strings (escaped for encoding safety)
     const DIR = {
-        up:    '\u0432\u0432\u0435\u0440\u0445',      // vverh
-        down:  '\u0432\u043d\u0438\u0437',            // vniz
-        left:  '\u0432\u043b\u0435\u0432\u043e',      // vlevo
+        up: '\u0432\u0432\u0435\u0440\u0445', // vverh
+        down: '\u0432\u043d\u0438\u0437', // vniz
+        left: '\u0432\u043b\u0435\u0432\u043e', // vlevo
         right: '\u0432\u043f\u0440\u0430\u0432\u043e' // vpravo
     };
 
@@ -101,13 +101,19 @@
         const B = color2 || { r: 0, g: 0, b: 255 };
         let base;
         if (midEnabled && color3) {
-            base = [{ from: A, to: color3 }, { from: color3, to: B }];
+            base = [
+                { from: A, to: color3 },
+                { from: color3, to: B }
+            ];
         } else {
             base = [{ from: A, to: B }];
         }
         if (reverse === true) {
             return base.concat(
-                base.slice().reverse().map((ph) => ({ from: ph.to, to: ph.from }))
+                base
+                    .slice()
+                    .reverse()
+                    .map((ph) => ({ from: ph.to, to: ph.from }))
             );
         }
         return base;
@@ -115,13 +121,19 @@
     function buildCirclePhases(colorA, midEnabled, colorMid, colorB, reverse) {
         let base;
         if (midEnabled && colorMid) {
-            base = [{ from: colorA, to: colorMid }, { from: colorMid, to: colorB }];
+            base = [
+                { from: colorA, to: colorMid },
+                { from: colorMid, to: colorB }
+            ];
         } else {
             base = [{ from: colorA, to: colorB }];
         }
         if (reverse === true) {
             return base.concat(
-                base.slice().reverse().map((ph) => ({ from: ph.to, to: ph.from }))
+                base
+                    .slice()
+                    .reverse()
+                    .map((ph) => ({ from: ph.to, to: ph.from }))
             );
         }
         return base;
@@ -131,13 +143,55 @@
     function generateLetterE(size, r, g, b, angle) {
         const a = angle == null ? 0 : angle;
         const t = size / 5;
-        const path = 'M 0 0 H ' + size + ' V ' + t + ' H ' + t + ' V ' + (2 * t)
-            + ' H ' + (size - t) + ' V ' + (3 * t) + ' H ' + t + ' V ' + (4 * t)
-            + ' H ' + size + ' V ' + size + ' H 0 Z';
-        return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' '
-            + size + '" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">'
-            + '<g transform="rotate(' + a + ', ' + (size / 2) + ', ' + (size / 2) + ')">'
-            + '<path d="' + path + '" fill="rgb(' + r + ',' + g + ',' + b + ')"/></g></svg>';
+        const path =
+            'M 0 0 H ' +
+            size +
+            ' V ' +
+            t +
+            ' H ' +
+            t +
+            ' V ' +
+            2 * t +
+            ' H ' +
+            (size - t) +
+            ' V ' +
+            3 * t +
+            ' H ' +
+            t +
+            ' V ' +
+            4 * t +
+            ' H ' +
+            size +
+            ' V ' +
+            size +
+            ' H 0 Z';
+        return (
+            '<svg width="' +
+            size +
+            '" height="' +
+            size +
+            '" viewBox="0 0 ' +
+            size +
+            ' ' +
+            size +
+            '" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">' +
+            '<g transform="rotate(' +
+            a +
+            ', ' +
+            size / 2 +
+            ', ' +
+            size / 2 +
+            ')">' +
+            '<path d="' +
+            path +
+            '" fill="rgb(' +
+            r +
+            ',' +
+            g +
+            ',' +
+            b +
+            ')"/></g></svg>'
+        );
     }
     function generateLandoltRing(diameter, gapDirection, r, g, b, bgR, bgG, bgB) {
         const sw = diameter * 0.2;
@@ -159,12 +213,48 @@
             ry = cy - rh / 2;
             rx = gapDirection === DIR.right ? cx + or_ - rw + sm : cx - or_ - sm;
         }
-        return '<svg width="' + diameter + '" height="' + diameter + '" viewBox="0 0 '
-            + diameter + ' ' + diameter + '" xmlns="http://www.w3.org/2000/svg">'
-            + '<circle cx="' + cx + '" cy="' + cy + '" r="' + (or_ - sw / 2) + '" fill="none" '
-            + 'stroke="rgb(' + r + ',' + g + ',' + b + ')" stroke-width="' + sw + '"/>'
-            + '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh
-            + '" fill="rgb(' + bgR + ',' + bgG + ',' + bgB + ')"/></svg>';
+        return (
+            '<svg width="' +
+            diameter +
+            '" height="' +
+            diameter +
+            '" viewBox="0 0 ' +
+            diameter +
+            ' ' +
+            diameter +
+            '" xmlns="http://www.w3.org/2000/svg">' +
+            '<circle cx="' +
+            cx +
+            '" cy="' +
+            cy +
+            '" r="' +
+            (or_ - sw / 2) +
+            '" fill="none" ' +
+            'stroke="rgb(' +
+            r +
+            ',' +
+            g +
+            ',' +
+            b +
+            ')" stroke-width="' +
+            sw +
+            '"/>' +
+            '<rect x="' +
+            rx +
+            '" y="' +
+            ry +
+            '" width="' +
+            rw +
+            '" height="' +
+            rh +
+            '" fill="rgb(' +
+            bgR +
+            ',' +
+            bgG +
+            ',' +
+            bgB +
+            ')"/></svg>'
+        );
     }
     function getCircleStimulusSVG(node, size) {
         const uid = 'cg_' + Math.random().toString(36).slice(2, 8);
@@ -173,15 +263,20 @@
         const r = size / 2;
         const innerEnabled = node.circleInnerEnabled !== false;
         const outerEnabled = node.circleOuterEnabled !== false;
-        const innerR = Math.max(5, Math.min(95, node.circleInnerRadiusPct != null ? node.circleInnerRadiusPct : 40));
+        const innerR = Math.max(
+            5,
+            Math.min(95, node.circleInnerRadiusPct != null ? node.circleInnerRadiusPct : 40)
+        );
         const innerFr = innerR / 100;
         const iA = node.circleInnerColor1 || { r: 255, g: 0, b: 0 };
         const iB = node.circleInnerColor2 || { r: 0, g: 0, b: 255 };
-        const iMid = node.circleInnerMidEnabled ? (node.circleInnerColor3 || { r: 255, g: 255, b: 0 }) : null;
+        const iMid = node.circleInnerMidEnabled ? node.circleInnerColor3 || { r: 255, g: 255, b: 0 } : null;
         const innerStops = [];
         if (iMid) {
             innerStops.push('<stop offset="0%" stop-color="rgb(' + iA.r + ',' + iA.g + ',' + iA.b + ')"/>');
-            innerStops.push('<stop offset="50%" stop-color="rgb(' + iMid.r + ',' + iMid.g + ',' + iMid.b + ')"/>');
+            innerStops.push(
+                '<stop offset="50%" stop-color="rgb(' + iMid.r + ',' + iMid.g + ',' + iMid.b + ')"/>'
+            );
             innerStops.push('<stop offset="100%" stop-color="rgb(' + iB.r + ',' + iB.g + ',' + iB.b + ')"/>');
         } else {
             innerStops.push('<stop offset="0%" stop-color="rgb(' + iA.r + ',' + iA.g + ',' + iA.b + ')"/>');
@@ -189,25 +284,66 @@
         }
         const oA = node.circleOuterColor1 || { r: 0, g: 255, b: 0 };
         const oB = node.circleOuterColor2 || { r: 0, g: 128, b: 255 };
-        const oMid = node.circleOuterMidEnabled ? (node.circleOuterColor3 || { r: 0, g: 255, b: 255 }) : null;
+        const oMid = node.circleOuterMidEnabled ? node.circleOuterColor3 || { r: 0, g: 255, b: 255 } : null;
         const outerStops = [];
-        outerStops.push('<stop offset="0%" stop-color="rgb(' + oA.r + ',' + oA.g + ',' + oA.b + ')" stop-opacity="0"/>');
-        outerStops.push('<stop offset="' + innerR + '%" stop-color="rgb(' + oA.r + ',' + oA.g + ',' + oA.b + ')" stop-opacity="1"/>');
+        outerStops.push(
+            '<stop offset="0%" stop-color="rgb(' + oA.r + ',' + oA.g + ',' + oA.b + ')" stop-opacity="0"/>'
+        );
+        outerStops.push(
+            '<stop offset="' +
+                innerR +
+                '%" stop-color="rgb(' +
+                oA.r +
+                ',' +
+                oA.g +
+                ',' +
+                oA.b +
+                ')" stop-opacity="1"/>'
+        );
         if (oMid) {
-            outerStops.push('<stop offset="' + ((innerR + 100) / 2) + '%" stop-color="rgb(' + oMid.r + ',' + oMid.g + ',' + oMid.b + ')"/>');
+            outerStops.push(
+                '<stop offset="' +
+                    (innerR + 100) / 2 +
+                    '%" stop-color="rgb(' +
+                    oMid.r +
+                    ',' +
+                    oMid.g +
+                    ',' +
+                    oMid.b +
+                    ')"/>'
+            );
         }
         outerStops.push('<stop offset="100%" stop-color="rgb(' + oB.r + ',' + oB.g + ',' + oB.b + ')"/>');
         const innerCircle = innerEnabled
-            ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r * innerFr) + '" fill="url(#' + uid + '_i)"/>'
+            ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + r * innerFr + '" fill="url(#' + uid + '_i)"/>'
             : '';
         const outerCircle = outerEnabled
             ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#' + uid + '_o)"/>'
             : '';
-        const html = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' '
-            + size + '" xmlns="http://www.w3.org/2000/svg"><defs>'
-            + '<radialGradient id="' + uid + '_o" cx="50%" cy="50%" r="50%">' + outerStops.join('') + '</radialGradient>'
-            + '<radialGradient id="' + uid + '_i" cx="50%" cy="50%" r="50%">' + innerStops.join('') + '</radialGradient>'
-            + '</defs>' + outerCircle + innerCircle + '</svg>';
+        const html =
+            '<svg width="' +
+            size +
+            '" height="' +
+            size +
+            '" viewBox="0 0 ' +
+            size +
+            ' ' +
+            size +
+            '" xmlns="http://www.w3.org/2000/svg"><defs>' +
+            '<radialGradient id="' +
+            uid +
+            '_o" cx="50%" cy="50%" r="50%">' +
+            outerStops.join('') +
+            '</radialGradient>' +
+            '<radialGradient id="' +
+            uid +
+            '_i" cx="50%" cy="50%" r="50%">' +
+            innerStops.join('') +
+            '</radialGradient>' +
+            '</defs>' +
+            outerCircle +
+            innerCircle +
+            '</svg>';
         return {
             html: html,
             bgColor: 'rgb(' + (node.bgR || 0) + ',' + (node.bgG || 0) + ',' + (node.bgB || 0) + ')',
@@ -225,8 +361,16 @@
         const b = node.stimB || 255;
         let html;
         if (node.stimType === 'LANDOLT') {
-            html = generateLandoltRing(size, node.stimDirection || DIR.up, r, g, b,
-                node.bgR || 0, node.bgG || 0, node.bgB || 0);
+            html = generateLandoltRing(
+                size,
+                node.stimDirection || DIR.up,
+                r,
+                g,
+                b,
+                node.bgR || 0,
+                node.bgG || 0,
+                node.bgB || 0
+            );
         } else {
             const am = {};
             am[DIR.up] = 270;
@@ -250,12 +394,18 @@
     }
     function getThreshold(size) {
         switch (size) {
-            case 4: return 3;
-            case 5: return 4;
-            case 6: return 4;
-            case 7: return 5;
-            case 8: return 6;
-            default: return Math.ceil(size / 2);
+            case 4:
+                return 3;
+            case 5:
+                return 4;
+            case 6:
+                return 4;
+            case 7:
+                return 5;
+            case 8:
+                return 6;
+            default:
+                return Math.ceil(size / 2);
         }
     }
     function randomDirection() {

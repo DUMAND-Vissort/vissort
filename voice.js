@@ -537,14 +537,12 @@
             if (e.target.id === 'voice-picker-modal') onClose();
         });
 
-        modal
-            .querySelector('#voice-test')
-            .addEventListener('click', () =>
-                Voice.say('Правильно. Не отклоняйтесь. Осталось пять секунд.', {
-                    cancel: true,
-                    allowRepeat: true
-                })
-            );
+        modal.querySelector('#voice-test').addEventListener('click', () =>
+            Voice.say('Правильно. Не отклоняйтесь. Осталось пять секунд.', {
+                cancel: true,
+                allowRepeat: true
+            })
+        );
 
         const rateEl = modal.querySelector('#voice-rate');
         rateEl.value = Voice.rate;

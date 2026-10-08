@@ -25,7 +25,36 @@
             const lw = Math.max(0, Math.min(100, p.splitLeftWidthPercent ?? 50));
             const lc = p.splitLeftColor || { r: 0, g: 0, b: 0 };
             const rc = p.splitRightColor || { r: 0, g: 0, b: 0 };
-            viewportEl.style.background = 'linear-gradient(to right, rgb(' + lc.r + ',' + lc.g + ',' + lc.b + ') 0%, rgb(' + lc.r + ',' + lc.g + ',' + lc.b + ') ' + lw + '%, rgb(' + rc.r + ',' + rc.g + ',' + rc.b + ') ' + lw + '%, rgb(' + rc.r + ',' + rc.g + ',' + rc.b + ') 100%)';
+            viewportEl.style.background =
+                'linear-gradient(to right, rgb(' +
+                lc.r +
+                ',' +
+                lc.g +
+                ',' +
+                lc.b +
+                ') 0%, rgb(' +
+                lc.r +
+                ',' +
+                lc.g +
+                ',' +
+                lc.b +
+                ') ' +
+                lw +
+                '%, rgb(' +
+                rc.r +
+                ',' +
+                rc.g +
+                ',' +
+                rc.b +
+                ') ' +
+                lw +
+                '%, rgb(' +
+                rc.r +
+                ',' +
+                rc.g +
+                ',' +
+                rc.b +
+                ') 100%)';
             return;
         }
 
@@ -35,9 +64,43 @@
             if (p.gradientMidEnabled !== false) {
                 const mc = p.gradientMidColor || { r: 204, g: 204, b: 204 };
                 const mp = Math.max(0, Math.min(100, p.gradientMidPosition ?? 50));
-                viewportEl.style.background = 'linear-gradient(to right, rgb(' + lc.r + ',' + lc.g + ',' + lc.b + ') 0%, rgb(' + mc.r + ',' + mc.g + ',' + mc.b + ') ' + mp + '%, rgb(' + rc.r + ',' + rc.g + ',' + rc.b + ') 100%)';
+                viewportEl.style.background =
+                    'linear-gradient(to right, rgb(' +
+                    lc.r +
+                    ',' +
+                    lc.g +
+                    ',' +
+                    lc.b +
+                    ') 0%, rgb(' +
+                    mc.r +
+                    ',' +
+                    mc.g +
+                    ',' +
+                    mc.b +
+                    ') ' +
+                    mp +
+                    '%, rgb(' +
+                    rc.r +
+                    ',' +
+                    rc.g +
+                    ',' +
+                    rc.b +
+                    ') 100%)';
             } else {
-                viewportEl.style.background = 'linear-gradient(to right, rgb(' + lc.r + ',' + lc.g + ',' + lc.b + ') 0%, rgb(' + rc.r + ',' + rc.g + ',' + rc.b + ') 100%)';
+                viewportEl.style.background =
+                    'linear-gradient(to right, rgb(' +
+                    lc.r +
+                    ',' +
+                    lc.g +
+                    ',' +
+                    lc.b +
+                    ') 0%, rgb(' +
+                    rc.r +
+                    ',' +
+                    rc.g +
+                    ',' +
+                    rc.b +
+                    ') 100%)';
             }
             return;
         }
@@ -71,13 +134,22 @@
         } else {
             const A = p.dynamicStartColor || { r: 255, g: 0, b: 0 };
             const B = p.dynamicEndColor || { r: 0, g: 0, b: 255 };
-            base = (p.dynamicMidEnabled && p.dynamicMidColor)
-                ? [{ from: A, to: p.dynamicMidColor }, { from: p.dynamicMidColor, to: B }]
-                : [{ from: A, to: B }];
+            base =
+                p.dynamicMidEnabled && p.dynamicMidColor
+                    ? [
+                          { from: A, to: p.dynamicMidColor },
+                          { from: p.dynamicMidColor, to: B }
+                      ]
+                    : [{ from: A, to: B }];
         }
 
         const phases = rev
-            ? base.concat(base.slice().reverse().map((ph) => ({ from: ph.to, to: ph.from })))
+            ? base.concat(
+                  base
+                      .slice()
+                      .reverse()
+                      .map((ph) => ({ from: ph.to, to: ph.from }))
+              )
             : base;
         const cnt = phases.length;
         const cycleMs = Math.max(100, p.dynamicDuration || 10000);
