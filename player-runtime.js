@@ -4,16 +4,29 @@
 // ============================================================
 // ============================================================
 if (!window.VissortCore) {
-    throw new Error('[player] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE player-runtime.js.');
+    throw new Error(
+        '[player] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE player-runtime.js.'
+    );
 }
 const {
-    acuityToSizeMm, acuityToSizePx, acuityToFontSizePx,
-    detectDeviceType, detectPPIHeuristic, loadPPI,
-    hexToRgb, rgbToHex, lerpColor,
-    buildGenericDynamicPhases, buildCirclePhases,
-    generateLetterE, generateLandoltRing,
-    getCircleStimulusSVG, getStimulusSVG,
-    escapeHtml, getThreshold, randomDirection
+    acuityToSizeMm,
+    acuityToSizePx,
+    acuityToFontSizePx,
+    detectDeviceType,
+    detectPPIHeuristic,
+    loadPPI,
+    hexToRgb,
+    rgbToHex,
+    lerpColor,
+    buildGenericDynamicPhases,
+    buildCirclePhases,
+    generateLetterE,
+    generateLandoltRing,
+    getCircleStimulusSVG,
+    getStimulusSVG,
+    escapeHtml,
+    getThreshold,
+    randomDirection
 } = window.VissortCore;
 
 // ==================== PLAYER OPTIONS ====================
@@ -22,7 +35,8 @@ const {
     if (opts.requireDomain) {
         const ALLOWED = ['vissort.com', 'www.vissort.com', 'localhost', '127.0.0.1'];
         if (!ALLOWED.includes(location.hostname)) {
-            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0b12;color:#e8e8f0;font-family:sans-serif;text-align:center;padding:20px"><div><h1 style="font-size:24px;margin-bottom:12px">Access denied</h1><p style="color:#9494a8">Player only works on vissort.com</p></div></div>';
+            document.body.innerHTML =
+                '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0b12;color:#e8e8f0;font-family:sans-serif;text-align:center;padding:20px"><div><h1 style="font-size:24px;margin-bottom:12px">Access denied</h1><p style="color:#9494a8">Player only works on vissort.com</p></div></div>';
             throw new Error('Domain not allowed');
         }
     }
@@ -49,8 +63,13 @@ const SUPABASE_ANON_KEY =
         const pass = document.getElementById('auth-password');
         if (!email || !pass) return;
         try {
-            if (email.value) { pass.focus(); pass.select(); }
-            else { email.focus(); email.select(); }
+            if (email.value) {
+                pass.focus();
+                pass.select();
+            } else {
+                email.focus();
+                email.select();
+            }
         } catch (_) {}
     }
     function onModalOpen() {
@@ -75,36 +94,47 @@ const SUPABASE_ANON_KEY =
     }
 })();
 
-
 // Логирование каждого ответа
 window._reactionLog = window._reactionLog || [];
-window._logAnswer = function(entry) {
+window._logAnswer = function (entry) {
     window._reactionLog.push(entry);
     var tag = entry.valid ? '[answer]' : '[invalid]';
-    var msg = tag + ' rt=' + (entry.rt != null ? Math.round(entry.rt) + 'ms' : 'n/a')
-            + ' correct=' + entry.correct;
+    var msg =
+        tag + ' rt=' + (entry.rt != null ? Math.round(entry.rt) + 'ms' : 'n/a') + ' correct=' + entry.correct;
     if (entry.direction) msg += ' dir=' + entry.direction;
     if (entry.reason) msg += ' reason=' + entry.reason;
     console.log(msg);
 };
-window._reactionReport = function() {
+window._reactionReport = function () {
     var log = window._reactionLog || [];
-    var rts = log.filter(function(e){return e.rt != null && e.valid;}).map(function(e){return e.rt;});
+    var rts = log
+        .filter(function (e) {
+            return e.rt != null && e.valid;
+        })
+        .map(function (e) {
+            return e.rt;
+        });
     console.log('Total: ' + log.length + ' | Valid: ' + rts.length);
-    if (rts.length) console.log('RT raw: [' + rts.map(function(x){return Math.round(x);}).join(', ') + ']');
+    if (rts.length)
+        console.log(
+            'RT raw: [' +
+                rts
+                    .map(function (x) {
+                        return Math.round(x);
+                    })
+                    .join(', ') +
+                ']'
+        );
 };
 
 let _findSameState = null;
 
-
 // --- МОРГАНИЕ ---
-
 
 const realIPD_MM = 63;
 let _blinkClosedSince = 0;
 let _blinkIsClosed = false;
 const BLINK_THRESHOLD = 0.21;
-
 
 // === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
 let _frameSkipCounter = 0;
@@ -113,13 +143,27 @@ let _frameSkipCounter = 0;
 // Called when user's distance deviates >15%, face is lost, or face returns.
 // Cancels current show, waits for stability, then reshows from scratch.
 
-function _abortCurrentStimulus(reason) { return window.PlayerInvalidDetection._abortCurrentStimulus(reason); }
-function _resumeAfterStable() { return window.PlayerInvalidDetection._resumeAfterStable(); }
-function _updateStimulusDim() { return window.PlayerInvalidDetection._updateStimulusDim(); }
-function _showInvalidToast(text) { return window.PlayerInvalidDetection._showInvalidToast(text); }
-function _recordDeviation(pct) { return window.PlayerInvalidDetection._recordDeviation(pct); }
-function _isAnswerInvalid() { return window.PlayerInvalidDetection._isAnswerInvalid(); }
-function _markAnswerInvalid(reason) { return window.PlayerInvalidDetection._markAnswerInvalid(reason); }
+function _abortCurrentStimulus(reason) {
+    return window.PlayerInvalidDetection._abortCurrentStimulus(reason);
+}
+function _resumeAfterStable() {
+    return window.PlayerInvalidDetection._resumeAfterStable();
+}
+function _updateStimulusDim() {
+    return window.PlayerInvalidDetection._updateStimulusDim();
+}
+function _showInvalidToast(text) {
+    return window.PlayerInvalidDetection._showInvalidToast(text);
+}
+function _recordDeviation(pct) {
+    return window.PlayerInvalidDetection._recordDeviation(pct);
+}
+function _isAnswerInvalid() {
+    return window.PlayerInvalidDetection._isAnswerInvalid();
+}
+function _markAnswerInvalid(reason) {
+    return window.PlayerInvalidDetection._markAnswerInvalid(reason);
+}
 
 // ==================== RATE LIMIT + SCENARIO VALIDATION ====================
 const checkRateLimit = window.PlayerUtils.checkRateLimit;
@@ -152,7 +196,6 @@ const readingContentEl = $('reading-content');
 const readingToolbarEl = $('reading-toolbar');
 const camIndicator = $('cam-indicator');
 
-
 function _effectiveDistance(declared) {
     return window.PlayerUtils.effectiveDistance(declared, PlayerState.curDistanceM);
 }
@@ -174,10 +217,12 @@ function hideStatus() {
 }
 
 function initSupabase() {
-	    // PATCH_TEST_NO_LOGIN: bypass auth for test mode
+    // PATCH_TEST_NO_LOGIN: bypass auth for test mode
     if (location.search.indexOf('test=1') !== -1) {
         var _raw = null;
-        try { _raw = localStorage.getItem('vissort_test_scenario'); } catch (e) {}
+        try {
+            _raw = localStorage.getItem('vissort_test_scenario');
+        } catch (e) {}
         if (_raw) {
             try {
                 var _td = JSON.parse(_raw);
@@ -199,7 +244,11 @@ function initSupabase() {
                 hideStatus();
                 btnPlayer.disabled = false;
                 console.log('[test] no-login mode');
-                setTimeout(function () { try { enableCamera(); } catch (e) {} }, 100);
+                setTimeout(function () {
+                    try {
+                        enableCamera();
+                    } catch (e) {}
+                }, 100);
                 return;
             } catch (e) {
                 console.warn('[test] no-login failed:', e);
@@ -221,8 +270,15 @@ function initSupabase() {
     // Обработка SIGNED_IN и INITIAL_SESSION
     PlayerState.supabaseClient.auth.onAuthStateChange((event, session) => {
         PlayerState.currentUser = session?.user || null;
-        if (event === 'SIGNED_OUT') { _onLoggedInFired = false; promptLogin(); return; }
-        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && PlayerState.currentUser) {
+        if (event === 'SIGNED_OUT') {
+            _onLoggedInFired = false;
+            promptLogin();
+            return;
+        }
+        if (
+            (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') &&
+            PlayerState.currentUser
+        ) {
             _safeOnLoggedIn();
         }
     });
@@ -265,10 +321,18 @@ function updateAuthModal() {
 const LS_LAST_EMAIL = 'vissort_last_email';
 
 function encodeCred(s) {
-    try { return btoa(unescape(encodeURIComponent(s))); } catch (_) { return ''; }
+    try {
+        return btoa(unescape(encodeURIComponent(s)));
+    } catch (_) {
+        return '';
+    }
 }
 function decodeCred(s) {
-    try { return decodeURIComponent(escape(atob(s))); } catch (_) { return ''; }
+    try {
+        return decodeURIComponent(escape(atob(s)));
+    } catch (_) {
+        return '';
+    }
 }
 function saveAuthCreds(email, password) {
     try {
@@ -367,19 +431,21 @@ async function onLoggedIn() {
     authModal.classList.remove('open');
     hdrUser.textContent = PlayerState.currentUser.email || '—';
     showStatus('Загрузка сценария…', 'Читаем назначения.');
-	    // ==== Тестовый сценарий из админки (player.html?test=1) ====
+    // ==== Тестовый сценарий из админки (player.html?test=1) ====
     if (location.search.includes('test=1')) {
         try {
             const raw = localStorage.getItem('vissort_test_scenario');
             if (raw) {
                 const testData = JSON.parse(raw);
                 console.log('[test] loading test scenario from localStorage');
-                PlayerState.userScenarios = [{
-                    id: '__test__',
-                    name: '🧪 Тестовый сценарий',
-                    params: testData,
-                    trainingType: testData.trainingType || 'single'
-                }];
+                PlayerState.userScenarios = [
+                    {
+                        id: '__test__',
+                        name: '🧪 Тестовый сценарий',
+                        params: testData,
+                        trainingType: testData.trainingType || 'single'
+                    }
+                ];
                 PlayerState.userScenario = PlayerState.userScenarios[0];
                 hdrScenario.textContent = PlayerState.userScenario.name;
                 applyScenarioDefaults();
@@ -387,7 +453,11 @@ async function onLoggedIn() {
                 hideStatus();
                 btnPlayer.disabled = false;
                 if (typeof enableCamera === 'function') {
-                    try { enableCamera(); } catch (e) { console.warn('[test] camera:', e); }
+                    try {
+                        enableCamera();
+                    } catch (e) {
+                        console.warn('[test] camera:', e);
+                    }
                 }
                 console.log('[test] test scenario loaded, ready to play');
                 return;
@@ -483,7 +553,9 @@ function openScenarioPicker() {
     list.innerHTML = '';
     PlayerState.userScenarios.forEach((s) => {
         const el = document.createElement('div');
-        el.className = 'scenario-item' + (PlayerState.userScenario && PlayerState.userScenario.id === s.id ? ' active' : '');
+        el.className =
+            'scenario-item' +
+            (PlayerState.userScenario && PlayerState.userScenario.id === s.id ? ' active' : '');
         el.innerHTML = `<div><div style="font-weight:600">${escapeHtml(s.name)}</div><div style="font-size:11px;color:#9ca3af">${escapeHtml(s.trainingType || 'single')}</div></div><div>▶</div>`;
         el.addEventListener('click', () => {
             PlayerState.userScenario = s;
@@ -579,23 +651,54 @@ function setStimColorRGB(r, g, b) {
     if (cc) cc.setAttribute('stroke', c);
 }
 
-
-function startSingleStimAnimation(p) { return window.PlayerAnimation.startSingleStimAnimation(p); }
-function stopSingleStimAnimation() { return window.PlayerAnimation.stopSingleStimAnimation(); }
-function startSingleBgAnimation(p) { return window.PlayerAnimation.startSingleBgAnimation(p); }
-function stopSingleBgAnimation() { return window.PlayerAnimation.stopSingleBgAnimation(); }
-function startBlinkAnimation(opts) { return window.PlayerAnimation.startBlinkAnimation(opts); }
-function stopBlinkAnimation() { return window.PlayerAnimation.stopBlinkAnimation(); }
-function startCircleAnimation(node) { return window.PlayerAnimation.startCircleAnimation(node); }
-function stopCircleAnimation() { return window.PlayerAnimation.stopCircleAnimation(); }
-function stopPeripheralAnimation() { return window.PlayerAnimation.stopPeripheralAnimation(); }
-function buildPeripheralDots(node) { return window.PlayerAnimation.buildPeripheralDots(node); }
-function buildDefocusFrame(node, stimHtml) { return window.PlayerAnimation.buildDefocusFrame(node, stimHtml); }
-function removeSingleGridLines() { return window.PlayerAnimation.removeSingleGridLines(); }
-function drawSingleGridLines(gx, gy) { return window.PlayerAnimation.drawSingleGridLines(gx, gy); }
-function applySingleGridPosition(size, gx, gy, row, col, showLines) { return window.PlayerAnimation.applySingleGridPosition(size, gx, gy, row, col, showLines); }
-function pickSingleGridCell(gx, gy, rand, avoid, fx, fy, cells) { return window.PlayerAnimation.pickSingleGridCell(gx, gy, rand, avoid, fx, fy, cells); }
-function applyRandomStimulusPosition(size) { return window.PlayerAnimation.applyRandomStimulusPosition(size); }
+function startSingleStimAnimation(p) {
+    return window.PlayerAnimation.startSingleStimAnimation(p);
+}
+function stopSingleStimAnimation() {
+    return window.PlayerAnimation.stopSingleStimAnimation();
+}
+function startSingleBgAnimation(p) {
+    return window.PlayerAnimation.startSingleBgAnimation(p);
+}
+function stopSingleBgAnimation() {
+    return window.PlayerAnimation.stopSingleBgAnimation();
+}
+function startBlinkAnimation(opts) {
+    return window.PlayerAnimation.startBlinkAnimation(opts);
+}
+function stopBlinkAnimation() {
+    return window.PlayerAnimation.stopBlinkAnimation();
+}
+function startCircleAnimation(node) {
+    return window.PlayerAnimation.startCircleAnimation(node);
+}
+function stopCircleAnimation() {
+    return window.PlayerAnimation.stopCircleAnimation();
+}
+function stopPeripheralAnimation() {
+    return window.PlayerAnimation.stopPeripheralAnimation();
+}
+function buildPeripheralDots(node) {
+    return window.PlayerAnimation.buildPeripheralDots(node);
+}
+function buildDefocusFrame(node, stimHtml) {
+    return window.PlayerAnimation.buildDefocusFrame(node, stimHtml);
+}
+function removeSingleGridLines() {
+    return window.PlayerAnimation.removeSingleGridLines();
+}
+function drawSingleGridLines(gx, gy) {
+    return window.PlayerAnimation.drawSingleGridLines(gx, gy);
+}
+function applySingleGridPosition(size, gx, gy, row, col, showLines) {
+    return window.PlayerAnimation.applySingleGridPosition(size, gx, gy, row, col, showLines);
+}
+function pickSingleGridCell(gx, gy, rand, avoid, fx, fy, cells) {
+    return window.PlayerAnimation.pickSingleGridCell(gx, gy, rand, avoid, fx, fy, cells);
+}
+function applyRandomStimulusPosition(size) {
+    return window.PlayerAnimation.applyRandomStimulusPosition(size);
+}
 
 function displayStimulus(html, bg) {
     stimDisplay.innerHTML = html;
@@ -615,18 +718,39 @@ function hideStimulus() {
     stimArea.style.backgroundColor = '';
 }
 
-
-function _faceEmoji(rate, hasFaceNow) { return window.PlayerCamera._faceEmoji(rate, hasFaceNow); }
-function _pushDetection(found) { return window.PlayerCamera._pushDetection(found); }
-function _detectRatePct() { return window.PlayerCamera._detectRatePct(); }
-function _updateDetectUI() { return window.PlayerCamera._updateDetectUI(); }
-function _checkHardLimit() { return window.PlayerCamera._checkHardLimit(); }
-function startCamLoop() { return window.PlayerCamera.startCamLoop(); }
-async function enableCamera() { return window.PlayerCamera.enableCamera(); }
-async function loadFaceApi() { /* internal to player-camera.js */ }
-async function processCamFrame() { return window.PlayerCamera.processCamFrame(); }
-function evaluateDistance() { return window.PlayerCamera.evaluateDistance(); }
-function disableCamera() { return window.PlayerCamera.disableCamera(); }
+function _faceEmoji(rate, hasFaceNow) {
+    return window.PlayerCamera._faceEmoji(rate, hasFaceNow);
+}
+function _pushDetection(found) {
+    return window.PlayerCamera._pushDetection(found);
+}
+function _detectRatePct() {
+    return window.PlayerCamera._detectRatePct();
+}
+function _updateDetectUI() {
+    return window.PlayerCamera._updateDetectUI();
+}
+function _checkHardLimit() {
+    return window.PlayerCamera._checkHardLimit();
+}
+function startCamLoop() {
+    return window.PlayerCamera.startCamLoop();
+}
+async function enableCamera() {
+    return window.PlayerCamera.enableCamera();
+}
+async function loadFaceApi() {
+    /* internal to player-camera.js */
+}
+async function processCamFrame() {
+    return window.PlayerCamera.processCamFrame();
+}
+function evaluateDistance() {
+    return window.PlayerCamera.evaluateDistance();
+}
+function disableCamera() {
+    return window.PlayerCamera.disableCamera();
+}
 
 // ==================== user.js: Конец части 1 из 4 ====================
 // ==================== user.js: Начало части 2 из 4 ====================
@@ -734,16 +858,29 @@ function playNextGraphNode() {
     hideStimulus();
     responseButtons.style.display = 'none';
     PlayerState.phaseTimers.push(
-        setTimeout(() => {
-            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
-        }, (node.delay1 != null ? node.delay1 : 0))
+        setTimeout(
+            () => {
+                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
+            },
+            node.delay1 != null ? node.delay1 : 0
+        )
     );
 }
 
 function playGraphStimulus(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (window._faceLostPause) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // пауза при потере лица
-    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphStimulus(node); }, 500); return; } // отмена при отклонении
+    if (window._faceLostPause) {
+        setTimeout(function () {
+            playGraphStimulus(node);
+        }, 500);
+        return;
+    } // пауза при потере лица
+    if (PlayerState._waitingStable) {
+        setTimeout(function () {
+            playGraphStimulus(node);
+        }, 500);
+        return;
+    } // отмена при отклонении
     PlayerState._answerBlocked = false; // Сброс блокировки перед новым циклом
     // Ранняя активация фазы ответа
     PlayerState.responsePhaseActive = true;
@@ -768,7 +905,7 @@ function playGraphStimulus(node) {
     PlayerState.lastDirection = dir;
     PlayerState.currentCorrectDirection = dir;
     // Включить фазу ответа до рендера
-    const dCalc = _effectiveDistance(node.stimDistance || 1) // Приоритет измеренной дистанции;
+    const dCalc = _effectiveDistance(node.stimDistance || 1); // Приоритет измеренной дистанции;
     const pCalc = node.stimPPI || PlayerState.screenPPI || 96;
     const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent, dCalc, pCalc);
     PlayerState.currentSize = eff;
@@ -798,7 +935,7 @@ function playGraphStimulus(node) {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
+        PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
     } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
     PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
     if (node.singleGridEnabled) {
@@ -838,7 +975,7 @@ function playGraphStimulus(node) {
             count: node.blinkCount || 0
         });
     }
-    
+
     document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'flex'));
     document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
@@ -913,7 +1050,11 @@ function finishGraphStimulusSeries(node) {
                 );
         }
     }
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
+    PlayerState.seriesCorrect =
+        PlayerState.seriesIncorrect =
+        PlayerState.seriesNoAnswer =
+        PlayerState.seriesStep =
+            0;
     PlayerState.lastDirection = null;
     updateCounters();
     // Отчёт отключён, только лог ответов
@@ -923,10 +1064,12 @@ function finishGraphStimulusSeries(node) {
         var _rt = PlayerState.lastResponse && PlayerState.lastResponse.reactionTimeMs;
         if (_rt != null) window._reactionTimes.push(_rt);
         var _recent = window._reactionTimes.slice(-20);
-        var _avg = _recent.reduce(function(a,b){return a+b;},0) / _recent.length;
+        var _avg =
+            _recent.reduce(function (a, b) {
+                return a + b;
+            }, 0) / _recent.length;
         var _min = Math.min.apply(null, _recent);
         var _max = Math.max.apply(null, _recent);
-        
     } catch (e) {}
     if (PlayerState.noAnswerSeriesStreak >= 3) {
         pauseTraining();
@@ -938,9 +1081,12 @@ function finishGraphStimulusSeries(node) {
         return;
     }
     PlayerState.phaseTimers.push(
-        setTimeout(() => {
-            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
-        }, (node.delay2 != null ? node.delay2 : 500))
+        setTimeout(
+            () => {
+                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
+            },
+            node.delay2 != null ? node.delay2 : 500
+        )
     );
 }
 
@@ -950,30 +1096,87 @@ function handleGraphDirectionAnswer(dir) {
     // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = {
+            answered: true,
+            isCorrect: false,
+            reactionTimeMs: Math.max(
+                0,
+                performance.now() - (PlayerState.responseStartTime || performance.now())
+            ),
+            invalidReason: _inv32
+        };
+        if (window._logAnswer)
+            window._logAnswer({
+                rt: PlayerState.lastResponse.reactionTimeMs,
+                valid: false,
+                correct: false,
+                reason: PlayerState.lastResponse.invalidReason || 'unknown'
+            });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
-        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        setTimeout(function () {
+            document.body.style.background = '#0b0b0f';
+        }, 300);
         return;
     }
 
     const ok = dir === PlayerState.currentCorrectDirection;
 
     // Очистка таймера и DOM сразу после ответа
-    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
-    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
-    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
-    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
-    try { stopSingleStimAnimation(); } catch(e) {}
-    try { stopSingleBgAnimation(); } catch(e) {}
-    try { stopCircleAnimation(); } catch(e) {}
-    try { stopPeripheralAnimation(); } catch(e) {}
-    try { stopBlinkAnimation(); } catch(e) {}
-    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    if (PlayerState.currentShowTimer) {
+        clearTimeout(PlayerState.currentShowTimer);
+        PlayerState.currentShowTimer = null;
+    }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) {
+        PlayerState.phaseTimers.forEach(function (t) {
+            clearTimeout(t);
+        });
+        PlayerState.phaseTimers = [];
+    }
+    try {
+        var _el34 = document.getElementById('stim');
+        if (_el34) _el34.innerHTML = '';
+    } catch (e) {}
+    try {
+        var _ar34 = document.getElementById('stim-display');
+        if (_ar34) _ar34.style.backgroundColor = '';
+    } catch (e) {}
+    try {
+        stopSingleStimAnimation();
+    } catch (e) {}
+    try {
+        stopSingleBgAnimation();
+    } catch (e) {}
+    try {
+        stopCircleAnimation();
+    } catch (e) {}
+    try {
+        stopPeripheralAnimation();
+    } catch (e) {}
+    try {
+        stopBlinkAnimation();
+    } catch (e) {}
+    PlayerState.lastResponse = {
+        answered: true,
+        isCorrect: ok,
+        reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now()))
+    };
+    if (window._logAnswer)
+        window._logAnswer({
+            rt: PlayerState.lastResponse.reactionTimeMs,
+            valid: true,
+            correct: ok,
+            direction:
+                typeof direction !== 'undefined'
+                    ? direction
+                    : typeof dir !== 'undefined'
+                      ? dir
+                      : typeof answer !== 'undefined'
+                        ? String(answer)
+                        : null
+        });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -983,17 +1186,23 @@ function handleGraphDirectionAnswer(dir) {
     saveResult(PlayerState.gCurrentNodeId || 'graph_single', PlayerState.lastResponse.reactionTimeMs, ok);
 
     // Продвижение серии сразу
-    if (ok) PlayerState.seriesCorrect++; else PlayerState.seriesIncorrect++;
+    if (ok) PlayerState.seriesCorrect++;
+    else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
     var _n35 = gGetNode(PlayerState.gCurrentNodeId);
     if (_n35) {
         if (PlayerState.seriesStep >= (_n35.seriesSize || 6)) {
-            setTimeout(function () { finishGraphStimulusSeries(_n35); }, 50);
-        } else {
             setTimeout(function () {
-                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(_n35);
-            }, (_n35.delay2 != null ? _n35.delay2 : 1000));
+                finishGraphStimulusSeries(_n35);
+            }, 50);
+        } else {
+            setTimeout(
+                function () {
+                    if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(_n35);
+                },
+                _n35.delay2 != null ? _n35.delay2 : 1000
+            );
         }
     }
 }
@@ -1016,20 +1225,29 @@ function playGraphCompare(node) {
             { row: 0, col: 0 },
             { row: 0, col: 1 }
         ];
-    while (PlayerState.cellParams.length < PlayerState.activeCells.length) PlayerState.cellParams.push(defaultCellParams());
+    while (PlayerState.cellParams.length < PlayerState.activeCells.length)
+        PlayerState.cellParams.push(defaultCellParams());
     updateCounters();
     hideStimulus();
     responseButtons.style.display = 'none';
     PlayerState.phaseTimers.push(
-        setTimeout(() => {
-            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
-        }, (node.delay1 != null ? node.delay1 : 0))
+        setTimeout(
+            () => {
+                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
+            },
+            node.delay1 != null ? node.delay1 : 0
+        )
     );
 }
 
 function playGraphCompareRound(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (PlayerState._waitingStable) { setTimeout(function(){ playGraphCompareRound(node); }, 500); return; } // отмена при отклонении
+    if (PlayerState._waitingStable) {
+        setTimeout(function () {
+            playGraphCompareRound(node);
+        }, 500);
+        return;
+    } // отмена при отклонении
     if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
         finishGraphCompareSeries(node);
         return;
@@ -1052,9 +1270,12 @@ function playGraphCompareRound(node) {
                 if (PlayerState.seriesStep >= (_n31.seriesSize || 6)) {
                     finishGraphCompareSeries(_n31);
                 } else {
-                    PlayerState.phaseTimers.push(setTimeout(() => {
-                        if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(_n31);
-                    }, _n31.delay2 || 1000));
+                    PlayerState.phaseTimers.push(
+                        setTimeout(() => {
+                            if (PlayerState.playerRunning && !PlayerState.isPaused)
+                                playGraphCompareRound(_n31);
+                        }, _n31.delay2 || 1000)
+                    );
                 }
             }
         }
@@ -1068,30 +1289,87 @@ function handleGraphCompareAnswer(answer) {
     // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = {
+            answered: true,
+            isCorrect: false,
+            reactionTimeMs: Math.max(
+                0,
+                performance.now() - (PlayerState.responseStartTime || performance.now())
+            ),
+            invalidReason: _inv32
+        };
+        if (window._logAnswer)
+            window._logAnswer({
+                rt: PlayerState.lastResponse.reactionTimeMs,
+                valid: false,
+                correct: false,
+                reason: PlayerState.lastResponse.invalidReason || 'unknown'
+            });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
-        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        setTimeout(function () {
+            document.body.style.background = '#0b0b0f';
+        }, 300);
         return;
     }
 
     const ok = answer === PlayerState.currentCompareAnswer;
 
     // Очистка таймера и DOM сразу после ответа
-    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
-    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
-    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
-    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
-    try { stopSingleStimAnimation(); } catch(e) {}
-    try { stopSingleBgAnimation(); } catch(e) {}
-    try { stopCircleAnimation(); } catch(e) {}
-    try { stopPeripheralAnimation(); } catch(e) {}
-    try { stopBlinkAnimation(); } catch(e) {}
-    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    if (PlayerState.currentShowTimer) {
+        clearTimeout(PlayerState.currentShowTimer);
+        PlayerState.currentShowTimer = null;
+    }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) {
+        PlayerState.phaseTimers.forEach(function (t) {
+            clearTimeout(t);
+        });
+        PlayerState.phaseTimers = [];
+    }
+    try {
+        var _el34 = document.getElementById('stim');
+        if (_el34) _el34.innerHTML = '';
+    } catch (e) {}
+    try {
+        var _ar34 = document.getElementById('stim-display');
+        if (_ar34) _ar34.style.backgroundColor = '';
+    } catch (e) {}
+    try {
+        stopSingleStimAnimation();
+    } catch (e) {}
+    try {
+        stopSingleBgAnimation();
+    } catch (e) {}
+    try {
+        stopCircleAnimation();
+    } catch (e) {}
+    try {
+        stopPeripheralAnimation();
+    } catch (e) {}
+    try {
+        stopBlinkAnimation();
+    } catch (e) {}
+    PlayerState.lastResponse = {
+        answered: true,
+        isCorrect: ok,
+        reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now()))
+    };
+    if (window._logAnswer)
+        window._logAnswer({
+            rt: PlayerState.lastResponse.reactionTimeMs,
+            valid: true,
+            correct: ok,
+            direction:
+                typeof direction !== 'undefined'
+                    ? direction
+                    : typeof dir !== 'undefined'
+                      ? dir
+                      : typeof answer !== 'undefined'
+                        ? String(answer)
+                        : null
+        });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -1106,7 +1384,11 @@ function processGraphCompareAnswer(isCorrect) {
     else PlayerState.seriesIncorrect++;
     PlayerState.seriesStep++;
     updateCounters();
-    saveResult(PlayerState.gCurrentNodeId || 'graph_compare', PlayerState.lastResponse.reactionTimeMs, isCorrect);
+    saveResult(
+        PlayerState.gCurrentNodeId || 'graph_compare',
+        PlayerState.lastResponse.reactionTimeMs,
+        isCorrect
+    );
     const node = gGetNode(PlayerState.gCurrentNodeId);
     if (!node) {
         PlayerState.gIndex++;
@@ -1135,7 +1417,11 @@ function finishGraphCompareSeries(node) {
     PlayerState.completedSeries++;
     if (ok) PlayerState.successfulSeries++;
     else PlayerState.failedSeries++;
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
+    PlayerState.seriesCorrect =
+        PlayerState.seriesIncorrect =
+        PlayerState.seriesNoAnswer =
+        PlayerState.seriesStep =
+            0;
     updateCounters();
     if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
         PlayerState.gCurrentCompareNode = null;
@@ -1144,9 +1430,12 @@ function finishGraphCompareSeries(node) {
         return;
     }
     PlayerState.phaseTimers.push(
-        setTimeout(() => {
-            if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
-        }, (node.delay2 != null ? node.delay2 : 500))
+        setTimeout(
+            () => {
+                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
+            },
+            node.delay2 != null ? node.delay2 : 500
+        )
     );
 }
 
@@ -1201,8 +1490,9 @@ function playGraphReading(node) {
         readingFontWeight: node.readingFontWeight || 'normal'
     });
     setupReadingColumns();
-    const dCalc = _effectiveDistance(node.readingDistance || 1) // Приоритет измеренной дистанции;
-    readingContentEl.style.fontSize = acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, PlayerState.screenPPI) + 'px';
+    const dCalc = _effectiveDistance(node.readingDistance || 1); // Приоритет измеренной дистанции;
+    readingContentEl.style.fontSize =
+        acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, PlayerState.screenPPI) + 'px';
     setTimeout(() => {
         PlayerState.readingTotalPages = calcReadingTotalPages();
         PlayerState.readingPage = 0;
@@ -1210,7 +1500,10 @@ function playGraphReading(node) {
     }, 80);
     readingToolbarEl.style.display = 'flex';
     PlayerState._readingFinishGuard = false;
-    if (PlayerState._readingTimerId) { clearTimeout(PlayerState._readingTimerId); PlayerState._readingTimerId = null; }
+    if (PlayerState._readingTimerId) {
+        clearTimeout(PlayerState._readingTimerId);
+        PlayerState._readingTimerId = null;
+    }
 
     const dur = node.duration || 60000;
     if (dur > 0) {
@@ -1241,7 +1534,10 @@ function finishGraphReading(node) {
 
 // ==================== ЗАПУСК ====================
 function startPlayer() {
-    if (PlayerState.playerRunning) { console.warn('[player] уже запущен'); return; }
+    if (PlayerState.playerRunning) {
+        console.warn('[player] уже запущен');
+        return;
+    }
     // Закрыть status-overlay если открыт
     var _so = document.getElementById('status-overlay');
     if (_so && !_so.classList.contains('hidden')) {
@@ -1256,9 +1552,10 @@ function startPlayer() {
         alert('Сценарий повреждён или содержит некорректные данные.');
         return;
     }
-    PlayerState.sessionId = (window.crypto && typeof window.crypto.randomUUID === 'function')
-        ? window.crypto.randomUUID()
-        : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+    PlayerState.sessionId =
+        window.crypto && typeof window.crypto.randomUUID === 'function'
+            ? window.crypto.randomUUID()
+            : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
     const p = PlayerState.userScenario.params || {};
     PlayerState.playerRunning = true;
     window._fastLeanAt = 0;
@@ -1292,7 +1589,7 @@ function startPlayer() {
     PlayerState.screenPPI = p.ppi || PlayerState.screenPPI || 96;
     if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
     btnPlayer.disabled = true;
-    document.querySelector('.counters')?.style.setProperty('display','none');
+    document.querySelector('.counters')?.style.setProperty('display', 'none');
     btnPlayerStop.disabled = false;
     btnPlayerPause.disabled = false;
     if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
@@ -1303,12 +1600,17 @@ function startPlayer() {
         return;
     }
 
-    if (p.trainingType !== 'reading') PlayerState.currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
+    if (p.trainingType !== 'reading')
+        PlayerState.currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
     else PlayerState.currentAcuity = 1.0;
     PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
     PlayerState.currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
     PlayerState.currentDuration = 2550;
-    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, PlayerState.screenPPI);
+    PlayerState.currentSize = acuityToSizePx(
+        PlayerState.currentAcuity,
+        p.distanceMeters || 1,
+        PlayerState.screenPPI
+    );
     updateCounters();
     const tt = p.trainingType || 'single';
     if (tt === 'reading') {
@@ -1325,16 +1627,26 @@ function startPlayer() {
                 { row: 0, col: 0 },
                 { row: 0, col: 1 }
             ];
-        while (PlayerState.cellParams.length < PlayerState.activeCells.length) PlayerState.cellParams.push(defaultCellParams());
+        while (PlayerState.cellParams.length < PlayerState.activeCells.length)
+            PlayerState.cellParams.push(defaultCellParams());
         showNextCompareRound();
     } else showNextStimulus();
 }
 
 function showNextStimulus() {
-    if (!_checkHardLimit()) { setTimeout(showNextStimulus, 500); return; }
+    if (!_checkHardLimit()) {
+        setTimeout(showNextStimulus, 500);
+        return;
+    }
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (window._faceLostPause) { setTimeout(showNextStimulus, 500); return; } // пауза при потере лица
-    if (PlayerState._waitingStable) { setTimeout(showNextStimulus, 500); return; } // отмена при отклонении
+    if (window._faceLostPause) {
+        setTimeout(showNextStimulus, 500);
+        return;
+    } // пауза при потере лица
+    if (PlayerState._waitingStable) {
+        setTimeout(showNextStimulus, 500);
+        return;
+    } // отмена при отклонении
     // Ранняя активация фазы ответа
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
@@ -1354,7 +1666,7 @@ function showNextStimulus() {
     PlayerState.lastDirection = dir;
     PlayerState.currentCorrectDirection = dir;
     // Включить фазу и таймер до рендера
-    const dCalc = _effectiveDistance(p.distanceMeters || 1) // Приоритет измеренной дистанции;
+    const dCalc = _effectiveDistance(p.distanceMeters || 1); // Приоритет измеренной дистанции;
     const eff = acuityToSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI);
     PlayerState.currentSize = eff;
     let sc = PlayerState.currentStimColor;
@@ -1382,7 +1694,7 @@ function showNextStimulus() {
             stimDisplay.appendChild(frame);
             stimArea.style.backgroundColor = `rgb(${p.dfPeriBg.r},${p.dfPeriBg.g},${p.dfPeriBg.b})`;
         } else displayStimulus(svgData.html, PlayerState.currentBgColor);
-    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (single)
+        PlayerState.responseStartTime = performance.now(); // метка начала после рендера (single)
     } else displayStimulus(svgData.html, PlayerState.currentBgColor);
     PlayerState.responseStartTime = performance.now(); // метка начала после рендера (single)
     if (p.singleGridEnabled) {
@@ -1495,8 +1807,16 @@ function finishSeries() {
                 );
         }
     }
-    PlayerState.currentSize = acuityToSizePx(PlayerState.currentAcuity, p.distanceMeters || 1, PlayerState.screenPPI);
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
+    PlayerState.currentSize = acuityToSizePx(
+        PlayerState.currentAcuity,
+        p.distanceMeters || 1,
+        PlayerState.screenPPI
+    );
+    PlayerState.seriesCorrect =
+        PlayerState.seriesIncorrect =
+        PlayerState.seriesNoAnswer =
+        PlayerState.seriesStep =
+            0;
     PlayerState.lastDirection = null;
     updateCounters();
     if (PlayerState.completedSeries >= (p.seriesCount || 5)) {
@@ -1549,9 +1869,11 @@ function showNextCompareRound() {
             if (PlayerState.seriesStep >= (_p31.seriesSize || 6)) {
                 finishCompareSeries();
             } else {
-                PlayerState.phaseTimers.push(setTimeout(() => {
-                    if (PlayerState.playerRunning && !PlayerState.isPaused) showNextCompareRound();
-                }, _p31.delay2 || 1000));
+                PlayerState.phaseTimers.push(
+                    setTimeout(() => {
+                        if (PlayerState.playerRunning && !PlayerState.isPaused) showNextCompareRound();
+                    }, _p31.delay2 || 1000)
+                );
             }
         }
     }, dur);
@@ -1593,7 +1915,10 @@ function showFindSameComparisonInternal(pc) {
     chosen.forEach((cell, idx) => {
         const pi = Math.floor(idx / 2);
         const dir = pairs[pi].direction;
-        const params = PlayerState.cellParams[idx] || PlayerState.cellParams[PlayerState.cellParams.length - 1] || defaultCellParams();
+        const params =
+            PlayerState.cellParams[idx] ||
+            PlayerState.cellParams[PlayerState.cellParams.length - 1] ||
+            defaultCellParams();
         createCellElement(cell, params, dir, idx);
     });
     responseButtons.style.display = 'none';
@@ -1633,7 +1958,10 @@ function handleFindSameClick(idx) {
             PlayerState.lastResponse = {
                 answered: true,
                 isCorrect: true,
-                reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now()))
+                reactionTimeMs: Math.max(
+                    0,
+                    performance.now() - (PlayerState.responseStartTime || performance.now())
+                )
             };
             PlayerState.responsePhaseActive = false;
             processCompareAnswer(true);
@@ -1721,7 +2049,11 @@ function finishCompareSeries() {
     PlayerState.completedSeries++;
     if (ok) PlayerState.successfulSeries++;
     else PlayerState.failedSeries++;
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = PlayerState.seriesStep = 0;
+    PlayerState.seriesCorrect =
+        PlayerState.seriesIncorrect =
+        PlayerState.seriesNoAnswer =
+        PlayerState.seriesStep =
+            0;
     updateCounters();
     if (PlayerState.completedSeries >= (p.seriesCount || 5)) {
         showFinishedReport();
@@ -1745,30 +2077,87 @@ function handleDirectionAnswer(direction) {
     // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = {
+            answered: true,
+            isCorrect: false,
+            reactionTimeMs: Math.max(
+                0,
+                performance.now() - (PlayerState.responseStartTime || performance.now())
+            ),
+            invalidReason: _inv32
+        };
+        if (window._logAnswer)
+            window._logAnswer({
+                rt: PlayerState.lastResponse.reactionTimeMs,
+                valid: false,
+                correct: false,
+                reason: PlayerState.lastResponse.invalidReason || 'unknown'
+            });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
-        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        setTimeout(function () {
+            document.body.style.background = '#0b0b0f';
+        }, 300);
         return;
     }
 
     const ok = direction === PlayerState.currentCorrectDirection;
 
     // Очистка таймера и DOM сразу после ответа
-    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
-    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
-    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
-    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
-    try { stopSingleStimAnimation(); } catch(e) {}
-    try { stopSingleBgAnimation(); } catch(e) {}
-    try { stopCircleAnimation(); } catch(e) {}
-    try { stopPeripheralAnimation(); } catch(e) {}
-    try { stopBlinkAnimation(); } catch(e) {}
-    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    if (PlayerState.currentShowTimer) {
+        clearTimeout(PlayerState.currentShowTimer);
+        PlayerState.currentShowTimer = null;
+    }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) {
+        PlayerState.phaseTimers.forEach(function (t) {
+            clearTimeout(t);
+        });
+        PlayerState.phaseTimers = [];
+    }
+    try {
+        var _el34 = document.getElementById('stim');
+        if (_el34) _el34.innerHTML = '';
+    } catch (e) {}
+    try {
+        var _ar34 = document.getElementById('stim-display');
+        if (_ar34) _ar34.style.backgroundColor = '';
+    } catch (e) {}
+    try {
+        stopSingleStimAnimation();
+    } catch (e) {}
+    try {
+        stopSingleBgAnimation();
+    } catch (e) {}
+    try {
+        stopCircleAnimation();
+    } catch (e) {}
+    try {
+        stopPeripheralAnimation();
+    } catch (e) {}
+    try {
+        stopBlinkAnimation();
+    } catch (e) {}
+    PlayerState.lastResponse = {
+        answered: true,
+        isCorrect: ok,
+        reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now()))
+    };
+    if (window._logAnswer)
+        window._logAnswer({
+            rt: PlayerState.lastResponse.reactionTimeMs,
+            valid: true,
+            correct: ok,
+            direction:
+                typeof direction !== 'undefined'
+                    ? direction
+                    : typeof dir !== 'undefined'
+                      ? dir
+                      : typeof answer !== 'undefined'
+                        ? String(answer)
+                        : null
+        });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -1783,30 +2172,87 @@ function handleCompareAnswer(answer) {
     // Проверка отклонения перед ответом
     var _inv32 = window._isAnswerInvalid ? window._isAnswerInvalid() : null;
     if (_inv32) {
-        PlayerState.lastResponse = { answered: true, isCorrect: false, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())), invalidReason: _inv32 }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: false, correct: false, reason: (PlayerState.lastResponse.invalidReason || 'unknown') });
+        PlayerState.lastResponse = {
+            answered: true,
+            isCorrect: false,
+            reactionTimeMs: Math.max(
+                0,
+                performance.now() - (PlayerState.responseStartTime || performance.now())
+            ),
+            invalidReason: _inv32
+        };
+        if (window._logAnswer)
+            window._logAnswer({
+                rt: PlayerState.lastResponse.reactionTimeMs,
+                valid: false,
+                correct: false,
+                reason: PlayerState.lastResponse.invalidReason || 'unknown'
+            });
         PlayerState.responsePhaseActive = false;
         if (window._markAnswerInvalid) window._markAnswerInvalid(_inv32);
         if (window.Voice) window.Voice.sayKey('wrong', { cancel: true });
         document.body.style.background = '#78350f';
-        setTimeout(function() { document.body.style.background = '#0b0b0f'; }, 300);
+        setTimeout(function () {
+            document.body.style.background = '#0b0b0f';
+        }, 300);
         return;
     }
 
     const ok = answer === PlayerState.currentCompareAnswer;
 
     // Очистка таймера и DOM сразу после ответа
-    if (PlayerState.currentShowTimer) { clearTimeout(PlayerState.currentShowTimer); PlayerState.currentShowTimer = null; }
-    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) { PlayerState.phaseTimers.forEach(function(t){ clearTimeout(t); }); PlayerState.phaseTimers = []; }
-    try { var _el34 = document.getElementById('stim'); if (_el34) _el34.innerHTML = ''; } catch(e) {}
-    try { var _ar34 = document.getElementById('stim-display'); if (_ar34) _ar34.style.backgroundColor = ''; } catch(e) {}
-    try { stopSingleStimAnimation(); } catch(e) {}
-    try { stopSingleBgAnimation(); } catch(e) {}
-    try { stopCircleAnimation(); } catch(e) {}
-    try { stopPeripheralAnimation(); } catch(e) {}
-    try { stopBlinkAnimation(); } catch(e) {}
-    PlayerState.lastResponse = { answered: true, isCorrect: ok, reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now())) }; 
-    if (window._logAnswer) window._logAnswer({ rt: PlayerState.lastResponse.reactionTimeMs, valid: true, correct: ok, direction: (typeof direction !== 'undefined' ? direction : (typeof dir !== 'undefined' ? dir : (typeof answer !== 'undefined' ? String(answer) : null))) });
+    if (PlayerState.currentShowTimer) {
+        clearTimeout(PlayerState.currentShowTimer);
+        PlayerState.currentShowTimer = null;
+    }
+    if (PlayerState.phaseTimers && PlayerState.phaseTimers.length) {
+        PlayerState.phaseTimers.forEach(function (t) {
+            clearTimeout(t);
+        });
+        PlayerState.phaseTimers = [];
+    }
+    try {
+        var _el34 = document.getElementById('stim');
+        if (_el34) _el34.innerHTML = '';
+    } catch (e) {}
+    try {
+        var _ar34 = document.getElementById('stim-display');
+        if (_ar34) _ar34.style.backgroundColor = '';
+    } catch (e) {}
+    try {
+        stopSingleStimAnimation();
+    } catch (e) {}
+    try {
+        stopSingleBgAnimation();
+    } catch (e) {}
+    try {
+        stopCircleAnimation();
+    } catch (e) {}
+    try {
+        stopPeripheralAnimation();
+    } catch (e) {}
+    try {
+        stopBlinkAnimation();
+    } catch (e) {}
+    PlayerState.lastResponse = {
+        answered: true,
+        isCorrect: ok,
+        reactionTimeMs: Math.max(0, performance.now() - (PlayerState.responseStartTime || performance.now()))
+    };
+    if (window._logAnswer)
+        window._logAnswer({
+            rt: PlayerState.lastResponse.reactionTimeMs,
+            valid: true,
+            correct: ok,
+            direction:
+                typeof direction !== 'undefined'
+                    ? direction
+                    : typeof dir !== 'undefined'
+                      ? dir
+                      : typeof answer !== 'undefined'
+                        ? String(answer)
+                        : null
+        });
     PlayerState.responsePhaseActive = false;
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
@@ -1824,10 +2270,11 @@ responseButtons.addEventListener('click', (e) => {
     } else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
         // Проверка узла сравнения, а не graphActive
         const inCmp =
-            PlayerState.compareMode === 'direction' && (
-                (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
-                (PlayerState.graphActive && PlayerState.gCurrentCompareNode != null && PlayerState.gCurrentCompareNode.compareMode === 'direction')
-            );
+            PlayerState.compareMode === 'direction' &&
+            ((!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
+                (PlayerState.graphActive &&
+                    PlayerState.gCurrentCompareNode != null &&
+                    PlayerState.gCurrentCompareNode.compareMode === 'direction'));
         if (inCmp) {
             const val = btn.dataset.answer === 'да';
             if (PlayerState.graphActive) handleGraphCompareAnswer(val);
@@ -1855,16 +2302,24 @@ document.addEventListener('keydown', (e) => {
     }
     if (!PlayerState.responsePhaseActive) return;
     // В режиме сравнения игнорировать Up/Down, только Left/Right = Да/Нет
-    if (((PlayerState.graphActive && PlayerState.gCurrentCompareNode) || (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare')) && PlayerState.compareMode === 'direction' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (
+        ((PlayerState.graphActive && PlayerState.gCurrentCompareNode) ||
+            (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare')) &&
+        PlayerState.compareMode === 'direction' &&
+        e.key !== 'ArrowLeft' &&
+        e.key !== 'ArrowRight'
+    )
+        return;
     const map = { ArrowUp: 'вверх', ArrowDown: 'вниз', ArrowLeft: 'влево', ArrowRight: 'вправо' };
     if (map[e.key]) {
         e.preventDefault();
         // Проверка узла сравнения, а не graphActive
         const inCmp =
-            PlayerState.compareMode === 'direction' && (
-                (!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
-                (PlayerState.graphActive && PlayerState.gCurrentCompareNode != null && PlayerState.gCurrentCompareNode.compareMode === 'direction')
-            );
+            PlayerState.compareMode === 'direction' &&
+            ((!PlayerState.graphActive && PlayerState.userScenario?.params?.trainingType === 'compare') ||
+                (PlayerState.graphActive &&
+                    PlayerState.gCurrentCompareNode != null &&
+                    PlayerState.gCurrentCompareNode.compareMode === 'direction'));
         if (inCmp) {
             if (e.key === 'ArrowLeft') {
                 PlayerState.graphActive ? handleGraphCompareAnswer(true) : handleCompareAnswer(true);
@@ -1901,8 +2356,9 @@ function startReading() {
     readingContentEl.style.opacity = '1';
     applyReadingFont(p);
     setupReadingColumns();
-    const dCalc = _effectiveDistance(p.readingDistance || 1) // Приоритет измеренной дистанции;
-    readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI) + 'px';
+    const dCalc = _effectiveDistance(p.readingDistance || 1); // Приоритет измеренной дистанции;
+    readingContentEl.style.fontSize =
+        acuityToFontSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI) + 'px';
     setTimeout(() => {
         PlayerState.readingTotalPages = calcReadingTotalPages();
         PlayerState.readingPage = 0;
@@ -1943,7 +2399,8 @@ function prevReadingPage() {
     if (PlayerState.readingPage > 0) scrollReadingToPage(PlayerState.readingPage - 1);
 }
 function nextReadingPage() {
-    if (PlayerState.readingPage < PlayerState.readingTotalPages - 1) scrollReadingToPage(PlayerState.readingPage + 1);
+    if (PlayerState.readingPage < PlayerState.readingTotalPages - 1)
+        scrollReadingToPage(PlayerState.readingPage + 1);
 }
 function toggleReadingPause() {
     PlayerState.readingPaused = !PlayerState.readingPaused;
@@ -1980,7 +2437,8 @@ function finishReading() {
 function showFinishedReport() {
     const p = PlayerState.userScenario?.params || {};
     let txt = `Серий: ${PlayerState.completedSeries} · Успешных: ${PlayerState.successfulSeries} · Неуспешных: ${PlayerState.failedSeries}`;
-    if (p.trainingType !== 'reading' && !PlayerState.graphActive) txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
+    if (p.trainingType !== 'reading' && !PlayerState.graphActive)
+        txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
     showStatus('Готово!', txt, 'Ещё раз', () => {
         hideStatus();
         startPlayer();
@@ -2044,7 +2502,7 @@ function stopPlayer() {
     readingContentEl.innerHTML = '';
     stimDisplay.style.display = '';
     btnPlayer.disabled = false;
-    document.querySelector('.counters')?.style.setProperty('display','inline-flex');
+    document.querySelector('.counters')?.style.setProperty('display', 'inline-flex');
     btnPlayerStop.disabled = true;
     btnPlayerPause.disabled = true;
     document.body.style.background = '#0b0b0f';
@@ -2064,7 +2522,10 @@ function stopPlayer() {
     window._invalidAnswerCount = 0;
     PlayerState.sessionId = null;
     PlayerState._readingFinishGuard = false;
-    if (PlayerState._readingTimerId) { clearTimeout(PlayerState._readingTimerId); PlayerState._readingTimerId = null; }
+    if (PlayerState._readingTimerId) {
+        clearTimeout(PlayerState._readingTimerId);
+        PlayerState._readingTimerId = null;
+    }
     PlayerState.graphActive = false;
     PlayerState.gCurrentNodeId = null;
     PlayerState.gCurrentCompareNode = null;
@@ -2102,7 +2563,10 @@ async function saveResult(nodeId, reactionTimeMs, isCorrect) {
             node_id: nodeId || 'user_training',
             response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
             is_correct: isCorrect,
-            distance_m: (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null) ? PlayerState.curDistanceM : null, // Полная серия без ответов → пауза
+            distance_m:
+                typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null
+                    ? PlayerState.curDistanceM
+                    : null, // Полная серия без ответов → пауза
             created_at: new Date().toISOString()
         });
     } catch (e) {
@@ -2116,7 +2580,8 @@ function scheduleVoiceCountdown(durationMs) {
     if (durationMs - 5000 > 0)
         timers.push(
             setTimeout(() => {
-                if (PlayerState.responsePhaseActive && !PlayerState.isPaused) window.Voice.sayKey('countdown5');
+                if (PlayerState.responsePhaseActive && !PlayerState.isPaused)
+                    window.Voice.sayKey('countdown5');
             }, durationMs - 5000)
         );
     [3, 2, 1].forEach((s) => {
@@ -2124,7 +2589,8 @@ function scheduleVoiceCountdown(durationMs) {
         if (at > 0)
             timers.push(
                 setTimeout(() => {
-                    if (PlayerState.responsePhaseActive && !PlayerState.isPaused) window.Voice.sayKey('countdown' + s);
+                    if (PlayerState.responsePhaseActive && !PlayerState.isPaused)
+                        window.Voice.sayKey('countdown' + s);
                 }, at)
             );
     });
@@ -2148,22 +2614,25 @@ function init() {
             onAbortStimulus: (reason) => _abortCurrentStimulus(reason),
             onResume: () => _resumeAfterStable()
         });
-    if (window.PlayerAnimation && typeof window.PlayerAnimation.setCallbacks === 'function') {
-        window.PlayerAnimation.setCallbacks({
-            onSetStimColor: setStimColorRGB
-        });
-    if (window.PlayerInvalidDetection && typeof window.PlayerInvalidDetection.setCallbacks === 'function') {
-        window.PlayerInvalidDetection.setCallbacks({
-            onHideStimulus: hideStimulus,
-            onPlayGraphStimulus: (node) => playGraphStimulus(node),
-            onPlayGraphCompareRound: (node) => playGraphCompareRound(node),
-            onShowNextStimulus: () => showNextStimulus(),
-            onGetNode: (id) => getNode(id)
-        });
-        console.log('[player-runtime] PlayerInvalidDetection callbacks registered');
-    }
-        console.log('[player-runtime] PlayerAnimation callbacks registered');
-    }
+        if (window.PlayerAnimation && typeof window.PlayerAnimation.setCallbacks === 'function') {
+            window.PlayerAnimation.setCallbacks({
+                onSetStimColor: setStimColorRGB
+            });
+            if (
+                window.PlayerInvalidDetection &&
+                typeof window.PlayerInvalidDetection.setCallbacks === 'function'
+            ) {
+                window.PlayerInvalidDetection.setCallbacks({
+                    onHideStimulus: hideStimulus,
+                    onPlayGraphStimulus: (node) => playGraphStimulus(node),
+                    onPlayGraphCompareRound: (node) => playGraphCompareRound(node),
+                    onShowNextStimulus: () => showNextStimulus(),
+                    onGetNode: (id) => getNode(id)
+                });
+                console.log('[player-runtime] PlayerInvalidDetection callbacks registered');
+            }
+            console.log('[player-runtime] PlayerAnimation callbacks registered');
+        }
         console.log('[player-runtime] PlayerCamera callbacks registered');
     }
     $('auth-submit').addEventListener('click', doAuth);
@@ -2196,7 +2665,10 @@ function init() {
         promptLogin();
     });
 
-    if (!btnPlayer.__playerBound) { btnPlayer.addEventListener('click', startPlayer); btnPlayer.__playerBound = true; }
+    if (!btnPlayer.__playerBound) {
+        btnPlayer.addEventListener('click', startPlayer);
+        btnPlayer.__playerBound = true;
+    }
     btnPlayerPause.addEventListener('click', togglePause);
     btnPlayerStop.addEventListener('click', stopPlayer);
     $('pause-continue').addEventListener('click', resumeTraining);
@@ -2224,7 +2696,8 @@ function init() {
     $('reading-not-see').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.max(0.1, Math.round((PlayerState.currentAcuity - 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
+        readingContentEl.style.fontSize =
+            acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
@@ -2233,7 +2706,8 @@ function init() {
     $('reading-see-well').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.min(2.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize = acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
+        readingContentEl.style.fontSize =
+            acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
             scrollReadingToPage(0);
@@ -2251,7 +2725,8 @@ function init() {
             if (np !== PlayerState.readingPage) {
                 PlayerState.readingPage = Math.max(0, Math.min(np, PlayerState.readingTotalPages - 1));
                 const info = $('reading-page-info');
-                if (info) info.textContent = `Стр. ${PlayerState.readingPage + 1} / ${PlayerState.readingTotalPages}`;
+                if (info)
+                    info.textContent = `Стр. ${PlayerState.readingPage + 1} / ${PlayerState.readingTotalPages}`;
             }
         }, 100);
     });
@@ -2292,7 +2767,8 @@ else init();
 (function installCamPreview() {
     if (document.getElementById('btn-cam-preview')) return;
     var style = document.createElement('style');
-    style.textContent = '#hidden-video.pip-visible{position:fixed !important;right:12px !important;bottom:12px !important;left:auto !important;top:auto !important;width:240px !important;height:180px !important;opacity:1 !important;pointer-events:none !important;border:2px solid #0ea5e9;border-radius:8px;z-index:9998;transform:scaleX(-1);box-shadow:0 6px 20px rgba(0,0,0,0.6);background:#000;}';
+    style.textContent =
+        '#hidden-video.pip-visible{position:fixed !important;right:12px !important;bottom:12px !important;left:auto !important;top:auto !important;width:240px !important;height:180px !important;opacity:1 !important;pointer-events:none !important;border:2px solid #0ea5e9;border-radius:8px;z-index:9998;transform:scaleX(-1);box-shadow:0 6px 20px rgba(0,0,0,0.6);background:#000;}';
     document.head.appendChild(style);
 
     // Кнопка в шапке рядом с logout
@@ -2316,12 +2792,12 @@ else init();
         btn.style.background = on ? '#0ea5e9' : '';
         btn.style.color = on ? '#fff' : '';
     }
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         var on = localStorage.getItem(KEY) === '1';
         localStorage.setItem(KEY, on ? '0' : '1');
         apply();
     });
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'p' || e.key === 'P' || e.key === 'з' || e.key === 'З') {
             if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
             var on = localStorage.getItem(KEY) === '1';
@@ -2344,12 +2820,13 @@ else init();
         if (!el) {
             el = document.createElement('div');
             el.id = 'cam-hud';
-            el.style.cssText = 'position:fixed;right:12px;bottom:196px;width:240px;padding:6px 8px;background:rgba(0,0,0,0.7);color:#fff;font-family:monospace;font-size:12px;border-radius:6px;z-index:9999;text-align:center;pointer-events:none;line-height:1.4;';
+            el.style.cssText =
+                'position:fixed;right:12px;bottom:196px;width:240px;padding:6px 8px;background:rgba(0,0,0,0.7);color:#fff;font-family:monospace;font-size:12px;border-radius:6px;z-index:9999;text-align:center;pointer-events:none;line-height:1.4;';
             document.body.appendChild(el);
         }
         return el;
     }
-    setInterval(function() {
+    setInterval(function () {
         var v = document.getElementById('hidden-video');
         var el = ensure();
         if (!v || !el) return;
@@ -2364,29 +2841,48 @@ else init();
         var faceText = face ? face.textContent : '';
         // Определение лица по иконке в cam-indicator
         var hasFace = faceText.indexOf('📏') !== -1 || faceText.indexOf('✅') !== -1; // ✅ или 📏 означают, что лицо найдено
-        var dev = (typeof PlayerState.camBaseline !== 'undefined' && PlayerState.camBaseline && typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM)
-            ? ((PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline * 100)
-            : null;
-        var dist = (typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM) ? PlayerState.curDistanceM.toFixed(2) : '—';
-        var base = (typeof PlayerState.camBaseline !== 'undefined' && PlayerState.camBaseline) ? PlayerState.camBaseline.toFixed(2) : '—';
+        var dev =
+            typeof PlayerState.camBaseline !== 'undefined' &&
+            PlayerState.camBaseline &&
+            typeof PlayerState.curDistanceM !== 'undefined' &&
+            PlayerState.curDistanceM
+                ? ((PlayerState.curDistanceM - PlayerState.camBaseline) / PlayerState.camBaseline) * 100
+                : null;
+        var dist =
+            typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM
+                ? PlayerState.curDistanceM.toFixed(2)
+                : '—';
+        var base =
+            typeof PlayerState.camBaseline !== 'undefined' && PlayerState.camBaseline
+                ? PlayerState.camBaseline.toFixed(2)
+                : '—';
 
         var status, border;
-        var faceLostMs = (typeof window._faceLostSince !== 'undefined' && window._faceLostSince)
-            ? (performance.now() - window._faceLostSince)
-            : 0;
+        var faceLostMs =
+            typeof window._faceLostSince !== 'undefined' && window._faceLostSince
+                ? performance.now() - window._faceLostSince
+                : 0;
         if (!hasFace) {
             // HUD: жёлтый при короткой потере (<1.5с), красный при долгой
             if (faceLostMs < 1500) {
-                status = '\u26A0\uFE0F \u041B\u0418\u0426\u041E? ' + (dev != null ? dev.toFixed(1) + '%' : '');
+                status =
+                    '\u26A0\uFE0F \u041B\u0418\u0426\u041E? ' + (dev != null ? dev.toFixed(1) + '%' : '');
                 border = '#eab308';
                 v.style.animation = '';
             } else {
-                status = '\u274C \u041D\u0415\u0422 \u041B\u0418\u0426\u0410' + (dev != null ? ' ' + dev.toFixed(1) + '%' : '');
+                status =
+                    '\u274C \u041D\u0415\u0422 \u041B\u0418\u0426\u0410' +
+                    (dev != null ? ' ' + dev.toFixed(1) + '%' : '');
                 border = '#dc2626';
                 v.style.animation = 'camBlink 0.6s infinite alternate';
             }
         } else if (dev != null && Math.abs(dev) > 15) {
-            status = (dev < 0 ? '\u26A0\uFE0F \u0411\u041B\u0418\u0417\u041A\u041E ' : '\u26A0\uFE0F \u0414\u0410\u041B\u0415\u041A\u041E ') + dev.toFixed(1) + '%';
+            status =
+                (dev < 0
+                    ? '\u26A0\uFE0F \u0411\u041B\u0418\u0417\u041A\u041E '
+                    : '\u26A0\uFE0F \u0414\u0410\u041B\u0415\u041A\u041E ') +
+                dev.toFixed(1) +
+                '%';
             border = '#eab308';
             v.style.borderColor = border;
             v.style.animation = '';
@@ -2417,12 +2913,14 @@ else init();
         if (el) return el;
         el = document.createElement('div');
         el.id = 'face-lost-overlay';
-        el.style.cssText = 'position:fixed;inset:0;background:rgba(11,11,18,0.94);display:none;align-items:center;justify-content:center;z-index:99997;font-family:"Segoe UI",Tahoma,sans-serif;color:#fff;text-align:center;padding:20px;';
-        el.innerHTML = '<div><div style="font-size:72px;margin-bottom:24px;">&#128100;</div><h2 style="font-size:28px;margin:0 0 12px;font-weight:700;">Вернитесь в кадр</h2><p style="color:#94a3b8;font-size:15px;">Тренировка возобновится автоматически</p></div>';
+        el.style.cssText =
+            'position:fixed;inset:0;background:rgba(11,11,18,0.94);display:none;align-items:center;justify-content:center;z-index:99997;font-family:"Segoe UI",Tahoma,sans-serif;color:#fff;text-align:center;padding:20px;';
+        el.innerHTML =
+            '<div><div style="font-size:72px;margin-bottom:24px;">&#128100;</div><h2 style="font-size:28px;margin:0 0 12px;font-weight:700;">Вернитесь в кадр</h2><p style="color:#94a3b8;font-size:15px;">Тренировка возобновится автоматически</p></div>';
         document.body.appendChild(el);
         return el;
     }
-    setInterval(function() {
+    setInterval(function () {
         var overlay = ensureOverlay();
         var face = document.getElementById('cam-indicator');
         var faceText = face ? face.textContent : '';
@@ -2436,7 +2934,8 @@ else init();
             if (overlay.style.display !== 'flex') {
                 overlay.style.display = 'flex';
                 console.warn('[face] потеряно >2с — пауза');
-                if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('returnToFrame', { cancel: true });
+                if (window.Voice && window.Voice.sayKey)
+                    window.Voice.sayKey('returnToFrame', { cancel: true });
             }
             window._faceLostPause = true;
         } else {
@@ -2446,12 +2945,12 @@ else init();
                 if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('faceFound', { cancel: true });
                 // После долгой потери лица — ожидание стабилизации (like deviation)
                 if (typeof _abortCurrentStimulus === 'function') {
-                    try { _abortCurrentStimulus('face_back_after_long_loss'); } catch (e) {}
+                    try {
+                        _abortCurrentStimulus('face_back_after_long_loss');
+                    } catch (e) {}
                 }
             }
             window._faceLostPause = false;
         }
     }, 300);
 })();
-
-

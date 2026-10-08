@@ -7,19 +7,35 @@
 // ============================================================
 // ============================================================
 if (!window.VissortCore) {
-    throw new Error('[app] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE app.js.');
+    throw new Error(
+        '[app] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE app.js.'
+    );
 }
 const {
     TIME_UNITS,
-    acuityToSizeMm, acuityToSizePx, acuityToFontSizePx,
-    detectDeviceType, detectPPIHeuristic, loadPPI,
-    msToUnit, unitToMs, detectUnit,
-    hexToRgb, rgbToHex, lerpColor,
-    buildGenericDynamicPhases, buildCirclePhases,
-    generateLetterE, generateLandoltRing,
-    getCircleStimulusSVG, getStimulusSVG,
-    escapeHtml, getThreshold, randomDirection,
-    hashCode, sha1
+    acuityToSizeMm,
+    acuityToSizePx,
+    acuityToFontSizePx,
+    detectDeviceType,
+    detectPPIHeuristic,
+    loadPPI,
+    msToUnit,
+    unitToMs,
+    detectUnit,
+    hexToRgb,
+    rgbToHex,
+    lerpColor,
+    buildGenericDynamicPhases,
+    buildCirclePhases,
+    generateLetterE,
+    generateLandoltRing,
+    getCircleStimulusSVG,
+    getStimulusSVG,
+    escapeHtml,
+    getThreshold,
+    randomDirection,
+    hashCode,
+    sha1
 } = window.VissortCore;
 
 const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
@@ -1103,7 +1119,10 @@ function scheduleVoiceCountdown(durationMs, p) {
 // ==================== КАМЕРА ====================
 async function loadFaceApiModels() {
     if (faceapi.tf) {
-        try { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch (e) {}
+        try {
+            await faceapi.tf.setBackend('cpu');
+            await faceapi.tf.ready();
+        } catch (e) {}
     }
     const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
     await faceapi.nets.tinyFaceDetector.loadFromUri(M);
@@ -1214,7 +1233,10 @@ async function processVideoFrame() {
     if (v.readyState >= 2 && v.videoWidth > 0 && !v.paused) {
         try {
             const det = await faceapi
-                .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+                .detectSingleFace(
+                    v,
+                    new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+                )
                 .withFaceLandmarks();
             const faceStatus = document.getElementById('face-status');
             const calibInd = document.getElementById('calib-face-indicator');
@@ -2303,7 +2325,12 @@ function createNodeElement(node) {
     // Перетаскивание по всей площади узла
     el.addEventListener('mousedown', (e) => {
         if (e.button !== 0 || window._pendingConnectionHandler) return;
-        if (e.target.closest('.node-btn') || e.target.closest('.start-checkbox') || e.target.closest('.node-resize-handle')) return;
+        if (
+            e.target.closest('.node-btn') ||
+            e.target.closest('.start-checkbox') ||
+            e.target.closest('.node-resize-handle')
+        )
+            return;
         dragNodeId = node.id;
         const r = canvas.getBoundingClientRect();
         const _zoomA = window.__vissort_zoom || 1;
@@ -3152,7 +3179,7 @@ function updateStimulusInspector(node) {
     html += `<label>Циклов в серии</label><input type="number" id="inp-series-size" value="${node.seriesSize || 6}" min="1" max="20">`; // адаптивная острота
     html += `<label>Критерий правильности серии</label><input type="number" id="inp-series-threshold" value="${node.seriesThreshold || 4}" min="1" max="20">`;
     html += `<label><input type="checkbox" id="inp-adaptive-acuity" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`;
-      html += '</div>';
+    html += '</div>';
     html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
     html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета</h3>';
     html += `<label>Цвет стимула (для буквы)</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
@@ -3240,12 +3267,13 @@ function updateStimulusInspector(node) {
     html += `<label><input type="checkbox" id="inp-bg-loop" ${node.singleBgLoop ? 'checked' : ''}> Повторять</label>`;
     html += `<label><input type="checkbox" id="inp-bg-reverse" ${node.singleBgReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
     html += '</div>';
-       html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
+    html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
     html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
     html += `<label>Серий всего</label><input type="number" id="inp-series-count" value="${node.seriesCount || 10}" min="1" max="50">`;
     html += '</div>';
     html += '</div>';
-    html += '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
+    html +=
+        '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
     inspectorEl.innerHTML = html;
     const p = document.getElementById('insp-grid-preview');
     if (p) {
@@ -3257,7 +3285,7 @@ function updateStimulusInspector(node) {
         pp = document.getElementById('inp-ppi');
     const upd = () => {
         var _w = document.getElementById('insp-v-warn');
-        if (_w) _w.style.display = (v > 0.8) ? 'block' : 'none';
+        if (_w) _w.style.display = v > 0.8 ? 'block' : 'none';
         const v = parseFloat(ai?.value) || 1.0,
             d = parseFloat(di?.value) || 1,
             ppi = parseInt(pp?.value) || screenPPI || 96;
@@ -3337,13 +3365,14 @@ function updateCompareInspector(node) {
     html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
     html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">🔄 Цикл показа</h3>';
     var _tfCmp = [
-        { id: 'inp-cmp-d1',   label: 'Задержка 1',       value: node.delay1  || 0 },
-        { id: 'inp-cmp-dur',  label: 'Время показа',     value: node.duration || 0 },
-        { id: 'inp-cmp-resp', label: 'Ожидание ответа',  value: node.response || 0 },
-        { id: 'inp-cmp-d2',   label: 'Задержка 2',       value: node.delay2  || 0 }
+        { id: 'inp-cmp-d1', label: 'Задержка 1', value: node.delay1 || 0 },
+        { id: 'inp-cmp-dur', label: 'Время показа', value: node.duration || 0 },
+        { id: 'inp-cmp-resp', label: 'Ожидание ответа', value: node.response || 0 },
+        { id: 'inp-cmp-d2', label: 'Задержка 2', value: node.delay2 || 0 }
     ];
     _tfCmp.forEach(function (f) {
-        var u = detectUnit(f.value), dv = msToUnit(f.value, u);
+        var u = detectUnit(f.value),
+            dv = msToUnit(f.value, u);
         html += `<label>${f.label}</label><div class="time-group">
             <input type="number" id="${f.id}" value="${dv}" step="any" min="0">
             <select id="${f.id}-unit"><option value="ms" ${u === 'ms' ? 'selected' : ''}>мс</option><option value="s" ${u === 's' ? 'selected' : ''}>с</option><option value="min" ${u === 'min' ? 'selected' : ''}>мин</option></select>
@@ -6423,7 +6452,7 @@ function buildScenarioPayloadFromCurrent() {
 const SCHEMA_VERSION = 2;
 
 function migrateScenario(data) {
-    const version = (typeof data.schemaVersion === 'number') ? data.schemaVersion : 1;
+    const version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
     if (version === SCHEMA_VERSION) return data;
     if (version === 1) {
         console.log('[migrate] scenario v1 -> v2');
@@ -6816,7 +6845,7 @@ function initSupabase() {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac'
     );
     window.supabaseClient = supabaseClient;
-supabaseClient.auth.getSession().then(({ data }) => {
+    supabaseClient.auth.getSession().then(({ data }) => {
         if (data?.session) {
             currentUser = data.session.user;
             window.Data.setAuth(data.session.access_token, data.session.user.id);
@@ -6965,7 +6994,7 @@ function init() {
     btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
-	    // Кнопка теста в player.html (?test=1)
+    // Кнопка теста в player.html (?test=1)
     document.getElementById('btn-test')?.addEventListener('click', () => {
         const payload = {
             graph: {
@@ -7547,7 +7576,6 @@ function init() {
 // ==================== START ====================
 init();
 
-
 // ==================== ЭКСПОРТ ДЛЯ AI ГЕНЕРАТОРА ====================
 window.AppEditorCore = {
     createNewNode,
@@ -7556,10 +7584,18 @@ window.AppEditorCore = {
     updateInspector,
     defaultCompareCellParams,
     state: {
-        get nodes() { return nodes; },
-        get connections() { return connections; },
-        get activeNodeId() { return activeNodeId; },
-        set activeNodeId(v) { activeNodeId = v; }
+        get nodes() {
+            return nodes;
+        },
+        get connections() {
+            return connections;
+        },
+        get activeNodeId() {
+            return activeNodeId;
+        },
+        set activeNodeId(v) {
+            activeNodeId = v;
+        }
     }
 };
 console.log('[app] AppEditorCore экспортирован для AI-генератора');
@@ -7569,10 +7605,18 @@ const LS_LAST_EMAIL = 'vissort_last_email';
 const LS_LAST_PASS = 'vissort_last_pass';
 
 function encodeCred(s) {
-    try { return btoa(unescape(encodeURIComponent(s))); } catch (_) { return ''; }
+    try {
+        return btoa(unescape(encodeURIComponent(s)));
+    } catch (_) {
+        return '';
+    }
 }
 function decodeCred(s) {
-    try { return decodeURIComponent(escape(atob(s))); } catch (_) { return ''; }
+    try {
+        return decodeURIComponent(escape(atob(s)));
+    } catch (_) {
+        return '';
+    }
 }
 function saveAuthCreds(email, password) {
     try {
@@ -7596,8 +7640,13 @@ function focusAuthField() {
     if (!emailEl || !passEl) return;
     setTimeout(() => {
         try {
-            if (emailEl.value) { passEl.focus(); passEl.select(); }
-            else { emailEl.focus(); emailEl.select(); }
+            if (emailEl.value) {
+                passEl.focus();
+                passEl.select();
+            } else {
+                emailEl.focus();
+                emailEl.select();
+            }
         } catch (_) {}
     }, 150);
 }
@@ -7616,7 +7665,10 @@ async function handleAuthSubmit() {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const name = document.getElementById('auth-name').value.trim();
-    if (!email || !password) { alert('Введите email и пароль'); return; }
+    if (!email || !password) {
+        alert('Введите email и пароль');
+        return;
+    }
     saveAuthCreds(email, password);
     if (authMode === 'signin') await signIn(email, password);
     else await signUp(email, password, name);
@@ -7648,7 +7700,6 @@ async function handleAuthSubmit() {
     }
 })();
 
-
 // ==================== Масштаб холста ====================
 (function installZoom() {
     var ZOOM_KEY = 'vissort_canvas_zoom';
@@ -7675,7 +7726,9 @@ async function handleAuthSubmit() {
         window.__vissort_zoom = zoomLevel;
         canvasEl.style.zoom = zoomLevel;
         if (btnReset) btnReset.textContent = Math.round(zoomLevel * 100) + '%';
-        try { localStorage.setItem(ZOOM_KEY, String(zoomLevel)); } catch (_) {}
+        try {
+            localStorage.setItem(ZOOM_KEY, String(zoomLevel));
+        } catch (_) {}
     }
 
     function zoomBy(delta) {
@@ -7683,12 +7736,19 @@ async function handleAuthSubmit() {
         applyZoom();
     }
 
-    if (btnIn) btnIn.addEventListener('click', function () { zoomBy(STEP); });
-    if (btnOut) btnOut.addEventListener('click', function () { zoomBy(-STEP); });
-    if (btnReset) btnReset.addEventListener('click', function () {
-        zoomLevel = 1.0;
-        applyZoom();
-    });
+    if (btnIn)
+        btnIn.addEventListener('click', function () {
+            zoomBy(STEP);
+        });
+    if (btnOut)
+        btnOut.addEventListener('click', function () {
+            zoomBy(-STEP);
+        });
+    if (btnReset)
+        btnReset.addEventListener('click', function () {
+            zoomLevel = 1.0;
+            applyZoom();
+        });
 
     document.addEventListener('keydown', function (e) {
         if (!e.ctrlKey && !e.metaKey) return;
@@ -7707,28 +7767,34 @@ async function handleAuthSubmit() {
         }
     });
 
-
     // Ctrl + колесо мыши — масштаб
-    canvasEl.addEventListener('wheel', function (e) {
-        if (!e.ctrlKey && !e.metaKey) return;
-        e.preventDefault();
-        var delta = e.deltaY > 0 ? -STEP : STEP;
-        zoomBy(delta);
-    }, { passive: false });
+    canvasEl.addEventListener(
+        'wheel',
+        function (e) {
+            if (!e.ctrlKey && !e.metaKey) return;
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -STEP : STEP;
+            zoomBy(delta);
+        },
+        { passive: false }
+    );
 
     applyZoom();
     console.log('[zoom] installed, level =', zoomLevel, '');
 })();
 
-
 // ==================== Новый сценарий ====================
 (function installNewScenario() {
     var btn = document.getElementById('btn-new');
-    if (!btn) { console.warn('[new] btn-new not found'); return; }
+    if (!btn) {
+        console.warn('[new] btn-new not found');
+        return;
+    }
 
     function doNew() {
-        var hasContent = (typeof nodes !== 'undefined' && nodes.length > 0) ||
-                         (typeof connections !== 'undefined' && connections.length > 0);
+        var hasContent =
+            (typeof nodes !== 'undefined' && nodes.length > 0) ||
+            (typeof connections !== 'undefined' && connections.length > 0);
         if (hasContent) {
             if (!confirm('Start a new scenario? Unsaved changes will be lost.')) return;
         }
