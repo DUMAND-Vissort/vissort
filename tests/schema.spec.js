@@ -24,20 +24,34 @@ async function mockAdminLogin(page) {
     await page.route('**/auth/v1/**', async (route) => {
         const url = route.request().url();
         if (url.includes('/user')) {
-            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeUser) });
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(fakeUser)
+            });
         }
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeSession) });
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(fakeSession)
+        });
     });
 
-    await page.addInitScript(([session]) => {
-        const projectRef = 'hzvypwdpdhsjzaclxmbm';
-        localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
-        const fp = 'test-fp';
-        sessionStorage.setItem('vissort_fp', fp);
-        localStorage.setItem('vissort_device_calib', JSON.stringify({
-            [fp]: { ppi: 96, focalLengthPx: 700 }
-        }));
-    }, [fakeSession]);
+    await page.addInitScript(
+        ([session]) => {
+            const projectRef = 'hzvypwdpdhsjzaclxmbm';
+            localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
+            const fp = 'test-fp';
+            sessionStorage.setItem('vissort_fp', fp);
+            localStorage.setItem(
+                'vissort_device_calib',
+                JSON.stringify({
+                    [fp]: { ppi: 96, focalLengthPx: 700 }
+                })
+            );
+        },
+        [fakeSession]
+    );
 }
 
 test.describe('Schema version — миграция', () => {
@@ -51,7 +65,7 @@ test.describe('Schema version — миграция', () => {
         const result = await page.evaluate(async () => {
             // Проверяем наличие migrateScenario в global scope
             const hasMigrate = typeof window.migrateScenario !== 'undefined';
-            
+
             // Сохраняем сценарий со schemaVersion 2 через API
             const record = {
                 id: 'schema-test-' + Date.now(),

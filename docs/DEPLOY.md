@@ -5,13 +5,13 @@
 
 ## Что где живёт
 
-| Компонент | Где | Как обновляется |
-|---|---|---|
-| Frontend (HTML/JS/CSS) | GitHub Pages (vissort.com) | Автоматически при push в main |
-| Edge Functions | Supabase | Вручную: \`supabase functions deploy\` |
-| Миграции БД | Supabase | Вручную: \`supabase db push\` или через SQL Editor |
-| Secrets | Supabase | Вручную: \`supabase secrets set\` |
-| SW-кэш | Браузер пользователя | Автоматически при \`CACHE_VERSION++\` |
+| Компонент              | Где                        | Как обновляется                                    |
+| ---------------------- | -------------------------- | -------------------------------------------------- |
+| Frontend (HTML/JS/CSS) | GitHub Pages (vissort.com) | Автоматически при push в main                      |
+| Edge Functions         | Supabase                   | Вручную: \`supabase functions deploy\`             |
+| Миграции БД            | Supabase                   | Вручную: \`supabase db push\` или через SQL Editor |
+| Secrets                | Supabase                   | Вручную: \`supabase secrets set\`                  |
+| SW-кэш                 | Браузер пользователя       | Автоматически при \`CACHE_VERSION++\`              |
 
 ## Первоначальная настройка
 
@@ -40,10 +40,13 @@ npx serve -l 5500 .
 ### 4. Supabase CLI
 
 \`\`\`powershell
+
 # Supabase CLI лежит в корне проекта (supabase.exe)
+
 .\supabase.exe --version
 
 # Привязка к проекту
+
 .\supabase.exe link --project-ref hzvypwdpdhsjzaclxmbm
 \`\`\`
 
@@ -54,6 +57,7 @@ npx serve -l 5500 .
 Любой push в \`main\` → GitHub Pages публикует файлы → vissort.com обновляется за 1-2 минуты.
 
 **Проверка:**
+
 1. https://github.com/DUMAND-Vissort/vissort/actions
 2. Workflow \`pages build and deployment\` — должен быть зелёный.
 
@@ -141,6 +145,7 @@ git config credential.helper manager
 \`\`\`
 
 При первом push git спросит логин/пароль. Введи:
+
 - Username: \`DUMAND-Vissort\`
 - Password: токен
 
@@ -199,9 +204,9 @@ npx playwright test --reporter=list
 // В Console на admin.html (залогинен как админ)
 const token = JSON.parse(localStorage.getItem('sb-hzvypwdpdhsjzaclxmbm-auth-token')).access_token;
 const r = await fetch('https://hzvypwdpdhsjzaclxmbm.supabase.co/functions/v1/generate-scenario', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ prompt: 'test' })
+method: 'POST',
+headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+body: JSON.stringify({ prompt: 'test' })
 });
 console.log(r.status, await r.text());
 \`\`\`
@@ -246,4 +251,4 @@ SQL Editor → выполни обратный SQL вручную. Или вос
 
 ---
 
-*Дата: 2026-10-05*
+_Дата: 2026-10-05_

@@ -7,34 +7,34 @@
 
 \`\`\`
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Браузер (клиент)                         │
-│                                                                 │
-│  admin.html ─────┐                                              │
-│                  ├──> app.js ──────┐                            │
-│  user.html ──────┤                 │                            │
-│  player.html ────┤                 ├──> vissort-core.js         │
-│                  ├──> player-runtime.js                            │
-│                  │                 │                            │
-│                  │                 ├──> data-layer.js           │
-│                  │                 │       │                    │
-│                  │                 ├──> voice.js                │
-│                  │                 │                            │
-│                  └─────────────────┴──> sw.js (Service Worker)  │
-│                                                                 │
+│ Браузер (клиент) │
+│ │
+│ admin.html ─────┐ │
+│ ├──> app.js ──────┐ │
+│ user.html ──────┤ │ │
+│ player.html ────┤ ├──> vissort-core.js │
+│ ├──> player-runtime.js │
+│ │ │ │
+│ │ ├──> data-layer.js │
+│ │ │ │ │
+│ │ ├──> voice.js │
+│ │ │ │
+│ └─────────────────┴──> sw.js (Service Worker) │
+│ │
 └─────────────────────────────────────────────────────────────────┘
-          │
-          │ HTTPS
-          ▼
+│
+│ HTTPS
+▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Supabase (облако)                       │
-│                                                                 │
-│  Auth  ◄──────►  PostgreSQL  ◄──────►  Edge Functions           │
-│                     │                          │                │
-│                     │                          ├─> generate-scenario (DeepSeek)
-│                     │                          ├─> sentry-proxy
-│                     │                          └─> backup (в планах)
-│                     │                                           │
-│                  RLS-политики                                   │
+│ Supabase (облако) │
+│ │
+│ Auth ◄──────► PostgreSQL ◄──────► Edge Functions │
+│ │ │ │
+│ │ ├─> generate-scenario (DeepSeek)
+│ │ ├─> sentry-proxy
+│ │ └─> backup (в планах)
+│ │ │
+│ RLS-политики │
 └─────────────────────────────────────────────────────────────────┘
 \`\`\`
 
@@ -45,6 +45,7 @@
 **Назначение:** общие утилиты без DOM-зависимостей. Загружается первым.
 
 **Что экспортирует** (через \`window.VissortCore\`):
+
 - Формулы остроты: \`acuityToSizeMm\`, \`acuityToSizePx\`, \`acuityToFontSizePx\`
 - Цвета: \`hexToRgb\`, \`rgbToHex\`, \`lerpColor\`
 - SVG: \`generateLetterE\`, \`generateLandoltRing\`, \`getStimulusSVG\`, \`getCircleStimulusSVG\`
@@ -60,6 +61,7 @@
 **Назначение:** единая прослойка между UI и источниками данных. IndexedDB + Supabase REST + очередь синхронизации.
 
 **Что экспортирует** (через \`window.Data\`):
+
 - Сценарии: \`getScenarios\`, \`getScenariosLocal\`, \`saveScenario\`, \`deleteScenario\`
 - Шаблоны: \`getTemplates\`, \`saveTemplate\`, \`bulkImportTemplates\`
 - Пользователи: \`getUsers\`
@@ -77,6 +79,7 @@
 **Назначение:** редактор сценариев + auth + все UI-модалки.
 
 **Ключевые функции:**
+
 - Граф: \`createNewNode\`, \`deleteNode\`, \`startConnection\`, \`renderGraph\`
 - Инспектор: \`updateStimulusInspector\`, \`updateReadingInspector\`, \`updateCompareInspector\`
 - Плеер (для тестов из редактора): \`playNodesSequence\`, \`playStimulusNodeSeries\`
@@ -94,6 +97,7 @@
 **Назначение:** логика плеера — всё, что происходит после «Старт».
 
 **Ключевые функции:**
+
 - Запуск: \`startPlayer\`, \`playNextGraphNode\`, \`playGraphStimulus\`
 - Плоский режим: \`showNextStimulus\`, \`finishSeries\`
 - Чтение: \`playGraphReading\`, \`applyReadingBackground\`
@@ -106,6 +110,7 @@
 **Зависимости:** vissort-core, data-layer, voice.
 
 **Проблема:** 145 KB / 5100 строк, монолит. **Фаза 1 — разбить на 5 модулей:**
+
 - \`player-state.js\` — единое состояние
 - \`player-camera.js\` — камера, face-api, устойчивость
 - \`player-graph.js\` — граф и очередь узлов
@@ -117,6 +122,7 @@
 **Назначение:** голосовое сопровождение через Web Speech API.
 
 **Что экспортирует** (через \`window.Voice\`):
+
 - \`say(text, opts)\`, \`sayKey(key)\`, \`mute(flag)\`, \`toggle()\`
 - Чтение вслух: \`readText\`, \`pauseReading\`, \`resumeReading\`, \`stopReading\`
 
@@ -127,6 +133,7 @@
 **Назначение:** Service Worker. Офлайн-режим.
 
 **Стратегии:**
+
 - HTML — network-first с fallback на кэш
 - JS/CSS — stale-while-revalidate
 - Supabase REST — stale-while-revalidate
@@ -136,12 +143,14 @@
 ### supabase/functions/*
 
 **generate-scenario/index.ts:**
+
 - Проксирует запросы к DeepSeek API
 - Auth: JWT + whitelist админов
 - Rate-limit: 20 запросов/час на user_id (через \`check_ai_rate_limit\` RPC)
 - Возвращает \`{ ok, data }\` или \`{ ok: false, error }\`
 
 **sentry-proxy/index.ts:**
+
 - Пересылает envelope от Sentry SDK в Sentry
 - Обходит гео-блокировку
 - Принимает \`text/plain\` (Sentry SDK избегает preflight)
@@ -152,33 +161,33 @@
 
 \`\`\`
 admin.html → app.js (buildScenarioPayloadFromCurrent)
-         → Data.saveScenario
-         → IndexedDB (локально)
-         → syncQueue (очередь)
-         → Supabase REST (когда онлайн)
+→ Data.saveScenario
+→ IndexedDB (локально)
+→ syncQueue (очередь)
+→ Supabase REST (когда онлайн)
 \`\`\`
 
 ### Загрузка сценария
 
 \`\`\`
 player.html → player-runtime.js (loadUserScenarios)
-           → Data.getScenarios
-           → Supabase REST (или локальный кэш)
-           → onLoggedIn
-           → userScenario.params
-           → startPlayer
+→ Data.getScenarios
+→ Supabase REST (или локальный кэш)
+→ onLoggedIn
+→ userScenario.params
+→ startPlayer
 \`\`\`
 
 ### Тренировка (стимул)
 
 \`\`\`
 startPlayer → playNextGraphNode → playGraphStimulus
-           → getStimulusSVG (vissort-core)
-           → displayStimulus
-           → камера (processCamFrame) → face-api
-           → _pushDetection → _updateDetectUI
-           → ответ стрелкой → handleGraphDirectionAnswer
-           → saveResult → Data.saveResult → Supabase
+→ getStimulusSVG (vissort-core)
+→ displayStimulus
+→ камера (processCamFrame) → face-api
+→ _pushDetection → _updateDetectUI
+→ ответ стрелкой → handleGraphDirectionAnswer
+→ saveResult → Data.saveResult → Supabase
 \`\`\`
 
 ## Версионирование схемы
@@ -189,6 +198,7 @@ startPlayer → playNextGraphNode → playGraphStimulus
 - v2 (с 2026-10-05) — добавлен \`schemaVersion: 2\`, миграция через \`migrateScenario\`
 
 При загрузке сценария в \`loadGraph\`:
+
 1. \`JSON.parse\`
 2. \`migrateScenario(data)\` — если нет версии, считаем v1, добавляем 2
 3. Per-node defaults — восстанавливают отсутствующие поля
@@ -196,11 +206,13 @@ startPlayer → playNextGraphNode → playGraphStimulus
 ## Точки расширения
 
 **Что легко добавить:**
+
 - Новый тип узла — в \`createNewNode\`, \`updateInspector\`, \`playGraph*\`
 - Новый тип стимула — в \`getStimulusSVG\`
 - Новая методика — в библиотеке (Фаза 6)
 
 **Что сложно:**
+
 - Изменение формата сценария (нужна миграция)
 - Изменение структуры БД (нужна RLS-миграция)
 - Изменение плеера (нужен рефакторинг)
@@ -214,4 +226,4 @@ startPlayer → playNextGraphNode → playGraphStimulus
 
 ---
 
-*Дата: 2026-10-05*
+_Дата: 2026-10-05_

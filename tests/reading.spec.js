@@ -24,16 +24,26 @@ async function mockUserLogin(page) {
     await page.route('**/auth/v1/**', async (route) => {
         const url = route.request().url();
         if (url.includes('/user')) {
-            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeUser) });
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(fakeUser)
+            });
         }
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeSession) });
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(fakeSession)
+        });
     });
 
     await page.route('**/rest/v1/user_scenarios**', async (route) => {
         return route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify([{ id: 'assign-1', user_id: fakeUser.id, scenario_id: 'sc-1', status: 'ready' }])
+            body: JSON.stringify([
+                { id: 'assign-1', user_id: fakeUser.id, scenario_id: 'sc-1', status: 'ready' }
+            ])
         });
     });
 
@@ -54,7 +64,11 @@ async function mockUserLogin(page) {
                 isActive: true
             }
         };
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([scenario]) });
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify([scenario])
+        });
     });
 
     await page.route('**/rest/v1/test_results**', async (route) => {
@@ -65,11 +79,14 @@ async function mockUserLogin(page) {
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
     });
 
-    await page.addInitScript(([session]) => {
-        const projectRef = 'hzvypwdpdhsjzaclxmbm';
-        localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
-        localStorage.setItem('vissort_cam_preview', '0');
-    }, [fakeSession]);
+    await page.addInitScript(
+        ([session]) => {
+            const projectRef = 'hzvypwdpdhsjzaclxmbm';
+            localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
+            localStorage.setItem('vissort_cam_preview', '0');
+        },
+        [fakeSession]
+    );
 }
 
 async function killOnboarding(page) {
@@ -81,9 +98,12 @@ async function killOnboarding(page) {
     await page.evaluate(() => {
         const fp = 'test-fp';
         sessionStorage.setItem('vissort_fp', fp);
-        localStorage.setItem('vissort_device_calib', JSON.stringify({
-            [fp]: { ppi: 96, focalLengthPx: 700 }
-        }));
+        localStorage.setItem(
+            'vissort_device_calib',
+            JSON.stringify({
+                [fp]: { ppi: 96, focalLengthPx: 700 }
+            })
+        );
     });
     await page.waitForTimeout(500);
     await page.evaluate(() => {
@@ -106,18 +126,24 @@ test.describe('Reading — player.html', () => {
     });
 
     test('старт открывает viewport чтения', async ({ page }) => {
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
 
         // Ждём, что reading-viewport стал видимым
-        await page.waitForFunction(() => {
-            const v = document.getElementById('reading-viewport');
-            return v && getComputedStyle(v).display === 'block';
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const v = document.getElementById('reading-viewport');
+                return v && getComputedStyle(v).display === 'block';
+            },
+            { timeout: 15000 }
+        );
 
         const viewportVisible = await page.evaluate(() => {
             const v = document.getElementById('reading-viewport');
@@ -127,17 +153,23 @@ test.describe('Reading — player.html', () => {
     });
 
     test('текст из сценария отображается', async ({ page }) => {
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
 
-        await page.waitForFunction(() => {
-            const c = document.getElementById('reading-content');
-            return c && c.textContent.trim().length > 0;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const c = document.getElementById('reading-content');
+                return c && c.textContent.trim().length > 0;
+            },
+            { timeout: 15000 }
+        );
 
         const content = await page.evaluate(() => {
             return document.getElementById('reading-content')?.textContent || '';
@@ -147,17 +179,23 @@ test.describe('Reading — player.html', () => {
     });
 
     test('toolbar чтения видим при активном чтении', async ({ page }) => {
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
 
-        await page.waitForFunction(() => {
-            const t = document.getElementById('reading-toolbar');
-            return t && getComputedStyle(t).display === 'flex';
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const t = document.getElementById('reading-toolbar');
+                return t && getComputedStyle(t).display === 'flex';
+            },
+            { timeout: 15000 }
+        );
 
         const toolbarVisible = await page.evaluate(() => {
             const t = document.getElementById('reading-toolbar');
@@ -167,17 +205,23 @@ test.describe('Reading — player.html', () => {
     });
 
     test('кнопка Закончить закрывает чтение', async ({ page }) => {
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
 
-        await page.waitForFunction(() => {
-            const t = document.getElementById('reading-toolbar');
-            return t && getComputedStyle(t).display === 'flex';
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const t = document.getElementById('reading-toolbar');
+                return t && getComputedStyle(t).display === 'flex';
+            },
+            { timeout: 15000 }
+        );
 
         // Нажимаем Закончить
         await page.click('#reading-finish');

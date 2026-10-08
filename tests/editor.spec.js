@@ -24,24 +24,38 @@ async function mockAdminLogin(page) {
     await page.route('**/auth/v1/**', async (route) => {
         const url = route.request().url();
         if (url.includes('/user')) {
-            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeUser) });
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(fakeUser)
+            });
         }
         if (url.includes('/token') || url.includes('/session')) {
-            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeSession) });
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(fakeSession)
+            });
         }
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
     });
 
-    await page.addInitScript(([session]) => {
-        const projectRef = 'hzvypwdpdhsjzaclxmbm';
-        localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
-        // Отключаем онбординг: предзаполняем калибровку для "текущего устройства"
-        const fp = 'test-fp';
-        sessionStorage.setItem('vissort_fp', fp);
-        localStorage.setItem('vissort_device_calib', JSON.stringify({
-            [fp]: { ppi: 96, focalLengthPx: 700 }
-        }));
-    }, [fakeSession]);
+    await page.addInitScript(
+        ([session]) => {
+            const projectRef = 'hzvypwdpdhsjzaclxmbm';
+            localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
+            // Отключаем онбординг: предзаполняем калибровку для "текущего устройства"
+            const fp = 'test-fp';
+            sessionStorage.setItem('vissort_fp', fp);
+            localStorage.setItem(
+                'vissort_device_calib',
+                JSON.stringify({
+                    [fp]: { ppi: 96, focalLengthPx: 700 }
+                })
+            );
+        },
+        [fakeSession]
+    );
 }
 
 test.describe('Editor — admin.html', () => {
@@ -74,8 +88,25 @@ test.describe('Editor — admin.html', () => {
                 params: {
                     graph: {
                         nodes: [
-                            { id: 'n1', nodeType: 'STIMULUS', x: 100, y: 100, width: 200, height: 180, name: 'Test 1', isStart: true },
-                            { id: 'n2', nodeType: 'STIMULUS', x: 400, y: 100, width: 200, height: 180, name: 'Test 2' }
+                            {
+                                id: 'n1',
+                                nodeType: 'STIMULUS',
+                                x: 100,
+                                y: 100,
+                                width: 200,
+                                height: 180,
+                                name: 'Test 1',
+                                isStart: true
+                            },
+                            {
+                                id: 'n2',
+                                nodeType: 'STIMULUS',
+                                x: 400,
+                                y: 100,
+                                width: 200,
+                                height: 180,
+                                name: 'Test 2'
+                            }
                         ],
                         connections: [{ fromId: 'n1', toId: 'n2', isLoop: false }],
                         books: {}

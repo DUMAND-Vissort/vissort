@@ -6,11 +6,13 @@
 ## ✅ ЗАКРЫТО
 
 ### Фаза 0 — фундамент
+
 - [x] Playwright: 28 тестов + CI
 - [x] schemaVersion: 2 + migrateScenario
 - [x] README + ARCHITECTURE + DEPLOY
 
 ### Фаза 1 — рефакторинг player-runtime.js
+
 - [x] player-state.js (93 переменные)
 - [x] player-utils.js (rate-limit, validation, distance)
 - [x] player-dist-warning.js (UI дистанции)
@@ -21,6 +23,7 @@
 - Граф оставлен в player-runtime.js (осознанно — «дирижёр» плеера)
 
 ### Фаза 2 — чистка кода
+
 - [x] Убрать PATCH* / BUG-* (228 вхождений)
 
 ---
@@ -71,4 +74,4 @@
 
 ---
 
-*Обновлять после каждой сессии.*
+_Обновлять после каждой сессии._

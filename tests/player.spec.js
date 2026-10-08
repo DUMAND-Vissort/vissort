@@ -24,16 +24,26 @@ async function mockUserLogin(page) {
     await page.route('**/auth/v1/**', async (route) => {
         const url = route.request().url();
         if (url.includes('/user')) {
-            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeUser) });
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(fakeUser)
+            });
         }
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeSession) });
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(fakeSession)
+        });
     });
 
     await page.route('**/rest/v1/user_scenarios**', async (route) => {
         return route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify([{ id: 'assign-1', user_id: fakeUser.id, scenario_id: 'sc-1', status: 'ready' }])
+            body: JSON.stringify([
+                { id: 'assign-1', user_id: fakeUser.id, scenario_id: 'sc-1', status: 'ready' }
+            ])
         });
     });
 
@@ -61,7 +71,11 @@ async function mockUserLogin(page) {
                 isActive: true
             }
         };
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([scenario]) });
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify([scenario])
+        });
     });
 
     await page.route('**/rest/v1/test_results**', async (route) => {
@@ -72,11 +86,14 @@ async function mockUserLogin(page) {
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
     });
 
-    await page.addInitScript(([session]) => {
-        const projectRef = 'hzvypwdpdhsjzaclxmbm';
-        localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
-        localStorage.setItem('vissort_cam_preview', '0');
-    }, [fakeSession]);
+    await page.addInitScript(
+        ([session]) => {
+            const projectRef = 'hzvypwdpdhsjzaclxmbm';
+            localStorage.setItem('sb-' + projectRef + '-auth-token', JSON.stringify(session));
+            localStorage.setItem('vissort_cam_preview', '0');
+        },
+        [fakeSession]
+    );
 }
 
 async function killOnboarding(page) {
@@ -88,9 +105,12 @@ async function killOnboarding(page) {
     await page.evaluate(() => {
         const fp = 'test-fp';
         sessionStorage.setItem('vissort_fp', fp);
-        localStorage.setItem('vissort_device_calib', JSON.stringify({
-            [fp]: { ppi: 96, focalLengthPx: 700 }
-        }));
+        localStorage.setItem(
+            'vissort_device_calib',
+            JSON.stringify({
+                [fp]: { ppi: 96, focalLengthPx: 700 }
+            })
+        );
     });
     await page.waitForTimeout(500);
     await page.evaluate(() => {
@@ -113,23 +133,32 @@ test.describe('Player — player.html', () => {
     });
 
     test('кнопка Старт активирует плеер и появляется стимул', async ({ page }) => {
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
 
-        await page.waitForFunction(() => {
-            const start = document.getElementById('btn-player');
-            const stop = document.getElementById('btn-player-stop');
-            return start && start.disabled && stop && !stop.disabled;
-        }, { timeout: 10000 });
+        await page.waitForFunction(
+            () => {
+                const start = document.getElementById('btn-player');
+                const stop = document.getElementById('btn-player-stop');
+                return start && start.disabled && stop && !stop.disabled;
+            },
+            { timeout: 10000 }
+        );
 
-        await page.waitForFunction(() => {
-            const stim = document.getElementById('stim');
-            return stim && stim.innerHTML.trim().length > 0;
-        }, { timeout: 10000 });
+        await page.waitForFunction(
+            () => {
+                const stim = document.getElementById('stim');
+                return stim && stim.innerHTML.trim().length > 0;
+            },
+            { timeout: 10000 }
+        );
 
         const svgCount = await page.locator('#stim svg').count();
         expect(svgCount).toBeGreaterThan(0);
@@ -139,10 +168,13 @@ test.describe('Player — player.html', () => {
         const errors = [];
         page.on('pageerror', (err) => errors.push(err.message));
 
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
 
@@ -161,10 +193,13 @@ test.describe('Player — player.html', () => {
     });
 
     test('кнопка Стоп останавливает плеер', async ({ page }) => {
-        await page.waitForFunction(() => {
-            const b = document.getElementById('btn-player');
-            return b && !b.disabled;
-        }, { timeout: 15000 });
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
 
         await page.click('#btn-player');
         await page.waitForTimeout(800);
