@@ -6,7 +6,7 @@
     "scripts": {
         "lint": "eslint . --ext .js",
         "lint:fix": "eslint . --ext .js --fix",
-        "format": "prettier --write \"**/*.{js,html,css,json,md}\"",
+        "format": "prettier --write \"*.{js,html,css,json,md}\" \"tests/**/*.js\" \"docs/*.md\"",
         "test": "playwright test"
     },
     "devDependencies": {
