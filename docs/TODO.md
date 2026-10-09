@@ -46,7 +46,7 @@
 - [ ] ESLint: убрать временные globals (stimArea/stimDisplay/dir/direction/answer) после рефакторинга player-runtime.js
 - [ ] player-runtime.js: разобрать пустые ветки чтения (строки 2472, 2481)
 - [ ] Два режима контроля дистанции («авто-пересчёт» / «возврат»)
-- [ ] Reaction time → test_results (в БД)
+- [x] Reaction time → test_results (в БД) — подтверждено 2026-10-09
 - [ ] Порог дистанции в админке (UI)
 - [ ] Landmarks вернуть для моргания
 - [ ] Порог устойчивости в редакторе
