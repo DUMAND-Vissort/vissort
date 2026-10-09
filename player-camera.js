@@ -85,6 +85,41 @@
     }));
 
     // ==================== FACE DETECTION UI ====================
+    // ==================== BLINK DETECTION (EAR) ====================
+    // EAR = (|p2-p6| + |p3-p5|) / (2 * |p1-p4|)
+    // Закрытый глаз: EAR < 0.21.
+    const _EAR_THRESHOLD = 0.21;
+    const _BLINK_MAX_MS = 500;
+
+    function _calcEAR(landmarks, eyeIndices) {
+        const p1 = landmarks[eyeIndices[0]];
+        const p2 = landmarks[eyeIndices[1]];
+        const p3 = landmarks[eyeIndices[2]];
+        const p4 = landmarks[eyeIndices[3]];
+        const p5 = landmarks[eyeIndices[4]];
+        const p6 = landmarks[eyeIndices[5]];
+        const dx14 = p1.x - p4.x,
+            dy14 = p1.y - p4.y;
+        const horiz = Math.sqrt(dx14 * dx14 + dy14 * dy14);
+        if (horiz < 1) return 1.0;
+        const d26 = Math.hypot(p2.x - p6.x, p2.y - p6.y);
+        const d35 = Math.hypot(p3.x - p5.x, p3.y - p5.y);
+        return (d26 + d35) / (2 * horiz);
+    }
+
+    const _LEFT_EYE = [36, 37, 38, 39, 40, 41];
+    const _RIGHT_EYE = [42, 43, 44, 45, 46, 47];
+
+    function _isBlinkFromLandmarks(landmarks) {
+        if (!landmarks || !landmarks.positions || landmarks.positions.length < 68) return null;
+        const pos = landmarks.positions;
+        const earL = _calcEAR(pos, _LEFT_EYE);
+        const earR = _calcEAR(pos, _RIGHT_EYE);
+        const ear = (earL + earR) / 2;
+        PS._lastEarValue = ear;
+        return ear < _EAR_THRESHOLD;
+    }
+
     function _faceEmoji(rate, hasFaceNow) {
         if (!hasFaceNow && rate < 40) return { icon: '❌', color: '#ef4444', label: 'нет лица / далеко' };
         if (rate < 40) return { icon: '❌', color: '#ef4444', label: 'далеко' };
@@ -315,18 +350,43 @@
                         evaluateDistance();
                     }
                 } else {
-                    if (PS.playerRunning && !PS.isPaused && PS.camBaseline != null) {
-                        if (!window._faceLostSince) window._faceLostSince = performance.now();
-                        var _flDur = performance.now() - window._faceLostSince;
-                        if (_flDur > 1500) {
-                            window._fastLeanAt = performance.now();
-                            if (window._recordDeviation) window._recordDeviation(-40);
-                            if (!PS._waitingStable) _callbacks.onAbortStimulus('face_lost');
+                    // Лицо не найдено — проверяем, может это моргание?
+                    var _isBlink = false;
+                    try {
+                        const detWithLm = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.25 })).withFaceLandmarks();
+                        if (detWithLm && detWithLm.landmarks) {
+                            if (_isBlinkFromLandmarks(detWithLm.landmarks) === true) _isBlink = true;
                         }
+                    } catch (e) {}
+                    if (_isBlink) {
+                        if (!PS._blinkClosedSince) PS._blinkClosedSince = performance.now();
+                        const _blinkDur = performance.now() - PS._blinkClosedSince;
+                        if (_blinkDur < _BLINK_MAX_MS) {
+                            const ci = _camIndicator();
+                            if (ci) ci.textContent = '👁 Моргание';
+                            _pushDetection(true);
+                            if (PS.curDistanceM != null) PS._lastSeenDist = PS.curDistanceM;
+                        } else {
+                            PS._blinkClosedSince = 0;
+                            const ci = _camIndicator();
+                            if (ci) ci.textContent = '❌ Нет лица';
+                            _pushDetection(false);
+                        }
+                    } else {
+                        PS._blinkClosedSince = 0;
+                        if (PS.playerRunning && !PS.isPaused && PS.camBaseline != null) {
+                            if (!window._faceLostSince) window._faceLostSince = performance.now();
+                            var _flDur = performance.now() - window._faceLostSince;
+                            if (_flDur > 1500) {
+                                window._fastLeanAt = performance.now();
+                                if (window._recordDeviation) window._recordDeviation(-40);
+                                if (!PS._waitingStable) _callbacks.onAbortStimulus('face_lost');
+                            }
+                        }
+                        const ci = _camIndicator();
+                        if (ci) ci.textContent = '❌ Нет лица';
+                        _pushDetection(false);
                     }
-                    const ci = _camIndicator();
-                    if (ci) ci.textContent = '❌ Нет лица';
-                    _pushDetection(false);
                 }
             } catch (e) {
                 window.camStats.fails++;
@@ -427,7 +487,9 @@
         _faceEmoji,
         _pushDetection,
         _updateDetectUI,
-        _detectRatePct
+        _detectRatePct,
+        _isBlinkFromLandmarks,
+        _calcEAR
     };
 
     console.log('[player-camera] module installed');

@@ -60,6 +60,11 @@
         _stableBuf: [],
         _answerBlocked: false,
 
+        // Моргание (EAR)
+        _blinkIsClosed: false,
+        _blinkClosedSince: 0,
+        _lastEarValue: 1.0,
+
         // Граф
         graphActive: false,
         gNodes: [],

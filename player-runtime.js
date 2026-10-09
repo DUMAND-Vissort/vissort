@@ -130,11 +130,8 @@ window._reactionReport = function () {
 let _findSameState = null;
 
 // --- МОРГАНИЕ ---
-
-const realIPD_MM = 63;
-let _blinkClosedSince = 0;
-let _blinkIsClosed = false;
-const BLINK_THRESHOLD = 0.21;
+// Логика вынесена в player-camera.js (_isBlinkFromLandmarks, _calcEAR).
+// Состояние — в PlayerState (_blinkIsClosed, _blinkClosedSince, _lastEarValue).
 
 // === ПЛЕЕР ГРАФА (объявления ДО первого использования в updateCounters) ===
 let _frameSkipCounter = 0;
