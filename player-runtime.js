@@ -1936,13 +1936,13 @@ function handleFindSameClick(idx) {
     if (st.foundCells.has(key)) return;
     if (st.firstSelectedIdx === null) {
         st.firstSelectedIdx = idx;
-        flashCell(idx, 'selected');
+        VissortCore.flashCell(idx, 'selected');
         return;
     }
     const fi = st.firstSelectedIdx;
     if (fi === idx) {
         st.firstSelectedIdx = null;
-        flashCell(idx, 'unselect');
+        VissortCore.flashCell(idx, 'unselect');
         return;
     }
     const fp = Math.floor(fi / 2),
@@ -1953,8 +1953,8 @@ function handleFindSameClick(idx) {
         st.foundCells.add(`${a.row},${a.col}`);
         st.foundCells.add(`${b.row},${b.col}`);
         st.pairs[fp].found = true;
-        flashCell(fi, 'found');
-        flashCell(idx, 'found');
+        VissortCore.flashCell(fi, 'found');
+        VissortCore.flashCell(idx, 'found');
         st.firstSelectedIdx = null;
         if (st.pairs.every((p) => p.found)) {
             PlayerState.lastResponse = {
@@ -1969,34 +1969,12 @@ function handleFindSameClick(idx) {
             processCompareAnswer(true);
         }
     } else {
-        flashCell(fi, 'unselect');
-        flashCell(idx, 'wrong');
+        VissortCore.flashCell(fi, 'unselect');
+        VissortCore.flashCell(idx, 'wrong');
         st.firstSelectedIdx = null;
     }
 }
-function flashCell(idx, kind) {
-    const el = document.querySelector(`.grid-cell[data-index="${idx}"]`);
-    if (!el) return;
-    const ob = el.style.border,
-        os = el.style.boxShadow;
-    if (kind === 'selected') {
-        el.style.border = '3px solid #38bdf8';
-        el.style.boxShadow = '0 0 12px #38bdf8';
-    } else if (kind === 'found') {
-        el.style.border = '4px solid #22c55e';
-        el.style.boxShadow = '0 0 20px #22c55e';
-    } else if (kind === 'wrong') {
-        el.style.border = '4px solid #ef4444';
-        el.style.boxShadow = '0 0 20px #ef4444';
-        setTimeout(() => {
-            el.style.border = ob;
-            el.style.boxShadow = os;
-        }, 400);
-    } else if (kind === 'unselect') {
-        el.style.border = ob;
-        el.style.boxShadow = os;
-    }
-}
+// flashCell — в vissort-core.js
 function createCellElement(cell, params, direction, idx) {
     const cw = stimDisplay.offsetWidth / PlayerState.gridX,
         ch = stimDisplay.offsetHeight / PlayerState.gridY;

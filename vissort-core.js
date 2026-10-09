@@ -429,6 +429,33 @@
             .join('');
     }
 
+    // ==================== FLASH CELL ====================
+    // Подсветка клетки в compare-режиме «найти одинаковые».
+    // Принимает индекс клетки (data-index), а не DOM-элемент.
+    function flashCell(idx, kind) {
+        const el = document.querySelector('.grid-cell[data-index="' + idx + '"]');
+        if (!el) return;
+        const ob = el.style.border,
+            os = el.style.boxShadow;
+        if (kind === 'selected') {
+            el.style.border = '3px solid #38bdf8';
+            el.style.boxShadow = '0 0 12px #38bdf8';
+        } else if (kind === 'found') {
+            el.style.border = '4px solid #22c55e';
+            el.style.boxShadow = '0 0 20px #22c55e';
+        } else if (kind === 'wrong') {
+            el.style.border = '4px solid #ef4444';
+            el.style.boxShadow = '0 0 20px #ef4444';
+            setTimeout(() => {
+                el.style.border = ob;
+                el.style.boxShadow = os;
+            }, 400);
+        } else if (kind === 'unselect') {
+            el.style.border = ob;
+            el.style.boxShadow = os;
+        }
+    }
+
     // ==================== EXPORT ====================
     global.VissortCore = {
         // constants
@@ -462,7 +489,8 @@
         getThreshold: getThreshold,
         randomDirection: randomDirection,
         hashCode: hashCode,
-        sha1: sha1
+        sha1: sha1,
+        flashCell: flashCell
     };
 
     console.log('[VissortCore] installed. Functions:', Object.keys(global.VissortCore).length);
