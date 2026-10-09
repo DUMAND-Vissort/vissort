@@ -484,7 +484,7 @@ async function onLoggedIn() {
                 await Onboarding.start({
                     client: PlayerState.supabaseClient,
                     userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                    onDone: () => enableCamera()
+                    onDone: (data) => { if (!data || !data.skipped) enableCamera(); else console.log('[onboarding] пропущено — камера не запрашивается'); }
                 });
             } catch (e) {
                 console.warn('[user] onboarding:', e);
@@ -513,7 +513,7 @@ async function onLoggedIn() {
             await Onboarding.start({
                 client: PlayerState.supabaseClient,
                 userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                onDone: () => enableCamera()
+                onDone: (data) => { if (!data || !data.skipped) enableCamera(); else console.log('[onboarding] пропущено — камера не запрашивается'); }
             });
         } catch (e) {
             console.warn('[user] onboarding:', e);
