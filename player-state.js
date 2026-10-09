@@ -19,6 +19,7 @@
 
         // Прочее (a)
         screenPPI: 96,
+        _distControlMode: 'return',
         _tolNearCm: 10,
         _tolFarCm: 15,
         // Auth / сессия

@@ -869,6 +869,27 @@ function playNextGraphNode() {
     );
 }
 
+// PATCH: авто-пересчёт размера стимула под новую дистанцию.
+// Вызывается из player-camera.js при distControlMode='auto'.
+function _recalcStimulusSize() {
+    if (!PlayerState.curDistanceM) return;
+    const node = getNode(PlayerState.currentPlayingNodeId);
+    if (!node) return;
+    const ppi = node.stimPPI || PlayerState.screenPPI || 96;
+    const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent || 1.0, PlayerState.curDistanceM, ppi);
+    PlayerState.currentSize = eff;
+    // Обновить SVG на экране
+    const svg = document.querySelector('#stim svg');
+    if (svg) {
+        svg.setAttribute('width', eff);
+        svg.setAttribute('height', eff);
+        svg.setAttribute('viewBox', '0 0 ' + eff + ' ' + eff);
+    }
+    // Обновить _stimulusDistance — теперь baseline для дальнейших проверок
+    PlayerState._stimulusDistance = PlayerState.curDistanceM;
+    console.log('[auto-recalc] size updated to ' + eff + 'px at ' + PlayerState.curDistanceM.toFixed(2) + 'm');
+}
+
 function playGraphStimulus(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (window._faceLostPause) {
@@ -886,7 +907,9 @@ function playGraphStimulus(node) {
     PlayerState._answerBlocked = false; // Сброс блокировки перед новым циклом
     if (node.minDetectPct != null) PlayerState._minDetectPct = node.minDetectPct;
     if (node.tolNearCm != null) PlayerState._tolNearCm = node.tolNearCm;
-    if (node.tolFarCm != null) PlayerState._tolFarCm = node.tolFarCm; // порог узла
+    if (node.tolFarCm != null) PlayerState._tolFarCm = node.tolFarCm;
+    if (node.distControlMode === 'auto') PlayerState._distControlMode = 'auto';
+    else PlayerState._distControlMode = 'return'; // порог узла
     // Ранняя активация фазы ответа
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();
@@ -2595,7 +2618,8 @@ function init() {
         window.PlayerCamera.setCallbacks({
             onStimulusHide: hideStimulus,
             onAbortStimulus: (reason) => _abortCurrentStimulus(reason),
-            onResume: () => _resumeAfterStable()
+            onResume: () => _resumeAfterStable(),
+            onRecalcSize: () => _recalcStimulusSize()
         });
         if (window.PlayerAnimation && typeof window.PlayerAnimation.setCallbacks === 'function') {
             window.PlayerAnimation.setCallbacks({

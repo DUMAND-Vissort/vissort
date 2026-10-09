@@ -3175,6 +3175,10 @@ function updateStimulusInspector(node) {
 <label>Мин. устойчивость распознавания (%)</label><input type="number" id="inp-min-detect" value="${node.minDetectPct ?? ''}" min="30" max="100" step="5" placeholder="80">
 <label>Порог приближения (см)</label><input type="number" id="inp-tol-near" value="${node.tolNearCm ?? ''}" min="2" max="50" step="1" placeholder="10">
 <label>Порог отклонения (см)</label><input type="number" id="inp-tol-far" value="${node.tolFarCm ?? ''}" min="2" max="50" step="1" placeholder="15">
+<label>Контроль дистанции</label><select id="inp-dist-mode">
+<option value="return" ${(node.distControlMode ?? 'return') === 'return' ? 'selected' : ''}>Возврат (стоп при отклонении)</option>
+<option value="auto" ${node.distControlMode === 'auto' ? 'selected' : ''}>Авто-пересчёт (продолжать)</option>
+</select>
 <label>Порог приближения (см)</label><input type="number" id="inp-tol-near" value="${node.tolNearCm ?? ''}" min="2" max="50" step="1" placeholder="10">
 <label>Порог отклонения (см)</label><input type="number" id="inp-tol-far" value="${node.tolFarCm ?? ''}" min="2" max="50" step="1" placeholder="15">`;
     html += `<div style="margin-top:6px;padding:6px;background:#000;border-radius:3px;text-align:center;">
@@ -3695,6 +3699,12 @@ function applyStimulusInspectorChanges(node) {
             const val = parseInt(raw);
             if (!isNaN(val) && val >= 2 && val <= 50) node.tolFarCm = val;
         }
+    }
+
+    if (v('inp-dist-mode')) {
+        const mode = v('inp-dist-mode').value;
+        if (mode === 'auto') node.distControlMode = 'auto';
+        else delete node.distControlMode;
     }
 
     if (v('inp-tol-near')) {
