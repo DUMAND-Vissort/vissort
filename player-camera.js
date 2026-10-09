@@ -351,7 +351,13 @@
         if (PS.playerRunning && !PS.isPaused) {
             if (window._recordDeviation) window._recordDeviation(dev);
             if (window._updateStimulusDim) window._updateStimulusDim();
-            var _tol = dev < 0 ? 10 : 15;
+            // Порог в см → процент от baseline.
+            // |curDist - baseline| = |dev| * baseline / 100
+            // Условие: |dev| * baseline / 100 > tolCm  →  |dev| > tolCm * 100 / baseline
+            var _baselineCm = PS.camBaseline ? PS.camBaseline * 100 : 100;
+            var _tolNearPct = ((PS._tolNearCm || 10) * 100) / _baselineCm;
+            var _tolFarPct = ((PS._tolFarCm || 15) * 100) / _baselineCm;
+            var _tol = dev < 0 ? _tolNearPct : _tolFarPct;
             if (Math.abs(dev) > _tol) {
                 if (!PS._waitingStable) _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
             }

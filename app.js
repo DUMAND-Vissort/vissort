@@ -3172,7 +3172,11 @@ function updateStimulusInspector(node) {
     html += `<label>Шаг V за успешную серию</label><input type="number" id="inp-acuity-step" value="${node.acuityStep || 0.1}" min="0.05" max="1" step="0.05">`;
     html += `<label>Дистанция (м)</label><input type="number" id="inp-distance" value="${(node.stimDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
     html += `<label>PPI экрана (авто: ${screenPPI})</label><input type="number" id="inp-ppi" value="${node.stimPPI || screenPPI || 96}" min="20" max="1200" step="1">
-<label>Мин. устойчивость распознавания (%)</label><input type="number" id="inp-min-detect" value="${node.minDetectPct ?? ''}" min="30" max="100" step="5" placeholder="80">`;
+<label>Мин. устойчивость распознавания (%)</label><input type="number" id="inp-min-detect" value="${node.minDetectPct ?? ''}" min="30" max="100" step="5" placeholder="80">
+<label>Порог приближения (см)</label><input type="number" id="inp-tol-near" value="${node.tolNearCm ?? ''}" min="2" max="50" step="1" placeholder="10">
+<label>Порог отклонения (см)</label><input type="number" id="inp-tol-far" value="${node.tolFarCm ?? ''}" min="2" max="50" step="1" placeholder="15">
+<label>Порог приближения (см)</label><input type="number" id="inp-tol-near" value="${node.tolNearCm ?? ''}" min="2" max="50" step="1" placeholder="10">
+<label>Порог отклонения (см)</label><input type="number" id="inp-tol-far" value="${node.tolFarCm ?? ''}" min="2" max="50" step="1" placeholder="15">`;
     html += `<div style="margin-top:6px;padding:6px;background:#000;border-radius:3px;text-align:center;">
         <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">📐 ${mm.toFixed(2)} мм</div>
         <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div>
@@ -3671,6 +3675,44 @@ function applyStimulusInspectorChanges(node) {
         } else {
             const val = parseInt(raw);
             if (!isNaN(val) && val >= 30 && val <= 100) node.minDetectPct = val;
+        }
+    }
+
+    if (v('inp-tol-near')) {
+        const raw = v('inp-tol-near').value;
+        if (raw === '' || raw == null) {
+            delete node.tolNearCm;
+        } else {
+            const val = parseInt(raw);
+            if (!isNaN(val) && val >= 2 && val <= 50) node.tolNearCm = val;
+        }
+    }
+    if (v('inp-tol-far')) {
+        const raw = v('inp-tol-far').value;
+        if (raw === '' || raw == null) {
+            delete node.tolFarCm;
+        } else {
+            const val = parseInt(raw);
+            if (!isNaN(val) && val >= 2 && val <= 50) node.tolFarCm = val;
+        }
+    }
+
+    if (v('inp-tol-near')) {
+        const raw = v('inp-tol-near').value;
+        if (raw === '' || raw == null) {
+            delete node.tolNearCm;
+        } else {
+            const val = parseInt(raw);
+            if (!isNaN(val) && val >= 2 && val <= 50) node.tolNearCm = val;
+        }
+    }
+    if (v('inp-tol-far')) {
+        const raw = v('inp-tol-far').value;
+        if (raw === '' || raw == null) {
+            delete node.tolFarCm;
+        } else {
+            const val = parseInt(raw);
+            if (!isNaN(val) && val >= 2 && val <= 50) node.tolFarCm = val;
         }
     }
     node.stimSize = getNodeComputedSize(node);

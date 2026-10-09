@@ -19,6 +19,8 @@
 
         // Прочее (a)
         screenPPI: 96,
+        _tolNearCm: 10,
+        _tolFarCm: 15,
         // Auth / сессия
         supabaseClient: null,
         currentUser: null,
