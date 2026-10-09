@@ -1,6 +1,6 @@
 # Vissort — TODO
 
-> Статус: Фазы 0, 1, 2 закрыты (2026-10-06)
+> Статус: Фазы 0, 1, 2 закрыты (2026-10-09)
 > Связанные: PLAN.md (карта), HANDOFF.md (контекст)
 
 ## ✅ ЗАКРЫТО
@@ -25,19 +25,26 @@
 ### Фаза 2 — чистка кода
 
 - [x] Убрать PATCH* / BUG-* (228 вхождений)
+- [x] Prettier: все файлы отформатированы, .prettierignore настроен
+- [x] ESLint: 0 errors (978 → 0)
+- [x] Фикс багов разметки: </form></div> в auth-модалке (3 HTML)
+- [x] Фикс дубликата ключа response в app.js
+- [x] Фикс getNode → gGetNode в player-runtime.js (callback onGetNode падал)
 
 ---
 
-## 🚧 В РАБОТЕ (остаток Фазы 2)
+## 🚧 В РАБОТЕ
 
 - [ ] Устранить дублирование app.js ↔ player-runtime.js
-- [ ] Prettier + ESLint clean (0 warnings)
 - [ ] Уборка корня (patch*.ps1, _test_graph.json, diff.txt)
 
 ---
 
 ## 📋 ФАЗА 3 — доработки
 
+- [ ] ESLint: устранить 45 warnings (43 no-unused-vars межфайловых глобалов + 2 no-empty)
+- [ ] ESLint: убрать временные globals (stimArea/stimDisplay/dir/direction/answer) после рефакторинга player-runtime.js
+- [ ] player-runtime.js: разобрать пустые ветки чтения (строки 2472, 2481)
 - [ ] Два режима контроля дистанции («авто-пересчёт» / «возврат»)
 - [ ] Reaction time → test_results (в БД)
 - [ ] Порог дистанции в админке (UI)
