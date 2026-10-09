@@ -16,7 +16,8 @@
     let _callbacks = {
         onStimulusHide: () => {},
         onAbortStimulus: () => {},
-        onResume: () => {}
+        onResume: () => {},
+        onRecalcSize: () => {}
     };
 
     function setCallbacks(cb) {
@@ -363,7 +364,7 @@
                     if (!PS._waitingStable) _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
                 } else if (PS._distControlMode === 'auto') {
                     // Авто-пересчёт: не отменять, а пересчитать размер
-                    _callbacks.onRecalcSize();
+                    if (typeof _callbacks.onRecalcSize === 'function') _callbacks.onRecalcSize();
                 } else {
                     // Возврат (по умолчанию): отменить показ
                     if (!PS._waitingStable) _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');

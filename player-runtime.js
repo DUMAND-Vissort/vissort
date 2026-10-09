@@ -478,7 +478,6 @@ async function onLoggedIn() {
     // ==== /Тестовый сценарий ====
 
     PlayerState.userScenarios = await loadUserScenarios();
-    PlayerState.userScenarios = await loadUserScenarios();
     if (!PlayerState.userScenarios.length) {
         showStatus('Сценарий не назначен', 'Обратитесь к администратору.', 'Обновить', () => onLoggedIn());
         // Запустить камеру и онбординг даже без сценариев
