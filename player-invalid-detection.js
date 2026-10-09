@@ -154,7 +154,7 @@
         console.log('[abort] stable at ' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm -- resuming');
 
         var _n = null;
-        try { _n = _callbacks.onGetNode(PS.currentPlayingNodeId); } catch (e) { _n = null; }
+        try { _n = _callbacks.onGetNode(PS.gCurrentNodeId); } catch (e) { _n = null; }
         if (_n && PS.gNodes && PS.gNodes.indexOf(_n) !== -1) {
             if (_n.nodeType === 'COMPARE') _callbacks.onPlayGraphCompareRound(_n);
             else _callbacks.onPlayGraphStimulus(_n);

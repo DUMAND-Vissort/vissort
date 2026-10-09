@@ -152,12 +152,14 @@ function _resumeAfterStable() {
 function _updateStimulusDim() {
     return window.PlayerInvalidDetection._updateStimulusDim();
 }
+window._updateStimulusDim = _updateStimulusDim;
 function _showInvalidToast(text) {
     return window.PlayerInvalidDetection._showInvalidToast(text);
 }
 function _recordDeviation(pct) {
     return window.PlayerInvalidDetection._recordDeviation(pct);
 }
+window._recordDeviation = _recordDeviation;
 function _isAnswerInvalid() {
     return window.PlayerInvalidDetection._isAnswerInvalid();
 }
@@ -174,6 +176,9 @@ const $ = (id) => document.getElementById(id);
 const stimDisplay = $('stim');
 // eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimArea
 const stimArea = $('stim-display');
+// Экспорт в window для вынесенных модулей (player-animation.js и др.)
+window.stimDisplay = stimDisplay;
+window.stimArea = stimArea;
 const responseButtons = $('response-buttons');
 const hdrScenario = $('hdr-scenario');
 const hdrUser = $('hdr-user');
@@ -873,7 +878,7 @@ function playNextGraphNode() {
 // Вызывается из player-camera.js при distControlMode='auto'.
 function _recalcStimulusSize() {
     if (!PlayerState.curDistanceM) return;
-    const node = getNode(PlayerState.currentPlayingNodeId);
+    const node = gGetNode(PlayerState.gCurrentNodeId);
     if (!node) return;
     const ppi = node.stimPPI || PlayerState.screenPPI || 96;
     const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent || 1.0, PlayerState.curDistanceM, ppi);
