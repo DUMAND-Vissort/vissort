@@ -170,7 +170,9 @@ const checkRateLimit = window.PlayerUtils.checkRateLimit;
 const validateScenario = window.PlayerUtils.validateScenario;
 
 const $ = (id) => document.getElementById(id);
+// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimDisplay
 const stimDisplay = $('stim');
+// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimArea
 const stimArea = $('stim-display');
 const responseButtons = $('response-buttons');
 const hdrScenario = $('hdr-scenario');
@@ -2627,7 +2629,7 @@ function init() {
                     onPlayGraphStimulus: (node) => playGraphStimulus(node),
                     onPlayGraphCompareRound: (node) => playGraphCompareRound(node),
                     onShowNextStimulus: () => showNextStimulus(),
-                    onGetNode: (id) => getNode(id)
+                    onGetNode: (id) => gGetNode(id)
                 });
                 console.log('[player-runtime] PlayerInvalidDetection callbacks registered');
             }

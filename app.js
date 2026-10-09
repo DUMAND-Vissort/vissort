@@ -216,7 +216,9 @@ window._currentScenarioId = window._currentScenarioId || null;
 
 // ==================== DOM-ССЫЛКИ ====================
 const canvas = document.getElementById('canvas');
+// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimDisplay
 const stimDisplay = document.getElementById('stim');
+// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimArea
 const stimArea = document.getElementById('stim-display');
 const responseButtons = document.getElementById('response-buttons');
 const inspectorEl = document.getElementById('inspector');
@@ -5957,9 +5959,9 @@ function buildModeParamsFromUI() {
         adaptiveAcuity: safeChecked('gen-adaptive', true),
         delay1: unitToMs(safeVal('gen-delay1', 1, parseFloat), safeVal('gen-delay1-unit', 's')),
         delay2: unitToMs(safeVal('gen-delay2', 1, parseFloat), safeVal('gen-delay2-unit', 's')),
-        isActive: safeChecked('gen-active', false),
-        response: 1000
+        isActive: safeChecked('gen-active', false)
     };
+    if (p.response == null) p.response = 1000;
     p.startDuration = p.delay2;
     if (tt === 'single') {
         p.singleRandomPos = safeChecked('gen-single-random-pos', false);
