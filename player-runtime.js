@@ -884,6 +884,7 @@ function playGraphStimulus(node) {
         return;
     } // отмена при отклонении
     PlayerState._answerBlocked = false; // Сброс блокировки перед новым циклом
+    if (node.minDetectPct != null) PlayerState._minDetectPct = node.minDetectPct; // порог узла
     // Ранняя активация фазы ответа
     PlayerState.responsePhaseActive = true;
     PlayerState.responseStartTime = performance.now();

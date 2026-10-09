@@ -3171,7 +3171,8 @@ function updateStimulusInspector(node) {
     html += `<label>V цель</label><select id="inp-end-acuity">${acOpts.replace(`value="${eV}"`, `value="${eV}" selected`)}</select>`;
     html += `<label>Шаг V за успешную серию</label><input type="number" id="inp-acuity-step" value="${node.acuityStep || 0.1}" min="0.05" max="1" step="0.05">`;
     html += `<label>Дистанция (м)</label><input type="number" id="inp-distance" value="${(node.stimDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
-    html += `<label>PPI экрана (авто: ${screenPPI})</label><input type="number" id="inp-ppi" value="${node.stimPPI || screenPPI || 96}" min="20" max="1200" step="1">`;
+    html += `<label>PPI экрана (авто: ${screenPPI})</label><input type="number" id="inp-ppi" value="${node.stimPPI || screenPPI || 96}" min="20" max="1200" step="1">
+<label>Мин. устойчивость распознавания (%)</label><input type="number" id="inp-min-detect" value="${node.minDetectPct ?? ''}" min="30" max="100" step="5" placeholder="80">`;
     html += `<div style="margin-top:6px;padding:6px;background:#000;border-radius:3px;text-align:center;">
         <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">📐 ${mm.toFixed(2)} мм</div>
         <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || screenPPI || 96} PPI</div>
@@ -3663,6 +3664,15 @@ function applyStimulusInspectorChanges(node) {
     if (v('inp-acuity-step')) node.acuityStep = parseFloat(v('inp-acuity-step').value) || 0.1;
     if (v('inp-distance')) node.stimDistance = parseFloat(v('inp-distance').value) || 1;
     if (v('inp-ppi')) node.stimPPI = parseInt(v('inp-ppi').value) || screenPPI || 96;
+    if (v('inp-min-detect')) {
+        const raw = v('inp-min-detect').value;
+        if (raw === '' || raw == null) {
+            delete node.minDetectPct;
+        } else {
+            const val = parseInt(raw);
+            if (!isNaN(val) && val >= 30 && val <= 100) node.minDetectPct = val;
+        }
+    }
     node.stimSize = getNodeComputedSize(node);
     if (v('inp-color')) {
         const c = hexToRgb(v('inp-color').value);
