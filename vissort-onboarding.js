@@ -93,13 +93,10 @@
             function skipOnboarding() {
                 if (!confirm('Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.')) return;
                 stopCamera();
-                const data = { ppi: 96, focalLengthPx: 0, skipped: true };
-                const fp = sessionStorage.getItem('vissort_fp');
-                if (fp) Device.saveLocal(fp, data);
-                Device.apply(data);
+                sessionStorage.setItem('vissort_onboarding_skipped', '1');
                 if (modal) modal.remove();
                 modal = null;
-                if (typeof onDone === 'function') onDone(data);
+                if (typeof onDone === 'function') onDone({ skipped: true });
             }
             const skip1 = document.getElementById('ob-skip-1');
             if (skip1) skip1.addEventListener('click', skipOnboarding);
@@ -241,12 +238,21 @@
         userId = opts.userId;
         onDone = opts.onDone;
 
+        // Пользователь уже нажал «Пропустить» в этой сессии — не мучаем
+        if (sessionStorage.getItem('vissort_onboarding_skipped') === '1') {
+            if (typeof onDone === 'function') onDone({ skipped: true });
+            return;
+        }
+
         if (Device.hasCalibrationForCurrent()) {
             if (typeof onDone === 'function') onDone();
             return;
         }
 
-        const fp = sessionStorage.getItem('vissort_fp');
+        let fp = sessionStorage.getItem('vissort_fp') || localStorage.getItem('vissort_fp_persist');
+        if (fp && !sessionStorage.getItem('vissort_fp')) {
+            sessionStorage.setItem('vissort_fp', fp);
+        }
 
         if (client && userId) {
             const cloudData = await Device.loadCloudByFingerprint(client, userId, fp);
