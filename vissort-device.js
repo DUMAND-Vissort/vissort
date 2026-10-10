@@ -69,12 +69,17 @@
         }
     }
 
-    function saveLocal(fp, data) {
+    function saveLocal(fp, data, userId) {
         try {
+            const uid = userId || getCurrentUserId();
+            const key = _storageKey(fp, uid);
+            if (!key) return;
             const all = loadLocal();
-            all[fp] = Object.assign({}, data, {
+            all[key] = Object.assign({}, data, {
                 savedAt: new Date().toISOString(),
-                deviceLabel: getDeviceLabel()
+                deviceLabel: getDeviceLabel(),
+                fp: fp,
+                userId: uid || null
             });
             localStorage.setItem(LS_KEY, JSON.stringify(all));
         } catch (e) {
@@ -91,15 +96,27 @@
             } catch (_) {}
         }
         if (!fp) return null;
+        const uid = getCurrentUserId();
         const all = loadLocal();
-        return all[fp] || null;
+        const key = _storageKey(fp, uid);
+        return all[key] || null;
     }
 
-    function setCurrent(fp) {
+    function setCurrent(fp, userId) {
         sessionStorage.setItem('vissort_fp', fp);
         try {
             localStorage.setItem('vissort_fp_persist', fp);
+            if (userId) sessionStorage.setItem('vissort_uid', userId);
         } catch (_) {}
+    }
+
+    function _storageKey(fp, userId) {
+        if (!fp) return null;
+        return userId ? fp + '|' + userId : fp;
+    }
+
+    function getCurrentUserId() {
+        return sessionStorage.getItem('vissort_uid') || null;
     }
 
     async function saveCloud(client, userId, fp, data) {
@@ -179,6 +196,7 @@
         saveLocal,
         getForCurrent,
         setCurrent,
+        getCurrentUserId,
         saveCloud,
         listCloud,
         loadCloudByFingerprint,
@@ -203,8 +221,10 @@
         clearCurrent() {
             const fp = sessionStorage.getItem('vissort_fp') || localStorage.getItem('vissort_fp_persist');
             if (!fp) return;
+            const uid = getCurrentUserId();
+            const key = _storageKey(fp, uid);
             const all = loadLocal();
-            delete all[fp];
+            delete all[key];
             localStorage.setItem(LS_KEY, JSON.stringify(all));
             localStorage.removeItem('focalLengthPx');
             localStorage.removeItem('screenPPI');
