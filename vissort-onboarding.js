@@ -275,6 +275,24 @@
         renderStep();
     }
 
-    global.Onboarding = { start };
+    async function restart() {
+        ensureDevice();
+        // Сброс флага сессии «Пропустить»
+        sessionStorage.removeItem('vissort_onboarding_skipped');
+        // Сброс локальной калибровки для текущего устройства+пользователя
+        if (Device && typeof Device.clearCurrent === 'function') {
+            Device.clearCurrent();
+        }
+        // Удаляем старую модалку если висит
+        const oldModal = document.getElementById('vissort-onboarding');
+        if (oldModal) oldModal.remove();
+        modal = null;
+        step = 1;
+        // Открываем заново
+        modal = createModal();
+        renderStep();
+    }
+
+    global.Onboarding = { start, restart };
     console.log('[onboarding] модуль установлен');
 })(window);

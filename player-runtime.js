@@ -2690,6 +2690,20 @@ function init() {
     });
     $('scenario-close').addEventListener('click', () => $('scenario-modal').classList.remove('open'));
     btnHistory.addEventListener('click', openHistory);
+    const btnCalibrate = document.getElementById('btn-calibrate');
+    if (btnCalibrate) {
+        btnCalibrate.addEventListener('click', async () => {
+            if (typeof Onboarding === 'undefined' || typeof Onboarding.restart !== 'function') {
+                console.warn('[calibrate] Onboarding.restart недоступен');
+                return;
+            }
+            try {
+                await Onboarding.restart();
+            } catch (e) {
+                console.error('[calibrate] restart failed:', e);
+            }
+        });
+    }
     $('history-close').addEventListener('click', () => $('history-modal').classList.remove('open'));
 
     $('reading-prev').addEventListener('click', prevReadingPage);
