@@ -83,7 +83,13 @@
     }
 
     function getForCurrent() {
-        const fp = sessionStorage.getItem('vissort_fp');
+        let fp = sessionStorage.getItem('vissort_fp');
+        if (!fp) {
+            try {
+                fp = localStorage.getItem('vissort_fp_persist');
+                if (fp) sessionStorage.setItem('vissort_fp', fp);
+            } catch (_) {}
+        }
         if (!fp) return null;
         const all = loadLocal();
         return all[fp] || null;
@@ -91,6 +97,9 @@
 
     function setCurrent(fp) {
         sessionStorage.setItem('vissort_fp', fp);
+        try {
+            localStorage.setItem('vissort_fp_persist', fp);
+        } catch (_) {}
     }
 
     async function saveCloud(client, userId, fp, data) {
@@ -192,7 +201,7 @@
         },
 
         clearCurrent() {
-            const fp = sessionStorage.getItem('vissort_fp');
+            const fp = sessionStorage.getItem('vissort_fp') || localStorage.getItem('vissort_fp_persist');
             if (!fp) return;
             const all = loadLocal();
             delete all[fp];

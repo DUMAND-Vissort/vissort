@@ -93,7 +93,7 @@
             function skipOnboarding() {
                 if (!confirm('Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.')) return;
                 stopCamera();
-                const data = { ppi: 96, focalLengthPx: 1, skipped: true };
+                const data = { ppi: 96, focalLengthPx: 0, skipped: true };
                 const fp = sessionStorage.getItem('vissort_fp');
                 if (fp) Device.saveLocal(fp, data);
                 Device.apply(data);
