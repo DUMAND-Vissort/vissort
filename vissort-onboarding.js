@@ -198,40 +198,6 @@
         if (typeof onDone === 'function') onDone(data);
     }
 
-    function askAboutDevice(cloudData, fp) {
-        const m = document.createElement('div');
-        m.style.cssText = 'position:fixed;inset:0;background:rgba(11,11,18,0.96);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:"Segoe UI",Tahoma,sans-serif;color:#e8e8f0;';
-        const d = new Date(cloudData.calibrated_at).toLocaleDateString('ru-RU');
-        m.innerHTML = [
-            '<div style="max-width:480px;width:100%;background:#1e1e24;border-radius:14px;border:1px solid #3f3f46;padding:32px;text-align:center;">',
-            '<h2 style="font-size:20px;margin:0 0 12px;">📱 Это то же устройство?</h2>',
-            '<p style="color:#94a3b8;font-size:14px;margin:0 0 8px;">Ранее вы калибровали:</p>',
-            '<p style="color:#fff;font-size:14px;margin:0 0 20px;">',
-            (cloudData.device_label || '—'),
-            '<br><span style="color:#64748b;font-size:12px;">' + d + '</span></p>',
-            '<div style="display:flex;gap:10px;justify-content:center;">',
-            '<button id="ob-same" style="padding:10px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Да, это оно</button>',
-            '<button id="ob-new" style="padding:10px 20px;background:transparent;color:#94a3b8;border:1px solid #3f3f46;border-radius:8px;font-size:14px;cursor:pointer;">Новое устройство</button>',
-            '</div></div>'
-        ].join('');
-        document.body.appendChild(m);
-
-        document.getElementById('ob-same').addEventListener('click', () => {
-            const data = { ppi: cloudData.ppi, focalLengthPx: cloudData.focal_length_px };
-            if (fp) Device.saveLocal(fp, data);
-            Device.apply(data);
-            m.remove();
-            if (typeof onDone === 'function') onDone(data);
-        });
-
-        document.getElementById('ob-new').addEventListener('click', () => {
-            m.remove();
-            step = 1;
-            modal = createModal();
-            renderStep();
-        });
-    }
-
     async function start(opts) {
         ensureDevice();
         client = opts.client;
@@ -260,12 +226,6 @@
                 Device.apply({ ppi: cloudData.ppi, focalLengthPx: cloudData.focal_length_px });
                 if (fp) Device.saveLocal(fp, { ppi: cloudData.ppi, focalLengthPx: cloudData.focal_length_px });
                 if (typeof onDone === 'function') onDone();
-                return;
-            }
-
-            const list = await Device.listCloud(client, userId);
-            if (list.length > 0) {
-                askAboutDevice(list[0], fp);
                 return;
             }
         }
