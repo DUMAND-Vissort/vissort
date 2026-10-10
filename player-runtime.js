@@ -481,7 +481,7 @@ async function onLoggedIn() {
         if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
             try {
                 const fp = await VissortDevice.getFingerprint();
-                VissortDevice.setCurrent(fp);
+                VissortDevice.setCurrent(fp, PlayerState.currentUser ? PlayerState.currentUser.id : null);
                 await Onboarding.start({
                     client: PlayerState.supabaseClient,
                     userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
@@ -510,7 +510,7 @@ async function onLoggedIn() {
     if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
         try {
             const fp = await VissortDevice.getFingerprint();
-            VissortDevice.setCurrent(fp);
+            VissortDevice.setCurrent(fp, PlayerState.currentUser ? PlayerState.currentUser.id : null);
             await Onboarding.start({
                 client: PlayerState.supabaseClient,
                 userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
