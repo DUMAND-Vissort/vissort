@@ -298,6 +298,7 @@ Sivtsev OTF (шрифт)
 
 | Неймспейс | Файл | Назначение |
 |---|---|---|
+| `window.VissortEnv` | `vissort-env.js` | SUPABASE_URL, ANON_KEY — единый источник |
 | `window.VissortCore` | `vissort-core.js` | 24 функции утилит |
 | `window.Voice` | `voice.js` | Web Speech API |
 | `window.Data` | `data-layer.js` | IndexedDB + Supabase + очередь |
@@ -313,6 +314,13 @@ Sivtsev OTF (шрифт)
 | `window.AIGenerator` | `vissort-ai-generator.js` | DeepSeek-генератор |
 | `window.AppEditorCore` | `app.js` | API редактора для AI |
 | `window.VissortPlayerOptions` | `user.js` / `player.js` | конфиг плеера |
+
+### §4.1.1 `window.VissortEnv`
+
+- **Назначение:** единый источник env-констант (URL и anon-ключ Supabase).
+- **Загружается:** первым, до `vissort-core.js` (в `admin.html` — sync, в `user.html` / `player.html` — defer).
+- **Поля:** `SUPABASE_URL` (string), `SUPABASE_ANON_KEY` (string).
+- **История:** §11.2 — замена 5 копий ключа на один источник.
 ### §4.2 `window.VissortCore`
 
 - **Константы:** `TIME_UNITS`, `DIR`
@@ -1005,21 +1013,23 @@ UI:
 
 **СТАТУС: FIXED** — коммит 08d4c0f (удалён из ADMIN_EMAILS).
 
-### §11.2 SUPABASE_ANON_KEY — 5 копий
+### §11.2 SUPABASE_ANON_KEY — 5 копий → 1 источник ✅ ЗАКРЫТО
 
-Anon-ключ Supabase захардкожен в 5 файлах:
+**Было:** anon-ключ Supabase захардкожен в 5 файлах (data-layer.js, vissort-ai-generator.js, keepalive.js, player-runtime.js, app.js inline).
+Ротация = правка в 5 файлах.
 
-| Файл | Место |
-|---|---|
-| data-layer.js | константа SUPABASE_ANON_KEY |
-| vissort-ai-generator.js | константа SUPABASE_ANON_KEY |
-| keepalive.js | константа KEEPALIVE_KEY |
-| player-runtime.js | константа SUPABASE_ANON_KEY |
-| app.js | inline в initSupabase |
+**Стало:** единый источник `window.VissortEnv.SUPABASE_ANON_KEY` в новом `vissort-env.js`.
+Все 5 модулей читают из `VissortEnv` с fallback на прежнюю строку.
 
-Один и тот же ключ. Ротация = правка в 5 файлах.
+**Коммиты:**
+- `c7ebfee` — vissort-env.js + подключение в 3 HTML (первым, до vissort-core.js)
+- `3c55acc` — data-layer.js, vissort-ai-generator.js, player-runtime.js
+- `9c379b2` — keepalive.js
+- `63aba3d` — app.js (inline в initSupabase)
+- `518ae11` — sw.js: precache vissort-env.js
 
-Действие: вынести в единую константу (например, window.VissortEnv.SUPABASE_ANON_KEY), читать из неё.
+**Что осталось (в план Фазы 5):** ротация самого ключа — отдельной задачей.
+**Молчаливая страховка:** fallback снят не будет, пока не подтвердится, что все клиенты подхватили VissortEnv.
 
 ### §11.3 RLS-политики — не проверены
 
@@ -1058,7 +1068,7 @@ Edge Function backup (в планах) — не реализована.
 ### §11.6 Чек-лист Фазы 4
 
 - [x] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — FIXED 08d4c0f
-- [ ] Ротировать anon-ключ и вынести в единую константу
+- [x] Ротировать anon-ключ и вынести в единую константу — FIXED §11.2 (коммиты c7ebfee…518ae11)
 - [ ] Аудит RLS на всех таблицах
 - [ ] Логирование Edge Functions
 - [ ] Автобэкап БД
@@ -1773,14 +1783,19 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 | 11 | `4d0095a` | fix(player-reading): P1 — поддержка physiological mode | player-reading.js |
 | 12 | `24e42c0` | fix(ui): P1 — унификация .btn-response → .btn-resp | admin.html, app.js |
 | 13 | `a0080d7` | refactor(createCellElement): убрать небезопасный fallback | player-runtime.js, app.js |
+| 14 | `c7ebfee` | feat(env): вынести SUPABASE_URL/ANON_KEY в vissort-env.js | vissort-env.js, admin.html, user.html, player.html |
+| 15 | `3c55acc` | refactor(env): data-layer, ai-generator, player-runtime читают из VissortEnv | 3 файла |
+| 16 | `9c379b2` | refactor(env): keepalive.js читает KEEPALIVE_KEY из VissortEnv | keepalive.js |
+| 17 | `63aba3d` | refactor(env): app.js читает SUPABASE_URL/ANON_KEY из VissortEnv | app.js |
+| 18 | `518ae11` | fix(sw): precache vissort-env.js | sw.js |
 
 ### §16.2 Сводка
 
 - **P0 (критические):** 3 закрыто.
 - **P1 (важные):** 6 закрыто, 1 не подтверждён.
 - **Refactor:** 1 (createCellElement fallback).
-- **Документация:** 3 (PROJECT-MAP.md, ARCHITECTURE-DIAGRAMS.md, .gitignore).
-- **Всего коммитов:** 13.
+- **§11.2 (Фаза 5):** 5 закрыто + 1 финальный.
+- **Всего коммитов:** 19.
 - **Тесты:** 28 passed после каждого коммита. Ни одной регрессии.
 
 ### §16.3 До / После
@@ -1789,7 +1804,7 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 |---|---|---|
 | P0-багов | 3 | 0 |
 | P1-багов | 7 | 0 (1 не подтверждён) |
-| P2-багов | 5 | 5 (план Фазы 5) |
+| P2-багов | 5 + §11.2 | 4 (план Фазы 5) |
 | Тестов проходит | 28 | 28 |
 | Документация | ARCHITECTURE.md (устарел) | PROJECT-MAP.md + ARCHITECTURE-DIAGRAMS.md |
 
