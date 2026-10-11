@@ -27,6 +27,7 @@ const PRECACHE_URLS = [
     '/vissort-onboarding.js',
     '/player-runtime.js',
     '/keepalive.js',
+    '/vissort-env.js',
     '/vissort-core.js',
     '/player-state.js',
     '/player-utils.js',
