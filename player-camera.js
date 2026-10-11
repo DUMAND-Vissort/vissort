@@ -539,9 +539,7 @@
         _faceEmoji,
         _pushDetection,
         _updateDetectUI,
-        _detectRatePct,
-        _isBlinkFromLandmarks,
-        _calcEAR
+        _detectRatePct
     };
 
     VLog.log('[player-camera] module installed');
