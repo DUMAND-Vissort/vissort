@@ -27,6 +27,22 @@ const PRECACHE_URLS = [
     '/vissort-onboarding.js',
     '/player-runtime.js',
     '/keepalive.js',
+    '/vissort-core.js',
+    '/player-state.js',
+    '/player-utils.js',
+    '/player-dist-warning.js',
+    '/player-reading.js',
+    '/player-camera.js',
+    '/player-animation.js',
+    '/player-invalid-detection.js',
+    '/header-drag.js',
+    '/vissort-ai-generator.js',
+    '/favicon.svg',
+    '/site.webmanifest',
+    '/player.webmanifest',
+    '/features.html',
+    '/pyatnashki.html',
+    '/differences-wolf.html',
     '/sentry.min.js'
 ];
 
