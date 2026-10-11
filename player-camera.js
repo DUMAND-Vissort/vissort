@@ -358,13 +358,18 @@
                     }
                 } else {
                     // Лицо не найдено — проверяем, может это моргание?
+                    // Throttle: не чаще 5 раз/сек — снижает нагрузку при длительной потере лица.
                     var _isBlink = false;
-                    try {
-                        const detWithLm = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.25 })).withFaceLandmarks();
-                        if (detWithLm && detWithLm.landmarks) {
-                            if (_isBlinkFromLandmarks(detWithLm.landmarks) === true) _isBlink = true;
-                        }
-                    } catch (e) {}
+                    var _BLINK_CHECK_MS = 200;
+                    if (performance.now() - (PS._lastBlinkCheckAt || 0) >= _BLINK_CHECK_MS) {
+                        PS._lastBlinkCheckAt = performance.now();
+                        try {
+                            const detWithLm = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.25 })).withFaceLandmarks();
+                            if (detWithLm && detWithLm.landmarks) {
+                                if (_isBlinkFromLandmarks(detWithLm.landmarks) === true) _isBlink = true;
+                            }
+                        } catch (e) {}
+                    }
                     if (_isBlink) {
                         if (!PS._blinkClosedSince) PS._blinkClosedSince = performance.now();
                         const _blinkDur = performance.now() - PS._blinkClosedSince;

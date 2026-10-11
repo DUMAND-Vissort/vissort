@@ -508,7 +508,17 @@
     function syncAuthFromStorage() {
         try {
             const projectRef = 'hzvypwdpdhsjzaclxmbm';
-            const keys = Object.keys(localStorage).filter((k) => k.includes(projectRef));
+            // Прямое чтение известного ключа Supabase JS v2 — без перебора LS.
+            const keys = [];
+            const _primary = 'sb-' + projectRef + '-auth-token';
+            if (localStorage.getItem(_primary)) {
+                keys.push(_primary);
+            } else {
+                // Fallback: нестандартный формат — перебираем LS по projectRef.
+                Object.keys(localStorage).forEach((k) => {
+                    if (k.includes(projectRef) && k.indexOf('-auth-token') !== -1) keys.push(k);
+                });
+            }
             for (const k of keys) {
                 const raw = localStorage.getItem(k);
                 if (!raw) continue;
