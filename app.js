@@ -7840,7 +7840,7 @@ async function handleAuthSubmit() {
             (typeof nodes !== 'undefined' && nodes.length > 0) ||
             (typeof connections !== 'undefined' && connections.length > 0);
         if (hasContent) {
-            if (!confirm('Start a new scenario? Unsaved changes will be lost.')) return;
+            if (!confirm('Начать новый сценарий? Несохранённые изменения будут потеряны.')) return;
         }
 
         nodes.length = 0;
