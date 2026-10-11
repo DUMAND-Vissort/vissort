@@ -2172,6 +2172,21 @@ function handleDirectionAnswer(direction) {
         document.body.style.background = '#0b0b0f';
     }, 200);
     saveResult('user_single', PlayerState.lastResponse.reactionTimeMs, ok);
+    // P0 #1: prodvizhenie serii v ploskom rezhime
+    if (ok) PlayerState.seriesCorrect++;
+    else PlayerState.seriesIncorrect++;
+    PlayerState.seriesStep++;
+    updateCounters();
+    const _p = PlayerState.userScenario?.params || {};
+    if (PlayerState.seriesStep >= (_p.seriesSize || 6)) {
+        setTimeout(() => {
+            if (PlayerState.playerRunning && !PlayerState.isPaused) finishSeries();
+        }, 50);
+    } else {
+        setTimeout(() => {
+            if (PlayerState.playerRunning && !PlayerState.isPaused) showNextStimulus();
+        }, _p.delay2 != null ? _p.delay2 : 1000);
+    }
 }
 function handleCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
