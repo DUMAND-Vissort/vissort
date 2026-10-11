@@ -38,7 +38,7 @@ const {
     sha1
 } = window.VissortCore;
 
-const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
+const ADMIN_EMAILS = ['dumand@gmail.com'];
 const IS_DEV = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const HAS_FS_ACCESS = typeof window.showDirectoryPicker === 'function';
 const LS_KEYS = {
