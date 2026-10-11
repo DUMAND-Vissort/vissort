@@ -54,6 +54,7 @@
 | `app.js` | Логика редактора + auth (366 KB) |
 | `player-runtime.js` | Логика плеера (145 KB) |
 | `data-layer.js` | Прослойка UI ↔ Supabase (41 KB) |
+| `vissort-env.js` | Единый источник env: SUPABASE_URL, ANON_KEY (~0.8 KB) |
 | `vissort-core.js` | Общие утилиты (14 KB) |
 | `voice.js` | Голосовое сопровождение (26 KB) |
 | `sw.js` | Service Worker (9 KB) |
@@ -197,6 +198,7 @@ npx playwright test --reporter=list
 
 **Синтаксис:**
 node --check D:\PROEKT\vissort\app.js
+node --check D:\PROEKT\vissort\vissort-env.js
 node --check D:\PROEKT\vissort\player-runtime.js
 node --check D:\PROEKT\vissort\vissort-onboarding.js
 node --check D:\PROEKT\vissort\vissort-device.js

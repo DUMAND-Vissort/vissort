@@ -98,7 +98,7 @@
 - [ ] Логирование Edge Functions — §11.4
 - [ ] Бэкап БД (cron + Storage) — §11.5
 - [x] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — §11.1 (FIXED 08d4c0f)
-- [ ] Ротировать SUPABASE_ANON_KEY (5 копий) — §11.2
+- [x] Ротировать SUPABASE_ANON_KEY — §11.2 (FIXED 2026-10-11: vissort-env.js, коммиты c7ebfee…f61da92)
 
 ---
 
