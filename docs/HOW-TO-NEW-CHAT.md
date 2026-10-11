@@ -67,6 +67,10 @@
 | `player-utils.js` | rate-limit, validation, distance |
 | `player-dist-warning.js` | UI-предупреждения о дистанции |
 | `tests/` | Playwright-тесты (28) |
+| `docs/PROJECT-MAP.md` | **Полная карта архитектуры (16 разделов + Прил. А, 92 KB)** |
+| `docs/ARCHITECTURE-DIAGRAMS.md` | **4 mermaid-диаграммы архитектуры** |
+| `docs/ARCHITECTURE.md` | ⚠ Устарел (05.10, до Фазы 1) |
+| `docs/HANDOFF.md` | ⚠ Устарел (10.10, дубль HOW-TO) |
 
 ## Что работает
 
@@ -89,6 +93,8 @@
 - Sentry через прокси
 - GitHub Actions CI: 28 Playwright-тестов на каждый push
 - schemaVersion: 2 в сценариях + migrateScenario
+- PROJECT-MAP.md — полная карта архитектуры (16 разделов)
+- ARCHITECTURE-DIAGRAMS.md — 4 mermaid-диаграммы
 
 ## Что в работе
 
@@ -98,15 +104,23 @@
 - Фаза 1: 7 модулей, player-runtime.js 3560 → ~2700 строк
 - Фаза 2: 228 PATCH/BUG комментариев заменены, Prettier, ESLint 0 errors
 
-### Фаза 3 — доработки
+### Фаза 3 — доработки (ЗАКРЫТА 2026-10-10)
 
-- ЗАКРЫТО: Задача 1 — Два режима контроля дистанции
-- ЗАКРЫТО: Задача 2 — Reaction time → test_results
-- ЗАКРЫТО: Задача 3 — Порог дистанции в админке
-- ЗАКРЫТО: Задача 4 — Landmarks для моргания (EAR)
-- ЗАКРЫТО: Задача 5 — Порог устойчивости в инспекторе узлов
-- ЗАКРЫТО: NotAllowedError при отказе от камеры
-- ОСТАЛОСЬ: ESLint 45 warnings — чистка
+Все 5 задач + NotAllowedError — закрыты. См. TODO.md.
+
+### Фаза 4 — RLS, логирование, бэкап (ЧАСТИЧНО)
+
+- RLS-аудит — отложен (см. PROJECT-MAP.md §11.3)
+- Логирование Edge Functions — отложено (§11.4)
+- Бэкап БД — не настроен (§11.5)
+- ADMIN_EMAILS — eremeevap@gmail.com всё ещё в app.js (§11.1)
+
+### Баг-фиксы после Фазы 4 (2026-10-11)
+
+- 3 P0 (focalLengthPx, handleDirectionAnswer, showAuthModal)
+- 6 P1 (CSP, SW precache, Sentry-регекспы, deleteNode, physiological, btn-*)
+- 1 refactor (createCellElement fallback)
+- См. PROJECT-MAP.md §16 «История исправлений»
 
 ### Синхронизация калибровки (не в TODO, добавлено 10.10.2026)
 
@@ -117,12 +131,22 @@
 - Кнопка 📐 для повторной калибровки
 - Убран `askAboutDevice` — не подставляем чужую калибровку
 
-## Следующие задачи
+## Следующие задачи (обновлено 2026-10-11)
 
-- ESLint 45 warnings — 43 no-unused-vars межфайловых глобалов + 2 no-empty + H (мусор в `_logAnswer`)
-- Фаза 4: RLS-аудит, логирование Edge Functions, бэкап БД
-- Фаза 5: аудит app.js, авто-bump SW, Sentry performance
-- Фаза 6: клинический редактор (6 недель)
+**P2 (техдолг из PROJECT-MAP.md §12.3):**
+- RAF-анимации плеера не восстанавливаются после паузы
+- Нет PlayerAnimation.stopAll()
+- window._camDetecting может залипнуть
+- After face_lost стимул может не возобновиться
+- ESLint 45 warnings — 43 no-unused-vars + 2 no-empty
+
+**Техдолг (PROJECT-MAP.md §13):** 23 пункта
+- Архитектура: app.js монолит (360 KB), три системы дистанции
+- Производительность: 7 пунктов
+- Качество кода: 7 пунктов
+
+**Фаза 5:** аудит app.js, авто-bump SW, Sentry performance (tracesSampleRate 0.1)
+**Фаза 6:** клинический редактор (6 недель)
 
 ## Принципы работы
 
@@ -205,5 +229,5 @@ npx --yes serve -l 5500
 ---
 
 *Дата создания: 2026-10-05*
-*Обновлено: 2026-10-10 (после сессии: 10 коммитов)*
+*Обновлено: 2026-10-11 (после Фазы 4-багфиксов: 14 коммитов, 3 P0 + 6 P1 закрыто)*
 *Копировать: в первое сообщение нового чата.*

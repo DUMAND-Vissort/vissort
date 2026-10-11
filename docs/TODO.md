@@ -1,7 +1,7 @@
 # Vissort — TODO
 
-> Статус: Фазы 0, 1, 2, 3 закрыты (2026-10-10)
-> Связанные: PLAN.md (карта), HANDOFF.md (контекст)
+> Статус: Фазы 0, 1, 2, 3 закрыты. Фаза 4 частично. Все P0/P1 закрыты (2026-10-11)
+> Связанные: PROJECT-MAP.md (карта), PLAN.md
 
 ## ✅ ЗАКРЫТО
 
@@ -35,17 +35,19 @@
 
 ## 🚧 В РАБОТЕ
 
-- [ ] Устранить дублирование app.js ↔ player-runtime.js
+- [ ] Устранить дублирование app.js ↔ player-runtime.js (~3000 строк, §8 PROJECT-MAP.md)
+- [ ] P2-баги (§12.3 PROJECT-MAP.md): 5 пунктов техдолга
+- [ ] Техдолг (§13 PROJECT-MAP.md): 23 пункта
 - [ ] Уборка корня (patch*.ps1, _test_graph.json, diff.txt)
 
 ---
 
 ## ✅ ФАЗА 3 — доработки (закрыта 2026-10-10)
 
-- [ ] ESLint: устранить 45 warnings (43 no-unused-vars межфайловых глобалов + 2 no-empty)
+- [ ] ESLint: 45 warnings — перенесено в P2 (§12.3, §13 PROJECT-MAP.md)
 - [ ] ESLint: убрать временные globals (stimArea/stimDisplay/dir/direction/answer) после рефакторинга player-runtime.js
 - [ ] player-runtime.js: разобрать пустые ветки чтения (строки 2472, 2481)
-- [ ] H: убрать мусорный typeof direction в _logAnswer (4 места)
+- [ ] H: убрать мусорный typeof direction в _logAnswer — перенесено в P2 (§12.3)
 - [x] Два режима контроля дистанции (авто-пересчёт / возврат) — закрыто 09.10.2026
 - [x] Reaction time → test_results (в БД) — подтверждено 2026-10-09
 - [x] Порог дистанции в админке — закрыто 09.10.2026 (tolNearCm/tolFarCm в инспекторе узла)
@@ -70,11 +72,33 @@
 
 ---
 
+## ✅ P0/P1 закрыты (2026-10-11)
+
+См. PROJECT-MAP.md §16 «История исправлений».
+
+- [x] P0 #1: handleDirectionAnswer — продвижение серии (34f8659)
+- [x] P0 #2: focalLengthPx — правильный ключ LS (f8a82a9)
+- [x] P0 #3: showAuthModal — удалён мёртвый код (9475205)
+- [x] P1 #1: CSP admin.html — frame-ancestors (303a093)
+- [x] P1 #2: SW precache — 16 новых URL (6a7cdf1)
+- [x] P1 #3: Sentry-регекспы — удалены (47c8732)
+- [x] P1 #4: deleteNode — точная проверка границ id (b3eaf99)
+- [x] P1 #5: showFindSame — не подтверждён (бага нет)
+- [x] P1 #6: physiological — режим добавлен в player-reading.js (4d0095a)
+- [x] P1 #7: btn-response/btn-resp — унифицированы (24e42c0)
+- [x] Refactor: createCellElement fallback = -1 (a0080d7)
+- [x] PROJECT-MAP.md — 16 разделов + Прил. А (04db57d)
+- [x] ARCHITECTURE-DIAGRAMS.md — 4 mermaid-диаграммы (39435a8)
+
+---
+
 ## 📋 ФАЗА 4 — безопасность и надёжность
 
-- [ ] RLS-аудит Supabase
-- [ ] Логирование Edge Functions
-- [ ] Бэкап БД (cron + Storage)
+- [ ] RLS-аудит Supabase — §11.3 PROJECT-MAP.md
+- [ ] Логирование Edge Functions — §11.4
+- [ ] Бэкап БД (cron + Storage) — §11.5
+- [ ] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — §11.1
+- [ ] Ротировать SUPABASE_ANON_KEY (5 копий) — §11.2
 
 ---
 
