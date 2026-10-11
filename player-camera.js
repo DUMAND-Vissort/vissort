@@ -191,6 +191,9 @@
     const _camIndicator = () => document.getElementById('cam-indicator');
 
     async function loadFaceApi() {
+        if (faceapi.nets.tinyFaceDetector.isLoaded && faceapi.nets.faceLandmark68Net.isLoaded) {
+            return;
+        }
         if (faceapi.tf) {
             var _actual = 'none';
             try {
@@ -303,7 +306,11 @@
                 if (det && det.box) {
                     const ipd = det.box.width * 0.45;
                     PS.lastEyeDistPx = ipd;
+                    const _hadFaceLost = window._faceLostSince !== 0;
                     window._faceLostSince = 0;
+                    if (_hadFaceLost && typeof _callbacks.onResume === 'function') {
+                        _callbacks.onResume();
+                    }
                     const ci = _camIndicator();
                     if (ci) ci.textContent = '✅ Лицо';
                     _pushDetection(true);
