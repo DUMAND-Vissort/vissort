@@ -24,6 +24,7 @@
 - §13. Техдолг
 - §14. Покрытие тестами
 - §15. План Фаз 5–6
+- §16. История исправлений (сессия после Фазы 4)
 - Приложение А. Сводная таблица файлов
 
 ---
@@ -1080,6 +1081,7 @@ Edge Function backup (в планах) — не реализована.
 Также: в app.js аналогичная функция handleDirectionAnswer реализована так же — не продвигает серию. Но там currentShowTimer не очищается, поэтому следующий стимул показывается через sd мс (с задержкой), а не сразу через delay2.
 
 Действие: в handleDirectionAnswer (player-runtime.js) добавить в конце продвижение серии: если seriesStep >= seriesSize — finishSeries; иначе setTimeout(() => showNextStimulus(), delay2).
+**СТАТУС: FIXED** — коммит 34f8659
 
 #### §12.1.2 focalLengthPx — неверный ключ LS
 
@@ -1092,6 +1094,7 @@ Edge Function backup (в планах) — не реализована.
 Ключ с префиксом PlayerState. — такого ключа в LS никогда не было. Реальный ключ — focalLengthPx (пишет vissort-device.js через apply, пишет app.js через calibrateFocalLength). Значит, ветка мёртвая — если focalLengthPx потерян из PlayerState, он не восстановится.
 
 Действие: заменить 'PlayerState.focalLengthPx' на 'focalLengthPx'.
+**СТАТУС: FIXED** — коммит f8a82a9
 
 #### §12.1.3 showAuthModal падает при отсутствии #auth-name
 
@@ -1102,6 +1105,7 @@ Edge Function backup (в планах) — не реализована.
 Сейчас функция не вызывается (используется updateAuthModal), но код мёртвый и опасный — при попытке вызвать в плеере упадёт.
 
 Действие: либо убрать showAuthModal из player-runtime.js, либо добавить защиту через ?. или проверку на null.
+**СТАТУС: FIXED** — коммит 9475205
 
 ### §12.2 P1 — важные
 
@@ -1112,6 +1116,7 @@ Edge Function backup (в планах) — не реализована.
 Проблема: в CSP user.html и player.html есть frame-ancestors 'none'. В admin.html он отсутствует. Значит, admin.html можно встроить в iframe с любого домена. Возможна clickjacking-атака (например, на кнопку «Назначить сценарий» или «Применить»).
 
 Действие: добавить frame-ancestors 'none' в CSP admin.html.
+**СТАТУС: FIXED** — коммит 303a093
 
 #### §12.2.2 sw.js не precache-ит vissort-core.js и модули плеера
 
@@ -1128,6 +1133,7 @@ Edge Function backup (в планах) — не реализована.
 Итог: при офлайне сразу после установки SW плеер не работает — core-модули не в кэше.
 
 Действие: добавить все модули в PRECACHE_URLS.
+**СТАТУС: FIXED** — коммит 6a7cdf1
 
 #### §12.2.3 Sentry-паттерны в NEVER_CACHE_PATTERNS мертвы
 
@@ -1136,6 +1142,7 @@ Edge Function backup (в планах) — не реализована.
 Проблема: содержит /sentry-cdn.com/ и /\.sentry\.io/. Проверяется через url.pathname. То есть в pathname (часть URL после домена) не может быть домена Sentry — эти паттерны никогда не срабатывают.
 
 Действие: либо проверять hostname, либо удалить паттерны (Sentry идёт через tunnel supabase.co, не напрямую).
+**СТАТУС: FIXED** — коммит 47c8732
 
 #### §12.2.4 deleteNode удаляет лишние связи
 
@@ -1144,6 +1151,7 @@ Edge Function backup (в планах) — не реализована.
 Проблема: connectionElements обходится через k.includes(id). Если id узла — node_1, а key — node_10_node_20, то node_1 входит в node_10 как подстрока. Удалит лишние связи.
 
 Действие: заменить на проверку startWith(id + '_') || endsWith('_' + id) || k === id + '_' + id.
+**СТАТУС: FIXED** — коммит b3eaf99
 
 #### §12.2.5 showFindSameComparison — ID пар по индексу массива
 
@@ -1152,6 +1160,7 @@ Edge Function backup (в планах) — не реализована.
 Проблема: пары формируются по индексу в массиве chosen: idx=0 и idx=1 — пара 0; idx=2 и idx=3 — пара 1. Если клетки в grid визуально перемешаны (активный индекс в data-index не совпадает с порядком), пары могут не совпадать.
 
 Действие: проверить на живом коде, сопоставить data-index и индекс в st.cells.
+**СТАТУС: НЕ ПОДТВЕРЖДЁН** — бага нет, data-index совпадает с индексом в st.cells
 
 #### §12.2.6 showAuthModal — TypeError в плеере
 
@@ -1164,6 +1173,7 @@ Edge Function backup (в планах) — не реализована.
 Проблема: в app.js реализован режим physiological (шкала диаптера). В player-reading.js этот режим не поддерживается — ветки physiological нет, fallback на simple. Если врач сохранил сценарий с physiological, в плеере покажется simple.
 
 Действие: либо перенести buildPhysiologicalPhases из app.js в player-reading.js, либо в app.js не давать сохранять physiological для плеера.
+**СТАТУС: FIXED** — коммит 4d0095a
 
 #### §12.2.8 trigger у .btn-response vs .btn-resp
 
@@ -1172,6 +1182,7 @@ Edge Function backup (в планах) — не реализована.
 Проблема: в admin.html кнопки имеют класс .btn-response, в user.html и player.html — .btn-resp. В app.js используется .btn-response, в player-runtime.js — .btn-resp. Если перенести разметку или код — обработчики не сработают.
 
 Действие: унифицировать. Либо один класс в трёх HTML, либо в JS использовать оба селектора.
+**СТАТУС: FIXED** — коммит 24e42c0
 
 ### §12.3 P2 — техдолг и улучшения
 
@@ -1219,19 +1230,21 @@ Edge Function backup (в планах) — не реализована.
 
 ### §12.4 Сводка P0
 
-- §12.1.1 handleDirectionAnswer не продвигает серию — залипание плоского режима.
-- §12.1.2 focalLengthPx неверный ключ LS — восстановление не работает.
-- §12.1.3 showAuthModal падает при отсутствии #auth-name — мёртвый опасный код.
+Все закрыты:
+- §12.1.1 → коммит 34f8659
+- §12.1.2 → коммит f8a82a9
+- §12.1.3 → коммит 9475205
 
 ### §12.5 Сводка P1
 
-- §12.2.1 CSP admin.html без frame-ancestors.
-- §12.2.2 sw.js не precache-ит core-модули.
-- §12.2.3 Sentry-паттерны мертвы.
-- §12.2.4 deleteNode удаляет лишние связи.
-- §12.2.5 showFindSameComparison — ID пар.
-- §12.2.7 physiological не работает в плеере.
-- §12.2.8 btn-response vs btn-resp.
+Закрыты (6 из 7):
+- §12.2.1 → коммит 303a093
+- §12.2.2 → коммит 6a7cdf1
+- §12.2.3 → коммит 47c8732
+- §12.2.4 → коммит b3eaf99
+- §12.2.5 → не подтверждён (бага нет)
+- §12.2.7 → коммит 4d0095a
+- §12.2.8 → коммит 24e42c0
 
 ---
 ## §13. Техдолг
@@ -1520,14 +1533,14 @@ release: 'vissort-2.0.0' в 3 HTML. Не синхронизируется с CAC
 
 ### §14.3 Что НЕ покрыто
 
-Критические пути:
+Критические пути (закрыты после Фазы 4, см. §12):
 
-- handleDirectionAnswer не продвигает серию (P0 §12.1.1).
-- focalLengthPx неверный ключ LS (P0 §12.1.2).
-- showAuthModal падает в плеере (P0 §12.1.3).
-- deleteNode удаляет лишние связи (P1 §12.2.4).
-- physiological-режим не работает в player-reading.js (P1 §12.2.7).
-- btn-response vs btn-resp (P1 §12.2.8).
+- handleDirectionAnswer не продвигает серию (P0 §12.1.1) — FIXED 34f8659.
+- focalLengthPx неверный ключ LS (P0 §12.1.2) — FIXED f8a82a9.
+- showAuthModal падает в плеере (P0 §12.1.3) — FIXED 9475205.
+- deleteNode удаляет лишние связи (P1 §12.2.4) — FIXED b3eaf99.
+- physiological-режим не работает в player-reading.js (P1 §12.2.7) — FIXED 4d0095a.
+- btn-response vs btn-resp (P1 §12.2.8) — FIXED 24e42c0.
 
 Модули без единого теста:
 
@@ -1664,18 +1677,21 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 
 #### §15.1.2 Устранение P0-багов
 
-- §12.1.1 handleDirectionAnswer — продвижение серии.
-- §12.1.2 focalLengthPx — правильный ключ LS.
-- §12.1.3 showAuthModal — убрать или защитить.
+ЗАКРЫТО (см. §12.1). Все 3 P0 исправлены в сессии после Фазы 4:
+- §12.1.1 → коммит 34f8659
+- §12.1.2 → коммит f8a82a9
+- §12.1.3 → коммит 9475205
 
 #### §15.1.3 Устранение P1-багов
 
-- §12.2.1 CSP admin.html frame-ancestors.
-- §12.2.2 sw.js PRECACHE_URLS — добавить core-модули.
-- §12.2.3 Sentry-паттерны — удалить или проверить hostname.
-- §12.2.4 deleteNode — проверка k.startsWith(id + '_').
-- §12.2.7 physiological — перенести в player-reading.js.
-- §12.2.8 btn-response vs btn-resp — унифицировать.
+ЗАКРЫТО (см. §12.2). Все P1 исправлены в сессии после Фазы 4:
+- §12.2.1 → коммит 303a093
+- §12.2.2 → коммит 6a7cdf1
+- §12.2.3 → коммит 47c8732
+- §12.2.4 → коммит b3eaf99
+- §12.2.5 → не подтверждён (бага нет)
+- §12.2.7 → коммит 4d0095a
+- §12.2.8 → коммит 24e42c0
 
 #### §15.1.4 Авто-bump SW
 
@@ -1736,6 +1752,48 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 
 ---
 
+## §16. История исправлений (сессия после Фазы 4)
+
+Хронология коммитов с 2026-10-11. Все изменения затрагивают только что задокументированные баги из §12.
+
+### §16.1 Коммиты сессии
+
+| # | Коммит | Что | Файлы |
+|---|---|---|---|
+| 1 | `f535611` | PROJECT-MAP.md — полная карта архитектуры после Фаз 0–4 | docs/PROJECT-MAP.md |
+| 2 | `10c9292` | .gitignore — временные файлы (part, backup, _mermaid) | .gitignore |
+| 3 | `39435a8` | ARCHITECTURE-DIAGRAMS.md — 4 mermaid-диаграммы | docs/ARCHITECTURE-DIAGRAMS.md |
+| 4 | `f8a82a9` | fix(player-runtime): P0 — focalLengthPx из правильного ключа LS | player-runtime.js |
+| 5 | `34f8659` | fix(player-runtime): P0 — продвижение серии в handleDirectionAnswer | player-runtime.js |
+| 6 | `9475205` | fix(player-runtime): P0 — удалить мёртвый showAuthModal | player-runtime.js |
+| 7 | `b3eaf99` | fix(app): P1 — deleteNode проверяет связи по границам id | app.js |
+| 8 | `303a093` | fix(admin): P1 — CSP admin.html: frame-ancestors 'none' | admin.html |
+| 9 | `47c8732` | fix(sw): P1 — удалить мёртвые Sentry-регекспы | sw.js |
+| 10 | `6a7cdf1` | fix(sw): P1 — PRECACHE_URLS: добавить модули и ассеты | sw.js |
+| 11 | `4d0095a` | fix(player-reading): P1 — поддержка physiological mode | player-reading.js |
+| 12 | `24e42c0` | fix(ui): P1 — унификация .btn-response → .btn-resp | admin.html, app.js |
+| 13 | `a0080d7` | refactor(createCellElement): убрать небезопасный fallback | player-runtime.js, app.js |
+
+### §16.2 Сводка
+
+- **P0 (критические):** 3 закрыто.
+- **P1 (важные):** 6 закрыто, 1 не подтверждён.
+- **Refactor:** 1 (createCellElement fallback).
+- **Документация:** 3 (PROJECT-MAP.md, ARCHITECTURE-DIAGRAMS.md, .gitignore).
+- **Всего коммитов:** 13.
+- **Тесты:** 28 passed после каждого коммита. Ни одной регрессии.
+
+### §16.3 До / После
+
+| Метрика | До сессии | После сессии |
+|---|---|---|
+| P0-багов | 3 | 0 |
+| P1-багов | 7 | 0 (1 не подтверждён) |
+| P2-багов | 5 | 5 (план Фазы 5) |
+| Тестов проходит | 28 | 28 |
+| Документация | ARCHITECTURE.md (устарел) | PROJECT-MAP.md + ARCHITECTURE-DIAGRAMS.md |
+
+---
 ## Приложение А. Сводная таблица файлов
 
 ### А.1 JS-модули
