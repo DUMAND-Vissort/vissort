@@ -4806,8 +4806,8 @@ function playStimulusNodeSeries(node) {
     }
     responsePhaseActive = true;
     responseStartTime = performance.now();
-    document.querySelectorAll('.btn-response[data-dir]').forEach((b) => (b.style.display = 'flex'));
-    document.querySelectorAll('.btn-response[data-answer]').forEach((b) => (b.style.display = 'none'));
+    document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'flex'));
+    document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
     let sd = node.duration || 1000;
@@ -5161,8 +5161,8 @@ function showNextStimulus() {
     }
     responsePhaseActive = true;
     responseStartTime = performance.now();
-    document.querySelectorAll('.btn-response[data-dir]').forEach((b) => (b.style.display = 'flex'));
-    document.querySelectorAll('.btn-response[data-answer]').forEach((b) => (b.style.display = 'none'));
+    document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'flex'));
+    document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
     responseButtons.style.display = 'flex';
     if (window.Voice) window.Voice.sayKey('look', { cancel: true });
     let sd = currentDuration;
@@ -5293,8 +5293,8 @@ function showDirectionComparison() {
     currentCompareAnswer = d1 === d2;
     createCellElement(cA, cellParams[0] || defaultCellParams(), d1, 0);
     createCellElement(cB, cellParams[1] || defaultCellParams(), d2, 1);
-    document.querySelectorAll('.btn-response[data-dir]').forEach((b) => (b.style.display = 'none'));
-    document.querySelectorAll('.btn-response[data-answer]').forEach((b) => (b.style.display = 'flex'));
+    document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'none'));
+    document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'flex'));
     responseButtons.style.display = 'flex';
 }
 function showFindSameComparison() {
@@ -5465,7 +5465,7 @@ function handleCompareDirectionAnswer(answer) {
     processComparisonAnswer(ok);
 }
 responseButtons.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-response');
+    const btn = e.target.closest('.btn-resp');
     if (!btn || !responsePhaseActive) return;
     if (btn.dataset.dir) handleDirectionAnswer(btn.dataset.dir);
     else if (btn.dataset.answer === 'да' || btn.dataset.answer === 'нет') {
@@ -5544,7 +5544,7 @@ function stopPlayer() {
     responsePhaseActive = false;
     hideStimulus();
     responseButtons.style.display = 'none';
-    document.querySelectorAll('.btn-response').forEach((b) => (b.style.display = 'none'));
+    document.querySelectorAll('.btn-resp').forEach((b) => (b.style.display = 'none'));
     btnPlayer.disabled = false;
     btnPlayerStop.disabled = true;
     btnPlayerPause.disabled = true;
