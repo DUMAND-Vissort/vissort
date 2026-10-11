@@ -8,6 +8,27 @@
 
     const { lerpColor } = global.VissortCore;
 
+    // Физиологическая шкала диаптера (Thibos et al.)
+    const PHYSIOLOGICAL_PHASES = [
+        { diopters: 0.0, wavelength_nm: 670, name: 'Глубокий карминно-красный', rgb: [180, 0, 0] },
+        { diopters: 0.1, wavelength_nm: 648, name: 'Классический красный', rgb: [235, 0, 0] },
+        { diopters: 0.2, wavelength_nm: 627, name: 'Алый / насыщенный красный', rgb: [255, 35, 0] },
+        { diopters: 0.3, wavelength_nm: 610, name: 'Огненно-оранжевый', rgb: [255, 90, 0] },
+        { diopters: 0.4, wavelength_nm: 593, name: 'Оранжево-жёлтый', rgb: [255, 145, 0] },
+        { diopters: 0.5, wavelength_nm: 578, name: 'Янтарно-жёлтый', rgb: [215, 215, 0] },
+        { diopters: 0.6, wavelength_nm: 564, name: 'Жёлто-зелёный (лайм)', rgb: [155, 245, 0] },
+        { diopters: 0.7, wavelength_nm: 551, name: 'Салатовый', rgb: [90, 240, 0] },
+        { diopters: 0.8, wavelength_nm: 538, name: 'Изумрудно-зелёный', rgb: [0, 230, 60] },
+        { diopters: 0.9, wavelength_nm: 525, name: 'Ярко-зелёный (мятный)', rgb: [0, 235, 110] },
+        { diopters: 1.0, wavelength_nm: 511, name: 'Мятно-бирюзовый', rgb: [0, 240, 160] },
+        { diopters: 1.1, wavelength_nm: 498, name: 'Морская волна', rgb: [0, 210, 210] },
+        { diopters: 1.2, wavelength_nm: 484, name: 'Яркий голубой', rgb: [0, 175, 255] },
+        { diopters: 1.3, wavelength_nm: 469, name: 'Васильково-голубой', rgb: [0, 115, 255] },
+        { diopters: 1.4, wavelength_nm: 454, name: 'Королевский синий', rgb: [0, 50, 255] },
+        { diopters: 1.5, wavelength_nm: 438, name: 'Ультрамарин / тёмно-синий', rgb: [35, 0, 230] },
+        { diopters: 1.6, wavelength_nm: 421, name: 'Фиолетово-синий', rgb: [90, 0, 190] }
+    ];
+
     // Состояние анимации динамического фона
     const _state = {
         animId: null,
@@ -114,6 +135,29 @@
         viewportEl.style.background = 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')';
     }
 
+    function buildPhysiologicalPhases(step) {
+        const sd = Math.max(0.1, parseFloat(step) || 0.1);
+        const sel = [];
+        for (const p of PHYSIOLOGICAL_PHASES) {
+            const r = p.diopters / sd;
+            if (Math.abs(r - Math.round(r)) < 1e-6) sel.push(p);
+        }
+        const last = PHYSIOLOGICAL_PHASES[PHYSIOLOGICAL_PHASES.length - 1];
+        if (sel.length === 0 || sel[sel.length - 1] !== last) sel.push(last);
+        const ph = [];
+        for (let i = 0; i < sel.length - 1; i++) {
+            const a = sel[i],
+                b = sel[i + 1];
+            ph.push({
+                from: { r: a.rgb[0], g: a.rgb[1], b: a.rgb[2] },
+                to: { r: b.rgb[0], g: b.rgb[1], b: b.rgb[2] },
+                metaFrom: a,
+                metaTo: b
+            });
+        }
+        return ph;
+    }
+
     // ==================== DYNAMIC BACKGROUND ====================
     // isPausedGetter: функция, возвращающая true/false — вызывается в каждом кадре
     function startDynamicBg(p, viewportEl, isPausedGetter) {
@@ -131,6 +175,8 @@
                 { from: { r: 0, g: 255, b: 0 }, to: { r: 0, g: 255, b: 255 } },
                 { from: { r: 0, g: 255, b: 255 }, to: { r: 0, g: 0, b: 255 } }
             ];
+        } else if (mode === 'physiological') {
+            base = buildPhysiologicalPhases(p.dynamicStep || 0.1);
         } else {
             const A = p.dynamicStartColor || { r: 255, g: 0, b: 0 };
             const B = p.dynamicEndColor || { r: 0, g: 0, b: 255 };
@@ -152,7 +198,10 @@
               )
             : base;
         const cnt = phases.length;
-        const cycleMs = Math.max(100, p.dynamicDuration || 10000);
+        const cycleMs =
+            mode === 'physiological'
+                ? Math.max(100, p.dynamicStepDuration || 1000) * cnt
+                : Math.max(100, p.dynamicDuration || 10000);
         const first = phases[0].from;
         viewportEl.style.background = 'rgb(' + first.r + ',' + first.g + ',' + first.b + ')';
 
