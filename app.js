@@ -2092,7 +2092,7 @@ function deleteNode(id) {
         nodeElements.delete(id);
     }
     for (const [k, els] of connectionElements)
-        if (k.includes(id)) {
+        if (k.startsWith(id + '_') || k.endsWith('_' + id) || k === id + '_' + id) {
             els.line.remove();
             els.arrow.remove();
             connectionElements.delete(k);
