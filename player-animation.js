@@ -51,8 +51,12 @@ function startSingleStimAnimation(p) {
     setStimColorRGB(first.r, first.g, first.b);
     PlayerState.singleStimAnimStart = null;
     function tick(now) {
-        if (!PlayerState.playerRunning || PlayerState.isPaused) {
+        if (!PlayerState.playerRunning) {
             PlayerState.singleStimAnimId = null;
+            return;
+        }
+        if (PlayerState.isPaused) {
+            PlayerState.singleStimAnimId = requestAnimationFrame(tick);
             return;
         }
         if (PlayerState.singleStimAnimStart === null) PlayerState.singleStimAnimStart = now;
@@ -109,8 +113,12 @@ function startSingleBgAnimation(p) {
     stimArea.style.backgroundColor = `rgb(${first.r},${first.g},${first.b})`;
     PlayerState.singleBgAnimStart = null;
     function tick(now) {
-        if (!PlayerState.playerRunning || PlayerState.isPaused) {
+        if (!PlayerState.playerRunning) {
             PlayerState.singleBgAnimId = null;
+            return;
+        }
+        if (PlayerState.isPaused) {
+            PlayerState.singleBgAnimId = requestAnimationFrame(tick);
             return;
         }
         if (PlayerState.singleBgAnimStart === null) PlayerState.singleBgAnimStart = now;
@@ -169,8 +177,12 @@ function startBlinkAnimation(opts) {
     }
 
     function tick() {
-        if (!PlayerState.playerRunning || PlayerState.isPaused) {
+        if (!PlayerState.playerRunning) {
             PlayerState._blinkTimerId = null;
+            return;
+        }
+        if (PlayerState.isPaused) {
+            PlayerState._blinkTimerId = setTimeout(tick, 50);
             return;
         }
         const isA = PlayerState._blinkLocalState.current === 'A';
@@ -244,8 +256,12 @@ function startCircleAnimation(node) {
         }
     }
     function tick(now) {
-        if (!PlayerState.playerRunning || PlayerState.isPaused) {
+        if (!PlayerState.playerRunning) {
             PlayerState._circleAnimId = null;
+            return;
+        }
+        if (PlayerState.isPaused) {
+            PlayerState._circleAnimId = requestAnimationFrame(tick);
             return;
         }
         if (PlayerState._circleAnimStart === null) PlayerState._circleAnimStart = now;
@@ -294,6 +310,13 @@ function stopPeripheralAnimation() {
     PlayerState._periAnimStart = null;
     clearPeripheralLayer();
 }
+function stopAll() {
+    stopSingleStimAnimation();
+    stopSingleBgAnimation();
+    stopBlinkAnimation();
+    stopCircleAnimation();
+    stopPeripheralAnimation();
+}
 function buildPeripheralDots(node) {
     clearPeripheralLayer();
     if (!node.periEnabled) return;
@@ -339,8 +362,12 @@ function buildPeripheralDots(node) {
     if (node.periMotion === 'static') return;
     PlayerState._periAnimStart = null;
     function tick(now) {
-        if (!PlayerState.playerRunning || PlayerState.isPaused) {
+        if (!PlayerState.playerRunning) {
             PlayerState._periAnimId = null;
+            return;
+        }
+        if (PlayerState.isPaused) {
+            PlayerState._periAnimId = requestAnimationFrame(tick);
             return;
         }
         if (PlayerState._periAnimStart === null) PlayerState._periAnimStart = now;
@@ -485,6 +512,7 @@ function applyRandomStimulusPosition(size) {
         startCircleAnimation,
         stopCircleAnimation,
         stopPeripheralAnimation,
+        stopAll,
         buildPeripheralDots,
         buildDefocusFrame,
         removeSingleGridLines,

@@ -36,11 +36,9 @@
         if (PS.currentShowTimer) { clearTimeout(PS.currentShowTimer); PS.currentShowTimer = null; }
 
         // Freeze animations
-        if (PS.singleStimAnimId) { cancelAnimationFrame(PS.singleStimAnimId); PS.singleStimAnimId = null; }
-        if (PS.singleBgAnimId)   { cancelAnimationFrame(PS.singleBgAnimId);   PS.singleBgAnimId = null; }
-        if (PS._circleAnimId)    { cancelAnimationFrame(PS._circleAnimId);    PS._circleAnimId = null; }
-        if (PS._periAnimId)      { cancelAnimationFrame(PS._periAnimId);      PS._periAnimId = null; }
-        if (PS._blinkTimerId)    { clearTimeout(PS._blinkTimerId);            PS._blinkTimerId = null; }
+        if (window.PlayerAnimation && window.PlayerAnimation.stopAll) {
+            window.PlayerAnimation.stopAll();
+        }
 
         PS.responsePhaseActive = false;
         const rb = document.getElementById('response-buttons');
