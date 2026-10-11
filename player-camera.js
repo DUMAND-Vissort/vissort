@@ -391,8 +391,9 @@
             } catch (e) {
                 window.camStats.fails++;
                 console.warn('[cam] detect error:', e && e.message ? e.message : e);
+            } finally {
+                window._camDetecting = false;
             }
-            window._camDetecting = false;
         }
     }
 

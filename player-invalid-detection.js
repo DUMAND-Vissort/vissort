@@ -59,10 +59,7 @@
     window._invalidAnswerCount = window._invalidAnswerCount || 0;
 
     const _LEAN_DROP_PCT = 15;
-    const _LEAN_FAST_MS = 800;
-    const _LEAN_WINDOW_MS = 4000;
     const _DEVIATION_HISTORY_MS = 2000;
-    const _LEAN_CONSECUTIVE_FRAMES = 3;
 
     function _recordDeviation(pct) {
         if (!PS.playerRunning) return;
