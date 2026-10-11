@@ -450,6 +450,7 @@
         </style>
 
         <!-- Sentry -->
+        <script src="vissort-env.js"></script>
         <script src="sentry.min.js" crossorigin="anonymous"></script>
         <script>
             (function () {
@@ -464,7 +465,7 @@
                         location.hostname === 'localhost' || location.hostname === '127.0.0.1'
                             ? 'dev'
                             : 'production',
-                    release: 'vissort-2.0.0',
+                    release: (window.VissortEnv && window.VissortEnv.RELEASE) || 'vissort-2.0.0',
                     dataCollection: { userInfo: false, httpBodies: [] },
                     tracesSampleRate: 0,
                     beforeSend: function (event) {
@@ -653,7 +654,6 @@
         <script src="vissort-device.js" defer></script>
         <script src="voice.js" defer></script>
         <script src="user.js"></script>
-        <script src="vissort-env.js" defer></script>
         <script src="vissort-core.js" defer></script>
         <script src="player-state.js" defer></script>
         <script src="player-camera.js" defer></script>

@@ -20,16 +20,8 @@
         <title>Vissort Studio Pro — Администратор</title>
         <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
         <style>
-            @font-face {
-                font-family: 'Sivtsev';
-                src: url('https://cdn.jsdelivr.net/gh/shoorick/sivtsev-font@master/Sivtsev-Eye-Chart.otf')
-                    format('opentype');
-                font-weight: normal;
-                font-style: normal;
-                font-display: swap;
-            }
             * {
                 box-sizing: border-box;
                 margin: 0;
@@ -1475,6 +1467,7 @@
         </style>
 
         <!-- Sentry -->
+        <script src="vissort-env.js"></script>
         <script src="sentry.min.js" crossorigin="anonymous"></script>
         <script>
             (function () {
@@ -1489,7 +1482,7 @@
                         location.hostname === 'localhost' || location.hostname === '127.0.0.1'
                             ? 'dev'
                             : 'production',
-                    release: 'vissort-2.0.0',
+                    release: (window.VissortEnv && window.VissortEnv.RELEASE) || 'vissort-2.0.0',
                     dataCollection: { userInfo: false, httpBodies: [] },
                     tracesSampleRate: 0,
                     beforeSend: function (event) {
@@ -2712,7 +2705,6 @@
         <div id="connection-menu"></div>
         <video id="hidden-video" playsinline muted></video>
 
-        <script src="vissort-env.js"></script>
         <script src="vissort-core.js"></script>
         <script src="data-layer.js"></script>
         <script src="voice.js"></script>
