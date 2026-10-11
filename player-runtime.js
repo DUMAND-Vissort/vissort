@@ -2818,9 +2818,11 @@ else init();
             apply();
         }
     });
-    // Периодически проверяем -- видео создаётся динамически
-    setInterval(apply, 1000);
-    setTimeout(apply, 500);
+    // Наблюдаем за появлением #hidden-video (создаётся динамически в enableCamera)
+    new MutationObserver(function () {
+        if (document.getElementById('hidden-video')) apply();
+    }).observe(document.body, { childList: true, subtree: true });
+    apply();
     console.log('[pip] camera preview installed');
 })();
 
@@ -2839,7 +2841,7 @@ else init();
         }
         return el;
     }
-    setInterval(function () {
+    function _hudTick() {
         var v = document.getElementById('hidden-video');
         var el = ensure();
         if (!v || !el) return;
@@ -2909,7 +2911,28 @@ else init();
         v.style.borderColor = border;
         v.style.borderWidth = '3px';
         v.style.borderStyle = 'solid';
-    }, 250);
+    }
+    var _hudIntervalId = null;
+    function _hudStart() {
+        if (_hudIntervalId) return;
+        _hudTick();
+        _hudIntervalId = setInterval(_hudTick, 250);
+    }
+    function _hudStop() {
+        if (_hudIntervalId) { clearInterval(_hudIntervalId); _hudIntervalId = null; }
+        var _el = document.getElementById('cam-hud');
+        if (_el) _el.style.display = 'none';
+    }
+    function _hudSync() {
+        var _v = document.getElementById('hidden-video');
+        if (_v && _v.classList.contains('pip-visible')) _hudStart();
+        else _hudStop();
+    }
+    new MutationObserver(_hudSync).observe(document.body, {
+        childList: true, subtree: true,
+        attributes: true, attributeFilter: ['class']
+    });
+    _hudSync();
 
     // Анимация мигания
     var st = document.createElement('style');
@@ -2934,6 +2957,15 @@ else init();
         return el;
     }
     setInterval(function () {
+        // Ранний выход: если тренировка не идёт -- не парсим DOM, не крутим логику.
+        if (!PlayerState.playerRunning || PlayerState.isPaused) {
+            if (window._faceLostPause) {
+                window._faceLostPause = false;
+                var _o = document.getElementById('face-lost-overlay');
+                if (_o && _o.style.display === 'flex') _o.style.display = 'none';
+            }
+            return;
+        }
         var overlay = ensureOverlay();
         var face = document.getElementById('cam-indicator');
         var faceText = face ? face.textContent : '';
