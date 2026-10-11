@@ -992,7 +992,7 @@ UI:
 
 Ключевое место — `app.js`, константа `ADMIN_EMAILS`:
 
-    const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
+    const ADMIN_EMAILS = ['dumand@gmail.com'];  // было: + eremeevap@gmail.com (удалён 08d4c0f)
 
 Используется в `updateAuthUI()`:
 
@@ -1001,9 +1001,9 @@ UI:
         return;
     }
 
-Проблема: по плану Фазы 4 пользователь eremeevap удалён из админов, но в app.js он остался. Значит, eremeevap сохраняет доступ к редактору. Второй источник правды помимо Edge Function.
+**Проблема (была):** до 2026-10-11 пользователь eremeevap был в ADMIN_EMAILS в app.js — сохранял доступ к редактору (в обход Edge Function whitelist).
 
-Действие: убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js.
+**СТАТУС: FIXED** — коммит 08d4c0f (удалён из ADMIN_EMAILS).
 
 ### §11.2 SUPABASE_ANON_KEY — 5 копий
 
@@ -1057,7 +1057,7 @@ Edge Function backup (в планах) — не реализована.
 
 ### §11.6 Чек-лист Фазы 4
 
-- [ ] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js
+- [x] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — FIXED 08d4c0f
 - [ ] Ротировать anon-ключ и вынести в единую константу
 - [ ] Аудит RLS на всех таблицах
 - [ ] Логирование Edge Functions

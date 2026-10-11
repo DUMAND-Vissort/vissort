@@ -97,7 +97,7 @@
 - [ ] RLS-аудит Supabase — §11.3 PROJECT-MAP.md
 - [ ] Логирование Edge Functions — §11.4
 - [ ] Бэкап БД (cron + Storage) — §11.5
-- [ ] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — §11.1
+- [x] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — §11.1 (FIXED 08d4c0f)
 - [ ] Ротировать SUPABASE_ANON_KEY (5 копий) — §11.2
 
 ---

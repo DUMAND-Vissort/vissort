@@ -113,7 +113,7 @@
 - RLS-аудит — отложен (см. PROJECT-MAP.md §11.3)
 - Логирование Edge Functions — отложено (§11.4)
 - Бэкап БД — не настроен (§11.5)
-- ADMIN_EMAILS — eremeevap@gmail.com всё ещё в app.js (§11.1)
+- ~~ADMIN_EMAILS — eremeevap@gmail.com~~ закрыто 2026-10-11 (коммит 08d4c0f)
 
 ### Баг-фиксы после Фазы 4 (2026-10-11)
 
