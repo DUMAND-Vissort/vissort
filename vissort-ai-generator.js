@@ -6,8 +6,10 @@
 (function installAIGenerator() {
     'use strict';
 
-    const SUPABASE_URL = 'https://hzvypwdpdhsjzaclxmbm.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
+    const SUPABASE_URL = (window.VissortEnv && window.VissortEnv.SUPABASE_URL) ||
+        'https://hzvypwdpdhsjzaclxmbm.supabase.co';
+    const SUPABASE_ANON_KEY = (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_KEY) ||
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
     const FN_URL = SUPABASE_URL + '/functions/v1/generate-scenario';
 
     const $ = (id) => document.getElementById(id);
