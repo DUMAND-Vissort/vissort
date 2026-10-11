@@ -5382,7 +5382,7 @@ function createCellElement(cell, params, direction, idx) {
     const el = document.createElement('div');
     el.className = 'grid-cell';
     el.style.cssText = `left:${cell.col * cw}px;top:${cell.row * ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR || 0},${params.bgG || 0},${params.bgB || 0});position:absolute;box-sizing:border-box;border:3px solid transparent;`;
-    el.dataset.index = idx !== undefined ? idx : activeCells.indexOf(cell);
+    el.dataset.index = idx !== undefined ? idx : -1;
     const size = params.size || currentSize;
     const svgData = getStimulusSVG(
         {
