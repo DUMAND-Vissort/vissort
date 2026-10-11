@@ -382,31 +382,6 @@ function bindAuthForm() {
     });
 }
 
-function showAuthModal(mode) {
-    PlayerState.authMode = mode;
-    const t = $('auth-title');
-    const nl = $('auth-name-label');
-    const ni = $('auth-name');
-    const tb = $('auth-toggle');
-    const sb = $('auth-submit');
-    if (mode === 'signin') {
-        t.textContent = 'Вход';
-        nl.style.display = 'none';
-        ni.style.display = 'none';
-        tb.textContent = 'Нет аккаунта? Регистрация';
-        sb.textContent = 'Войти';
-    } else {
-        t.textContent = 'Регистрация';
-        nl.style.display = 'block';
-        ni.style.display = 'block';
-        tb.textContent = 'Уже есть аккаунт? Войти';
-        sb.textContent = 'Зарегистрироваться';
-    }
-    authModal.classList.add('open');
-    bindAuthForm();
-    prefillAuthEmail();
-    focusAuthField();
-}
 
 async function doAuth() {
     const email = $('auth-email').value.trim();
