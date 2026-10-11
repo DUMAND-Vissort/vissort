@@ -20,10 +20,14 @@
     };
 
     // ==================== ACUITY / MATH ====================
+    // Коэффициент перевода: 1 угловая минута на 1 м ≈ 0.2909 мм (визуальный угол),
+    // но для офтальмологической формулы Сивцева используется 1.454 (табличный коэффициент).
+    const ACUITY_MM_COEFF = 1.454;
+
     function acuityToSizeMm(acuity, distanceMeters) {
         const d = distanceMeters && distanceMeters > 0 ? distanceMeters : 1;
         const V = Math.max(0.01, acuity || 1.0);
-        return (d * 1.454) / V;
+        return (d * ACUITY_MM_COEFF) / V;
     }
     function acuityToSizePx(acuity, distanceMeters, ppi) {
         const sizeMm = acuityToSizeMm(acuity, distanceMeters);

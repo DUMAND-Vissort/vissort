@@ -45,6 +45,15 @@
           ? { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
           : { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
 
+    // === Константы поведения ===
+    const HARD_LIMIT_M = 1.0;              // Жёсткий лимит дистанции (м): при превышении — баннер + abort.
+    const BASELINE_WAIT_MS = 3000;         // Ожидание стабильного положения перед фиксацией baseline (мс).
+    const MIN_BASELINE_M = 0.1;            // Минимальный валидный baseline (м).
+    const DEFAULT_TOL_NEAR_CM = 10;        // Fallback: допуск отклонения ближе baseline (см).
+    const DEFAULT_TOL_FAR_CM = 15;         // Fallback: допуск отклонения дальше baseline (см).
+    const DEFAULT_TOL_INCREASE_PCT = 15;   // Fallback: UI-warning — увеличение дистанции (%).
+    const DEFAULT_TOL_DECREASE_PCT = 10;   // Fallback: UI-warning — уменьшение дистанции (%).
+
     let _camLoopStarted = false;
 
     window.camStats = {
@@ -184,7 +193,7 @@
 
     function _checkHardLimit() {
         if (PS.curDistanceM == null) return true;
-        if (PS.curDistanceM > 1.0) {
+        if (PS.curDistanceM > HARD_LIMIT_M) {
             if (global.PlayerDistWarning) global.PlayerDistWarning.showDistHardBanner();
             return false;
         }
@@ -443,26 +452,26 @@
         if (PS.camBaseline == null) {
             if (!window._baselineWaitStart) window._baselineWaitStart = performance.now();
             var _bw = performance.now() - window._baselineWaitStart;
-            if (_bw > 3000) {
+            if (_bw > BASELINE_WAIT_MS) {
                 PS.camBaseline = PS.curDistanceM;
                 window._fastLeanAt = 0;
                 window._deviationHistory = [];
             }
         }
-        if (PS.camBaseline == null || !isFinite(PS.camBaseline) || PS.camBaseline <= 0.1) return;
+        if (PS.camBaseline == null || !isFinite(PS.camBaseline) || PS.camBaseline <= MIN_BASELINE_M) return;
         const dev = ((PS.curDistanceM - PS.camBaseline) / PS.camBaseline) * 100;
         if (PS.playerRunning && !PS.isPaused) {
             if (window._recordDeviation) window._recordDeviation(dev);
             if (window._updateStimulusDim) window._updateStimulusDim();
             // Порог в см → процент от baseline.
             var _baselineCm = PS.camBaseline ? PS.camBaseline * 100 : 100;
-            var _tolNearPct = ((PS._tolNearCm || 10) * 100) / _baselineCm;
-            var _tolFarPct = ((PS._tolFarCm || 15) * 100) / _baselineCm;
+            var _tolNearPct = ((PS._tolNearCm || DEFAULT_TOL_NEAR_CM) * 100) / _baselineCm;
+            var _tolFarPct = ((PS._tolFarCm || DEFAULT_TOL_FAR_CM) * 100) / _baselineCm;
             var _tol = dev < 0 ? _tolNearPct : _tolFarPct;
 
             if (Math.abs(dev) > _tol) {
-                // Hard limit: если дистанция > 1.0 м — всегда отменяем (C1)
-                if (PS.curDistanceM > 1.0) {
+                // Hard limit: если дистанция > HARD_LIMIT_M — всегда отменяем (C1)
+                if (PS.curDistanceM > HARD_LIMIT_M) {
                     if (!PS._waitingStable)
                         _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
                 } else if (PS._distControlMode === 'auto') {
@@ -479,12 +488,12 @@
             (PS.userScenario &&
                 PS.userScenario.params &&
                 PS.userScenario.params.distanceToleranceIncreasePct) ||
-            15;
+            DEFAULT_TOL_INCREASE_PCT;
         const dnTol =
             (PS.userScenario &&
                 PS.userScenario.params &&
                 PS.userScenario.params.distanceToleranceDecreasePct) ||
-            10;
+            DEFAULT_TOL_DECREASE_PCT;
         const ci = _camIndicator();
         if (!ci) return;
         if (dev > upTol) {

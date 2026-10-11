@@ -64,8 +64,15 @@
     window._fastLeanAt = window._fastLeanAt || 0;
     window._invalidAnswerCount = window._invalidAnswerCount || 0;
 
-    const _LEAN_DROP_PCT = 15;
-    const _DEVIATION_HISTORY_MS = 2000;
+    const _LEAN_DROP_PCT = 15;              // Порог наклона (%): |deviation| > X → стимул аннулируется.
+    const _DEVIATION_HISTORY_MS = 2000;     // Окно скользящей истории отклонений (мс).
+    const _LEAN_VELOCITY_PCT = 8;           // Порог скорости наклона (%), при которой срабатывает fast_lean.
+    const _LEAN_LOG_INTERVAL_MS = 2000;     // Антиспам: минимальный интервал логирования velocity (мс).
+    const _LEAN_LOG_INTERVAL_SLOW_MS = 3000; // Антиспам: интервал логирования при медленном наклоне (мс).
+    const _FAST_LEAN_WINDOW_MS = 2000;      // Окно, в котором fast_lean считается актуальным (мс).
+    const _DIM_DURATION_MS = 1500;          // Длительность приглушения стимула после наклона (мс).
+    const _TOAST_FADE_MS = 1800;            // Тост: начало fade-out (мс).
+    const _TOAST_REMOVE_MS = 2200;          // Тост: удаление из DOM (мс).
 
     function _recordDeviation(pct) {
         if (!PS.playerRunning) return;
@@ -81,10 +88,10 @@
         var _lastH = window._deviationHistory[window._deviationHistory.length - 2];
         if (_lastH) {
             var _vel = Math.abs(pct - _lastH.dev);
-            if (_vel > 8) {
+            if (_vel > _LEAN_VELOCITY_PCT) {
                 window._fastLeanAt = now;
                 var _llog = window._lastLeanLogAt || 0;
-                if (now - _llog > 2000) {
+                if (now - _llog > _LEAN_LOG_INTERVAL_MS) {
                     VLog.warn('[lean] velocity', _vel.toFixed(1) + '%');
                     window._lastLeanLogAt = now;
                 }
@@ -93,7 +100,7 @@
         if (Math.abs(pct) > _LEAN_DROP_PCT) {
             window._fastLeanAt = now;
             var _lastLeanLogAt = window._lastLeanLogAt || 0;
-            if (now - _lastLeanLogAt > 3000) {
+            if (now - _lastLeanLogAt > _LEAN_LOG_INTERVAL_SLOW_MS) {
                 VLog.warn('[lean]', pct.toFixed(1) + '%');
                 window._lastLeanLogAt = now;
             }
@@ -112,7 +119,7 @@
                 }
             }
         } catch (e) {}
-        if (now - window._fastLeanAt < 2000) return 'fast_lean';
+        if (now - window._fastLeanAt < _FAST_LEAN_WINDOW_MS) return 'fast_lean';
         return null;
     }
 
@@ -132,7 +139,7 @@
         var leanAge = now - (window._fastLeanAt || 0);
         var stim = document.getElementById('stim');
         if (!stim) return;
-        if (leanAge < 1500) {
+        if (leanAge < _DIM_DURATION_MS) {
             stim.style.opacity = '0.7';
         } else if (stim.style.opacity === '0.7') {
             stim.style.opacity = '';
@@ -150,10 +157,10 @@
         document.body.appendChild(el);
         setTimeout(function () {
             el.style.opacity = '0';
-        }, 1800);
+        }, _TOAST_FADE_MS);
         setTimeout(function () {
             if (el.parentNode) el.remove();
-        }, 2200);
+        }, _TOAST_REMOVE_MS);
     }
 
     // ==================== RESUME AFTER STABLE ====================
