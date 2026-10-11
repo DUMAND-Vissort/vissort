@@ -30,3 +30,11 @@ patch*.cjs
 
 # Playwright test credentials
 .env.test
+
+# Временные файлы (part-разбиение, бэкапы)
+*.part*.txt
+docs/PROJECT-MAP.backup-*.md
+docs/_mermaid/
+docs/_parts/
+docs/PART2.md
+docs/PART3.md
