@@ -34,7 +34,7 @@
 
         init() {
             if (!('speechSynthesis' in window)) {
-                console.warn('[voice] Web Speech API не поддерживается');
+                VLog.warn('[voice] Web Speech API не поддерживается');
                 this.enabled = false;
                 return;
             }
@@ -58,7 +58,7 @@
             const all = window.speechSynthesis.getVoices();
             this._voices = all.filter((v) => /^ru/i.test(v.lang));
             if (this._voices.length === 0) this._voices = all;
-            console.log(
+            VLog.log(
                 '[voice] голосов:',
                 this._voices.length,
                 this._voices.map((v) => v.name + ' (' + v.lang + ')').join(', ')
@@ -104,7 +104,7 @@
             try {
                 window.speechSynthesis.speak(u);
             } catch (e) {
-                console.warn('[voice] speak:', e);
+                VLog.warn('[voice] speak:', e);
             }
         },
 
@@ -208,7 +208,7 @@
 
         readText(text, startIndex = 0) {
             if (!this.enabled) {
-                console.warn('[voice] озвучивание выключено');
+                VLog.warn('[voice] озвучивание выключено');
                 return;
             }
             if (!('speechSynthesis' in window)) return;
@@ -219,7 +219,7 @@
             this.reading.paused = false;
             this.reading.sentences = sentences;
             this.reading.index = Math.max(0, Math.min(startIndex, sentences.length - 1));
-            console.log('[voice] чтение вслух, предложений:', sentences.length);
+            VLog.log('[voice] чтение вслух, предложений:', sentences.length);
             updateReadingUI();
             this._readNext();
         },
@@ -246,13 +246,13 @@
             };
             u.onerror = (e) => {
                 if (e.error === 'interrupted' || e.error === 'canceled') return;
-                console.warn('[voice] utterance error:', e.error);
+                VLog.warn('[voice] utterance error:', e.error);
             };
             this.reading.currentUtterance = u;
             try {
                 window.speechSynthesis.speak(u);
             } catch (e) {
-                console.warn('[voice] speak:', e);
+                VLog.warn('[voice] speak:', e);
             }
         },
 
@@ -321,7 +321,7 @@
         readReadingContent() {
             const el = document.getElementById('reading-content');
             if (!el) {
-                console.warn('[voice] #reading-content не найден');
+                VLog.warn('[voice] #reading-content не найден');
                 return;
             }
             const text = el.textContent || el.textContent || '';
@@ -366,7 +366,7 @@
         };
         const text = phrases[key];
         if (!text) {
-            console.warn('[voice] нет фразы для ключа:', key);
+            VLog.warn('[voice] нет фразы для ключа:', key);
             return;
         }
         this.say(text, opts);
@@ -643,5 +643,5 @@
         watchReadingViewport();
     });
 
-    console.log('[voice] модуль установлен');
+    VLog.log('[voice] модуль установлен');
 })();

@@ -183,7 +183,7 @@
             await faceapi.nets.tinyFaceDetector.loadFromUri(M);
             await faceapi.nets.faceLandmark68Net.loadFromUri(M);
         } catch (e) {
-            console.warn('[onboarding] face-api:', e);
+            VLog.warn('[onboarding] face-api:', e);
         }
     }
 
@@ -268,5 +268,5 @@
     }
 
     global.Onboarding = { start, restart };
-    console.log('[onboarding] модуль установлен');
+    VLog.log('[onboarding] модуль установлен');
 })(window);

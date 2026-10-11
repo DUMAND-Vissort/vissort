@@ -48,10 +48,10 @@
     // УТИЛИТЫ
     // ============================================================
     function log(...args) {
-        console.log('%c[Data]', 'color:#8b5cf6;font-weight:bold;', ...args);
+        VLog.log('%c[Data]', 'color:#8b5cf6;font-weight:bold;', ...args);
     }
     function warn(...args) {
-        console.warn('%c[Data]', 'color:#f59e0b;font-weight:bold;', ...args);
+        VLog.warn('%c[Data]', 'color:#f59e0b;font-weight:bold;', ...args);
     }
     function uuid() {
         if (global.crypto && global.crypto.randomUUID) return global.crypto.randomUUID();
@@ -109,7 +109,7 @@
                 db = req.result;
                 _reopenAttempts = 0;
                 db.onclose = () => {
-                    console.warn('[Data] IndexedDB закрыта');
+                    VLog.warn('[Data] IndexedDB закрыта');
                     db = null;
                 };
                 db.onversionchange = () => {
@@ -147,7 +147,7 @@
                         reject(new Error('IndexedDB failed to reopen after 3 attempts'));
                         return;
                     }
-                    console.warn('[Data] DB закрыта, переподключаюсь...');
+                    VLog.warn('[Data] DB закрыта, переподключаюсь...');
                     db = null;
                     openDB()
                         .then(() => idb(store, mode, fn))
@@ -191,7 +191,7 @@
                         reject(new Error('IndexedDB failed to reopen after 3 attempts'));
                         return;
                     }
-                    console.warn('[Data] DB closed, reopening (idbRequest)...');
+                    VLog.warn('[Data] DB closed, reopening (idbRequest)...');
                     db = null;
                     openDB()
                         .then(() => idbRequest(store, mode, fn))

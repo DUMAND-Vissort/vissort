@@ -15,7 +15,7 @@
         RELEASE: RELEASE
     };
 
-    console.log('[VissortEnv] loaded', {
+    VLog.log('[VissortEnv] loaded', {
         url: SUPABASE_URL,
         keyLen: SUPABASE_ANON_KEY.length
     });

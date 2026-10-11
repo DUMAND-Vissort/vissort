@@ -89,5 +89,5 @@
         }
     };
 
-    console.log('[VissortDialog] installed');
+    VLog.log('[VissortDialog] installed');
 })(window);

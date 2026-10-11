@@ -251,5 +251,5 @@
         stopDynamicBg
     };
 
-    console.log('[player-reading] module installed');
+    VLog.log('[player-reading] module installed');
 })(window);

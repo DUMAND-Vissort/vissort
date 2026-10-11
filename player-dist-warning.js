@@ -50,5 +50,5 @@
         hideDistHardBanner
     };
 
-    console.log('[player-dist-warning] module installed');
+    VLog.log('[player-dist-warning] module installed');
 })(window);

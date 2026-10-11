@@ -493,5 +493,5 @@
         flashCell: flashCell
     };
 
-    console.log('[VissortCore] installed. Functions:', Object.keys(global.VissortCore).length);
+    VLog.log('[VissortCore] installed. Functions:', Object.keys(global.VissortCore).length);
 })(window);

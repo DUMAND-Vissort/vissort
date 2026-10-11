@@ -30,7 +30,7 @@
         if (!PS.playerRunning || PS.isPaused) return;
         if (PS._waitingStable) return;
 
-        console.log('[abort] reason=' + reason + ' (dist=' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm)');
+        VLog.log('[abort] reason=' + reason + ' (dist=' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm)');
 
         if (PS.currentShowTimer) { clearTimeout(PS.currentShowTimer); PS.currentShowTimer = null; }
 
@@ -73,7 +73,7 @@
                 window._fastLeanAt = now;
                 var _llog = window._lastLeanLogAt || 0;
                 if (now - _llog > 2000) {
-                    console.warn('[lean] velocity', _vel.toFixed(1) + '%');
+                    VLog.warn('[lean] velocity', _vel.toFixed(1) + '%');
                     window._lastLeanLogAt = now;
                 }
             }
@@ -82,7 +82,7 @@
             window._fastLeanAt = now;
             var _lastLeanLogAt = window._lastLeanLogAt || 0;
             if (now - _lastLeanLogAt > 3000) {
-                console.warn('[lean]', pct.toFixed(1) + '%');
+                VLog.warn('[lean]', pct.toFixed(1) + '%');
                 window._lastLeanLogAt = now;
             }
         }
@@ -145,7 +145,7 @@
         PS._stableSince = 0;
         PS._stableBuf = [];
         PS._stimulusDistance = PS.curDistanceM;
-        console.log('[abort] stable at ' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm -- resuming');
+        VLog.log('[abort] stable at ' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm -- resuming');
 
         var _n = null;
         try { _n = _callbacks.onGetNode(PS.gCurrentNodeId); } catch (e) { _n = null; }
@@ -154,7 +154,7 @@
             else _callbacks.onPlayGraphStimulus(_n);
             return;
         }
-        try { _callbacks.onShowNextStimulus(); } catch (e) { console.warn('[abort] resume flat failed:', e); }
+        try { _callbacks.onShowNextStimulus(); } catch (e) { VLog.warn('[abort] resume flat failed:', e); }
     }
 
     // ==================== EXPORT ====================
@@ -169,5 +169,5 @@
         _showInvalidToast
     };
 
-    console.log('[player-invalid-detection] module installed');
+    VLog.log('[player-invalid-detection] module installed');
 })(window);

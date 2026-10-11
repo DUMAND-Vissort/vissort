@@ -522,5 +522,5 @@ function applyRandomStimulusPosition(size) {
         applyRandomStimulusPosition
     };
 
-    console.log('[player-animation] module installed');
+    VLog.log('[player-animation] module installed');
 })(window);

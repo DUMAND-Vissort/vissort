@@ -66,7 +66,7 @@ const SUPABASE_ANON_KEY = (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_
             e.stopPropagation();
             if (typeof doAuth === 'function') doAuth();
         });
-        console.log('[auth] форма привязана');
+        VLog.log('[auth] форма привязана');
     }
     function focusFirstField() {
         const email = document.getElementById('auth-email');
@@ -95,7 +95,7 @@ const SUPABASE_ANON_KEY = (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_
         });
         obs.observe(modal, { attributes: true, attributeFilter: ['class'] });
         if (modal.classList.contains('open')) onModalOpen();
-        console.log('[auth] observer установлен');
+        VLog.log('[auth] observer установлен');
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', attach);
@@ -113,7 +113,7 @@ window._logAnswer = function (entry) {
         tag + ' rt=' + (entry.rt != null ? Math.round(entry.rt) + 'ms' : 'n/a') + ' correct=' + entry.correct;
     if (entry.direction) msg += ' dir=' + entry.direction;
     if (entry.reason) msg += ' reason=' + entry.reason;
-    console.log(msg);
+    VLog.log(msg);
 };
 window._reactionReport = function () {
     var log = window._reactionLog || [];
@@ -124,9 +124,9 @@ window._reactionReport = function () {
         .map(function (e) {
             return e.rt;
         });
-    console.log('Total: ' + log.length + ' | Valid: ' + rts.length);
+    VLog.log('Total: ' + log.length + ' | Valid: ' + rts.length);
     if (rts.length)
-        console.log(
+        VLog.log(
             'RT raw: [' +
                 rts
                     .map(function (x) {
@@ -257,7 +257,7 @@ function initSupabase() {
                 updateCounters();
                 hideStatus();
                 btnPlayer.disabled = false;
-                console.log('[test] no-login mode');
+                VLog.log('[test] no-login mode');
                 setTimeout(function () {
                     try {
                         enableCamera();
@@ -265,7 +265,7 @@ function initSupabase() {
                 }, 100);
                 return;
             } catch (e) {
-                console.warn('[test] no-login failed:', e);
+                VLog.warn('[test] no-login failed:', e);
             }
         }
     }
@@ -303,7 +303,7 @@ function initSupabase() {
             const { data } = await PlayerState.supabaseClient.auth.getSession();
             if (data?.session?.user) {
                 PlayerState.currentUser = data.session.user;
-                console.log('[auth] fallback: сессия найдена, вызов onLoggedIn');
+                VLog.log('[auth] fallback: сессия найдена, вызов onLoggedIn');
                 _safeOnLoggedIn();
             }
         } catch (e) {}
@@ -426,7 +426,7 @@ async function onLoggedIn() {
             const raw = localStorage.getItem('vissort_test_scenario');
             if (raw) {
                 const testData = JSON.parse(raw);
-                console.log('[test] loading test scenario from localStorage');
+                VLog.log('[test] loading test scenario from localStorage');
                 PlayerState.userScenarios = [
                     {
                         id: '__test__',
@@ -445,16 +445,16 @@ async function onLoggedIn() {
                     try {
                         enableCamera();
                     } catch (e) {
-                        console.warn('[test] camera:', e);
+                        VLog.warn('[test] camera:', e);
                     }
                 }
-                console.log('[test] test scenario loaded, ready to play');
+                VLog.log('[test] test scenario loaded, ready to play');
                 return;
             } else {
-                console.warn('[test] no scenario in localStorage');
+                VLog.warn('[test] no scenario in localStorage');
             }
         } catch (e) {
-            console.warn('[test] failed:', e);
+            VLog.warn('[test] failed:', e);
         }
     }
     // ==== /Тестовый сценарий ====
@@ -470,10 +470,10 @@ async function onLoggedIn() {
                 await Onboarding.start({
                     client: PlayerState.supabaseClient,
                     userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                    onDone: (data) => { if (!data || !data.skipped) enableCamera(); else console.log('[onboarding] пропущено — камера не запрашивается'); }
+                    onDone: (data) => { if (!data || !data.skipped) enableCamera(); else VLog.log('[onboarding] пропущено — камера не запрашивается'); }
                 });
             } catch (e) {
-                console.warn('[user] onboarding:', e);
+                VLog.warn('[user] onboarding:', e);
                 enableCamera();
             }
         } else {
@@ -499,10 +499,10 @@ async function onLoggedIn() {
             await Onboarding.start({
                 client: PlayerState.supabaseClient,
                 userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                onDone: (data) => { if (!data || !data.skipped) enableCamera(); else console.log('[onboarding] пропущено — камера не запрашивается'); }
+                onDone: (data) => { if (!data || !data.skipped) enableCamera(); else VLog.log('[onboarding] пропущено — камера не запрашивается'); }
             });
         } catch (e) {
-            console.warn('[user] onboarding:', e);
+            VLog.warn('[user] onboarding:', e);
             enableCamera();
         }
     } else {
@@ -859,7 +859,7 @@ function _recalcStimulusSize() {
     }
     // Обновить _stimulusDistance — теперь baseline для дальнейших проверок
     PlayerState._stimulusDistance = PlayerState.curDistanceM;
-    console.log('[auto-recalc] size updated to ' + eff + 'px at ' + PlayerState.curDistanceM.toFixed(2) + 'm');
+    VLog.log('[auto-recalc] size updated to ' + eff + 'px at ' + PlayerState.curDistanceM.toFixed(2) + 'm');
 }
 
 function playGraphStimulus(node) {
@@ -1007,7 +1007,7 @@ function playGraphStimulus(node) {
             // Таймаут не увеличивает seriesStep
             // Полная серия без ответов → пауза
             if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (node.seriesSize || 6)) {
-                console.log('[pause] полная серия без ответов, пауза');
+                VLog.log('[pause] полная серия без ответов, пауза');
                 PlayerState.seriesNoAnswer = 0;
                 pauseTraining();
                 return;
@@ -1535,13 +1535,13 @@ function finishGraphReading(node) {
 // ==================== ЗАПУСК ====================
 function startPlayer() {
     if (PlayerState.playerRunning) {
-        console.warn('[player] уже запущен');
+        VLog.warn('[player] уже запущен');
         return;
     }
     // Закрыть status-overlay если открыт
     var _so = document.getElementById('status-overlay');
     if (_so && !_so.classList.contains('hidden')) {
-        console.log('[player] закрываю status-overlay');
+        VLog.log('[player] закрываю status-overlay');
         _so.classList.add('hidden');
     }
     if (!PlayerState.userScenario) {
@@ -1578,7 +1578,7 @@ function startPlayer() {
     PlayerState.gCurrentCompareNode = null;
     window._invalidAnswerCount = 0;
     if (window._reactionTimes) window._reactionTimes = [];
-    console.log('[graph] state reset');
+    VLog.log('[graph] state reset');
     PlayerState.isPaused = false;
     PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
     PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
@@ -1766,7 +1766,7 @@ function showNextStimulus() {
             // Таймаут не увеличивает seriesStep
             // Полная серия без ответов → пауза
             if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (p.seriesSize || 6)) {
-                console.log('[pause] полная серия без ответов, пауза');
+                VLog.log('[pause] полная серия без ответов, пауза');
                 PlayerState.seriesNoAnswer = 0;
                 pauseTraining();
                 return;
@@ -2561,7 +2561,7 @@ async function saveResult(nodeId, reactionTimeMs, isCorrect) {
             created_at: new Date().toISOString()
         });
     } catch (e) {
-        console.warn('[user] save:', e);
+        VLog.warn('[user] save:', e);
     }
 }
 function scheduleVoiceCountdown(durationMs) {
@@ -2619,11 +2619,11 @@ function init() {
                     onShowNextStimulus: () => showNextStimulus(),
                     onGetNode: (id) => gGetNode(id)
                 });
-                console.log('[player-runtime] PlayerInvalidDetection callbacks registered');
+                VLog.log('[player-runtime] PlayerInvalidDetection callbacks registered');
             }
-            console.log('[player-runtime] PlayerAnimation callbacks registered');
+            VLog.log('[player-runtime] PlayerAnimation callbacks registered');
         }
-        console.log('[player-runtime] PlayerCamera callbacks registered');
+        VLog.log('[player-runtime] PlayerCamera callbacks registered');
     }
     $('auth-submit').addEventListener('click', doAuth);
     $('auth-toggle').addEventListener('click', () => {
@@ -2676,7 +2676,7 @@ function init() {
     if (btnCalibrate) {
         btnCalibrate.addEventListener('click', async () => {
             if (typeof Onboarding === 'undefined' || typeof Onboarding.restart !== 'function') {
-                console.warn('[calibrate] Onboarding.restart недоступен');
+                VLog.warn('[calibrate] Onboarding.restart недоступен');
                 return;
             }
             try {
@@ -2759,7 +2759,7 @@ async function loadSivtsevFont() {
         document.fonts.add(font);
         localStorage.setItem(KEY, 'true');
     } catch (e) {
-        console.warn('Sivtsev:', e);
+        VLog.warn('Sivtsev:', e);
     }
 }
 
@@ -2813,7 +2813,7 @@ else init();
         if (document.getElementById('hidden-video')) apply();
     }).observe(document.body, { childList: true, subtree: true });
     apply();
-    console.log('[pip] camera preview installed');
+    VLog.log('[pip] camera preview installed');
 })();
 
 // HUD-оверлей на превью камеры (цвет + текст)
@@ -2929,7 +2929,7 @@ else init();
     st.textContent = '@keyframes camBlink{from{border-color:#dc2626;}to{border-color:#7f1d1d;}}';
     document.head.appendChild(st);
 
-    console.log('[cam-hud] installed');
+    VLog.log('[cam-hud] installed');
 })();
 
 // Пауза и голос при потере лица >2с
@@ -2968,7 +2968,7 @@ else init();
         if (training && longLoss) {
             if (overlay.style.display !== 'flex') {
                 overlay.style.display = 'flex';
-                console.warn('[face] потеряно >2с — пауза');
+                VLog.warn('[face] потеряно >2с — пауза');
                 if (window.Voice && window.Voice.sayKey)
                     window.Voice.sayKey('returnToFrame', { cancel: true });
             }
@@ -2976,7 +2976,7 @@ else init();
         } else {
             if (overlay.style.display === 'flex') {
                 overlay.style.display = 'none';
-                console.log('[face] лицо вернулось — продолжаем');
+                VLog.log('[face] лицо вернулось — продолжаем');
                 if (window.Voice && window.Voice.sayKey) window.Voice.sayKey('faceFound', { cancel: true });
                 // После долгой потери лица — ожидание стабилизации (like deviation)
                 if (typeof _abortCurrentStimulus === 'function') {

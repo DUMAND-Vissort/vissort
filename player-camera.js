@@ -64,20 +64,20 @@
 
     window.camReport = function () {
         var s = window.camStats;
-        console.log('=== CAMERA STATS ===');
-        console.log('Device      :', s.device);
-        console.log('Backend     :', s.backend);
-        console.log('Input size  :', s.inputSize + 'x' + s.inputSize);
-        console.log('Interval    :', s.intervalMs + ' ms');
-        console.log('Video       :', s.videoW + 'x' + s.videoH);
-        console.log('Detections  :', s.detections);
-        console.log('Fails       :', s.fails);
-        console.log('Avg detect  :', s.avgDetectMs.toFixed(1) + ' ms');
-        console.log('Last FPS    :', s.fps);
+        VLog.log('=== CAMERA STATS ===');
+        VLog.log('Device      :', s.device);
+        VLog.log('Backend     :', s.backend);
+        VLog.log('Input size  :', s.inputSize + 'x' + s.inputSize);
+        VLog.log('Interval    :', s.intervalMs + ' ms');
+        VLog.log('Video       :', s.videoW + 'x' + s.videoH);
+        VLog.log('Detections  :', s.detections);
+        VLog.log('Fails       :', s.fails);
+        VLog.log('Avg detect  :', s.avgDetectMs.toFixed(1) + ' ms');
+        VLog.log('Last FPS    :', s.fps);
         return s;
     };
 
-    console.log('[cam] config:', JSON.stringify({
+    VLog.log('[cam] config:', JSON.stringify({
         device: _camDevice.label,
         inputSize: _camConfig.inputSize,
         intervalMs: _camConfig.intervalMs,
@@ -201,7 +201,7 @@
                     if (_actual !== 'wasm') _actual = 'none';
                 }
             } catch (e) {
-                console.warn('[cam] wasm backend failed:', e && e.message ? e.message : e);
+                VLog.warn('[cam] wasm backend failed:', e && e.message ? e.message : e);
             }
             if (_actual !== 'wasm') {
                 try {
@@ -209,11 +209,11 @@
                     await faceapi.tf.ready();
                     _actual = 'cpu';
                 } catch (e) {
-                    console.warn('[cam] cpu backend also failed:', e && e.message ? e.message : e);
+                    VLog.warn('[cam] cpu backend also failed:', e && e.message ? e.message : e);
                 }
             }
             window.camStats.backend = _actual;
-            console.log('[cam] backend =', _actual);
+            VLog.log('[cam] backend =', _actual);
         }
         const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
         await faceapi.nets.tinyFaceDetector.loadFromUri(M);
@@ -227,7 +227,7 @@
         PS.camFrameId = setInterval(function () {
             if (PS.camActive) processCamFrame();
         }, _camConfig.intervalMs);
-        console.log('[cam] loop started @', _camConfig.intervalMs, 'ms');
+        VLog.log('[cam] loop started @', _camConfig.intervalMs, 'ms');
     }
 
     async function enableCamera() {
@@ -236,7 +236,7 @@
             if (_lsFocal > 0) {
                 PS.focalLengthPx = _lsFocal;
             } else {
-                console.warn('[cam] focalLengthPx missing -- distance disabled');
+                VLog.warn('[cam] focalLengthPx missing -- distance disabled');
             }
         }
         if (PS.camActive) return;
@@ -268,7 +268,7 @@
             }
             startCamLoop();
         } catch (e) {
-            console.warn('[cam]', e);
+            VLog.warn('[cam]', e);
         }
     }
 
@@ -396,7 +396,7 @@
                 }
             } catch (e) {
                 window.camStats.fails++;
-                console.warn('[cam] detect error:', e && e.message ? e.message : e);
+                VLog.warn('[cam] detect error:', e && e.message ? e.message : e);
             } finally {
                 window._camDetecting = false;
             }
@@ -499,5 +499,5 @@
         _calcEAR
     };
 
-    console.log('[player-camera] module installed');
+    VLog.log('[player-camera] module installed');
 })(window);

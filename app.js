@@ -365,7 +365,7 @@ function saveUserSettings() {
         localStorage.setItem(LS_KEYS.blinkWindow, String(blinkWindowSec));
         localStorage.setItem(LS_KEYS.blinkLockShow, String(blinkLockShow));
     } catch (e) {
-        console.warn('save settings:', e);
+        VLog.warn('save settings:', e);
     }
 }
 
@@ -6352,7 +6352,7 @@ async function scanScenariosFolder() {
     if (!selectedFolderHandle) return;
     const ok = await window.Data.ensurePermission(selectedFolderHandle, 'read');
     if (!ok) {
-        console.warn('[scenarios] нет доступа к папке');
+        VLog.warn('[scenarios] нет доступа к папке');
         return;
     }
     const files = await window.Data.scanFolder(selectedFolderHandle, '.json');
@@ -6380,16 +6380,16 @@ async function scanScenariosFolder() {
             });
             imported++;
         } catch (e) {
-            console.warn('[scenarios] пропущен файл:', f.name, e.message);
+            VLog.warn('[scenarios] пропущен файл:', f.name, e.message);
         }
     }
-    if (imported > 0) console.log(`[scenarios] импортировано из папки: ${imported}`);
+    if (imported > 0) VLog.log(`[scenarios] импортировано из папки: ${imported}`);
 }
 
 // ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ГРАФА ====================
 async function saveGraph() {
     if (_saveGraphInFlight) {
-        console.warn('[saveGraph] уже сохраняется');
+        VLog.warn('[saveGraph] уже сохраняется');
         return;
     }
     _saveGraphInFlight = true;
@@ -6415,7 +6415,7 @@ async function saveGraph() {
                     alert('📁 Файл сохранён: ' + fileName);
                 }
             } catch (err) {
-                console.warn('[saveGraph] папка:', err);
+                VLog.warn('[saveGraph] папка:', err);
             }
         } else {
             const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -6460,7 +6460,7 @@ async function saveGraph() {
         };
         const saved = await window.Data.saveScenario(record);
         window._currentScenarioId = saved.id;
-        console.log('[saveGraph] сохранено локально, id:', saved.id);
+        VLog.log('[saveGraph] сохранено локально, id:', saved.id);
     } finally {
         _saveGraphInFlight = false;
     }
@@ -6497,7 +6497,7 @@ function migrateScenario(data) {
     const version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
     if (version === SCHEMA_VERSION) return data;
     if (version === 1) {
-        console.log('[migrate] scenario v1 -> v2');
+        VLog.log('[migrate] scenario v1 -> v2');
         data.schemaVersion = 2;
         // Миграции v1 -> v2 уже выполняются дальше в loadGraph (per-node defaults),
         // тут фиксируем только номер версии.
@@ -7064,13 +7064,13 @@ function init() {
         };
         try {
             localStorage.setItem('vissort_test_scenario', JSON.stringify(payload));
-            console.log('[test] scenario saved, opening user.html?test=1');
+            VLog.log('[test] scenario saved, opening user.html?test=1');
             window.open('/user.html?test=1', '_blank');
         } catch (e) {
             alert('Не удалось: ' + e.message);
         }
     });
-    console.log('[test] btn-test handler installed');
+    VLog.log('[test] btn-test handler installed');
     btnPlayerStop.addEventListener('click', stopPlayer);
     btnPlayerPause.addEventListener('click', togglePause);
     btnModeToggle.addEventListener('click', () => switchMode(currentMode === 'nodes' ? 'stimuli' : 'nodes'));
@@ -7642,7 +7642,7 @@ window.AppEditorCore = {
         }
     }
 };
-console.log('[app] AppEditorCore экспортирован для AI-генератора');
+VLog.log('[app] AppEditorCore экспортирован для AI-генератора');
 
 // ==================== AUTH: SAVE + PREFILL + FOCUS ====================
 const LS_LAST_EMAIL = 'vissort_last_email';
@@ -7703,7 +7703,7 @@ function bindAuthForm() {
         e.stopPropagation();
         if (typeof handleAuthSubmit === 'function') handleAuthSubmit();
     });
-    console.log('[app] auth form привязана');
+    VLog.log('[app] auth form привязана');
 }
 async function handleAuthSubmit() {
     const email = document.getElementById('auth-email').value.trim();
@@ -7735,7 +7735,7 @@ async function handleAuthSubmit() {
             prefillAuthCreds();
             focusAuthField();
         }
-        console.log('[app] auth observer установлен');
+        VLog.log('[app] auth observer установлен');
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', attach);
@@ -7753,7 +7753,7 @@ async function handleAuthSubmit() {
 
     var canvasEl = document.getElementById('canvas');
     if (!canvasEl) {
-        console.warn('[zoom] canvas not found');
+        VLog.warn('[zoom] canvas not found');
         return;
     }
 
@@ -7824,14 +7824,14 @@ async function handleAuthSubmit() {
     );
 
     applyZoom();
-    console.log('[zoom] installed, level =', zoomLevel, '');
+    VLog.log('[zoom] installed, level =', zoomLevel, '');
 })();
 
 // ==================== Новый сценарий ====================
 (function installNewScenario() {
     var btn = document.getElementById('btn-new');
     if (!btn) {
-        console.warn('[new] btn-new not found');
+        VLog.warn('[new] btn-new not found');
         return;
     }
 
@@ -7870,10 +7870,10 @@ async function handleAuthSubmit() {
         // Пустой холст — узлы не создаются
         if (typeof switchMode === 'function' && currentMode !== 'nodes') switchMode('nodes');
 
-        console.log('[new] new scenario created, key =', window._currentScenarioKey);
+        VLog.log('[new] new scenario created, key =', window._currentScenarioKey);
     }
 
     btn.addEventListener('click', doNew);
     window.__vissort_newScenario = doNew;
-    console.log('[new] installed');
+    VLog.log('[new] installed');
 })();

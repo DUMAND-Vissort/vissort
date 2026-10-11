@@ -222,7 +222,7 @@ if (created.length > 0) {
     function openModal() {
         const m = $('ai-generator-modal');
         if (m) { m.style.display = 'flex'; return; }
-        console.warn('[ai-gen] модалка не найдена');
+        VLog.warn('[ai-gen] модалка не найдена');
     }
 
     async function generate() {
@@ -292,5 +292,5 @@ if (created.length > 0) {
         bind();
     }
 
-    console.log('[ai-gen] модуль установлен');
+    VLog.log('[ai-gen] модуль установлен');
 })();

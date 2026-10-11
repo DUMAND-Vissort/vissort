@@ -12,7 +12,7 @@
         const now = Date.now();
         _answerTimestamps = _answerTimestamps.filter((t) => now - t < 60000);
         if (_answerTimestamps.length >= 100) {
-            console.warn('[rate-limit] Слишком много ответов в минуту');
+            VLog.warn('[rate-limit] Слишком много ответов в минуту');
             return false;
         }
         _answerTimestamps.push(now);
@@ -44,7 +44,7 @@
             for (const id of Object.keys(p.graph.books)) {
                 const book = p.graph.books[id];
                 if (typeof book.text === 'string' && book.text.length > 10000000) {
-                    console.warn('Книга слишком большая:', id);
+                    VLog.warn('Книга слишком большая:', id);
                     return false;
                 }
             }
@@ -88,5 +88,5 @@
         smoothDistance
     };
 
-    console.log('[player-utils] module installed');
+    VLog.log('[player-utils] module installed');
 })(window);

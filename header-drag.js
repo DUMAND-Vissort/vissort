@@ -94,14 +94,14 @@
                     }
                     saveOrder();
                 } catch (err) {
-                    console.warn('[header-drag] insertBefore failed:', err);
+                    VLog.warn('[header-drag] insertBefore failed:', err);
                 }
             } else if (section && section !== el.parentNode) {
                 try {
                     section.appendChild(el);
                     saveOrder();
                 } catch (err) {
-                    console.warn('[header-drag] appendChild failed:', err);
+                    VLog.warn('[header-drag] appendChild failed:', err);
                 }
             }
         }
@@ -145,7 +145,7 @@
         }
 
         restoreOrder();
-        console.log('[header-drag] установлен — ПКМ для перетаскивания');
+        VLog.log('[header-drag] установлен — ПКМ для перетаскивания');
     }
 
     if (document.readyState === 'loading') {

@@ -83,7 +83,7 @@
             });
             localStorage.setItem(LS_KEY, JSON.stringify(all));
         } catch (e) {
-            console.warn('[device] saveLocal:', e);
+            VLog.warn('[device] saveLocal:', e);
         }
     }
 
@@ -134,12 +134,12 @@
                 .from('device_calibrations')
                 .upsert(row, { onConflict: 'user_id,fingerprint' });
             if (error) {
-                console.warn('[device] saveCloud:', error.message);
+                VLog.warn('[device] saveCloud:', error.message);
                 return false;
             }
             return true;
         } catch (e) {
-            console.warn('[device] saveCloud error:', e);
+            VLog.warn('[device] saveCloud error:', e);
             return false;
         }
     }
@@ -233,5 +233,5 @@
     };
 
     global.VissortDevice = Device;
-    console.log('[device] модуль установлен');
+    VLog.log('[device] модуль установлен');
 })(window);

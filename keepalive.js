@@ -32,7 +32,7 @@
         refreshLabel(btn);
         autoPingIfStale(btn);
         setInterval(() => refreshLabel(btn), 30 * 60 * 1000);
-        console.log(
+        VLog.log(
             '[keepalive] установлен. Последняя активность:',
             isFinite(daysSinceLast()) ? daysSinceLast().toFixed(1) + ' дн. назад' : 'никогда'
         );
@@ -43,7 +43,7 @@
         if (btn) return btn;
         const anchor = document.getElementById('btn-voice') || document.getElementById('btn-auth');
         if (!anchor || !anchor.parentNode) {
-            console.warn('[keepalive] не найден #btn-auth. Кнопка не создана.');
+            VLog.warn('[keepalive] не найден #btn-auth. Кнопка не создана.');
             return null;
         }
         btn = document.createElement('button');
@@ -122,7 +122,7 @@
                 if (!silent) flashButton(btn, '✅ Активность отправлена', '#10b981');
             } else {
                 const txt = await res.text().catch(() => '');
-                console.warn('[keepalive] HTTP', res.status, txt);
+                VLog.warn('[keepalive] HTTP', res.status, txt);
                 if (!silent) {
                     if (res.status === 404)
                         _alert(
@@ -139,7 +139,7 @@
                 refreshLabel(btn);
             }
         } catch (e) {
-            console.warn('[keepalive] сеть:', e);
+            VLog.warn('[keepalive] сеть:', e);
             if (!silent) _alert('Сеть недоступна: ' + e.message);
             refreshLabel(btn);
         } finally {

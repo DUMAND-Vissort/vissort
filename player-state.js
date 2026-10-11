@@ -173,5 +173,5 @@
         } catch (_) {}
     })();
 
-    console.log('[player-state] module installed');
+    VLog.log('[player-state] module installed');
 })(window);
