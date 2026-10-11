@@ -4,7 +4,7 @@
 // Возвращает: { ok, data } или { ok: false, error }
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
-const ADMIN_EMAILS = ['dumand@gmail.com', 'eremeevap@gmail.com'];
+const ADMIN_EMAILS = ['dumand@gmail.com'];
 
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') {
