@@ -8,6 +8,14 @@
 (function installKeepalive() {
     'use strict';
 
+    function _alert(msg) {
+        if (window.VissortDialog && window.VissortDialog.alert) {
+            window.VissortDialog.alert(msg);
+        } else {
+            alert(msg);
+        }
+    }
+
     const KEEPALIVE_URL =
         'https://hzvypwdpdhsjzaclxmbm.supabase.co/rest/v1/training_sessions?select=id&limit=1';
     const KEEPALIVE_KEY = (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_KEY) ||
@@ -117,22 +125,22 @@
                 console.warn('[keepalive] HTTP', res.status, txt);
                 if (!silent) {
                     if (res.status === 404)
-                        alert(
+                        _alert(
                             'Таблица training_sessions не найдена через API.\n\nВозможно, RLS блокирует доступ. Проверьте политику SELECT для anon.'
                         );
                     else if (res.status === 401 || res.status === 403)
-                        alert(
+                        _alert(
                             'Доступ запрещён (' +
                                 res.status +
                                 ').\n\nПроверьте anon-ключ и RLS-политику для training_sessions.'
                         );
-                    else alert('Ошибка Supabase: ' + res.status);
+                    else _alert('Ошибка Supabase: ' + res.status);
                 }
                 refreshLabel(btn);
             }
         } catch (e) {
             console.warn('[keepalive] сеть:', e);
-            if (!silent) alert('Сеть недоступна: ' + e.message);
+            if (!silent) _alert('Сеть недоступна: ' + e.message);
             refreshLabel(btn);
         } finally {
             btn.disabled = false;

@@ -7,6 +7,20 @@
 (function installOnboarding(global) {
     'use strict';
 
+    function _alert(msg) {
+        if (global.VissortDialog && global.VissortDialog.alert) {
+            global.VissortDialog.alert(msg);
+        } else {
+            alert(msg);
+        }
+    }
+    async function _confirm(msg) {
+        if (global.VissortDialog && global.VissortDialog.confirm) {
+            return await global.VissortDialog.confirm(msg);
+        }
+        return confirm(msg);
+    }
+
     let Device = null;
     function ensureDevice() { Device = global.VissortDevice; return Device; }
 
@@ -64,7 +78,7 @@
 
             document.getElementById('ob-next').addEventListener('click', () => {
                 const mm = parseFloat(mmInput.value) || 0;
-                if (mm < 5 || mm > 500) { alert('Введите длину 5–500 мм'); return; }
+                if (mm < 5 || mm > 500) { _alert('Введите длину 5–500 мм'); return; }
                 ppiValue = Math.round(400 * (window.devicePixelRatio || 1) * 25.4 / mm);
                 step = 2;
                 renderStep();
@@ -90,8 +104,8 @@
 
             startCameraForOnboarding();
 
-            function skipOnboarding() {
-                if (!confirm('Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.')) return;
+            async function skipOnboarding() {
+                if (!await _confirm('Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.')) return;
                 stopCamera();
                 sessionStorage.setItem('vissort_onboarding_skipped', '1');
                 if (modal) modal.remove();
@@ -152,7 +166,7 @@
                 } catch (_) {}
             }, 500);
         } catch (e) {
-            alert('Не удалось включить камеру: ' + e.message);
+            _alert('Не удалось включить камеру: ' + e.message);
         }
     }
 

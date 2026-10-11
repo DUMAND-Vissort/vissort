@@ -7,6 +7,16 @@ if (!window.VissortCore) {
         '[player] VissortCore not loaded. Include <script src="vissort-core.js"></script> BEFORE player-runtime.js.'
     );
 }
+
+// Единая модалка вместо alert (fallback на нативный alert при отсутствии VissortDialog)
+function _alert(msg) {
+    if (window.VissortDialog && window.VissortDialog.alert) {
+        window.VissortDialog.alert(msg);
+    } else {
+        alert(msg);
+    }
+}
+
 const {
     acuityToSizeMm,
     acuityToSizePx,
@@ -387,20 +397,20 @@ async function doAuth() {
     const email = $('auth-email').value.trim();
     const password = $('auth-password').value;
     if (!email || !password) {
-        alert('Введите email и пароль');
+        _alert('Введите email и пароль');
         return;
     }
     saveAuthCreds(email, password);
     if (PlayerState.authMode === 'signin') {
         const { error } = await PlayerState.supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
-            alert('Ошибка: ' + error.message);
+            _alert('Ошибка: ' + error.message);
             return;
         }
     } else {
         const { error } = await PlayerState.supabaseClient.auth.signUp({ email, password });
         if (error) {
-            alert('Ошибка: ' + error.message);
+            _alert('Ошибка: ' + error.message);
             return;
         }
     }
@@ -1535,11 +1545,11 @@ function startPlayer() {
         _so.classList.add('hidden');
     }
     if (!PlayerState.userScenario) {
-        alert('Сценарий не назначен');
+        _alert('Сценарий не назначен');
         return;
     }
     if (!validateScenario(PlayerState.userScenario)) {
-        alert('Сценарий повреждён или содержит некорректные данные.');
+        _alert('Сценарий повреждён или содержит некорректные данные.');
         return;
     }
     PlayerState.sessionId =
