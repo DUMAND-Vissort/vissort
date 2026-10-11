@@ -1594,7 +1594,7 @@ function startPlayer() {
     window._baselineWaitStart = null; // baseline
     // Восстановить PlayerState.focalLengthPx если потерян
     if (!PlayerState.focalLengthPx || PlayerState.focalLengthPx <= 0) {
-        var _lsF2 = parseFloat(localStorage.getItem('PlayerState.focalLengthPx') || '0');
+        var _lsF2 = parseFloat(localStorage.getItem('focalLengthPx') || '0');
         if (_lsF2 > 0) PlayerState.focalLengthPx = _lsF2;
     }
     // Жёсткий сброс состояния графа
