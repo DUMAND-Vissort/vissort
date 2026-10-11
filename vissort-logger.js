@@ -4,18 +4,17 @@
 (function (global) {
     'use strict';
 
-    var isDev = (
+    var isDev =
         location.hostname === 'localhost' ||
         location.hostname === '127.0.0.1' ||
         location.hostname === '' ||
-        location.search.indexOf('debug=1') !== -1
-    );
+        location.search.indexOf('debug=1') !== -1;
 
     var VLog = {
         debug: isDev ? console.log.bind(console) : function () {},
-        log:   isDev ? console.log.bind(console) : function () {},
-        info:  isDev ? console.info.bind(console) : function () {},
-        warn:  isDev ? console.warn.bind(console) : function () {},
+        log: isDev ? console.log.bind(console) : function () {},
+        info: isDev ? console.info.bind(console) : function () {},
+        warn: isDev ? console.warn.bind(console) : function () {},
         error: console.error.bind(console)
     };
 

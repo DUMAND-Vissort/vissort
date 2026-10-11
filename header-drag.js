@@ -14,7 +14,8 @@
 
         let dragEl = null;
         let ghost = null;
-        let startX = 0, startY = 0;
+        let startX = 0,
+            startY = 0;
 
         header.addEventListener('contextmenu', (e) => {
             if (e.target.closest('.btn, .status-chip, .counter')) {
@@ -111,7 +112,10 @@
         }
 
         function cleanup() {
-            if (ghost) { ghost.remove(); ghost = null; }
+            if (ghost) {
+                ghost.remove();
+                ghost = null;
+            }
             if (dragEl) dragEl.style.opacity = '';
             dragEl = null;
             document.removeEventListener('mousemove', onMove);
@@ -123,7 +127,9 @@
 
         function saveOrder() {
             try {
-                const ids = Array.from(header.querySelectorAll('[id]')).map(el => el.id).filter(Boolean);
+                const ids = Array.from(header.querySelectorAll('[id]'))
+                    .map((el) => el.id)
+                    .filter(Boolean);
                 localStorage.setItem(LS_KEY, JSON.stringify(ids));
             } catch (_) {}
         }
@@ -133,7 +139,7 @@
                 const saved = localStorage.getItem(LS_KEY);
                 if (!saved) return;
                 const ids = JSON.parse(saved);
-                ids.forEach(id => {
+                ids.forEach((id) => {
                     const el = document.getElementById(id);
                     if (!el) return;
                     const parentSection = el.parentNode;

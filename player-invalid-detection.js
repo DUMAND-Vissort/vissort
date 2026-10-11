@@ -30,9 +30,18 @@
         if (!PS.playerRunning || PS.isPaused) return;
         if (PS._waitingStable) return;
 
-        VLog.log('[abort] reason=' + reason + ' (dist=' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm)');
+        VLog.log(
+            '[abort] reason=' +
+                reason +
+                ' (dist=' +
+                (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') +
+                'm)'
+        );
 
-        if (PS.currentShowTimer) { clearTimeout(PS.currentShowTimer); PS.currentShowTimer = null; }
+        if (PS.currentShowTimer) {
+            clearTimeout(PS.currentShowTimer);
+            PS.currentShowTimer = null;
+        }
 
         // Freeze animations
         if (window.PlayerAnimation && window.PlayerAnimation.stopAll) {
@@ -63,7 +72,10 @@
         if (PS.isPaused) return;
         var now = performance.now();
         window._deviationHistory.push({ t: now, dev: pct });
-        while (window._deviationHistory.length && now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS) {
+        while (
+            window._deviationHistory.length &&
+            now - window._deviationHistory[0].t > _DEVIATION_HISTORY_MS
+        ) {
             window._deviationHistory.shift();
         }
         var _lastH = window._deviationHistory[window._deviationHistory.length - 2];
@@ -94,7 +106,7 @@
         var now = performance.now();
         try {
             if (PS.curDistanceM != null && PS.camBaseline != null) {
-                var curDev = (PS.curDistanceM - PS.camBaseline) / PS.camBaseline * 100;
+                var curDev = ((PS.curDistanceM - PS.camBaseline) / PS.camBaseline) * 100;
                 if (Math.abs(curDev) > _LEAN_DROP_PCT) {
                     return curDev < 0 ? 'fast_lean' : 'off_distance';
                 }
@@ -108,9 +120,10 @@
         window._invalidAnswerCount++;
         var cnt = document.getElementById('cnt-invalid');
         if (cnt) cnt.textContent = window._invalidAnswerCount;
-        var msg = reason === 'fast_lean'
-            ? '⚠️ Ответ не засчитан — резкий наклон'
-            : '⚠️ Ответ не засчитан — вернитесь на дистанцию';
+        var msg =
+            reason === 'fast_lean'
+                ? '⚠️ Ответ не засчитан — резкий наклон'
+                : '⚠️ Ответ не засчитан — вернитесь на дистанцию';
         _showInvalidToast(msg);
     }
 
@@ -132,10 +145,15 @@
         var el = document.createElement('div');
         el.id = 'invalid-toast';
         el.textContent = text;
-        el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(234,88,12,0.95);color:#fff;padding:14px 24px;border-radius:10px;font-size:16px;font-weight:bold;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);pointer-events:none;transition:opacity 0.3s;';
+        el.style.cssText =
+            'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(234,88,12,0.95);color:#fff;padding:14px 24px;border-radius:10px;font-size:16px;font-weight:bold;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);pointer-events:none;transition:opacity 0.3s;';
         document.body.appendChild(el);
-        setTimeout(function () { el.style.opacity = '0'; }, 1800);
-        setTimeout(function () { if (el.parentNode) el.remove(); }, 2200);
+        setTimeout(function () {
+            el.style.opacity = '0';
+        }, 1800);
+        setTimeout(function () {
+            if (el.parentNode) el.remove();
+        }, 2200);
     }
 
     // ==================== RESUME AFTER STABLE ====================
@@ -145,16 +163,28 @@
         PS._stableSince = 0;
         PS._stableBuf = [];
         PS._stimulusDistance = PS.curDistanceM;
-        VLog.log('[abort] stable at ' + (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') + 'm -- resuming');
+        VLog.log(
+            '[abort] stable at ' +
+                (PS.curDistanceM != null ? PS.curDistanceM.toFixed(2) : '?') +
+                'm -- resuming'
+        );
 
         var _n = null;
-        try { _n = _callbacks.onGetNode(PS.gCurrentNodeId); } catch (e) { _n = null; }
+        try {
+            _n = _callbacks.onGetNode(PS.gCurrentNodeId);
+        } catch (e) {
+            _n = null;
+        }
         if (_n && PS.gNodes && PS.gNodes.indexOf(_n) !== -1) {
             if (_n.nodeType === 'COMPARE') _callbacks.onPlayGraphCompareRound(_n);
             else _callbacks.onPlayGraphStimulus(_n);
             return;
         }
-        try { _callbacks.onShowNextStimulus(); } catch (e) { VLog.warn('[abort] resume flat failed:', e); }
+        try {
+            _callbacks.onShowNextStimulus();
+        } catch (e) {
+            VLog.warn('[abort] resume flat failed:', e);
+        }
     }
 
     // ==================== EXPORT ====================

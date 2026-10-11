@@ -51,9 +51,10 @@ const {
     }
 })();
 
-const SUPABASE_URL = (window.VissortEnv && window.VissortEnv.SUPABASE_URL) ||
-    'https://hzvypwdpdhsjzaclxmbm.supabase.co';
-const SUPABASE_ANON_KEY = (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_KEY) ||
+const SUPABASE_URL =
+    (window.VissortEnv && window.VissortEnv.SUPABASE_URL) || 'https://hzvypwdpdhsjzaclxmbm.supabase.co';
+const SUPABASE_ANON_KEY =
+    (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_KEY) ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
 
 (function installAuthObserver() {
@@ -392,7 +393,6 @@ function bindAuthForm() {
     });
 }
 
-
 async function doAuth() {
     const email = $('auth-email').value.trim();
     const password = $('auth-password').value;
@@ -470,7 +470,10 @@ async function onLoggedIn() {
                 await Onboarding.start({
                     client: PlayerState.supabaseClient,
                     userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                    onDone: (data) => { if (!data || !data.skipped) enableCamera(); else VLog.log('[onboarding] пропущено — камера не запрашивается'); }
+                    onDone: (data) => {
+                        if (!data || !data.skipped) enableCamera();
+                        else VLog.log('[onboarding] пропущено — камера не запрашивается');
+                    }
                 });
             } catch (e) {
                 VLog.warn('[user] onboarding:', e);
@@ -499,7 +502,10 @@ async function onLoggedIn() {
             await Onboarding.start({
                 client: PlayerState.supabaseClient,
                 userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                onDone: (data) => { if (!data || !data.skipped) enableCamera(); else VLog.log('[onboarding] пропущено — камера не запрашивается'); }
+                onDone: (data) => {
+                    if (!data || !data.skipped) enableCamera();
+                    else VLog.log('[onboarding] пропущено — камера не запрашивается');
+                }
             });
         } catch (e) {
             VLog.warn('[user] onboarding:', e);
@@ -727,7 +733,6 @@ async function enableCamera() {
 function disableCamera() {
     return window.PlayerCamera.disableCamera();
 }
-
 
 // ==================== ПЛЕЕР ГРАФА ====================
 function gGetNode(id) {
@@ -2045,7 +2050,6 @@ function finishCompareSeries() {
     );
 }
 
-
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
     if (!PlayerState.responsePhaseActive) return;
@@ -2152,9 +2156,12 @@ function handleDirectionAnswer(direction) {
             if (PlayerState.playerRunning && !PlayerState.isPaused) finishSeries();
         }, 50);
     } else {
-        setTimeout(() => {
-            if (PlayerState.playerRunning && !PlayerState.isPaused) showNextStimulus();
-        }, _p.delay2 != null ? _p.delay2 : 1000);
+        setTimeout(
+            () => {
+                if (PlayerState.playerRunning && !PlayerState.isPaused) showNextStimulus();
+            },
+            _p.delay2 != null ? _p.delay2 : 1000
+        );
     }
 }
 function handleCompareAnswer(answer) {
@@ -2593,7 +2600,6 @@ function scheduleVoiceCountdown(durationMs) {
     }, 200);
 }
 
-
 // ==================== INIT ====================
 function init() {
     // Регистрация callbacks для плеера-камеры
@@ -2909,7 +2915,10 @@ else init();
         _hudIntervalId = setInterval(_hudTick, 250);
     }
     function _hudStop() {
-        if (_hudIntervalId) { clearInterval(_hudIntervalId); _hudIntervalId = null; }
+        if (_hudIntervalId) {
+            clearInterval(_hudIntervalId);
+            _hudIntervalId = null;
+        }
         var _el = document.getElementById('cam-hud');
         if (_el) _el.style.display = 'none';
     }
@@ -2919,8 +2928,10 @@ else init();
         else _hudStop();
     }
     new MutationObserver(_hudSync).observe(document.body, {
-        childList: true, subtree: true,
-        attributes: true, attributeFilter: ['class']
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class']
     });
     _hudSync();
 

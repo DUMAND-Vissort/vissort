@@ -12,7 +12,7 @@
         const buf = new TextEncoder().encode(s);
         const hb = await crypto.subtle.digest('SHA-1', buf);
         return Array.from(new Uint8Array(hb))
-            .map(b => b.toString(16).padStart(2, '0'))
+            .map((b) => b.toString(16).padStart(2, '0'))
             .join('');
     }
 

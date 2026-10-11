@@ -22,7 +22,10 @@
     }
 
     let Device = null;
-    function ensureDevice() { Device = global.VissortDevice; return Device; }
+    function ensureDevice() {
+        Device = global.VissortDevice;
+        return Device;
+    }
 
     let client = null;
     let userId = null;
@@ -37,8 +40,10 @@
     function createModal() {
         const m = document.createElement('div');
         m.id = 'vissort-onboarding';
-        m.style.cssText = 'position:fixed;inset:0;background:rgba(11,11,18,0.96);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:"Segoe UI",Tahoma,sans-serif;color:#e8e8f0;';
-        m.innerHTML = '<div style="max-width:560px;width:100%;background:#1e1e24;border-radius:14px;border:1px solid #3f3f46;padding:32px;"><div id="ob-progress" style="font-size:12px;color:#94a3b8;margin-bottom:8px;"></div><div id="ob-content"></div></div>';
+        m.style.cssText =
+            'position:fixed;inset:0;background:rgba(11,11,18,0.96);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:"Segoe UI",Tahoma,sans-serif;color:#e8e8f0;';
+        m.innerHTML =
+            '<div style="max-width:560px;width:100%;background:#1e1e24;border-radius:14px;border:1px solid #3f3f46;padding:32px;"><div id="ob-progress" style="font-size:12px;color:#94a3b8;margin-bottom:8px;"></div><div id="ob-content"></div></div>';
         document.body.appendChild(m);
         return m;
     }
@@ -70,16 +75,22 @@
             const ppiEl = document.getElementById('ob-ppi');
             const recalc = () => {
                 const mm = parseFloat(mmInput.value) || 0;
-                if (mm <= 0) { ppiEl.textContent = '—'; return; }
-                ppiEl.textContent = Math.round(400 * (window.devicePixelRatio || 1) * 25.4 / mm);
+                if (mm <= 0) {
+                    ppiEl.textContent = '—';
+                    return;
+                }
+                ppiEl.textContent = Math.round((400 * (window.devicePixelRatio || 1) * 25.4) / mm);
             };
             mmInput.addEventListener('input', recalc);
             recalc();
 
             document.getElementById('ob-next').addEventListener('click', () => {
                 const mm = parseFloat(mmInput.value) || 0;
-                if (mm < 5 || mm > 500) { _alert('Введите длину 5–500 мм'); return; }
-                ppiValue = Math.round(400 * (window.devicePixelRatio || 1) * 25.4 / mm);
+                if (mm < 5 || mm > 500) {
+                    _alert('Введите длину 5–500 мм');
+                    return;
+                }
+                ppiValue = Math.round((400 * (window.devicePixelRatio || 1) * 25.4) / mm);
                 step = 2;
                 renderStep();
             });
@@ -105,7 +116,12 @@
             startCameraForOnboarding();
 
             async function skipOnboarding() {
-                if (!await _confirm('Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.')) return;
+                if (
+                    !(await _confirm(
+                        'Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.'
+                    ))
+                )
+                    return;
                 stopCamera();
                 sessionStorage.setItem('vissort_onboarding_skipped', '1');
                 if (modal) modal.remove();
@@ -142,7 +158,10 @@
                 if (!v.videoWidth) return;
                 try {
                     const det = await faceapi
-                        .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+                        .detectSingleFace(
+                            v,
+                            new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+                        )
                         .withFaceLandmarks();
                     if (det && det.landmarks) {
                         const le = det.landmarks.getLeftEye();
@@ -173,12 +192,15 @@
     async function waitForFaceApi() {
         let tries = 0;
         while ((typeof faceapi === 'undefined' || !faceapi.nets) && tries < 40) {
-            await new Promise(r => setTimeout(r, 250));
+            await new Promise((r) => setTimeout(r, 250));
             tries++;
         }
         if (typeof faceapi === 'undefined') return;
         try {
-            if (faceapi.tf) { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); }
+            if (faceapi.tf) {
+                await faceapi.tf.setBackend('cpu');
+                await faceapi.tf.ready();
+            }
             const M = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
             await faceapi.nets.tinyFaceDetector.loadFromUri(M);
             await faceapi.nets.faceLandmark68Net.loadFromUri(M);
@@ -188,8 +210,14 @@
     }
 
     function stopCamera() {
-        if (faceCheckInterval) { clearInterval(faceCheckInterval); faceCheckInterval = null; }
-        if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+        if (faceCheckInterval) {
+            clearInterval(faceCheckInterval);
+            faceCheckInterval = null;
+        }
+        if (videoStream) {
+            videoStream.getTracks().forEach((t) => t.stop());
+            videoStream = null;
+        }
     }
 
     async function finishOnboarding() {
@@ -238,7 +266,8 @@
             const cloudData = await Device.loadCloudByFingerprint(client, userId, fp);
             if (cloudData) {
                 Device.apply({ ppi: cloudData.ppi, focalLengthPx: cloudData.focal_length_px });
-                if (fp) Device.saveLocal(fp, { ppi: cloudData.ppi, focalLengthPx: cloudData.focal_length_px });
+                if (fp)
+                    Device.saveLocal(fp, { ppi: cloudData.ppi, focalLengthPx: cloudData.focal_length_px });
                 if (typeof onDone === 'function') onDone();
                 return;
             }

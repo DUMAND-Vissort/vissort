@@ -8,7 +8,9 @@
     'use strict';
 
     if (!global.PlayerState) {
-        throw new Error('[player-camera] PlayerState not loaded. Include <script src="player-state.js"></script> BEFORE player-camera.js.');
+        throw new Error(
+            '[player-camera] PlayerState not loaded. Include <script src="player-state.js"></script> BEFORE player-camera.js.'
+        );
     }
     const PS = global.PlayerState;
 
@@ -33,15 +35,15 @@
             isPhone: isPhone,
             isTablet: isTablet,
             isDesktop: !isPhone && !isTablet,
-            label: isPhone ? 'phone' : (isTablet ? 'tablet' : 'desktop')
+            label: isPhone ? 'phone' : isTablet ? 'tablet' : 'desktop'
         };
     })();
 
     const _camConfig = _camDevice.isPhone
         ? { inputSize: 320, intervalMs: 300, videoW: 320, videoH: 240, frameRate: 15 }
         : _camDevice.isTablet
-        ? { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
-        : { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
+          ? { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 20 }
+          : { inputSize: 320, intervalMs: 200, videoW: 480, videoH: 360, frameRate: 24 };
 
     let _camLoopStarted = false;
 
@@ -77,12 +79,15 @@
         return s;
     };
 
-    VLog.log('[cam] config:', JSON.stringify({
-        device: _camDevice.label,
-        inputSize: _camConfig.inputSize,
-        intervalMs: _camConfig.intervalMs,
-        video: _camConfig.videoW + 'x' + _camConfig.videoH
-    }));
+    VLog.log(
+        '[cam] config:',
+        JSON.stringify({
+            device: _camDevice.label,
+            inputSize: _camConfig.inputSize,
+            intervalMs: _camConfig.intervalMs,
+            video: _camConfig.videoW + 'x' + _camConfig.videoH
+        })
+    );
 
     // ==================== FACE DETECTION UI ====================
     // ==================== BLINK DETECTION (EAR) ====================
@@ -137,7 +142,7 @@
         if (PS._detWindow.length === 0) return 100;
         var sum = 0;
         for (var i = 0; i < PS._detWindow.length; i++) sum += PS._detWindow[i];
-        return Math.round(sum / PS._detWindow.length * 100);
+        return Math.round((sum / PS._detWindow.length) * 100);
     }
 
     function _updateDetectUI() {
@@ -148,7 +153,8 @@
         var hasFaceNow = PS._detWindow.length > 0 && PS._detWindow[PS._detWindow.length - 1] === 1;
         var em = _faceEmoji(rate, hasFaceNow);
         if (el) {
-            el.textContent = em.icon + ' ' + rate + '% (' + detCount + '/' + PS._detWindow.length + ') · ' + em.label;
+            el.textContent =
+                em.icon + ' ' + rate + '% (' + detCount + '/' + PS._detWindow.length + ') · ' + em.label;
             el.style.color = em.color;
         }
 
@@ -160,7 +166,12 @@
         if (!PS._distWarnArmed && rate >= PS._minDetectPct + 10) {
             PS._distWarnArmed = true;
         }
-        if (PS._detWindow.length >= PS._DET_WINDOW_SIZE && PS._distWarnArmed && rate < PS._minDetectPct && detCount >= 3) {
+        if (
+            PS._detWindow.length >= PS._DET_WINDOW_SIZE &&
+            PS._distWarnArmed &&
+            rate < PS._minDetectPct &&
+            detCount >= 3
+        ) {
             if (PS._lastSeenDist != null && PS._lastSeenDist < 0.85) return;
             var now = performance.now();
             if (now - PS._lastDistWarnAt > 8000) {
@@ -193,8 +204,10 @@
             try {
                 if (faceapi.tf.wasm) {
                     var _wasmDir = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@1.7.4/dist/';
-                    if (typeof faceapi.tf.wasm.setWasmPath === 'function') faceapi.tf.wasm.setWasmPath(_wasmDir);
-                    else if (typeof faceapi.tf.wasm.setWasmPaths === 'function') faceapi.tf.wasm.setWasmPaths(_wasmDir);
+                    if (typeof faceapi.tf.wasm.setWasmPath === 'function')
+                        faceapi.tf.wasm.setWasmPath(_wasmDir);
+                    else if (typeof faceapi.tf.wasm.setWasmPaths === 'function')
+                        faceapi.tf.wasm.setWasmPaths(_wasmDir);
                     await faceapi.tf.setBackend('wasm');
                     await faceapi.tf.ready();
                     _actual = (faceapi.tf.getBackend && faceapi.tf.getBackend()) || 'unknown';
@@ -255,7 +268,8 @@
             v.muted = true;
             v.playsInline = true;
             v.setAttribute('playsinline', '');
-            v.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;height:240px;opacity:0;pointer-events:none;';
+            v.style.cssText =
+                'position:fixed;left:-9999px;top:0;width:320px;height:240px;opacity:0;pointer-events:none;';
             v.srcObject = PS.camStream;
             document.body.appendChild(v);
             await v.play();
@@ -284,7 +298,13 @@
             const tStart = performance.now();
             window.camStats.frames++;
             try {
-                const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.25 }));
+                const det = await faceapi.detectSingleFace(
+                    v,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: _camConfig.inputSize,
+                        scoreThreshold: 0.25
+                    })
+                );
                 const tDetect = performance.now() - tStart;
                 window.camStats.detections++;
                 window.camStats.totalDetectMs += tDetect;
@@ -311,18 +331,25 @@
                     if (PS.curDistanceM != null) PS._lastSeenDist = PS.curDistanceM;
                     if (ipd > 0 && PS.focalLengthPx) {
                         PS.curDistanceM = (63 * PS.focalLengthPx) / ipd / 1000;
-                        if (PS.curDistanceM > 0.3 && PS.curDistanceM < 5) PS.curDistanceM = global.PlayerUtils.smoothDistance(PS.curDistanceM);
+                        if (PS.curDistanceM > 0.3 && PS.curDistanceM < 5)
+                            PS.curDistanceM = global.PlayerUtils.smoothDistance(PS.curDistanceM);
                         if (PS._stimulusDistance && PS.curDistanceM && PS.camBaseline != null) {
-                            var _dev = Math.abs((PS.curDistanceM - PS._stimulusDistance) / PS._stimulusDistance * 100);
+                            var _dev = Math.abs(
+                                ((PS.curDistanceM - PS._stimulusDistance) / PS._stimulusDistance) * 100
+                            );
                             if (_dev > 15) {
                                 if (PS.responsePhaseActive || !PS._waitingStable) {
                                     _callbacks.onStimulusHide();
                                     PS.responsePhaseActive = false;
                                     const rb = document.getElementById('response-buttons');
                                     if (rb) rb.style.display = 'none';
-                                    if (PS.currentShowTimer) { clearTimeout(PS.currentShowTimer); PS.currentShowTimer = null; }
+                                    if (PS.currentShowTimer) {
+                                        clearTimeout(PS.currentShowTimer);
+                                        PS.currentShowTimer = null;
+                                    }
                                     if (PS.phaseTimers && PS.phaseTimers.length) {
-                                        for (var _i = 0; _i < PS.phaseTimers.length; _i++) clearTimeout(PS.phaseTimers[_i]);
+                                        for (var _i = 0; _i < PS.phaseTimers.length; _i++)
+                                            clearTimeout(PS.phaseTimers[_i]);
                                         PS.phaseTimers.length = 0;
                                     }
                                     PS._waitingStable = true;
@@ -337,7 +364,7 @@
                             if (PS._stableBuf.length === 5) {
                                 var _mn = Math.min.apply(null, PS._stableBuf);
                                 var _mx = Math.max.apply(null, PS._stableBuf);
-                                if ((_mx - _mn) / _mn * 100 < 3) {
+                                if (((_mx - _mn) / _mn) * 100 < 3) {
                                     if (!PS._stableSince) PS._stableSince = performance.now();
                                     if (performance.now() - PS._stableSince >= 1000) {
                                         _callbacks.onResume();
@@ -358,7 +385,15 @@
                     if (performance.now() - (PS._lastBlinkCheckAt || 0) >= _BLINK_CHECK_MS) {
                         PS._lastBlinkCheckAt = performance.now();
                         try {
-                            const detWithLm = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: _camConfig.inputSize, scoreThreshold: 0.25 })).withFaceLandmarks();
+                            const detWithLm = await faceapi
+                                .detectSingleFace(
+                                    v,
+                                    new faceapi.TinyFaceDetectorOptions({
+                                        inputSize: _camConfig.inputSize,
+                                        scoreThreshold: 0.25
+                                    })
+                                )
+                                .withFaceLandmarks();
                             if (detWithLm && detWithLm.landmarks) {
                                 if (_isBlinkFromLandmarks(detWithLm.landmarks) === true) _isBlink = true;
                             }
@@ -428,18 +463,28 @@
             if (Math.abs(dev) > _tol) {
                 // Hard limit: если дистанция > 1.0 м — всегда отменяем (C1)
                 if (PS.curDistanceM > 1.0) {
-                    if (!PS._waitingStable) _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
+                    if (!PS._waitingStable)
+                        _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
                 } else if (PS._distControlMode === 'auto') {
                     // Авто-пересчёт: не отменять, а пересчитать размер
                     if (typeof _callbacks.onRecalcSize === 'function') _callbacks.onRecalcSize();
                 } else {
                     // Возврат (по умолчанию): отменить показ
-                    if (!PS._waitingStable) _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
+                    if (!PS._waitingStable)
+                        _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
                 }
             }
         }
-        const upTol = (PS.userScenario && PS.userScenario.params && PS.userScenario.params.distanceToleranceIncreasePct) || 15;
-        const dnTol = (PS.userScenario && PS.userScenario.params && PS.userScenario.params.distanceToleranceDecreasePct) || 10;
+        const upTol =
+            (PS.userScenario &&
+                PS.userScenario.params &&
+                PS.userScenario.params.distanceToleranceIncreasePct) ||
+            15;
+        const dnTol =
+            (PS.userScenario &&
+                PS.userScenario.params &&
+                PS.userScenario.params.distanceToleranceDecreasePct) ||
+            10;
         const ci = _camIndicator();
         if (!ci) return;
         if (dev > upTol) {

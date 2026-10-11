@@ -6,9 +6,10 @@
 (function installAIGenerator() {
     'use strict';
 
-    const SUPABASE_URL = (window.VissortEnv && window.VissortEnv.SUPABASE_URL) ||
-        'https://hzvypwdpdhsjzaclxmbm.supabase.co';
-    const SUPABASE_ANON_KEY = (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_KEY) ||
+    const SUPABASE_URL =
+        (window.VissortEnv && window.VissortEnv.SUPABASE_URL) || 'https://hzvypwdpdhsjzaclxmbm.supabase.co';
+    const SUPABASE_ANON_KEY =
+        (window.VissortEnv && window.VissortEnv.SUPABASE_ANON_KEY) ||
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dnlwd2RwZGhzanphY2x4bWJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MjIyNTIsImV4cCI6MjEwNDE5ODI1Mn0.HK0VE9KdzS8c7WoMCIlvOUn02vSOQEN0ahGPgsYzKac';
     const FN_URL = SUPABASE_URL + '/functions/v1/generate-scenario';
 
@@ -31,9 +32,13 @@
         parts.push('  "name": "короткое название сценария",');
         parts.push('  "description": "для кого и зачем",');
         parts.push('  "nodes": [');
-        parts.push('    { "nodeType": "STIMULUS", "name": "...", "stimAcuity": 0.5, "endAcuity": 0.7, "stimType": "LETTER_E", "seriesCount": 5, "seriesSize": 6 },');
+        parts.push(
+            '    { "nodeType": "STIMULUS", "name": "...", "stimAcuity": 0.5, "endAcuity": 0.7, "stimType": "LETTER_E", "seriesCount": 5, "seriesSize": 6 },'
+        );
         parts.push('    { "nodeType": "READING", "name": "...", "readingAcuity": 0.8, "duration": 60000 },');
-        parts.push('    { "nodeType": "COMPARE", "name": "...", "compareMode": "direction", "gridX": 3, "gridY": 3, "seriesCount": 5, "seriesSize": 6 }');
+        parts.push(
+            '    { "nodeType": "COMPARE", "name": "...", "compareMode": "direction", "gridX": 3, "gridY": 3, "seriesCount": 5, "seriesSize": 6 }'
+        );
         parts.push('  ]');
         parts.push('}');
         parts.push('');
@@ -47,18 +52,21 @@
     }
 
     async function callGenerate(prompt) {
-        const sb = window.supabaseClient || (window.supabase && window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+        const sb =
+            window.supabaseClient ||
+            (window.supabase && window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
         if (!sb) throw new Error('Supabase client not initialized');
         const sessionRes = await sb.auth.getSession();
-        const token = sessionRes && sessionRes.data && sessionRes.data.session && sessionRes.data.session.access_token;
+        const token =
+            sessionRes && sessionRes.data && sessionRes.data.session && sessionRes.data.session.access_token;
         if (!token) throw new Error('Not authorized. Please sign in as admin.');
 
         const res = await fetch(FN_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token,
-                'apikey': SUPABASE_ANON_KEY
+                Authorization: 'Bearer ' + token,
+                apikey: SUPABASE_ANON_KEY
             },
             body: JSON.stringify({
                 prompt: prompt,
@@ -73,7 +81,10 @@
                 const j = await res.json();
                 if (j && j.error) msg = j.error + (j.details ? ' - ' + String(j.details).slice(0, 200) : '');
             } catch (_) {
-                try { const t = await res.text(); if (t) msg += ': ' + t.slice(0, 200); } catch (_) {}
+                try {
+                    const t = await res.text();
+                    if (t) msg += ': ' + t.slice(0, 200);
+                } catch (_) {}
             }
             throw new Error(msg);
         }
@@ -121,7 +132,8 @@
             const id = Editor.createNewNode(type, x, y);
             const node = Editor.getNode(id);
 
-            node.name = n.name || (type === 'READING' ? 'Чтение' : type === 'COMPARE' ? 'Сравнение' : 'Стимул');
+            node.name =
+                n.name || (type === 'READING' ? 'Чтение' : type === 'COMPARE' ? 'Сравнение' : 'Стимул');
 
             if (type === 'STIMULUS') {
                 node.stimAcuity = Number(n.stimAcuity) || 1.0;
@@ -145,10 +157,7 @@
                     { row: 0, col: 0 },
                     { row: 0, col: Math.min(1, node.gridX - 1) }
                 ];
-                node.cellParams = [
-                    Editor.defaultCompareCellParams(),
-                    Editor.defaultCompareCellParams()
-                ];
+                node.cellParams = [Editor.defaultCompareCellParams(), Editor.defaultCompareCellParams()];
             }
 
             created.push(id);
@@ -179,36 +188,25 @@
 
         Editor.requestRenderGraph();
 
-        
-// Автоскролл к созданным узлам
-        
-if (created.length > 0) {
-        
-    const firstNode = Editor.getNode(created[0]);
-        
-    if (firstNode && canvas) {
-        
-        setTimeout(function() {
-        
-            const el = document.querySelector('.scenario-node[data-node-id="' + created[0] + '"]');
-        
-            if (el) {
-        
-                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-        
-            } else {
-        
-                canvas.scrollLeft = Math.max(0, firstNode.x - 40);
-        
-                canvas.scrollTop = Math.max(0, firstNode.y - 40);
-        
+        // Автоскролл к созданным узлам
+
+        if (created.length > 0) {
+            const firstNode = Editor.getNode(created[0]);
+
+            if (firstNode && canvas) {
+                setTimeout(function () {
+                    const el = document.querySelector('.scenario-node[data-node-id="' + created[0] + '"]');
+
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    } else {
+                        canvas.scrollLeft = Math.max(0, firstNode.x - 40);
+
+                        canvas.scrollTop = Math.max(0, firstNode.y - 40);
+                    }
+                }, 100);
             }
-        
-        }, 100);
-        
-    }
-        
-}
+        }
         if (window.AppEditor && typeof window.AppEditor.updateInspector === 'function') {
             window.AppEditor.updateInspector();
         }
@@ -221,7 +219,10 @@ if (created.length > 0) {
     // ============================================================
     function openModal() {
         const m = $('ai-generator-modal');
-        if (m) { m.style.display = 'flex'; return; }
+        if (m) {
+            m.style.display = 'flex';
+            return;
+        }
         VLog.warn('[ai-gen] модалка не найдена');
     }
 
@@ -239,7 +240,7 @@ if (created.length > 0) {
             types: []
         };
 
-        ['STIMULUS', 'READING', 'COMPARE'].forEach(t => {
+        ['STIMULUS', 'READING', 'COMPARE'].forEach((t) => {
             const cb = $('ai-gen-type-' + t.toLowerCase());
             if (cb && cb.checked) p.types.push(t);
         });
@@ -277,9 +278,10 @@ if (created.length > 0) {
         const btnOpen = $('btn-ai-generator');
         if (btnOpen) btnOpen.addEventListener('click', openModal);
         const btnCancel = $('ai-gen-cancel');
-        if (btnCancel) btnCancel.addEventListener('click', () => {
-            $('ai-generator-modal').style.display = 'none';
-        });
+        if (btnCancel)
+            btnCancel.addEventListener('click', () => {
+                $('ai-generator-modal').style.display = 'none';
+            });
         const btnSubmit = $('ai-gen-submit');
         if (btnSubmit) btnSubmit.addEventListener('click', generate);
     }

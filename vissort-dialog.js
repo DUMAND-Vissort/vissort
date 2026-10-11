@@ -51,14 +51,18 @@
             function onOk(e) {
                 e.preventDefault();
                 cleanup();
-                try { el.close(); } catch (_) {}
+                try {
+                    el.close();
+                } catch (_) {}
                 if (opts.type === 'prompt') resolve(input.value);
                 else resolve(true);
             }
             function onCancel(e) {
                 if (e) e.preventDefault();
                 cleanup();
-                try { el.close(); } catch (_) {}
+                try {
+                    el.close();
+                } catch (_) {}
                 if (opts.type === 'prompt') resolve(null);
                 else resolve(false);
             }
@@ -73,7 +77,10 @@
                 // Fallback, если showModal недоступен (старый браузер)
                 el.setAttribute('open', '');
             }
-            if (opts.type === 'prompt') setTimeout(function () { input.focus(); }, 50);
+            if (opts.type === 'prompt')
+                setTimeout(function () {
+                    input.focus();
+                }, 50);
         });
     }
 
@@ -85,7 +92,9 @@
             return show(Object.assign({ type: 'confirm', message: msg }, opts || {}));
         },
         prompt: function (msg, defaultValue, opts) {
-            return show(Object.assign({ type: 'prompt', message: msg, defaultValue: defaultValue || '' }, opts || {}));
+            return show(
+                Object.assign({ type: 'prompt', message: msg, defaultValue: defaultValue || '' }, opts || {})
+            );
         }
     };
 
