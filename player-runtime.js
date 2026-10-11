@@ -1,4 +1,3 @@
-// ==================== user.js: Начало части 1 из 4 ====================
 'use strict';
 
 // ============================================================
@@ -222,7 +221,7 @@ function hideStatus() {
 }
 
 function initSupabase() {
-    // PATCH_TEST_NO_LOGIN: bypass auth for test mode
+    // Test mode: bypass auth
     if (location.search.indexOf('test=1') !== -1) {
         var _raw = null;
         try {
@@ -719,8 +718,6 @@ function disableCamera() {
     return window.PlayerCamera.disableCamera();
 }
 
-// ==================== user.js: Конец части 1 из 4 ====================
-// ==================== user.js: Начало части 2 из 4 ====================
 
 // ==================== ПЛЕЕР ГРАФА ====================
 function gGetNode(id) {
@@ -834,7 +831,7 @@ function playNextGraphNode() {
     );
 }
 
-// PATCH: авто-пересчёт размера стимула под новую дистанцию.
+// Авто-пересчёт размера стимула под новую дистанцию.
 // Вызывается из player-camera.js при distControlMode='auto'.
 function _recalcStimulusSize() {
     if (!PlayerState.curDistanceM) return;
@@ -2038,8 +2035,6 @@ function finishCompareSeries() {
     );
 }
 
-// ==================== user.js: Конец части 2 из 4 ====================
-// ==================== user.js: Начало части 3 из 4 ====================
 
 // ==================== ОТВЕТЫ (плоский режим) ====================
 function handleDirectionAnswer(direction) {
@@ -2498,7 +2493,7 @@ function stopPlayer() {
     PlayerState._waitingStable = false; // ожидание стабилизации
     PlayerState._stableSince = 0;
     PlayerState._stableBuf = [];
-    PlayerState._stimulusDistance = null; // PATCH_CLEAN
+    PlayerState._stimulusDistance = null;
     PlayerState.camWarnKind = null;
     window._fastLeanAt = 0;
     window._deviationHistory = [];
@@ -2588,8 +2583,6 @@ function scheduleVoiceCountdown(durationMs) {
     }, 200);
 }
 
-// ==================== user.js: Конец части 3 из 4 ====================
-// ==================== user.js: Начало части 4 из 4 ====================
 
 // ==================== INIT ====================
 function init() {
@@ -2762,7 +2755,6 @@ async function loadSivtsevFont() {
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
-// ==================== user.js: Конец части 4 из 4 ====================
 
 // Переключатель превью камеры в углу (P)
 (function installCamPreview() {
