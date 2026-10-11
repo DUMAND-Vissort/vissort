@@ -3,7 +3,7 @@
 // Детекция наклона/отклонения: аннулирование ответов, инвалидация,
 // приостановка показа при потере лица или отклонении дистанции.
 // Зависит от PlayerState, PlayerDistWarning.
-// Вызывает плеер через callbacks (onHideStimulus, onPlayGraphStimulus,
+// Вызывает плеер через callbacks (onPlayGraphStimulus,
 // onPlayGraphCompareRound, onShowNextStimulus, onGetNode).
 // ============================================================
 (function (global) {
@@ -16,7 +16,6 @@
 
     // Callbacks
     let _callbacks = {
-        onHideStimulus: () => {},
         onPlayGraphStimulus: () => {},
         onPlayGraphCompareRound: () => {},
         onShowNextStimulus: () => {},

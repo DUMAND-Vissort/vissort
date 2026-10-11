@@ -151,13 +151,7 @@
             el.textContent = em.icon + ' ' + rate + '% (' + detCount + '/' + PS._detWindow.length + ') · ' + em.label;
             el.style.color = em.color;
         }
-        var _fs = document.getElementById('stim-face-status');
-        if (_fs) {
-            _fs.textContent = em.icon + ' ' + em.label;
-            _fs.style.background = em.color === '#22c55e' ? 'rgba(16,185,129,0.9)' :
-                                    em.color === '#f59e0b' ? 'rgba(234,88,12,0.9)' :
-                                                             'rgba(220,38,38,0.9)';
-        }
+
         var _ci = document.getElementById('cam-indicator');
         if (_ci) {
             _ci.textContent = em.icon + ' ' + rate + '%';

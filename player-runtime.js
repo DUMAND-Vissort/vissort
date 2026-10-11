@@ -712,20 +712,8 @@ function _updateDetectUI() {
 function _checkHardLimit() {
     return window.PlayerCamera._checkHardLimit();
 }
-function startCamLoop() {
-    return window.PlayerCamera.startCamLoop();
-}
 async function enableCamera() {
     return window.PlayerCamera.enableCamera();
-}
-async function loadFaceApi() {
-    /* internal to player-camera.js */
-}
-async function processCamFrame() {
-    return window.PlayerCamera.processCamFrame();
-}
-function evaluateDistance() {
-    return window.PlayerCamera.evaluateDistance();
 }
 function disableCamera() {
     return window.PlayerCamera.disableCamera();
