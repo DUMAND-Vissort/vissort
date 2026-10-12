@@ -41,6 +41,7 @@
     let _reopenAttempts = 0;
     let authToken = null;
     let currentUserId = null;
+    let currentRole = null;
     let autoSyncTimer = null;
     let processingQueue = false;
     const listeners = [];
@@ -552,11 +553,13 @@
     function setAuth(token, userId) {
         authToken = token || null;
         currentUserId = userId || null;
+        currentRole = null;
         log('auth обновлён, userId =', currentUserId);
     }
     function clearAuth() {
         authToken = null;
         currentUserId = null;
+        currentRole = null;
         log('auth сброшен');
     }
 
@@ -763,13 +766,30 @@
         return await idbGetAll(STORES.assignments);
     };
 
+    // Ленивая загрузка роли текущего пользователя (для doctor_id).
+    async function _loadCurrentRole() {
+        if (currentRole != null) return currentRole;
+        if (!currentUserId) return null;
+        try {
+            const rows = await sbFetch('profiles?id=eq.' + currentUserId + '&select=role');
+            currentRole = (rows && rows[0] && rows[0].role) || null;
+        } catch (_) {
+            currentRole = null;
+        }
+        return currentRole;
+    }
+
     Data.assignScenario = async (userId, scenarioId, status = 'ready') => {
-        const localId = `${userId}:${scenarioId}`;
+        const localId = userId + ':' + scenarioId;
+        // Только доктор проставляет doctor_id. Админ/девелопер — null.
+        const role = await _loadCurrentRole();
+        const doctorId = role === 'doctor' ? currentUserId : null;
         const record = {
             id: localId,
             user_id: userId,
             scenario_id: scenarioId,
             status,
+            doctor_id: doctorId,
             _dirty: true,
             _syncedAt: null
         };
@@ -778,13 +798,12 @@
             type: 'assignment',
             action: 'create',
             entityId: localId,
-            payload: { user_id: userId, scenario_id: scenarioId, status }
+            payload: { user_id: userId, scenario_id: scenarioId, status, doctor_id: doctorId }
         });
         if (isOnline() && currentUserId) processQueue();
         emit('assignments-changed', { userId, scenarioId });
         return record;
     };
-
     // ---------- РЕЗУЛЬТАТЫ ----------
     Data.saveResult = async (result) => {
         const record = {

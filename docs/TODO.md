@@ -94,7 +94,7 @@
 
 ## 📋 ФАЗА 4 — безопасность и надёжность
 
-- [ ] RLS-аудит Supabase — §11.3 PROJECT-MAP.md
+- [x] RLS-аудит Supabase — §11.3 (FIXED 2026-10-12: docs/RLS-AUDIT.md, миграция doctor/developer)
 - [ ] Логирование Edge Functions — §11.4
 - [ ] Бэкап БД (cron + Storage) — §11.5
 - [x] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — §11.1 (FIXED 08d4c0f)

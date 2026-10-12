@@ -1031,18 +1031,20 @@ UI:
 **Что осталось (в план Фазы 5):** ротация самого ключа — отдельной задачей.
 **Молчаливая страховка:** fallback снят не будет, пока не подтвердится, что все клиенты подхватили VissortEnv.
 
-### §11.3 RLS-политики — не проверены
+### §11.3 RLS-политики ✅ ПРОЙДЕНО (2026-10-12)
 
-Что не проверено:
+Аудит пройден. Детали: `docs/RLS-AUDIT.md`.
 
-- SELECT для anon на training_sessions (используется в keepalive.js).
-- RLS на device_calibrations (unique onConflict user_id,fingerprint).
-- RLS на test_results (только свой user_id).
-- RLS на scenarios (врач видит только свои?).
-- RLS на user_scenarios (назначения).
+Итог:
+- Все 8 таблиц с RLS.
+- anon не читает данные (тест с anon-ключом: все `200 []`).
+- Роли: `admin`, `developer`, `doctor`, `patient`.
+- Функции: `is_admin`, `is_developer`, `is_admin_or_developer`, `current_role`, `is_my_patient`.
+- Политики для `doctor`: `scenarios`, `templates`, `test_results`, `training_sessions`, `profiles`, `user_scenarios`, `doctor_patients`.
+- `user_scenarios.doctor_id` — новый столбец (2026-10-12).
+- Разделение `admin` / `developer` — `developer` без медданных.
 
-Действие: пройти по всем таблицам, проверить политики, включить RLS где отключён.
-
+Что осталось (Фаза 6): UI регистрации врача, привязки пациентов, дашборд.
 ### §11.4 Edge Functions — не аудированы
 
 generate-scenario:
