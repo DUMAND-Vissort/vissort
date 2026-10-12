@@ -2977,7 +2977,7 @@ async function renderTemplatesList(filter = '') {
         `;
         item.querySelector('.tpl-apply').addEventListener('click', () => applyTemplateToCanvas(tpl.id));
         item.querySelector('.tpl-del').addEventListener('click', async () => {
-            if (!confirm(`Удалить заготовку «${tpl.name}»?`)) return;
+            if (!(await VissortDialog.confirm(`Удалить заготовку «${tpl.name}»?`))) return;
             await window.Data.deleteTemplate(tpl.id);
             await renderTemplatesList(filter);
         });
@@ -7834,12 +7834,12 @@ async function handleAuthSubmit() {
         return;
     }
 
-    function doNew() {
+    async function doNew() {
         var hasContent =
             (typeof nodes !== 'undefined' && nodes.length > 0) ||
             (typeof connections !== 'undefined' && connections.length > 0);
         if (hasContent) {
-            if (!confirm('Начать новый сценарий? Несохранённые изменения будут потеряны.')) return;
+            if (!(await VissortDialog.confirm('Начать новый сценарий? Несохранённые изменения будут потеряны.'))) return;
         }
 
         nodes.length = 0;

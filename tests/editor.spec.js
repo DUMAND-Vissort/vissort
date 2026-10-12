@@ -134,9 +134,11 @@ test.describe('Editor — admin.html', () => {
         const before = await page.locator('.scenario-node').count();
         expect(before).toBeGreaterThan(0);
 
-        page.on('dialog', (d) => d.accept());
         await page.click('#btn-new');
-        await page.waitForTimeout(500);
+        // VissortDialog.confirm — HTML-модалка, закрываем вручную.
+        await page.waitForSelector('#vissort-dialog[open]', { timeout: 5000 });
+        await page.click('#vd-ok');
+        await page.waitForTimeout(200);
 
         const after = await page.locator('.scenario-node').count();
         expect(after).toBe(0);
