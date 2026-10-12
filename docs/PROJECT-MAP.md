@@ -1383,18 +1383,21 @@ player-camera.js: при отсутствии det повторный detectSingl
 
 Действие: единый logger с флагом DEBUG.
 
-#### §13.3.3 Нативные alert / confirm / prompt
+#### §13.3.3 Нативные alert / confirm / prompt ✅ ЗАКРЫТО (2026-10-12)
 
-Много мест:
+Все нативные диалоги заменены на VissortDialog.
 
-- app.js: saveGraph, startPlayer, removeBlock.
-- player-runtime.js: showStatus не alert, но handleDirectionAnswer инлайн.
-- vissort-onboarding.js: alert / confirm.
-- keepalive.js: alert × 4.
-- player-reading.js: alert.
-- installNewScenario: confirm на английском.
+**app.js (74 диалога):**
+- 67 `alert` → `VissortDialog.alert` (коммит `69ff3fd`).
+- 2 `confirm` → `VissortDialog.confirm` + async (коммит `ef6431c`).
+- 5 `prompt` → `VissortDialog.prompt` + async (коммит `7b5b739`).
 
-Действие: единая модалка уведомлений.
+**Остальные файлы (закрыто ранее):**
+- `keepalive.js` — 4 `alert` → `_alert` (§13.3.3 ранее).
+- `player-runtime.js` — 5 `alert` → `_alert` (§13.3.3 ранее).
+- `vissort-onboarding.js` — 2 `alert` + 1 `confirm` (§13.3.3 ранее).
+
+- **Тесты обновлены:** `login.spec.js:33`, `editor.spec.js:131` — теперь ждут `#vissort-dialog[open]` вместо `page.on('dialog')`.
 
 #### §13.3.4 PATCH* комментарии и исторические маркеры
 

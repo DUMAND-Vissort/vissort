@@ -77,4 +77,32 @@
 
 ---
 
+## 2026-10-12 — §13.3.3: унификация модалок в app.js
+
+### Решение: 74 диалога → VissortDialog (3 коммита)
+
+**Контекст:**
+- В app.js — 67 alert, 2 confirm, 5 prompt (нативные).
+- Проблемы нативных: чужеродно на проде, нельзя стилизовать, блокируют UI.
+- В проекте уже есть `vissort-dialog.js` (используется в player.html / user.html).
+
+**Решение:** заменить все нативные диалоги в app.js на VissortDialog:
+- ч.1: 67 alert → VissortDialog.alert (коммит 69ff3fd).
+- ч.2: 2 confirm → VissortDialog.confirm + async (коммит ef6431c).
+- ч.3: 5 prompt → VissortDialog.prompt + async (коммит 7b5b739).
+
+**Почему confirm/prompt требуют async:**
+- Нативные — синхронные, возвращают значение сразу.
+- VissortDialog.* — Promise.
+- Функции: renderTemplatesList (async), doNew (сделана async), saveNodeAsTemplate (async), saveGraph (async), saveCurrentScenario (async), addBlock (сделана async).
+- Вызывающие — через addEventListener (async event-handler не ломается).
+
+**Побочные правки тестов:**
+- login.spec.js:33 — page.waitForEvent('dialog') → waitForSelector('#vissort-dialog[open]').
+- editor.spec.js:131 — то же.
+
+**Файлы:** app.js (74 замены), tests/login.spec.js, tests/editor.spec.js.
+
+---
+
 *Составлено: 2026-10-12.*
