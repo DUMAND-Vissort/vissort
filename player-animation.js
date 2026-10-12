@@ -333,24 +333,38 @@
         const radii = baseAngles.map(() => rMin + Math.random() * (rMax - rMin));
         const cx = aw / 2,
             cy = ah / 2;
+        // Точки создаём один раз — в draw() только меняем transform (композитится GPU).
+        const _dots = [];
+        for (let i = 0; i < count; i++) {
+            const el = document.createElement('div');
+            el.style.cssText =
+                'position:absolute;left:0;top:0;border-radius:50%;background:' +
+                cStr +
+                ';box-shadow:0 0 6px rgba(0,0,0,0.4);will-change:transform,width,height;';
+            layer.appendChild(el);
+            _dots.push({ el: el, baseAngle: baseAngles[i], radius: radii[i] });
+        }
+
         function draw(t) {
-            layer.innerHTML = '';
             for (let i = 0; i < count; i++) {
-                let ang = baseAngles[i],
+                let ang = _dots[i].baseAngle,
                     sc = 1;
                 if (node.periMotion === 'rotate') {
                     const sp = Math.max(0.02, Math.min(2, node.periSpeed || 0.3));
                     ang += (t / 1000) * sp * Math.PI * 2;
                 } else if (node.periMotion === 'pulse') {
                     const sp = Math.max(0.5, Math.min(5, node.periSpeed || 1));
-                    sc = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(ang * 3 + (t / 1000) * sp * Math.PI * 2));
+                    sc =
+                        0.4 +
+                        0.6 * (0.5 + 0.5 * Math.sin(ang * 3 + (t / 1000) * sp * Math.PI * 2));
                 }
-                const x = cx + Math.cos(ang) * radii[i],
-                    y = cy + Math.sin(ang) * radii[i];
-                const d = document.createElement('div');
+                const x = cx + Math.cos(ang) * _dots[i].radius,
+                    y = cy + Math.sin(ang) * _dots[i].radius;
                 const s = Math.max(2, sizePx * sc);
-                d.style.cssText = `position:absolute;left:${x - s / 2}px;top:${y - s / 2}px;width:${s}px;height:${s}px;border-radius:50%;background:${cStr};box-shadow:0 0 6px rgba(0,0,0,0.4);`;
-                layer.appendChild(d);
+                const el = _dots[i].el;
+                el.style.transform = 'translate(' + (x - s / 2) + 'px, ' + (y - s / 2) + 'px)';
+                el.style.width = s + 'px';
+                el.style.height = s + 'px';
             }
         }
         draw(0);
