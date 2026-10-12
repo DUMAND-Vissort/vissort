@@ -193,7 +193,9 @@
 
     function _checkHardLimit() {
         if (PS.curDistanceM == null) return true;
-        if (PS.curDistanceM > HARD_LIMIT_M) {
+        // Единый источник: PlayerDistance (15.1.3).
+        const r = global.PlayerDistance.check(PS.curDistanceM);
+        if (r.status === 'hard-limit') {
             if (global.PlayerDistWarning) global.PlayerDistWarning.showDistHardBanner();
             return false;
         }
@@ -459,41 +461,26 @@
             }
         }
         if (PS.camBaseline == null || !isFinite(PS.camBaseline) || PS.camBaseline <= MIN_BASELINE_M) return;
-        const dev = ((PS.curDistanceM - PS.camBaseline) / PS.camBaseline) * 100;
+        // Единый источник: PlayerDistance (15.1.3).
+        const r = global.PlayerDistance.check(PS.curDistanceM);
+        const dev = r.deviationPct;
         if (PS.playerRunning && !PS.isPaused) {
             if (window._recordDeviation) window._recordDeviation(dev);
             if (window._updateStimulusDim) window._updateStimulusDim();
-            // Порог в см → процент от baseline.
-            var _baselineCm = PS.camBaseline ? PS.camBaseline * 100 : 100;
-            var _tolNearPct = ((PS._tolNearCm || DEFAULT_TOL_NEAR_CM) * 100) / _baselineCm;
-            var _tolFarPct = ((PS._tolFarCm || DEFAULT_TOL_FAR_CM) * 100) / _baselineCm;
-            var _tol = dev < 0 ? _tolNearPct : _tolFarPct;
 
-            if (Math.abs(dev) > _tol) {
-                // Hard limit: если дистанция > HARD_LIMIT_M — всегда отменяем (C1)
-                if (PS.curDistanceM > HARD_LIMIT_M) {
+            if (r.status === 'near' || r.status === 'far' || r.status === 'hard-limit') {
+                if (r.status === 'hard-limit' || PS._distControlMode !== 'auto') {
                     if (!PS._waitingStable)
                         _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
-                } else if (PS._distControlMode === 'auto') {
-                    // Авто-пересчёт: не отменять, а пересчитать размер
-                    if (typeof _callbacks.onRecalcSize === 'function') _callbacks.onRecalcSize();
                 } else {
-                    // Возврат (по умолчанию): отменить показ
-                    if (!PS._waitingStable)
-                        _callbacks.onAbortStimulus(dev < 0 ? 'deviation_near' : 'deviation_far');
+                    if (typeof _callbacks.onRecalcSize === 'function') _callbacks.onRecalcSize();
                 }
             }
         }
-        const upTol =
-            (PS.userScenario &&
-                PS.userScenario.params &&
-                PS.userScenario.params.distanceToleranceIncreasePct) ||
-            DEFAULT_TOL_INCREASE_PCT;
-        const dnTol =
-            (PS.userScenario &&
-                PS.userScenario.params &&
-                PS.userScenario.params.distanceToleranceDecreasePct) ||
-            DEFAULT_TOL_DECREASE_PCT;
+        // UI-warning — через PlayerDistance.effectiveTolerance (15.1.3).
+        const _tolCfg = global.PlayerDistance.effectiveTolerance();
+        const upTol = _tolCfg.increasePct;
+        const dnTol = _tolCfg.decreasePct;
         const ci = _camIndicator();
         if (!ci) return;
         if (dev > upTol) {
