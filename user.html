@@ -450,6 +450,7 @@
         </style>
 
         <!-- Sentry -->
+        <script src="vissort-logger.js"></script>
         <script src="vissort-env.js"></script>
         <script src="sentry.min.js" crossorigin="anonymous"></script>
         <script>
@@ -460,7 +461,7 @@
                 }
                 Sentry.init({
                     dsn: 'https://f64db93abc3ba7bc6b4be4b31835e749@o4512152794038272.ingest.de.sentry.io/4512152834801744',
-                    tunnel: 'https://hzvypwdpdhsjzaclxmbm.supabase.co/functions/v1/sentry-proxy',
+                    tunnel: 'https://hzvypwdpdhsjzaclxmbm.supabase.co/functions/v1/sentry-proxy?key=wZebbyFYhaAmp9k9M1yk5jZODq1rhf1MLbWM4jzY1SL0WQZ9',
                     environment:
                         location.hostname === 'localhost' || location.hostname === '127.0.0.1'
                             ? 'dev'
@@ -655,7 +656,6 @@
         <script src="voice.js" defer></script>
         <script src="user.js"></script>
         <script src="vissort-dialog.js" defer></script>
-        <script src="vissort-logger.js" defer></script>
         <script src="vissort-core.js" defer></script>
         <script src="player-state.js" defer></script>
         <script src="player-camera.js" defer></script>
