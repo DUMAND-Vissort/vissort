@@ -60,6 +60,15 @@
 | `sw.js` | Service Worker (9 KB) |
 | `vissort-onboarding.js` | Мастер калибровки (~14 KB) |
 | `vissort-device.js` | Fingerprint устройства + калибровка (~8 KB) |
+| `vissort-env.js` | Единый источник env: SUPABASE_URL, ANON_KEY, RELEASE |
+| `vissort-logger.js` | VLog — единый логгер (no-op в проде). Загружается ПЕРВЫМ |
+| `vissort-dialog.js` | VissortDialog — единая модалка (alert/confirm/prompt) |
+| `supabase/functions/generate-scenario/` | Edge Function: DeepSeek-прокси |
+| `supabase/functions/sentry-proxy/` | Edge Function: Sentry-туннель |
+| `.github/workflows/test.yml` | CI: 28 Playwright-тестов |
+| `.github/workflows/backup-db.yml` | CI: ежедневный pg_dump БД |
+| `docs/RLS-AUDIT.md` | Аудит RLS: матрица ролей × таблиц |
+| `docs/BACKUP.md` | Автобэкап: инструкция + восстановление |
 | `player-state.js` | Единый объект состояния плеера |
 | `player-camera.js` | Камера, детекция лица, EAR (моргание), дистанция |
 | `player-animation.js` | Анимации стимула |
@@ -84,19 +93,24 @@
 - Превью камеры и бейдж лица в overlay
 - Rate-limit AI-генератора (20/час на user_id)
 - Офлайн-режим (SW + IndexedDB + syncQueue)
-- Калибровка: 2 шага (PPI + камера), localStorage + `device_calibrations` в БД
-- Синхронизация калибровки: по `fingerprint+userId`, с облаком
+- Калибровка: 2 шага (PPI + камера), localStorage + device_calibrations
+- Синхронизация калибровки: по fingerprint+userId, с облаком
 - Моргание: детекция через EAR (Eye Aspect Ratio) на landmarks
-- Кнопка 📐 в шапке `player.html` и `user.html` — повторная калибровка
-
+- Кнопка 📐 в шапке — повторная калибровка
+- Роли: admin, developer, doctor, patient (profiles.role)
+- VissortDialog — единая модалка (alert/confirm/prompt)
+- VissortLog — единый логгер (no-op в проде, ?debug=1 для отладки)
+- VissortEnv — единый env (URL, ANON_KEY, RELEASE)
 ### Инфраструктура
-- Supabase: Auth, RLS, Edge Functions, миграции
-- Sentry через прокси
-- GitHub Actions CI: 28 Playwright-тестов на каждый push
+- Supabase: Auth, RLS (4 роли: admin/developer/doctor/patient), Edge Functions, миграции
+- RLS: 8 таблиц с RLS, 17 политик, doctor_patients, is_my_patient(), is_admin/is_developer
+- Edge Functions: CORS whitelist, retry на 429/5xx, timeout 60s, Sentry-хук, SENTRY_TUNNEL_KEY
+- Автобэкап: GitHub Actions, pg_dump 17, артефакты 90 дней (2026-10-12)
+- Sentry через прокси (tunnel key)
+- GitHub Actions CI: 28 Playwright-тестов + ежедневный backup-db
 - schemaVersion: 2 в сценариях + migrateScenario
-- PROJECT-MAP.md — полная карта архитектуры (16 разделов)
+- PROJECT-MAP.md — полная карта (16 разделов)
 - ARCHITECTURE-DIAGRAMS.md — 4 mermaid-диаграммы
-
 ## Что в работе
 
 ### Фазы 0, 1, 2 — ЗАКРЫТЫ
@@ -109,12 +123,13 @@
 
 Все 5 задач + NotAllowedError — закрыты. См. TODO.md.
 
-### Фаза 4 — RLS, логирование, бэкап (ЧАСТИЧНО)
+### Фаза 4 — RLS, логирование, бэкап ✅ ЗАКРЫТА (2026-10-12)
 
-- RLS-аудит — отложен (см. PROJECT-MAP.md §11.3)
-- Логирование Edge Functions — отложено (§11.4)
-- Бэкап БД — не настроен (§11.5)
-- ~~ADMIN_EMAILS — eremeevap@gmail.com~~ закрыто 2026-10-11 (коммит 08d4c0f)
+- ✅ §11.1 ADMIN_EMAILS — закрыто 08d4c0f
+- ✅ §11.2 Единый env (vissort-env.js) — закрыто c7ebfee…518ae11
+- ✅ §11.3 RLS + роли doctor/developer (docs/RLS-AUDIT.md)
+- ✅ §11.4 Edge Functions: CORS whitelist, retry, timeout, Sentry key
+- ✅ §11.5 Автобэкап (backup-db.yml, первый запуск 2026-10-12)
 
 ### Баг-фиксы после Фазы 4 (2026-10-11)
 
@@ -122,7 +137,6 @@
 - 6 P1 (CSP, SW precache, Sentry-регекспы, deleteNode, physiological, btn-*)
 - 1 refactor (createCellElement fallback)
 - См. PROJECT-MAP.md §16 «История исправлений»
-
 ### Синхронизация калибровки (не в TODO, добавлено 10.10.2026)
 
 - Калибровка привязана к `fp|userId`
@@ -132,23 +146,21 @@
 - Кнопка 📐 для повторной калибровки
 - Убран `askAboutDevice` — не подставляем чужую калибровку
 
-## Следующие задачи (обновлено 2026-10-11)
+## Следующие задачи (обновлено 2026-10-12)
 
-**P2 (техдолг из PROJECT-MAP.md §12.3):**
-- RAF-анимации плеера не восстанавливаются после паузы
-- Нет PlayerAnimation.stopAll()
-- window._camDetecting может залипнуть
-- After face_lost стимул может не возобновиться
-- ESLint 45 warnings — 43 no-unused-vars + 2 no-empty
+**Закрыто в сессии 2026-10-12:**
+- §11.3, §11.4, §11.5 — Фаза 4
+- §13.2.1 + §13.2.2–7 — производительность
+- §13.3.1–7 — качество кода (кроме app.js alert)
+- §13.4.1–3 — согласованность
+- §13.5.1–3 — зависимости
 
-**Техдолг (PROJECT-MAP.md §13):** 23 пункта
-- Архитектура: app.js монолит (360 KB), три системы дистанции
-- Производительность: 7 пунктов
-- Качество кода: 7 пунктов
+**Остаток:**
+- §13.3.3 (app.js): 68 alert/confirm/prompt → VissortDialog (~2 ч)
+- Prettier для docs/*.md (опционально)
 
-**Фаза 5:** аудит app.js, авто-bump SW, Sentry performance (tracesSampleRate 0.1)
+**Фаза 5:** разбить app.js (7900 строк), player-runtime.js (3000 строк); устранить дублирование ~3000 строк; единый player-distance.js; авто-bump SW; Sentry performance
 **Фаза 6:** клинический редактор (6 недель)
-
 ## Принципы работы
 
 1. Прод не ломаем. Каждое изменение — отдельный коммит.
@@ -158,6 +170,7 @@
 5. Перед push — `git status` и `git diff` глазами.
 6. Кириллица: UTF-8 без BOM.
 7. Если файл заблокирован — работать через `.tmp` + `Move-Item -Force`.
+8. **Порядок загрузки: vissort-logger.js → vissort-env.js → vissort-dialog.js → vissort-core.js → модули.** Все используют VLog. Если logger загружен позже — ReferenceError во всех файлах.
 
 ## Формат работы с ассистентом
 
@@ -210,13 +223,15 @@ npx --yes serve -l 5500
 ## Антипаттерны
 
 **Технически:**
+- Не загружать vissort-logger.js после vissort-env.js — VLog ещё не определён, весь bootstrap падает.
 - Не рефакторить player-runtime.js без прогона тестов после каждого шага.
 - Не менять структуру сценариев без schemaVersion.
 - Не патчить admin.html через PowerShell here-string (кириллица ломается).
 - Не пушить в прод в пятницу вечером.
 - Не удалять PATCH* комментарии без замены на осмысленные.
 - Не вызывать Set-Content на файл без .tmp + Move-Item обхода.
-
+- Не менять RLS-политики без теста утечки (anon-ключ не должен читать чужие данные).
+- Не редактировать Edge Functions без npx supabase functions deploy — код в репо не равен прод.
 **Продуктово:**
 - Не обещать излечения.
 - Не делать публичные рейтинги.
@@ -231,5 +246,5 @@ npx --yes serve -l 5500
 ---
 
 *Дата создания: 2026-10-05*
-*Обновлено: 2026-10-11 (после Фазы 4-багфиксов: 14 коммитов, 3 P0 + 6 P1 закрыто)*
+*Обновлено: 2026-10-12 (после Фазы 4: RLS+роли, Edge Functions, автобэкап; §13.2–13.5 закрыты)*
 *Копировать: в первое сообщение нового чата.*
