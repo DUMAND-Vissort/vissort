@@ -37,10 +37,11 @@ test.describe('Login — admin.html', () => {
         await page.fill('#auth-email', 'wrong@vissort.com');
         await page.fill('#auth-password', 'wrong-password-123');
 
-        const dialogPromise = page.waitForEvent('dialog', { timeout: 10000 });
         await page.click('#auth-submit');
-        const dialog = await dialogPromise;
-        expect(dialog.message()).toMatch(/ошибка|error|invalid/i);
-        await dialog.dismiss();
+        // VissortDialog — HTML-модалка, не нативный alert.
+        await page.waitForSelector('#vissort-dialog[open]', { timeout: 10000 });
+        const msg = await page.textContent('#vd-msg');
+        expect(msg).toMatch(/ошибка|error|invalid/i);
+        await page.click('#vd-ok');
     });
 });

@@ -617,12 +617,12 @@ function applyScreenCalib() {
     if (!mmInput || !modalEl) return;
     const mm = parseFloat(mmInput.value);
     if (!mm || mm < 5 || mm > 500) {
-        alert('Введите длину в мм (5..500)');
+        VissortDialog.alert('Введите длину в мм (5..500)');
         return;
     }
     const ppi = ppiFromMeasuredMm(mm);
     if (!ppi || ppi < 20 || ppi > 2000) {
-        alert('PPI вне разумных пределов');
+        VissortDialog.alert('PPI вне разумных пределов');
         return;
     }
     savePPI(ppi);
@@ -639,7 +639,7 @@ function applyScreenCalib() {
             updateInspector();
         }
     }
-    alert(`✅ PPI сохранён: ${ppi}`);
+    VissortDialog.alert(`✅ PPI сохранён: ${ppi}`);
     modalEl.style.display = 'none';
 }
 
@@ -1000,7 +1000,7 @@ function ensureBlinkCalibrationUI() {
 }
 function startBlinkCalibration() {
     if (!cameraActive) {
-        alert('Включите камеру');
+        VissortDialog.alert('Включите камеру');
         return;
     }
     ensureBlinkCalibrationUI();
@@ -1044,14 +1044,14 @@ function finishBlinkCalibration() {
     if (!_blinkCalibration) return;
     const { openSamples, closedSamples } = _blinkCalibration;
     if (openSamples.length < 5 || closedSamples.length < 5) {
-        alert('Недостаточно данных с камеры. Убедитесь, что лицо видно, и повторите.');
+        VissortDialog.alert('Недостаточно данных с камеры. Убедитесь, что лицо видно, и повторите.');
         cancelBlinkCalibration();
         return;
     }
     const meanOpen = openSamples.reduce((a, b) => a + b, 0) / openSamples.length;
     const meanClosed = closedSamples.reduce((a, b) => a + b, 0) / closedSamples.length;
     if (meanOpen <= meanClosed) {
-        alert('Значения нелогичны. Повторите калибровку.');
+        VissortDialog.alert('Значения нелогичны. Повторите калибровку.');
         cancelBlinkCalibration();
         return;
     }
@@ -1150,7 +1150,7 @@ async function enableCamera() {
         if (videoFrameId) cancelAnimationFrame(videoFrameId);
         videoFrameId = requestAnimationFrame(processVideoFrame);
     } catch (err) {
-        alert('Ошибка камеры: ' + err.message);
+        VissortDialog.alert('Ошибка камеры: ' + err.message);
     }
 }
 async function disableCamera() {
@@ -1326,7 +1326,7 @@ async function processVideoFrame() {
 }
 function openCalibrationModal() {
     if (!cameraActive) {
-        alert('Включите камеру');
+        VissortDialog.alert('Включите камеру');
         return;
     }
     document.getElementById('calibration-video').srcObject = videoStream;
@@ -1334,21 +1334,21 @@ function openCalibrationModal() {
 }
 function calibrateFocalLength() {
     if (!cameraActive) {
-        alert('Камера не включена');
+        VissortDialog.alert('Камера не включена');
         return;
     }
     if (!lastEyeDistancePx) {
-        alert('Лицо не найдено');
+        VissortDialog.alert('Лицо не найдено');
         return;
     }
     const cm = parseFloat(document.getElementById('calib-distance').value);
     if (isNaN(cm) || cm <= 0) {
-        alert('Неверное расстояние');
+        VissortDialog.alert('Неверное расстояние');
         return;
     }
     focalLengthPx = (lastEyeDistancePx * cm * 10) / realIPD_MM;
     localStorage.setItem('focalLengthPx', focalLengthPx);
-    alert('Калибровка камеры завершена!');
+    VissortDialog.alert('Калибровка камеры завершена!');
     document.getElementById('calibration-modal').style.display = 'none';
 }
 
@@ -2542,7 +2542,7 @@ function startConnection(sourceId, isLoop) {
                 100
             );
         } else {
-            alert('Такая связь уже существует или превышен лимит.');
+            VissortDialog.alert('Такая связь уже существует или превышен лимит.');
             cancelConnection();
         }
     };
@@ -2836,19 +2836,19 @@ async function saveNodeAsTemplate(nodeId) {
     delete payload.isStart;
     try {
         await window.Data.saveTemplate({ name, description, kind: 'node', payload });
-        alert(
+        VissortDialog.alert(
             `✅ Заготовка «${name}» сохранена${window.Data.isOnline() ? ' и отправляется в облако' : ' локально (отправится при появлении интернета)'}.`
         );
         refreshTemplatesIfOpen();
     } catch (e) {
-        alert('Ошибка сохранения заготовки: ' + e.message);
+        VissortDialog.alert('Ошибка сохранения заготовки: ' + e.message);
     }
 }
 async function applyTemplateToCanvas(templateId, position) {
     const templates = await window.Data.getTemplatesLocal();
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) {
-        alert('Заготовка не найдена');
+        VissortDialog.alert('Заготовка не найдена');
         return;
     }
     const x = position?.x ?? canvas.scrollLeft + 200 + Math.random() * 200;
@@ -2871,7 +2871,7 @@ async function applyTemplateToCanvas(templateId, position) {
             const toId = idMap.get(c.toId);
             if (fromId && toId) connections.push({ ...c, fromId, toId });
         });
-        alert(`✅ Импортировано ${newNodes.length} узлов из заготовки «${tpl.name}»`);
+        VissortDialog.alert(`✅ Импортировано ${newNodes.length} узлов из заготовки «${tpl.name}»`);
     } else if (tpl.payload) {
         const clone = JSON.parse(JSON.stringify(tpl.payload));
         clone.id = generateId();
@@ -2880,7 +2880,7 @@ async function applyTemplateToCanvas(templateId, position) {
         clone.isStart = false;
         nodes.push(clone);
         activeNodeId = clone.id;
-        alert(`✅ Узел «${tpl.name}» добавлен на холст`);
+        VissortDialog.alert(`✅ Узел «${tpl.name}» добавлен на холст`);
     }
     requestRenderGraph();
     updateInspector();
@@ -2903,7 +2903,7 @@ async function loadTemplatesFolder() {
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error(err);
-            alert('Ошибка выбора папки заготовок: ' + err.message);
+            VissortDialog.alert('Ошибка выбора папки заготовок: ' + err.message);
         }
     }
 }
@@ -2911,29 +2911,29 @@ async function importTemplatesFromFolder(handle) {
     if (!handle) return;
     const ok = await window.Data.ensurePermission(handle, 'read');
     if (!ok) {
-        alert('Нет доступа к папке заготовок');
+        VissortDialog.alert('Нет доступа к папке заготовок');
         return;
     }
     const files = await window.Data.scanFolder(handle, '.json');
     if (files.length === 0) {
-        alert('В папке заготовок нет .json файлов');
+        VissortDialog.alert('В папке заготовок нет .json файлов');
         return;
     }
     const res = await window.Data.bulkImportTemplates(files, { source: 'folder' });
     if (res.added + res.updated > 0) {
-        alert(`📋 Заготовки:\nДобавлено: ${res.added}\nОбновлено: ${res.updated}\nПропущено: ${res.skipped}`);
+        VissortDialog.alert(`📋 Заготовки:\nДобавлено: ${res.added}\nОбновлено: ${res.updated}\nПропущено: ${res.skipped}`);
     }
     refreshTemplatesIfOpen();
 }
 async function importTemplatesFromFileList(fileList) {
     const files = Array.from(fileList || []).filter((f) => /\.json$/i.test(f.name));
     if (!files.length) {
-        alert('Не выбрано ни одного .json');
+        VissortDialog.alert('Не выбрано ни одного .json');
         return;
     }
     const entries = await Promise.all(files.map(async (f) => ({ name: f.name, text: await f.text() })));
     const res = await window.Data.bulkImportTemplates(entries, { source: 'files' });
-    alert(`📋 Заготовки:\nДобавлено: ${res.added}\nОбновлено: ${res.updated}\nПропущено: ${res.skipped}`);
+    VissortDialog.alert(`📋 Заготовки:\nДобавлено: ${res.added}\nОбновлено: ${res.updated}\nПропущено: ${res.skipped}`);
     refreshTemplatesIfOpen();
 }
 async function refreshTemplatesIfOpen() {
@@ -3023,7 +3023,7 @@ function openTemplatesModal() {
 async function exportAllTemplates() {
     const list = await window.Data.getTemplatesLocal();
     if (!list.length) {
-        alert('Нет заготовок для экспорта');
+        VissortDialog.alert('Нет заготовок для экспорта');
         return;
     }
     const blob = new Blob([JSON.stringify({ templates: list }, null, 2)], { type: 'application/json' });
@@ -3436,7 +3436,7 @@ function updateCompareInspector(node) {
                     const cur = JSON.parse(previewEl.dataset.selected || '[]');
                     const was = cEl.dataset.on === '1';
                     if (was && cur.length <= 2) {
-                        alert('Нужно минимум 2 активные клетки');
+                        VissortDialog.alert('Нужно минимум 2 активные клетки');
                         return;
                     }
                     cEl.dataset.on = was ? '0' : '1';
@@ -3956,7 +3956,7 @@ function applyBookSelection(bookId) {
     if (!node || node.nodeType !== 'READING') return;
     const bk = window._books[bookId];
     if (!bk) {
-        alert('Книга не найдена');
+        VissortDialog.alert('Книга не найдена');
         return;
     }
     node.bookId = bookId;
@@ -3979,7 +3979,7 @@ async function handleBookPickerFileUpload(file) {
     if (!file) return;
     const n = (file.name || '').toLowerCase();
     if (!(n.endsWith('.txt') || n.endsWith('.fb2') || n.endsWith('.epub'))) {
-        alert('Поддерживаются .txt, .fb2, .epub');
+        VissortDialog.alert('Поддерживаются .txt, .fb2, .epub');
         return;
     }
     const f = document.getElementById('book-picker-file-name');
@@ -3991,7 +3991,7 @@ async function handleBookPickerFileUpload(file) {
             .replace(/\n{3,}/g, '\n\n')
             .trim();
         if (!clean) {
-            alert('Не удалось извлечь текст.');
+            VissortDialog.alert('Не удалось извлечь текст.');
             return;
         }
         const id = await sha1(clean);
@@ -3999,7 +3999,7 @@ async function handleBookPickerFileUpload(file) {
         if (f) f.textContent = `✅ ${file.name} (${clean.length} символов)`;
         applyBookSelection(id);
     } catch (err) {
-        alert('Ошибка: ' + err.message);
+        VissortDialog.alert('Ошибка: ' + err.message);
     }
 }
 // ==================== РЕЖИМ ЧТЕНИЯ (служебное) ====================
@@ -4066,29 +4066,29 @@ function toggleReadingPause() {
 }
 function saveReadingBookmark() {
     if (!window._currentReadingBookId) {
-        alert('Нет книги');
+        VissortDialog.alert('Нет книги');
         return;
     }
     localStorage.setItem(
         bookmarkKeyFor(window._currentReadingBookId),
         JSON.stringify({ page: readingPage, updatedAt: new Date().toISOString() })
     );
-    alert(`🔖 Закладка (страница ${readingPage + 1} из ${readingTotalPages})`);
+    VissortDialog.alert(`🔖 Закладка (страница ${readingPage + 1} из ${readingTotalPages})`);
 }
 function openReadingBookmark() {
     if (!window._currentReadingBookId) {
-        alert('Нет книги');
+        VissortDialog.alert('Нет книги');
         return;
     }
     const s = localStorage.getItem(bookmarkKeyFor(window._currentReadingBookId));
     if (!s) {
-        alert('Закладка не найдена');
+        VissortDialog.alert('Закладка не найдена');
         return;
     }
     try {
         scrollReadingToPage(JSON.parse(s).page);
     } catch (e) {
-        alert('Ошибка');
+        VissortDialog.alert('Ошибка');
     }
 }
 function changeAcuityByStep(delta) {
@@ -4451,7 +4451,7 @@ function startPlayer() {
         startAutoTraining();
         return;
     }
-    alert('Создайте узел или настройте Режим');
+    VissortDialog.alert('Создайте узел или настройте Режим');
 }
 function startAutoTraining() {
     if (currentMode === 'nodes') switchMode('stimuli');
@@ -4541,7 +4541,7 @@ function playNextQueuedNode() {
     if (!playerRunning || isPaused) return;
     if (playIndex >= playQueue.length) {
         stopPlayer();
-        alert('Проигрывание узлов завершено.');
+        VissortDialog.alert('Проигрывание узлов завершено.');
         return;
     }
     const item = playQueue[playIndex];
@@ -5248,7 +5248,7 @@ function finishSeries() {
             distRep = `\n\n📏 Дистанция: ср=${avg.toFixed(2)} м, мин=${distanceMin.toFixed(2)}, макс=${distanceMax.toFixed(2)}`;
         }
         const blinkRep = buildBlinkReport();
-        alert(
+        VissortDialog.alert(
             `Тренировка завершена!\nУспешных: ${successfulSeries}\nНеуспешных: ${failedSeries}\nV = ${currentAcuity.toFixed(1)}${distRep}${blinkRep}`
         );
         stopPlayer();
@@ -6341,7 +6341,7 @@ async function selectFolder() {
         }
     } else {
         if (!folderInput) {
-            alert('Браузер не поддерживает выбор папки.');
+            VissortDialog.alert('Браузер не поддерживает выбор папки.');
             return;
         }
         folderInput.value = '';
@@ -6412,7 +6412,7 @@ async function saveGraph() {
                         window._currentScenarioFileName = fileName;
                     }
                     await window.Data.writeFileToFolder(selectedFolderHandle, fileName, jsonStr);
-                    alert('📁 Файл сохранён: ' + fileName);
+                    VissortDialog.alert('📁 Файл сохранён: ' + fileName);
                 }
             } catch (err) {
                 VLog.warn('[saveGraph] папка:', err);
@@ -6673,7 +6673,7 @@ function loadGraph(file) {
             requestRenderGraph();
             updateInspector();
         } catch (err) {
-            alert('Ошибка загрузки');
+            VissortDialog.alert('Ошибка загрузки');
             console.error(err);
         }
     };
@@ -6707,7 +6707,7 @@ async function loadScenarioList() {
                 const id = btn.dataset.id;
                 const sc = await window.Data.getScenarioById(id);
                 if (!sc) {
-                    alert('Сценарий не найден');
+                    VissortDialog.alert('Сценарий не найден');
                     return;
                 }
                 trainingNode = { params: sc.params };
@@ -6721,8 +6721,8 @@ async function loadScenarioList() {
                     window._currentScenarioId = id;
                     window._currentScenarioFileName = (sc.name || 'scenario') + '.json';
                     requestRenderGraph();
-                    alert('Сценарий загружен в граф.');
-                } else alert('Сценарий загружен. Нажмите «Плеер».');
+                    VissortDialog.alert('Сценарий загружен в граф.');
+                } else VissortDialog.alert('Сценарий загружен. Нажмите «Плеер».');
                 document.getElementById('library-modal').style.display = 'none';
             });
         });
@@ -6732,11 +6732,11 @@ async function loadScenarioList() {
 }
 async function saveCurrentScenario() {
     if (!window.Data || !window.Data.getCurrentUserId()) {
-        alert('Войдите');
+        VissortDialog.alert('Войдите');
         return;
     }
     if (!trainingNode || !trainingNode.params) {
-        alert('Нет тренировки');
+        VissortDialog.alert('Нет тренировки');
         return;
     }
     const name = prompt('Название:');
@@ -6755,7 +6755,7 @@ async function saveCurrentScenario() {
         }
     };
     await window.Data.saveScenario(record);
-    alert('Сохранено: ' + name);
+    VissortDialog.alert('Сохранено: ' + name);
     loadScenarioList();
 }
 
@@ -6795,11 +6795,11 @@ async function assignScenario() {
     const u = document.getElementById('selected-user').value;
     const s = document.getElementById('selected-scenario').value;
     if (!u || !s) {
-        alert('Выберите пользователя и сценарий');
+        VissortDialog.alert('Выберите пользователя и сценарий');
         return;
     }
     await window.Data.assignScenario(u, s, 'ready');
-    alert('✅ Назначено');
+    VissortDialog.alert('✅ Назначено');
 }
 
 // ==================== БЛОКИ ====================
@@ -6840,7 +6840,7 @@ function clearBlocks() {
 }
 function generateSequenceFromBlocks() {
     if (blockList.length === 0) {
-        alert('Список пуст');
+        VissortDialog.alert('Список пуст');
         return;
     }
     nodes = [];
@@ -6877,7 +6877,7 @@ function generateSequenceFromBlocks() {
         updateInspector();
     }
     requestRenderGraph();
-    alert('Последовательность создана.');
+    VissortDialog.alert('Последовательность создана.');
 }
 
 // ==================== AUTH ====================
@@ -6905,7 +6905,7 @@ function initSupabase() {
 }
 async function signIn(email, password) {
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) alert('Ошибка: ' + error.message);
+    if (error) VissortDialog.alert('Ошибка: ' + error.message);
     else document.getElementById('auth-modal').style.display = 'none';
 }
 async function signUp(email, password, fullName) {
@@ -6914,7 +6914,7 @@ async function signUp(email, password, fullName) {
         password,
         options: { data: { full_name: fullName } }
     });
-    if (error) alert('Ошибка: ' + error.message);
+    if (error) VissortDialog.alert('Ошибка: ' + error.message);
     else document.getElementById('auth-modal').style.display = 'none';
 }
 async function signOut() {
@@ -7066,7 +7066,7 @@ function init() {
             VLog.log('[test] scenario saved, opening user.html?test=1');
             window.open('/user.html?test=1', '_blank');
         } catch (e) {
-            alert('Не удалось: ' + e.message);
+            VissortDialog.alert('Не удалось: ' + e.message);
         }
     });
     VLog.log('[test] btn-test handler installed');
@@ -7189,14 +7189,14 @@ function init() {
                     scrollReadingToPage(0);
                 }, 60);
             } catch (err) {
-                alert('Не удалось загрузить шрифт: ' + err.message);
+                VissortDialog.alert('Не удалось загрузить шрифт: ' + err.message);
             }
             fontFileInput.value = '';
         });
     }
     document.getElementById('reading-font-system')?.addEventListener('click', async () => {
         if (!('queryLocalFonts' in window)) {
-            alert('Браузер не поддерживает список системных шрифтов.');
+            VissortDialog.alert('Браузер не поддерживает список системных шрифтов.');
             return;
         }
         try {
@@ -7218,9 +7218,9 @@ function init() {
                 o.value = fam;
                 list.appendChild(o);
             }
-            alert(`Загружено ${fams.length} шрифтов.`);
+            VissortDialog.alert(`Загружено ${fams.length} шрифтов.`);
         } catch (err) {
-            alert('Ошибка: ' + err.message);
+            VissortDialog.alert('Ошибка: ' + err.message);
         }
     });
     document.getElementById('reading-bold-toggle')?.addEventListener('click', () => {
@@ -7269,7 +7269,7 @@ function init() {
             if (!f) return;
             const n = (f.name || '').toLowerCase();
             if (!(n.endsWith('.txt') || n.endsWith('.fb2') || n.endsWith('.epub'))) {
-                alert('Поддерживаются .txt, .fb2, .epub');
+                VissortDialog.alert('Поддерживаются .txt, .fb2, .epub');
                 readingFileInput.value = '';
                 return;
             }
@@ -7281,14 +7281,14 @@ function init() {
                     .replace(/\n{3,}/g, '\n\n')
                     .trim();
                 if (!clean) {
-                    alert('Файл пуст');
+                    VissortDialog.alert('Файл пуст');
                     return;
                 }
                 const ta = document.getElementById('gen-reading-text');
                 if (ta) ta.value = clean;
                 if (readingFileName) readingFileName.textContent = `✅ ${f.name} (${clean.length} символов)`;
             } catch (err) {
-                alert('Ошибка: ' + err.message);
+                VissortDialog.alert('Ошибка: ' + err.message);
             }
             readingFileInput.value = '';
         });
@@ -7352,17 +7352,17 @@ function init() {
         modal.style.display = 'none';
         if (tt === 'reading') {
             modeParamsToReadingNode(mp);
-            alert('📌 Узел «Чтение» создан.');
+            VissortDialog.alert('📌 Узел «Чтение» создан.');
         } else if (tt === 'single') {
             modeParamsToNode(mp);
-            alert('📌 Узел создан.');
-        } else alert('Сравнение пока не переносится в узел.');
+            VissortDialog.alert('📌 Узел создан.');
+        } else VissortDialog.alert('Сравнение пока не переносится в узел.');
     });
     document.getElementById('gen-apply').addEventListener('click', () => {
         modal.style.display = 'none';
         trainingNode = { id: 'training_node', params: buildModeParamsFromUI() };
         window._pendingGeneratorMode = true;
-        alert('Тренировка готова. Нажмите «Плеер».');
+        VissortDialog.alert('Тренировка готова. Нажмите «Плеер».');
     });
     document.getElementById('gen-training-type').addEventListener('change', function () {
         updateGeneratorVisibility();
@@ -7533,7 +7533,7 @@ function init() {
                     } catch (_) {}
                 }
                 folderStatus.textContent = '📁 ' + (list[0].webkitRelativePath.split('/')[0] || 'папка');
-                alert(`📁 Импортировано сценариев: ${imported}`);
+                VissortDialog.alert(`📁 Импортировано сценариев: ${imported}`);
             }
             folderInput.value = '';
         });
@@ -7709,7 +7709,7 @@ async function handleAuthSubmit() {
     const password = document.getElementById('auth-password').value;
     const name = document.getElementById('auth-name').value.trim();
     if (!email || !password) {
-        alert('Введите email и пароль');
+        VissortDialog.alert('Введите email и пароль');
         return;
     }
     saveAuthCreds(email, password);
