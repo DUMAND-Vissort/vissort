@@ -1061,19 +1061,23 @@ sentry-proxy:
 
 Действие: открыть обе функции, проверить код.
 
-### §11.5 Бэкап БД — не настроен
+### §11.5 Бэкап БД ✅ НАСТРОЕНО (2026-10-12)
 
-Edge Function backup (в планах) — не реализована.
+Автобэкап через GitHub Actions: `.github/workflows/backup-db.yml`.
 
-Действие: настроить pg_dump по расписанию (Supabase cron или внешний скрипт).
-
+- Расписание: ежедневно 03:00 UTC (`cron: 0 3 * * *`).
+- Ручной запуск: Actions → Backup Database → Run workflow.
+- `pg_dump --format=custom --compress=9` через Session pooler.
+- Артефакт: `db-backup-YYYY-MM-DD` (retention 90 дней).
+- Первый успешный запуск: 2026-10-12 (1m 5s).
+- Детали: `docs/BACKUP.md`.
 ### §11.6 Чек-лист Фазы 4
 
 - [x] Убрать eremeevap@gmail.com из ADMIN_EMAILS в app.js — FIXED 08d4c0f
 - [x] Ротировать anon-ключ и вынести в единую константу — FIXED §11.2 (коммиты c7ebfee…518ae11)
-- [ ] Аудит RLS на всех таблицах
-- [ ] Логирование Edge Functions
-- [ ] Автобэкап БД
+- [x] Аудит RLS на всех таблицах — FIXED §11.3 (docs/RLS-AUDIT.md)
+- [x] Логирование Edge Functions — FIXED §11.4 (Sentry-хук, CORS whitelist, retry)
+- [x] Автобэкап БД — FIXED §11.5 (backup-db.yml, первый запуск 2026-10-12)
 
 ---
 ## §12. Критические баги
