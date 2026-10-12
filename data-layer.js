@@ -509,7 +509,10 @@
     // ============================================================
     function syncAuthFromStorage() {
         try {
-            const projectRef = 'hzvypwdpdhsjzaclxmbm';
+            // Извлекаем projectRef из VissortEnv.SUPABASE_URL — без хардкода.
+            const _sbUrl = (window.VissortEnv && window.VissortEnv.SUPABASE_URL) || '';
+            const _m = _sbUrl.match(/^https?:\/\/([^.]+)\./);
+            const projectRef = _m ? _m[1] : '';
             // Прямое чтение известного ключа Supabase JS v2 — без перебора LS.
             const keys = [];
             const _primary = 'sb-' + projectRef + '-auth-token';
