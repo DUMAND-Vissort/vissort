@@ -216,9 +216,9 @@ window._currentScenarioId = window._currentScenarioId || null;
 
 // ==================== DOM-ССЫЛКИ ====================
 const canvas = document.getElementById('canvas');
-// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimDisplay
+// eslint-disable-next-line no-redeclare -- app.js — отдельный entry (admin.html); коллизия имён с player-runtime.js иллюзорна
 const stimDisplay = document.getElementById('stim');
-// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimArea
+// eslint-disable-next-line no-redeclare -- app.js — отдельный entry (admin.html); коллизия имён с player-runtime.js иллюзорна
 const stimArea = document.getElementById('stim-display');
 const responseButtons = document.getElementById('response-buttons');
 const inspectorEl = document.getElementById('inspector');

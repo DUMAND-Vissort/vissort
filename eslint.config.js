@@ -74,10 +74,9 @@ export default [
                 JSZip: 'readonly',
                 Sentry: 'readonly',
                 Deno: 'readonly',
-                // TODO(phase3): временные globals для player-runtime.
-                // dir/direction/answer/stimArea/stimDisplay объявлены локально,
-                // но player-animation.js использует их как глобальные.
-                // Требуется рефакторинг: явный window.X в player-runtime.js.
+                // Globals для player-runtime.js и вынесенных модулей (player-animation.js и др.).
+                // Файлы app.js и player-runtime.js — разные entry (admin.html vs player.html),
+                // вместе не загружаются. ESLint видит коллизию имён — подавляется осознанно.
                 dir: 'writable',
                 direction: 'writable',
                 answer: 'writable',

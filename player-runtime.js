@@ -180,9 +180,9 @@ const checkRateLimit = window.PlayerUtils.checkRateLimit;
 const validateScenario = window.PlayerUtils.validateScenario;
 
 const $ = (id) => document.getElementById(id);
-// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimDisplay
+// eslint-disable-next-line no-redeclare -- player-runtime.js — отдельный entry; коллизия имён с app.js иллюзорна
 const stimDisplay = $('stim');
-// eslint-disable-next-line no-redeclare -- TODO(phase3): синхронизировать с window.stimArea
+// eslint-disable-next-line no-redeclare -- player-runtime.js — отдельный entry; коллизия имён с app.js иллюзорна
 const stimArea = $('stim-display');
 // Экспорт в window для вынесенных модулей (player-animation.js и др.)
 window.stimDisplay = stimDisplay;
