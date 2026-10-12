@@ -1,0 +1,68 @@
+name: Backup Database
+
+on:
+  schedule:
+    # Каждый день в 03:00 UTC (06:00 MSK)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Причина ручного запуска'
+        required: false
+        default: 'manual'
+
+jobs:
+  backup:
+    name: pg_dump → artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Generate dump filename
+        id: fname
+        run: |
+          echo "date=$(date -u +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: pg_dump
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -o pipefail
+          DUMP_FILE="vissort-${{ steps.fname.outputs.timestamp }}.dump"
+          echo "→ Дамп в $DUMP_FILE"
+          pg_dump \
+            --dbname="$PGPASSWORD" \
+            --no-owner \
+            --no-acl \
+            --format=custom \
+            --compress=9 \
+            --file="$DUMP_FILE" \
+            --verbose 2>&1 | tail -20
+          echo "→ Размер: $(du -h $DUMP_FILE | cut -f1)"
+          echo "→ Файлов в дампе:"
+          pg_restore --list "$DUMP_FILE" | grep -c '^[0-9]' || true
+          echo "DUMP_FILE=$DUMP_FILE" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ steps.fname.outputs.date }}
+          path: ${{ env.DUMP_FILE }}
+          retention-days: 90
+          compression-level: 0
+
+      - name: Summary
+        run: |
+          echo "### ✅ Бэкап готов" >> $GITHUB_STEP_SUMMARY
+          echo "- Дата: ${{ steps.fname.outputs.timestamp }} UTC" >> $GITHUB_STEP_SUMMARY
+          echo "- Файл: \`${{ env.DUMP_FILE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Retention: 90 дней" >> $GITHUB_STEP_SUMMARY
