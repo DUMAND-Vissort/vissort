@@ -112,10 +112,15 @@
         if (PS.isPaused) return null;
         var now = performance.now();
         try {
-            if (PS.curDistanceM != null && PS.camBaseline != null) {
-                var curDev = ((PS.curDistanceM - PS.camBaseline) / PS.camBaseline) * 100;
-                if (Math.abs(curDev) > _LEAN_DROP_PCT) {
-                    return curDev < 0 ? 'fast_lean' : 'off_distance';
+            if (PS.curDistanceM != null && PS.camBaseline != null && global.PlayerDistance) {
+                // Единый источник: PlayerDistance (15.1.3).
+                const r = global.PlayerDistance.check(PS.curDistanceM);
+                if (
+                    r.status !== 'no-baseline' &&
+                    r.status !== 'unknown' &&
+                    Math.abs(r.deviationPct) > _LEAN_DROP_PCT
+                ) {
+                    return r.deviationPct < 0 ? 'fast_lean' : 'off_distance';
                 }
             }
         } catch (e) {}
