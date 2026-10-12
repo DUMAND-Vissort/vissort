@@ -1,0 +1,62 @@
+name: Bump SW Cache
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.html'
+      - '**.js'
+      - '!sw.js'
+      - '!scripts/**'
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    # Пропускаем, если коммит от бота с [skip ci]
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Bump CACHE_VERSION in sw.js
+        run: |
+          set -e
+          DATE=$(date -u +%Y%m%d)
+          HASH=$(git rev-parse --short HEAD)
+          NEW_VERSION="vissort-${DATE}-${HASH}"
+
+          CURRENT=$(grep -oP "const CACHE_VERSION = '\K[^']+" sw.js || echo "")
+          echo "→ Текущая версия: $CURRENT"
+          echo "→ Новая версия:   $NEW_VERSION"
+
+          if [ "$CURRENT" = "$NEW_VERSION" ]; then
+            echo "→ Версия уже актуальна, пропуск"
+            exit 0
+          fi
+
+          sed -i "s/const CACHE_VERSION = '[^']*';/const CACHE_VERSION = '${NEW_VERSION}';/" sw.js
+
+          # Проверка, что замена применилась
+          grep "const CACHE_VERSION" sw.js
+
+      - name: Commit and push
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet sw.js; then
+            echo "→ Нет изменений в sw.js, коммит не нужен"
+            exit 0
+          fi
+
+          git add sw.js
+          git commit -m "chore: bump SW cache [skip ci]"
+          git push origin main
