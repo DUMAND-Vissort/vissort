@@ -2826,9 +2826,9 @@ async function saveNodeAsTemplate(nodeId) {
     const node = getNode(nodeId);
     if (!node) return;
     const defaultName = node.name || 'Заготовка';
-    const name = prompt('Название заготовки:', defaultName);
+    const name = await VissortDialog.prompt('Название заготовки:', defaultName);
     if (!name) return;
-    const description = prompt('Описание (необязательно):', '') || '';
+    const description = (await VissortDialog.prompt('Описание (необязательно):', '')) || '';
     const payload = JSON.parse(JSON.stringify(node));
     delete payload.x;
     delete payload.y;
@@ -6403,7 +6403,7 @@ async function saveGraph() {
                 if (ok) {
                     let fileName = window._currentScenarioFileName;
                     if (!fileName) {
-                        const ans = prompt(
+                        const ans = await VissortDialog.prompt(
                             'Имя файла сценария (без пути):',
                             'scenario_' + new Date().toISOString().slice(0, 10) + '.json'
                         );
@@ -6739,7 +6739,7 @@ async function saveCurrentScenario() {
         VissortDialog.alert('Нет тренировки');
         return;
     }
-    const name = prompt('Название:');
+    const name = await VissortDialog.prompt('Название:');
     if (!name) return;
     const record = {
         id: window.Data.uuid(),
@@ -6819,7 +6819,7 @@ function renderBlockList() {
     blockCountSpan.textContent = `Блоков: ${blockList.length}`;
     blockListDiv.style.display = blockList.length > 0 ? 'block' : 'none';
 }
-function addBlock() {
+async function addBlock() {
     const type = blockSelect.value,
         name = blockNameInput.value.trim() || 'Блок';
     let p = {};
@@ -6827,7 +6827,7 @@ function addBlock() {
     else if (type === 'complex') p = { count: 10, size: 80, duration: 500 };
     else if (type === 'random') p = { count: 8, size: 150, duration: 800 };
     else if (type === 'custom') {
-        const c = prompt('Количество:', '5');
+        const c = await VissortDialog.prompt('Количество:', '5');
         p = { count: parseInt(c) || 5, size: 120, duration: 700 };
     }
     blockList.push({ type, params: p, name });
