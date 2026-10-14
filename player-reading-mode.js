@@ -165,7 +165,11 @@
             }
             PS._readingTimerId = setTimeout(function () {
                 PS._readingTimerId = null;
-                _callbacks.onFinish(p.mode || 'flat');
+                if (typeof p.onFinish === 'function') {
+                    p.onFinish();
+                } else {
+                    _callbacks.onFinish(p.mode || 'flat');
+                }
             }, p.duration);
         }
     }

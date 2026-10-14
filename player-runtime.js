@@ -1442,6 +1442,8 @@ function finishGraphCompareSeries(node) {
 function playGraphReading(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     PlayerState.gCurrentNodeId = node.id;
+
+    // Текст: книга > bookText > дефолт
     let bid = node.bookId;
     if (!bid && window._books) {
         const keys = Object.keys(window._books);
@@ -1449,15 +1451,14 @@ function playGraphReading(node) {
     }
     const bk = bid ? window._books?.[bid] : null;
     const text = bk ? bk.text : node.bookText || 'Текст не задан.';
-    const pars = (text || '')
-        .split(/\n+/)
-        .map((x) => x.trim())
-        .filter((x) => x.length > 0);
-    readingContentEl.innerHTML = pars.map((x) => `<p>${escapeHtml(x)}</p>`).join('');
-    readingContentEl.style.color = node.readingTextColor
-        ? rgbToHex(node.readingTextColor.r, node.readingTextColor.g, node.readingTextColor.b)
-        : '#000';
-    applyReadingBackground({
+
+    const dCalc = _effectiveDistance(node.readingDistance || 1);
+
+    // Запуск через общий API — §15.1.2 ч.3/7 A.2.7
+    window.PlayerReadingMode.start({
+        mode: 'graph',
+        text: text,
+        textColor: node.readingTextColor,
         bgMode: node.readingBgMode || 'solid',
         bgColor: node.readingBgColor || { r: 255, g: 255, b: 255 },
         splitLeftWidthPercent: node.readingSplitLeftWidthPercent,
@@ -1475,42 +1476,17 @@ function playGraphReading(node) {
         dynamicMidColor: node.readingDynamicMidColor,
         dynamicEndColor: node.readingDynamicEndColor,
         dynamicDuration: node.readingDynamicDuration,
-        dynamicLoop: node.readingDynamicLoop
-    });
-    stimDisplay.style.display = 'none';
-    responseButtons.style.display = 'none';
-    readingViewportEl.style.display = 'block';
-    readingViewportEl.scrollLeft = 0;
-    PlayerState.readingPaused = false;
-    const pp = $('reading-play-pause');
-    if (pp) pp.textContent = '⏸ Пауза';
-    readingContentEl.style.opacity = '1';
-    applyReadingFont({
+        dynamicLoop: node.readingDynamicLoop,
         readingFontFamily: node.readingFontFamily || 'Segoe UI',
-        readingFontWeight: node.readingFontWeight || 'normal'
+        readingFontWeight: node.readingFontWeight || 'normal',
+        acuity: node.readingAcuity || 1.0,
+        distance: dCalc,
+        duration: node.duration || 60000,
+        onFinish: function () { finishGraphReading(node); }
     });
-    setupReadingColumns();
-    const dCalc = _effectiveDistance(node.readingDistance || 1); // Приоритет измеренной дистанции;
-    readingContentEl.style.fontSize =
-        acuityToFontSizePx(node.readingAcuity || 1.0, dCalc, PlayerState.screenPPI) + 'px';
-    setTimeout(() => {
-        PlayerState.readingTotalPages = calcReadingTotalPages();
-        PlayerState.readingPage = 0;
-        scrollReadingToPage(0);
-    }, 80);
-    readingToolbarEl.style.display = 'flex';
-    PlayerState._readingFinishGuard = false;
-    if (PlayerState._readingTimerId) {
-        clearTimeout(PlayerState._readingTimerId);
-        PlayerState._readingTimerId = null;
-    }
 
-    const dur = node.duration || 60000;
-    if (dur > 0) {
-        PlayerState._readingTimerId = setTimeout(() => {
-            PlayerState._readingTimerId = null;
-            finishGraphReading(node);
-        }, dur);
+    // Таймер в phaseTimers (для паузы)
+    if (PlayerState._readingTimerId) {
         PlayerState.phaseTimers.push(PlayerState._readingTimerId);
     }
 }
