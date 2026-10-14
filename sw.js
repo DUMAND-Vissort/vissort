@@ -7,7 +7,7 @@
 // ============================================================
 'use strict';
 
-const CACHE_VERSION = 'vissort-20261014-0ad7713';
+const CACHE_VERSION = 'vissort-20261014-b57263d';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 const CACHE_SUPABASE = `${CACHE_VERSION}-supabase`;
