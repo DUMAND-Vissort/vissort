@@ -1364,167 +1364,25 @@ function stopReadingDynamicBg() { return window.PlayerReadingMode.stopReadingDyn
 
 // ==================== ФИНАЛ / ПАУЗА ====================
 function showFinishedReport() {
-    const p = PlayerState.userScenario?.params || {};
-    let txt = `Серий: ${PlayerState.completedSeries} · Успешных: ${PlayerState.successfulSeries} · Неуспешных: ${PlayerState.failedSeries}`;
-    if (p.trainingType !== 'reading' && !PlayerState.graphActive)
-        txt += ` · Итоговая V: ${PlayerState.currentAcuity.toFixed(1)}`;
-    showStatus('Готово!', txt, 'Ещё раз', () => {
-        hideStatus();
-        startPlayer();
-    });
+    return window.PlayerSession.showFinishedReport();
 }
 function pauseTraining() {
-    PlayerState.phaseTimers.forEach((t) => clearTimeout(t));
-    PlayerState.phaseTimers = [];
-    if (PlayerState.currentShowTimer) clearTimeout(PlayerState.currentShowTimer);
-    stopSingleStimAnimation();
-    stopSingleBgAnimation();
-    stopCircleAnimation();
-    stopPeripheralAnimation();
-    stopBlinkAnimation();
-    PlayerState.responsePhaseActive = false;
-    hideStimulus();
-    responseButtons.style.display = 'none';
-    PlayerState.isPaused = true;
-    btnPlayerPause.disabled = true;
-    window.PlayerOverlay.showPause();
+    return window.PlayerSession.pauseTraining();
 }
 function resumeTraining() {
-    window.PlayerOverlay.hidePause();
-    PlayerState.isPaused = false;
-    PlayerState.noAnswerSeriesStreak = 0;
-    btnPlayerPause.disabled = false;
-    if (PlayerState.graphActive) {
-        const node = gGetNode(PlayerState.gCurrentNodeId);
-        if (node) {
-            if (node.nodeType === 'COMPARE') playGraphCompareRound(node);
-            else if (node.nodeType === 'READING') {
-            } else playGraphStimulus(node);
-            return;
-        }
-        playNextGraphNode();
-        return;
-    }
-    const p = PlayerState.userScenario?.params || {};
-    if (p.trainingType === 'compare') showNextCompareRound();
-    else if (p.trainingType === 'reading') {
-    } else showNextStimulus();
+    return window.PlayerSession.resumeTraining();
 }
 function stopPlayer() {
-    PlayerState.phaseTimers.forEach((t) => clearTimeout(t));
-    PlayerState.phaseTimers = [];
-    if (PlayerState.currentShowTimer) clearTimeout(PlayerState.currentShowTimer);
-    stopSingleStimAnimation();
-    stopSingleBgAnimation();
-    stopCircleAnimation();
-    stopPeripheralAnimation();
-    stopBlinkAnimation();
-    window.Voice?.stopReading();
-    PlayerState.playerRunning = false;
-    PlayerState.isPaused = false;
-    PlayerState.responsePhaseActive = false;
-    hideStimulus();
-    responseButtons.style.display = 'none';
-    window.PlayerReadingMode.hideDOM();
-    btnPlayer.disabled = false;
-    document.querySelector('.counters')?.style.setProperty('display', 'inline-flex');
-    btnPlayerStop.disabled = true;
-    btnPlayerPause.disabled = true;
-    document.body.style.background = '#0b0b0f';
-    window.PlayerOverlay.hidePause();
-    PlayerState.camBaseline = null;
-    PlayerState._stimulusDistance = null;
-    PlayerState._waitingStable = false; // ожидание стабилизации
-    PlayerState._stableSince = 0;
-    PlayerState._stableBuf = [];
-    PlayerState._stimulusDistance = null;
-    PlayerState.camWarnKind = null;
-    window._fastLeanAt = 0;
-    window._deviationHistory = [];
-    window._distEMA = null; // EMA-фильтр дистанции
-    window._reactionLog = []; // Логирование реакций
-    window._baselineWaitStart = null; // baseline
-    window._invalidAnswerCount = 0;
-    PlayerState.sessionId = null;
-    PlayerState._readingFinishGuard = false;
-    if (PlayerState._readingTimerId) {
-        clearTimeout(PlayerState._readingTimerId);
-        PlayerState._readingTimerId = null;
-    }
-    PlayerState.graphActive = false;
-    PlayerState.gCurrentNodeId = null;
-    PlayerState.gCurrentCompareNode = null;
-    PlayerState.gQueue = [];
-    PlayerState.gIndex = 0;
+    return window.PlayerSession.stopPlayer();
 }
 function togglePause() {
-    if (!PlayerState.playerRunning) return;
-    if (PlayerState.isPaused) {
-        resumeTraining();
-        return;
-    }
-    PlayerState.isPaused = true;
-    PlayerState.phaseTimers.forEach((t) => clearTimeout(t));
-    PlayerState.phaseTimers = [];
-    if (PlayerState.currentShowTimer) clearTimeout(PlayerState.currentShowTimer);
-    stopSingleStimAnimation();
-    stopSingleBgAnimation();
-    stopCircleAnimation();
-    stopPeripheralAnimation();
-    stopBlinkAnimation();
-    hideStimulus();
-    responseButtons.style.display = 'none';
-    window.PlayerOverlay.showPause();
+    return window.PlayerSession.togglePause();
 }
-
-// ==================== SAVE RESULT ====================
 async function saveResult(nodeId, reactionTimeMs, isCorrect) {
-    if (!checkRateLimit()) return;
-    if (!PlayerState.supabaseClient || !PlayerState.currentUser || !PlayerState.sessionId) return;
-    try {
-        await PlayerState.supabaseClient.from('test_results').insert({
-            user_id: PlayerState.currentUser.id,
-            session_id: PlayerState.sessionId,
-            node_id: nodeId || 'user_training',
-            response_time_ms: reactionTimeMs != null ? Math.round(reactionTimeMs) : null,
-            is_correct: isCorrect,
-            distance_m:
-                typeof PlayerState.curDistanceM !== 'undefined' && PlayerState.curDistanceM != null
-                    ? PlayerState.curDistanceM
-                    : null, // Полная серия без ответов → пауза
-            created_at: new Date().toISOString()
-        });
-    } catch (e) {
-        VLog.warn('[user] save:', e);
-    }
+    return window.PlayerSession.saveResult(nodeId, reactionTimeMs, isCorrect);
 }
 function scheduleVoiceCountdown(durationMs) {
-    if (!window.Voice || !window.Voice.enabled) return;
-    if (!durationMs || durationMs < 5000) return;
-    const timers = [];
-    if (durationMs - 5000 > 0)
-        timers.push(
-            setTimeout(() => {
-                if (PlayerState.responsePhaseActive && !PlayerState.isPaused)
-                    window.Voice.sayKey('countdown5');
-            }, durationMs - 5000)
-        );
-    [3, 2, 1].forEach((s) => {
-        const at = durationMs - s * 1000;
-        if (at > 0)
-            timers.push(
-                setTimeout(() => {
-                    if (PlayerState.responsePhaseActive && !PlayerState.isPaused)
-                        window.Voice.sayKey('countdown' + s);
-                }, at)
-            );
-    });
-    const w = setInterval(() => {
-        if (!PlayerState.responsePhaseActive) {
-            timers.forEach((t) => clearTimeout(t));
-            clearInterval(w);
-        }
-    }, 200);
+    return window.PlayerSession.scheduleVoiceCountdown(durationMs);
 }
 
 // ==================== INIT ====================
@@ -1680,6 +1538,24 @@ function init() {
             startCircleAnimation: startCircleAnimation,
             startBlinkAnimation: startBlinkAnimation,
             scheduleVoiceCountdown: scheduleVoiceCountdown
+        });
+    }
+
+    // Session — §15.1.2 ч.7/7
+    if (window.PlayerSession && typeof window.PlayerSession.setCallbacks === 'function') {
+        window.PlayerSession.setCallbacks({
+            showStatus: showStatus,
+            hideStatus: hideStatus,
+            stopSingleStimAnimation: stopSingleStimAnimation,
+            stopSingleBgAnimation: stopSingleBgAnimation,
+            stopCircleAnimation: stopCircleAnimation,
+            stopPeripheralAnimation: stopPeripheralAnimation,
+            stopBlinkAnimation: stopBlinkAnimation,
+            hideStimulus: hideStimulus,
+            startPlayer: startPlayer,
+            checkRateLimit: checkRateLimit,
+            showNextCompareRound: showNextCompareRound,
+            showNextStimulus: showNextStimulus
         });
     }
 
