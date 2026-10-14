@@ -133,4 +133,61 @@
       - Связь: новый узел в редакторе + логика в player-animation.js
       - Статус: идея, ТЗ не проработано
 
+---
+
+## 🚧 §15.1.2 — рефакторинг player-runtime.js (в работе, 2026-10-14)
+
+**Цель:** разбить `player-runtime.js` (было 3002 строки) на модули.
+
+### ✅ Закрыто (2026-10-14)
+
+- [x] **ч.3/7** — `player-reading-mode.js` (254 строки)
+- [x] **ч.4/7** — `player-auth.js` (254 строки)
+- [x] **ч.5/7** — `player-scenarios.js` (~190 строк)
+- [x] **ч.6/7** — `player-graph.js` (633 строки) — **95%** (7 из 8 под-шагов)
+
+**Прогресс:** `player-runtime.js` — 3002 → 1890 строк (−37%).
+
+### 🚧 Остаток
+
+#### §15.1.2 ч.6/7-2b — `playGraphStimulus` (~2 ч)
+
+**Что:** вынести `playGraphStimulus` (161 строка) из `player-runtime.js` в `player-graph.js`.
+
+**Где:** `player-runtime.js`, idx ~450.
+
+**Зависимости (20+):**
+- `PlayerState`, DOM (`stimDisplay`, `stimArea`, `responseButtons`)
+- `PlayerAnimation`: `getStimulusSVG`, `getCircleStimulusSVG`, `buildDefocusFrame`
+- Анимации: `startSingleStimAnimation`, `stopSingleStimAnimation`, `startSingleBgAnimation`, `stopSingleBgAnimation`, `startCircleAnimation`, `stopCircleAnimation`, `startBlinkAnimation`, `stopBlinkAnimation`, `stopPeripheralAnimation`
+- Grid: `pickSingleGridCell`, `applySingleGridPosition`, `applyRandomStimulusPosition`
+- Peripheral: `buildPeripheralDots`
+- Результаты: `saveResult`, `scheduleVoiceCountdown`
+- Отображение: `displayStimulus`, `hideStimulus`
+
+**План:**
+1. Расширить `setCallbacks` — добавить callbacks на все функции.
+2. Скопировать тело `playGraphStimulus` в модуль, заменить прямые вызовы на `_callbacks.*`.
+3. Заменить в runtime на делегат.
+
+**Риск:** средний (критичный флоу).
+
+#### §15.1.2 ч.7/7 — остаток runtime (~3–4 ч)
+
+**Что:** разбить оставшиеся ~1890 строк на модули:
+- `player-session.js` — lifecycle (`startPlayer`, `stopPlayer`, `pauseTraining`, `resumeTraining`, `togglePause`)
+- `player-single.js` — одиночный режим
+- `player-stimulus.js` — `displayStimulus`, `hideStimulus`, `setStimColorRGB`, grid
+- `player-camera-ui.js` — камера-UI
+
+---
+
+## ⚠️ Уроки сессии 2026-10-14
+
+1. **Коммит после каждого под-шага** — `git checkout` снесёт всё незакоммиченное.
+2. **`$('...')` в PowerShell-патчах — экранировать** как `` `$('...') ``.
+3. **Проверки границ (idx) перед записью** — если сдвиг, файл не портится.
+4. **`pull --rebase` при отказе push** (bump-бот каждые 1–2 мин).
+5. **При патче `};` — пропускать только заменяемую строку**, не блок.
+
 _Обновлять после каждой сессии._
