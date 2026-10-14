@@ -2255,21 +2255,9 @@ function init() {
         VLog.log('[player-runtime] PlayerCamera callbacks registered');
     }
     btnLogout.addEventListener('click', async () => {
-        try {
-            stopPlayer();
-        } catch (e) {}
-        try {
-            disableCamera();
-        } catch (e) {}
-        try {
-            await PlayerState.supabaseClient.auth.signOut();
-        } catch (e) {}
-        PlayerState.currentUser = null;
-        PlayerState.userScenario = null;
-        PlayerState.userScenarios = [];
-        hdrUser.textContent = '—';
-        hdrScenario.textContent = '—';
-        btnPlayer.disabled = true;
+        try { stopPlayer(); } catch (e) {}
+        try { disableCamera(); } catch (e) {}
+        await window.PlayerAuth.signOut();
         window.PlayerAuth.promptLogin();
     });
 
