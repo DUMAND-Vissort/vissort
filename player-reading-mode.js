@@ -195,26 +195,6 @@
         var pp = _el('reading-play-pause');
         if (pp) pp.addEventListener('click', toggleReadingPause);
 
-        var finishBtn = _el('reading-finish');
-        if (finishBtn) {
-            finishBtn.addEventListener('click', function () {
-                _callbacks.onFinish('flat');
-            });
-        }
-
-        var notSee = _el('reading-not-see');
-        if (notSee) {
-            notSee.addEventListener('click', function () {
-                _callbacks.onChangeAcuity(-1);
-            });
-        }
-        var seeWell = _el('reading-see-well');
-        if (seeWell) {
-            seeWell.addEventListener('click', function () {
-                _callbacks.onChangeAcuity(1);
-            });
-        }
-
         // Scroll → определение страницы
         var vp = _vp();
         if (vp) {

@@ -2274,23 +2274,6 @@ responseButtons.addEventListener('click', (e) => {
     }
 });
 document.addEventListener('keydown', (e) => {
-    if (readingViewportEl.style.display === 'block') {
-        if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            prevReadingPage();
-            return;
-        }
-        if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            nextReadingPage();
-            return;
-        }
-        if (e.key === ' ') {
-            e.preventDefault();
-            toggleReadingPause();
-            return;
-        }
-    }
     if (!PlayerState.responsePhaseActive) return;
     // В режиме сравнения игнорировать Up/Down, только Left/Right = Да/Нет
     if (
@@ -2599,9 +2582,6 @@ function init() {
     }
     $('history-close').addEventListener('click', () => $('history-modal').classList.remove('open'));
 
-    $('reading-prev').addEventListener('click', prevReadingPage);
-    $('reading-next').addEventListener('click', nextReadingPage);
-    $('reading-play-pause').addEventListener('click', toggleReadingPause);
     $('reading-finish').addEventListener('click', () => {
         if (PlayerState.graphActive && PlayerState.gCurrentNodeId) {
             const n = gGetNode(PlayerState.gCurrentNodeId);
@@ -2639,22 +2619,10 @@ function init() {
         }, 60);
     });
 
-    let scrollTimer = null;
-    readingViewportEl.addEventListener('scroll', () => {
-        if (readingViewportEl.style.display === 'none' || scrollTimer) return;
-        scrollTimer = setTimeout(() => {
-            scrollTimer = null;
-            const W = readingViewportEl.clientWidth;
-            if (W <= 0) return;
-            const np = Math.round(readingViewportEl.scrollLeft / W);
-            if (np !== PlayerState.readingPage) {
-                PlayerState.readingPage = Math.max(0, Math.min(np, PlayerState.readingTotalPages - 1));
-                const info = $('reading-page-info');
-                if (info)
-                    info.textContent = `Стр. ${PlayerState.readingPage + 1} / ${PlayerState.readingTotalPages}`;
-            }
-        }, 100);
-    });
+    // Регистрация обработчиков режима чтения (§15.1.2 ч.3/7 X)
+    if (window.PlayerReadingMode && typeof window.PlayerReadingMode.initEvents === 'function') {
+        window.PlayerReadingMode.initEvents({});
+    }
 
     loadSivtsevFont();
     initSupabase();
