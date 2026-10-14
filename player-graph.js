@@ -15,7 +15,8 @@
         hideStimulus: function () {},
         playGraphStimulus: function () {},
         playGraphCompare: function () {},
-        playGraphReading: function () {}
+        playGraphReading: function () {},
+        pauseTraining: function () {}
     };
 
     function setCallbacks(cb) {
@@ -156,13 +157,81 @@
         VLog.log('[auto-recalc] size updated to ' + eff + 'px at ' + PS.curDistanceM.toFixed(2) + 'm');
     }
 
+    // ==================== Завершение серии стимулов ====================
+    function finishGraphStimulusSeries(node) {
+        var PS = _PS();
+        var getThreshold = (global.VissortCore && global.VissortCore.getThreshold) || function () { return 5; };
+        var th = node.seriesThreshold || getThreshold(node.seriesSize || 6);
+        var ok = PS.seriesCorrect >= th;
+        var allNo = PS.seriesNoAnswer === (node.seriesSize || 6);
+        if (allNo) PS.noAnswerSeriesStreak++;
+        else PS.noAnswerSeriesStreak = 0;
+        PS.completedSeries++;
+        if (ok) PS.successfulSeries++;
+        else PS.failedSeries++;
+        // Адаптивная острота зрения
+        if (node.adaptiveAcuity !== false) {
+            if (ok) {
+                var eA = node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0;
+                if (PS.gNodeAcuityCurrent < eA)
+                    PS.gNodeAcuityCurrent = Math.min(
+                        eA,
+                        Math.round((PS.gNodeAcuityCurrent + (node.acuityStep || 0.1)) * 10) / 10
+                    );
+            } else {
+                var sA = node.stimAcuity || 1.0;
+                if (PS.gNodeAcuityCurrent > sA)
+                    PS.gNodeAcuityCurrent = Math.max(
+                        sA,
+                        Math.round((PS.gNodeAcuityCurrent - (node.acuityStep || 0.1)) * 10) / 10
+                    );
+            }
+        }
+        PS.seriesCorrect =
+            PS.seriesIncorrect =
+            PS.seriesNoAnswer =
+            PS.seriesStep =
+                0;
+        PS.lastDirection = null;
+        _callbacks.updateCounters();
+        // Отчёт отключён, только лог ответов
+        // Агрегат времени реакции
+        try {
+            if (!global._reactionTimes) global._reactionTimes = [];
+            var _rt = PS.lastResponse && PS.lastResponse.reactionTimeMs;
+            if (_rt != null) global._reactionTimes.push(_rt);
+            var _recent = global._reactionTimes.slice(-20);
+            var _avg = _recent.reduce(function (a, b) { return a + b; }, 0) / _recent.length;
+            var _min = Math.min.apply(null, _recent);
+            var _max = Math.max.apply(null, _recent);
+        } catch (e) {}
+        if (PS.noAnswerSeriesStreak >= 3) {
+            _callbacks.pauseTraining();
+            return;
+        }
+        if (PS.completedSeries >= (node.seriesCount || 5)) {
+            PS.gIndex++;
+            playNextGraphNode();
+            return;
+        }
+        PS.phaseTimers.push(
+            setTimeout(
+                function () {
+                    if (PS.playerRunning && !PS.isPaused) _callbacks.playGraphStimulus(node);
+                },
+                node.delay2 != null ? node.delay2 : 500
+            )
+        );
+    }
+
     global.PlayerGraph = {
         setCallbacks: setCallbacks,
         gGetNode: gGetNode,
         buildGraphQueue: buildGraphQueue,
         startGraphPlay: startGraphPlay,
         playNextGraphNode: playNextGraphNode,
-        recalcStimulusSize: recalcStimulusSize
+        recalcStimulusSize: recalcStimulusSize,
+        finishGraphStimulusSeries: finishGraphStimulusSeries
     };
 
     VLog.log('[player-graph] module installed');

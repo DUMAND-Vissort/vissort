@@ -2156,7 +2156,8 @@ function init() {
             hideStimulus: hideStimulus,
             playGraphStimulus: playGraphStimulus,
             playGraphCompare: playGraphCompare,
-            playGraphReading: playGraphReading
+            playGraphReading: playGraphReading,
+            pauseTraining: pauseTraining
         });
     }
 
