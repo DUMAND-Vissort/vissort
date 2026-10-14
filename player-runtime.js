@@ -412,114 +412,19 @@ function disableCamera() {
 
 // ==================== ПЛЕЕР ГРАФА ====================
 function gGetNode(id) {
-    return PlayerState.gNodes.find((n) => n.id === id);
+    return window.PlayerGraph.gGetNode(id);
 }
 
 function buildGraphQueue() {
-    PlayerState.gQueue = [];
-    if (!PlayerState.gNodes.length) return;
-    const startNode = PlayerState.gNodes.find((n) => n.isStart === true) || PlayerState.gNodes[0];
-    const visited = new Set();
-    function visit(nodeId, connection = null, fromNodeId = null) {
-        if (visited.has(nodeId)) return;
-        visited.add(nodeId);
-        PlayerState.gQueue.push({ nodeId, connection, fromNodeId });
-        PlayerState.gConnections
-            .filter((c) => c.fromId === nodeId && c.isLoop && c.toId !== nodeId)
-            .forEach((loop) => {
-                const lim = loop.loopLimit || 1;
-                for (let i = 0; i < lim; i++) {
-                    PlayerState.gQueue.push({ nodeId: loop.toId, connection: loop, fromNodeId: nodeId });
-                    PlayerState.gQueue.push({ nodeId: nodeId, connection: loop, fromNodeId: loop.toId });
-                }
-            });
-        PlayerState.gConnections
-            .filter((c) => c.fromId === nodeId && !c.isLoop && c.toId !== nodeId)
-            .forEach((conn) => visit(conn.toId, conn, nodeId));
-    }
-    visit(startNode.id, null, null);
+    return window.PlayerGraph.buildGraphQueue();
 }
 
 function startGraphPlay(nodes, connections, books) {
-    PlayerState.graphActive = true;
-    PlayerState.gNodes = nodes || [];
-    PlayerState.gConnections = connections || [];
-    if (books && typeof books === 'object') {
-        window._books = window._books || {};
-        Object.assign(window._books, books);
-    }
-    buildGraphQueue();
-    if (!PlayerState.gQueue.length) {
-        stopPlayer();
-        return;
-    }
-    PlayerState.gIndex = 0;
-    PlayerState.gCurrentNodeId = null;
-    playNextGraphNode();
+    return window.PlayerGraph.startGraphPlay(nodes, connections, books);
 }
 
 function playNextGraphNode() {
-    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (PlayerState.gIndex >= PlayerState.gQueue.length) {
-        stopPlayer();
-        showStatus('Граф пройден', `Серий: ${PlayerState.completedSeries}`, 'Ещё раз', () => {
-            hideStatus();
-            startPlayer();
-        });
-        return;
-    }
-    const item = PlayerState.gQueue[PlayerState.gIndex];
-    const node = gGetNode(item.nodeId);
-    if (!node) {
-        PlayerState.gIndex++;
-        playNextGraphNode();
-        return;
-    }
-    if (node.isActive === false && node.nodeType !== 'LOGIC_IF') {
-        PlayerState.gIndex++;
-        playNextGraphNode();
-        return;
-    }
-    if (item.connection) {
-        const c = item.connection;
-        const fn = gGetNode(item.fromNodeId);
-        if (fn) {
-            if (c.inheritSize) {
-                node.stimAcuity = fn.stimAcuity;
-                node.endAcuity = fn.endAcuity;
-                node.stimDistance = fn.stimDistance;
-                node.stimPPI = fn.stimPPI;
-            }
-            if (c.inheritSpeed) node.duration = fn.duration;
-        }
-    }
-    if (node.nodeType === 'READING') {
-        playGraphReading(node);
-        return;
-    }
-    if (node.nodeType === 'COMPARE') {
-        playGraphCompare(node);
-        return;
-    }
-    PlayerState.gCurrentNodeId = node.id;
-    PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
-    PlayerState.seriesStep = 0;
-    PlayerState.noAnswerSeriesStreak = 0;
-    PlayerState.lastDirection = null;
-    PlayerState.currentSingleCell = { row: 0, col: 0 };
-    PlayerState.gNodeAcuityCurrent = Math.max(0.1, Math.min(1.0, node.stimAcuity || 1.0));
-    updateCounters();
-    hideStimulus();
-    responseButtons.style.display = 'none';
-    PlayerState.phaseTimers.push(
-        setTimeout(
-            () => {
-                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
-            },
-            node.delay1 != null ? node.delay1 : 0
-        )
-    );
+    return window.PlayerGraph.playNextGraphNode();
 }
 
 // Авто-пересчёт размера стимула под новую дистанцию.
@@ -2257,6 +2162,22 @@ function init() {
     if (window.PlayerReadingMode && typeof window.PlayerReadingMode.initEvents === 'function') {
         window.PlayerReadingMode.initEvents({});
     }
+
+    // Граф — §15.1.2 ч.6/7
+    if (window.PlayerGraph && typeof window.PlayerGraph.setCallbacks === 'function') {
+        window.PlayerGraph.setCallbacks({
+            stopPlayer: stopPlayer,
+            startPlayer: startPlayer,
+            showStatus: showStatus,
+            hideStatus: hideStatus,
+            updateCounters: updateCounters,
+            hideStimulus: hideStimulus,
+            playGraphStimulus: playGraphStimulus,
+            playGraphCompare: playGraphCompare,
+            playGraphReading: playGraphReading
+        });
+    }
+
 
     loadSivtsevFont();
     // Аутентификация — §15.1.2 ч.4/7 (PlayerAuth)
