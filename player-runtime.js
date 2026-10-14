@@ -174,6 +174,29 @@ async function onLoggedIn() {
     authModal.classList.remove('open');
     hdrUser.textContent = PlayerState.currentUser.email || '—';
     showStatus('Загрузка сценария…', 'Читаем назначения.');
+
+    // Общий блок: fingerprint + Onboarding + enableCamera (§15.1.2 ч.5/7 — устранение дублирования)
+    async function _startOnboardingAndCamera() {
+        if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
+            try {
+                const fp = await VissortDevice.getFingerprint();
+                VissortDevice.setCurrent(fp, PlayerState.currentUser ? PlayerState.currentUser.id : null);
+                await Onboarding.start({
+                    client: PlayerState.supabaseClient,
+                    userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
+                    onDone: (data) => {
+                        if (!data || !data.skipped) enableCamera();
+                        else VLog.log('[onboarding] пропущено — камера не запрашивается');
+                    }
+                });
+            } catch (e) {
+                VLog.warn('[user] onboarding:', e);
+                enableCamera();
+            }
+        } else {
+            enableCamera();
+        }
+    }
     // ==== Тестовый сценарий из админки (player.html?test=1) ====
     if (location.search.includes('test=1')) {
         try {
@@ -217,25 +240,7 @@ async function onLoggedIn() {
     if (!PlayerState.userScenarios.length) {
         showStatus('Сценарий не назначен', 'Обратитесь к администратору.', 'Обновить', () => onLoggedIn());
         // Запустить камеру и онбординг даже без сценариев
-        if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
-            try {
-                const fp = await VissortDevice.getFingerprint();
-                VissortDevice.setCurrent(fp, PlayerState.currentUser ? PlayerState.currentUser.id : null);
-                await Onboarding.start({
-                    client: PlayerState.supabaseClient,
-                    userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                    onDone: (data) => {
-                        if (!data || !data.skipped) enableCamera();
-                        else VLog.log('[onboarding] пропущено — камера не запрашивается');
-                    }
-                });
-            } catch (e) {
-                VLog.warn('[user] onboarding:', e);
-                enableCamera();
-            }
-        } else {
-            enableCamera();
-        }
+        await _startOnboardingAndCamera();
         return;
     }
     if (PlayerState.userScenarios.length === 1) {
@@ -249,25 +254,8 @@ async function onLoggedIn() {
         openScenarioPicker();
         hideStatus();
     }
-    if (typeof VissortDevice !== 'undefined' && typeof Onboarding !== 'undefined') {
-        try {
-            const fp = await VissortDevice.getFingerprint();
-            VissortDevice.setCurrent(fp, PlayerState.currentUser ? PlayerState.currentUser.id : null);
-            await Onboarding.start({
-                client: PlayerState.supabaseClient,
-                userId: PlayerState.currentUser ? PlayerState.currentUser.id : null,
-                onDone: (data) => {
-                    if (!data || !data.skipped) enableCamera();
-                    else VLog.log('[onboarding] пропущено — камера не запрашивается');
-                }
-            });
-        } catch (e) {
-            VLog.warn('[user] onboarding:', e);
-            enableCamera();
-        }
-    } else {
-        enableCamera();
-    }
+
+    await _startOnboardingAndCamera();
 }
 async function loadUserScenarios() {
     return window.PlayerScenarios.loadUserScenarios(
