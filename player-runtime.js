@@ -1523,11 +1523,7 @@ function finishGraphReading(node) {
         clearTimeout(PlayerState._readingTimerId);
         PlayerState._readingTimerId = null;
     }
-    readingToolbarEl.style.display = 'none';
-    readingViewportEl.style.display = 'none';
-    readingContentEl.innerHTML = '';
-    stimDisplay.style.display = '';
-    stopReadingDynamicBg();
+    window.PlayerReadingMode.hideDOM();
     PlayerState.gIndex++;
     playNextGraphNode();
 }
@@ -2485,17 +2481,13 @@ function stopPlayer() {
     stopCircleAnimation();
     stopPeripheralAnimation();
     stopBlinkAnimation();
-    stopReadingDynamicBg();
     window.Voice?.stopReading();
     PlayerState.playerRunning = false;
     PlayerState.isPaused = false;
     PlayerState.responsePhaseActive = false;
     hideStimulus();
     responseButtons.style.display = 'none';
-    readingToolbarEl.style.display = 'none';
-    readingViewportEl.style.display = 'none';
-    readingContentEl.innerHTML = '';
-    stimDisplay.style.display = '';
+    window.PlayerReadingMode.hideDOM();
     btnPlayer.disabled = false;
     document.querySelector('.counters')?.style.setProperty('display', 'inline-flex');
     btnPlayerStop.disabled = true;
