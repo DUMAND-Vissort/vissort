@@ -270,95 +270,29 @@ async function onLoggedIn() {
     }
 }
 async function loadUserScenarios() {
-    const { data: assigns, error: e1 } = await PlayerState.supabaseClient
-        .from('user_scenarios')
-        .select('scenario_id')
-        .eq('user_id', PlayerState.currentUser.id);
-    if (e1) {
-        console.error('[user] user_scenarios:', e1);
-        return [];
-    }
-    if (!assigns || !assigns.length) return [];
-    const ids = assigns.map((a) => a.scenario_id);
-    const { data: list, error: e2 } = await PlayerState.supabaseClient
-        .from('scenarios')
-        .select('id,name,training_type,params')
-        .in('id', ids);
-    if (e2) {
-        console.error('[user] scenarios:', e2);
-        return [];
-    }
-    return (list || []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        params: s.params || {},
-        trainingType: s.training_type
-    }));
+    return window.PlayerScenarios.loadUserScenarios(
+        PlayerState.supabaseClient,
+        PlayerState.currentUser && PlayerState.currentUser.id
+    );
 }
 
 function openScenarioPicker() {
-    const list = $('scenario-list');
-    list.innerHTML = '';
-    PlayerState.userScenarios.forEach((s) => {
-        const el = document.createElement('div');
-        el.className =
-            'scenario-item' +
-            (PlayerState.userScenario && PlayerState.userScenario.id === s.id ? ' active' : '');
-        el.innerHTML = `<div><div style="font-weight:600">${escapeHtml(s.name)}</div><div style="font-size:11px;color:#9ca3af">${escapeHtml(s.trainingType || 'single')}</div></div><div>▶</div>`;
-        el.addEventListener('click', () => {
-            PlayerState.userScenario = s;
-            hdrScenario.textContent = s.name;
-            applyScenarioDefaults();
-            updateCounters();
-            $('scenario-modal').classList.remove('open');
-            btnPlayer.disabled = false;
-            if (s.params?.cameraCheck) enableCamera();
-        });
-        list.appendChild(el);
+    window.PlayerScenarios.openPicker(PlayerState.userScenarios, function (s) {
+        PlayerState.userScenario = s;
+        hdrScenario.textContent = s.name;
+        applyScenarioDefaults();
+        updateCounters();
+        $('scenario-modal').classList.remove('open');
+        btnPlayer.disabled = false;
+        if (s.params && s.params.cameraCheck) enableCamera();
     });
-    $('scenario-modal').classList.add('open');
 }
 
 async function openHistory() {
-    $('history-modal').classList.add('open');
-    const body = $('history-body');
-    body.textContent = 'Загрузка…';
-    const { data, error } = await PlayerState.supabaseClient
-        .from('test_results')
-        .select('session_id,node_id,response_time_ms,is_correct,created_at')
-        .eq('user_id', PlayerState.currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(200);
-    if (error) {
-        body.innerHTML = `<div style="color:#dc2626">Ошибка: ${escapeHtml(error.message)}</div>`;
-        return;
-    }
-    if (!data || !data.length) {
-        body.innerHTML = '<div>Пока нет результатов.</div>';
-        return;
-    }
-    const groups = {};
-    data.forEach((r) => {
-        const k = r.session_id || '—';
-        if (!groups[k]) groups[k] = { total: 0, ok: 0, when: r.created_at };
-        groups[k].total++;
-        if (r.is_correct) groups[k].ok++;
-    });
-    const rows = Object.entries(groups)
-        .slice(0, 30)
-        .map(([sid, g]) => {
-            const d = new Date(g.when);
-            const when = d.toLocaleString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            const pct = Math.round((g.ok / g.total) * 100);
-            return `<tr><td>${when}</td><td>${g.ok}/${g.total}</td><td>${pct}%</td><td style="color:#6b7280;font-size:11px">${escapeHtml(String(sid).slice(0, 14))}…</td></tr>`;
-        })
-        .join('');
-    body.innerHTML = `<table class="res-table"><thead><tr><th>Когда</th><th>Верно</th><th>%</th><th>Сессия</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return window.PlayerScenarios.openHistory(
+        PlayerState.supabaseClient,
+        PlayerState.currentUser && PlayerState.currentUser.id
+    );
 }
 
 function applyScenarioDefaults() {
