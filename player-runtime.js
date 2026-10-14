@@ -592,70 +592,7 @@ function playGraphStimulus(node) {
 }
 
 function finishGraphStimulusSeries(node) {
-    const th = node.seriesThreshold || getThreshold(node.seriesSize || 6);
-    const ok = PlayerState.seriesCorrect >= th;
-    const allNo = PlayerState.seriesNoAnswer === (node.seriesSize || 6);
-    if (allNo) PlayerState.noAnswerSeriesStreak++;
-    else PlayerState.noAnswerSeriesStreak = 0;
-    PlayerState.completedSeries++;
-    if (ok) PlayerState.successfulSeries++;
-    else PlayerState.failedSeries++;
-    // Адаптивная острота зрения
-    if (node.adaptiveAcuity !== false) {
-        if (ok) {
-            const eA = node.endAcuity != null ? node.endAcuity : node.stimAcuity || 1.0;
-            if (PlayerState.gNodeAcuityCurrent < eA)
-                PlayerState.gNodeAcuityCurrent = Math.min(
-                    eA,
-                    Math.round((PlayerState.gNodeAcuityCurrent + (node.acuityStep || 0.1)) * 10) / 10
-                );
-        } else {
-            const sA = node.stimAcuity || 1.0;
-            if (PlayerState.gNodeAcuityCurrent > sA)
-                PlayerState.gNodeAcuityCurrent = Math.max(
-                    sA,
-                    Math.round((PlayerState.gNodeAcuityCurrent - (node.acuityStep || 0.1)) * 10) / 10
-                );
-        }
-    }
-    PlayerState.seriesCorrect =
-        PlayerState.seriesIncorrect =
-        PlayerState.seriesNoAnswer =
-        PlayerState.seriesStep =
-            0;
-    PlayerState.lastDirection = null;
-    updateCounters();
-    // Отчёт отключён, только лог ответов
-    // Агрегат времени реакции
-    try {
-        if (!window._reactionTimes) window._reactionTimes = [];
-        var _rt = PlayerState.lastResponse && PlayerState.lastResponse.reactionTimeMs;
-        if (_rt != null) window._reactionTimes.push(_rt);
-        var _recent = window._reactionTimes.slice(-20);
-        var _avg =
-            _recent.reduce(function (a, b) {
-                return a + b;
-            }, 0) / _recent.length;
-        var _min = Math.min.apply(null, _recent);
-        var _max = Math.max.apply(null, _recent);
-    } catch (e) {}
-    if (PlayerState.noAnswerSeriesStreak >= 3) {
-        pauseTraining();
-        return;
-    }
-    if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
-        PlayerState.gIndex++;
-        playNextGraphNode();
-        return;
-    }
-    PlayerState.phaseTimers.push(
-        setTimeout(
-            () => {
-                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
-            },
-            node.delay2 != null ? node.delay2 : 500
-        )
-    );
+    return window.PlayerGraph.finishGraphStimulusSeries(node);
 }
 
 function handleGraphDirectionAnswer(dir) {
