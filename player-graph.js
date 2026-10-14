@@ -136,12 +136,33 @@
         );
     }
 
+    // Авто-пересчёт размера стимула под новую дистанцию (§15.1.2 ч.6/7-2a)
+    function recalcStimulusSize() {
+        var PS = _PS();
+        if (!PS.curDistanceM) return;
+        var node = gGetNode(PS.gCurrentNodeId);
+        if (!node) return;
+        var ppi = node.stimPPI || PS.screenPPI || 96;
+        var acuityToSizePx = (global.VissortCore && global.VissortCore.acuityToSizePx) || function () { return 16; };
+        var eff = acuityToSizePx(PS.gNodeAcuityCurrent || 1.0, PS.curDistanceM, ppi);
+        PS.currentSize = eff;
+        var svg = document.querySelector('#stim svg');
+        if (svg) {
+            svg.setAttribute('width', eff);
+            svg.setAttribute('height', eff);
+            svg.setAttribute('viewBox', '0 0 ' + eff + ' ' + eff);
+        }
+        PS._stimulusDistance = PS.curDistanceM;
+        VLog.log('[auto-recalc] size updated to ' + eff + 'px at ' + PS.curDistanceM.toFixed(2) + 'm');
+    }
+
     global.PlayerGraph = {
         setCallbacks: setCallbacks,
         gGetNode: gGetNode,
         buildGraphQueue: buildGraphQueue,
         startGraphPlay: startGraphPlay,
-        playNextGraphNode: playNextGraphNode
+        playNextGraphNode: playNextGraphNode,
+        recalcStimulusSize: recalcStimulusSize
     };
 
     VLog.log('[player-graph] module installed');

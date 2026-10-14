@@ -429,24 +429,6 @@ function playNextGraphNode() {
 
 // Авто-пересчёт размера стимула под новую дистанцию.
 // Вызывается из player-camera.js при distControlMode='auto'.
-function _recalcStimulusSize() {
-    if (!PlayerState.curDistanceM) return;
-    const node = gGetNode(PlayerState.gCurrentNodeId);
-    if (!node) return;
-    const ppi = node.stimPPI || PlayerState.screenPPI || 96;
-    const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent || 1.0, PlayerState.curDistanceM, ppi);
-    PlayerState.currentSize = eff;
-    // Обновить SVG на экране
-    const svg = document.querySelector('#stim svg');
-    if (svg) {
-        svg.setAttribute('width', eff);
-        svg.setAttribute('height', eff);
-        svg.setAttribute('viewBox', '0 0 ' + eff + ' ' + eff);
-    }
-    // Обновить _stimulusDistance — теперь baseline для дальнейших проверок
-    PlayerState._stimulusDistance = PlayerState.curDistanceM;
-    VLog.log('[auto-recalc] size updated to ' + eff + 'px at ' + PlayerState.curDistanceM.toFixed(2) + 'm');
-}
 
 function playGraphStimulus(node) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
@@ -2058,7 +2040,7 @@ function init() {
             onStimulusHide: hideStimulus,
             onAbortStimulus: (reason) => _abortCurrentStimulus(reason),
             onResume: () => _resumeAfterStable(),
-            onRecalcSize: () => _recalcStimulusSize()
+            onRecalcSize: () => window.PlayerGraph.recalcStimulusSize()
         });
         if (window.PlayerAnimation && typeof window.PlayerAnimation.setCallbacks === 'function') {
             window.PlayerAnimation.setCallbacks({
