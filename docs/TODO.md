@@ -145,50 +145,42 @@
 - [x] **ч.4/7** — `player-auth.js` (254 строки)
 - [x] **ч.5/7** — `player-scenarios.js` (~190 строк)
 - [x] **ч.6/7** — `player-graph.js` (803 строки) — **100%** ✅
+- [x] **ч.7/7 (частично)** — `player-session.js` (328 строк) — **PlayerSession завершён** ✅
+      - `startPlayer`, `stopPlayer`, `pauseTraining`, `resumeTraining`, `togglePause`
+      - `showFinishedReport`, `saveResult`, `scheduleVoiceCountdown`
 
-**Прогресс:** `player-runtime.js` — 3002 → **1732** строк (**−42%**).
+**Прогресс:** `player-runtime.js` — 3002 → **1514** строк (**−49.6%**).
 
 **Модули:**
 - `player-reading-mode.js` — 254
 - `player-auth.js` — 254
 - `player-scenarios.js` — ~190
 - `player-graph.js` — 803
+- `player-session.js` — 328
 
-### 🚧 Остаток — §15.1.2 ч.7/7 (~3–4 ч)
+### 🚧 Остаток — §15.1.2 ч.7/7 (`player-single.js`, ~2 ч)
 
-**Что:** разбить оставшиеся **~1732 строки** `player-runtime.js` на модули.
+**Что:** вынести одиночный режим (~500 строк) из `player-runtime.js` в `player-single.js`.
 
-#### Что вынести
-
-**1. `player-session.js` (~250 строк)** — lifecycle:
-- `startPlayer`, `stopPlayer`
-- `pauseTraining`, `resumeTraining`, `togglePause`
-- `showFinishedReport`, `saveResult`, `scheduleVoiceCountdown`
-
-**2. `player-single.js` (~500 строк)** — одиночный режим:
-- `showNextStimulus`, `finishSeries`
+**Что вынести:**
+- `showNextStimulus` (~150 строк)
+- `finishSeries`
 - `handleDirectionAnswer`, `handleCompareAnswer`
 - `showNextCompareRound`, `showDirectionComparison`, `showFindSameComparison`, `showFindSameComparisonInternal`, `handleFindSameClick`
 - `createCellElement`, `defaultCellParams`
 - `processCompareAnswer`, `finishCompareSeries`
 
-#### Что НЕ выносить
-
-- **`player-stimulus.js`** — не делать. 19 «функций» — 17 тонких обёрток над `PlayerAnimation.*`, 2 реальные (`displayStimulus`/`hideStimulus`) — вместе ~26 строк. Не тянет на модуль.
-- **`player-camera-ui.js`** — не делать. 7 обёрток над `PlayerCamera.*`, ~21 строка.
-- **~50 тонких обёрток** (`enableCamera`, `disableCamera`, `_checkHardLimit`, `playGraph*`, `playGraphReading` и т.п.) — оставить в runtime или удалить отдельной задачей (30+ замен). Не критично.
-
-#### Порядок работы
-
-1. **`player-session.js`** — lifecycle. ~1 ч, средний риск.
-2. **`player-single.js`** — одиночный режим. ~2 ч, высокий риск (циклические зависимости).
-3. **Опционально** — удалить обёртки (~30 замен). ~1 ч.
-
-#### Целевой результат
-
-- `player-runtime.js`: **~500 строк** (bootstrap + init + обработчики + утилиты).
-- `player-session.js`: ~250.
+**Целевой результат:**
+- `player-runtime.js`: ~1000 строк (bootstrap + init + обработчики + утилиты + ~50 тонких обёрток).
 - `player-single.js`: ~500.
+
+**Риск:** высокий (циклические зависимости между single ↔ stimulus ↔ session).
+
+### Что НЕ выносить
+
+- **`player-stimulus.js`** — не делать. 19 «функций» — 17 тонких обёрток над `PlayerAnimation.*`, 2 реальные (`displayStimulus`/`hideStimulus`) — вместе ~26 строк.
+- **`player-camera-ui.js`** — не делать. 7 обёрток над `PlayerCamera.*`, ~21 строка.
+- **~50 тонких обёрток** — оставить в runtime. Не критично.
 ---
 
 ## ⚠️ Уроки сессии 2026-10-14
