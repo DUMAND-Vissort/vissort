@@ -431,164 +431,7 @@ function playNextGraphNode() {
 // Вызывается из player-camera.js при distControlMode='auto'.
 
 function playGraphStimulus(node) {
-    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (window._faceLostPause) {
-        setTimeout(function () {
-            playGraphStimulus(node);
-        }, 500);
-        return;
-    } // пауза при потере лица
-    if (PlayerState._waitingStable) {
-        setTimeout(function () {
-            playGraphStimulus(node);
-        }, 500);
-        return;
-    } // отмена при отклонении
-    PlayerState._answerBlocked = false; // Сброс блокировки перед новым циклом
-    if (node.minDetectPct != null) PlayerState._minDetectPct = node.minDetectPct;
-    if (node.tolNearCm != null) PlayerState._tolNearCm = node.tolNearCm;
-    if (node.tolFarCm != null) PlayerState._tolFarCm = node.tolFarCm;
-    if (node.distControlMode === 'auto') PlayerState._distControlMode = 'auto';
-    else PlayerState._distControlMode = 'return'; // порог узла
-    // Ранняя активация фазы ответа
-    PlayerState.responsePhaseActive = true;
-    PlayerState.responseStartTime = performance.now();
-    PlayerState.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-    if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
-        PlayerState.gIndex++;
-        playNextGraphNode();
-        return;
-    }
-    if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
-        finishGraphStimulusSeries(node);
-        return;
-    }
-    let dir;
-    if (node.isActive) {
-        const d = ['вверх', 'вниз', 'влево', 'вправо'];
-        do {
-            dir = d[Math.floor(Math.random() * d.length)];
-        } while (dir === PlayerState.lastDirection);
-    } else dir = node.stimDirectionFixed || 'вверх';
-    PlayerState.lastDirection = dir;
-    PlayerState.currentCorrectDirection = dir;
-    // Включить фазу ответа до рендера
-    const dCalc = _effectiveDistance(node.stimDistance || 1); // Приоритет измеренной дистанции;
-    const pCalc = node.stimPPI || PlayerState.screenPPI || 96;
-    const eff = acuityToSizePx(PlayerState.gNodeAcuityCurrent, dCalc, pCalc);
-    PlayerState.currentSize = eff;
-    let sc = { r: node.stimR || 255, g: node.stimG || 255, b: node.stimB || 255 };
-    if (node.singleStimDynamicEnabled && node.singleStimColor1 && !node.singleCircleEnabled)
-        sc = node.singleStimColor1;
-    let svgData;
-    if (node.singleCircleEnabled) svgData = getCircleStimulusSVG(node, eff);
-    else
-        svgData = getStimulusSVG(
-            {
-                stimType: node.stimType || 'LETTER_E',
-                stimDirection: dir,
-                stimR: sc.r,
-                stimG: sc.g,
-                stimB: sc.b,
-                bgR: node.bgR || 0,
-                bgG: node.bgG || 0,
-                bgB: node.bgB || 0
-            },
-            eff
-        );
-    if (node.dfEnabled) {
-        const frame = buildDefocusFrame(node, svgData.html);
-        if (frame) {
-            stimDisplay.innerHTML = '';
-            stimDisplay.appendChild(frame);
-            stimArea.style.backgroundColor = `rgb(${node.dfPeriBg.r},${node.dfPeriBg.g},${node.dfPeriBg.b})`;
-        } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-        PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
-    } else displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
-    PlayerState.responseStartTime = performance.now(); // метка начала после рендера (граф)
-    if (node.singleGridEnabled) {
-        const gx = node.singleGridX || 1,
-            gy = node.singleGridY || 1;
-        const cell = pickSingleGridCell(
-            gx,
-            gy,
-            node.singleGridRandomCell !== false,
-            node.singleGridAvoidRepeat !== false,
-            node.singleGridFixedRow || 0,
-            node.singleGridFixedCol || 0,
-            node.singleGridCells || []
-        );
-        PlayerState.currentSingleCell = cell;
-        applySingleGridPosition(eff, gx, gy, cell.row, cell.col, node.singleGridShowLines === true);
-    } else if (node.singleRandomPos) applyRandomStimulusPosition(eff);
-    buildPeripheralDots(node);
-    stopBlinkAnimation();
-    if (node.singleCircleEnabled) {
-        startCircleAnimation(node);
-        stopSingleStimAnimation();
-    } else {
-        stopCircleAnimation();
-        if (node.singleStimDynamicEnabled) startSingleStimAnimation(node);
-        else stopSingleStimAnimation();
-    }
-    if (node.singleBgDynamicEnabled) startSingleBgAnimation(node);
-    else stopSingleBgAnimation();
-    if (node.blinkEnabled) {
-        startBlinkAnimation({
-            target: node.blinkTarget || 'stim',
-            colorA: node.blinkColorA || { r: 255, g: 0, b: 0 },
-            colorB: node.blinkColorB || { r: 0, g: 0, b: 255 },
-            intervalMs: node.blinkIntervalMs || 500,
-            duty: node.blinkDuty ?? 0.5,
-            count: node.blinkCount || 0
-        });
-    }
-
-    document.querySelectorAll('.btn-resp[data-dir]').forEach((b) => (b.style.display = 'flex'));
-    document.querySelectorAll('.btn-resp[data-answer]').forEach((b) => (b.style.display = 'none'));
-    responseButtons.style.display = 'flex';
-    if (window.Voice) window.Voice.sayKey('look', { cancel: true });
-    let sd = (node.duration != null ? node.duration : 1000) + (node.response != null ? node.response : 0); // Полная серия без ответов → пауза
-    if (node.singleStimDynamicEnabled) sd = Math.max(sd, node.singleStimDuration || 0);
-    if (node.singleBgDynamicEnabled) sd = Math.max(sd, node.singleBgDuration || 0);
-    if (node.singleCircleEnabled) {
-        const ci = node.circleInnerEnabled !== false ? node.circleInnerDuration || 0 : 0;
-        const co = node.circleOuterEnabled !== false ? node.circleOuterDuration || 0 : 0;
-        sd = Math.max(sd, ci, co);
-    }
-    scheduleVoiceCountdown(sd);
-    PlayerState.currentShowTimer = setTimeout(() => {
-        hideStimulus();
-        PlayerState.responsePhaseActive = false;
-        stopSingleStimAnimation();
-        stopSingleBgAnimation();
-        stopCircleAnimation();
-        stopPeripheralAnimation();
-        stopBlinkAnimation();
-        if (PlayerState.lastResponse.answered) {
-            if (PlayerState.lastResponse.isCorrect) PlayerState.seriesCorrect++;
-            else PlayerState.seriesIncorrect++;
-            PlayerState.seriesStep++; // Только ответы считаются
-        } else {
-            PlayerState.seriesNoAnswer++;
-            saveResult(node.id, null, false);
-            // Таймаут не увеличивает seriesStep
-            // Полная серия без ответов → пауза
-            if (PlayerState.seriesStep === 0 && PlayerState.seriesNoAnswer >= (node.seriesSize || 6)) {
-                VLog.log('[pause] полная серия без ответов, пауза');
-                PlayerState.seriesNoAnswer = 0;
-                pauseTraining();
-                return;
-            }
-        }
-        updateCounters();
-        PlayerState.phaseTimers.push(
-            setTimeout(() => {
-                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphStimulus(node);
-            }, node.delay2 || 1000)
-        );
-    }, sd);
-    PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
+    return window.PlayerGraph.playGraphStimulus(node);
 }
 
 function finishGraphStimulusSeries(node) {
@@ -1837,7 +1680,18 @@ function init() {
             stopCircleAnimation: stopCircleAnimation,
             stopPeripheralAnimation: stopPeripheralAnimation,
             stopBlinkAnimation: stopBlinkAnimation,
-            _effectiveDistance: _effectiveDistance
+            _effectiveDistance: _effectiveDistance,
+            displayStimulus: displayStimulus,
+            buildDefocusFrame: buildDefocusFrame,
+            pickSingleGridCell: pickSingleGridCell,
+            applySingleGridPosition: applySingleGridPosition,
+            applyRandomStimulusPosition: applyRandomStimulusPosition,
+            buildPeripheralDots: buildPeripheralDots,
+            startSingleStimAnimation: startSingleStimAnimation,
+            startSingleBgAnimation: startSingleBgAnimation,
+            startCircleAnimation: startCircleAnimation,
+            startBlinkAnimation: startBlinkAnimation,
+            scheduleVoiceCountdown: scheduleVoiceCountdown
         });
     }
 

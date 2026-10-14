@@ -28,7 +28,18 @@
         stopCircleAnimation: function () {},
         stopPeripheralAnimation: function () {},
         stopBlinkAnimation: function () {},
-        _effectiveDistance: function (d) { return d; }
+        _effectiveDistance: function (d) { return d; },
+        displayStimulus: function () {},
+        buildDefocusFrame: function () { return null; },
+        pickSingleGridCell: function () { return { row: 0, col: 0 }; },
+        applySingleGridPosition: function () {},
+        applyRandomStimulusPosition: function () {},
+        buildPeripheralDots: function () {},
+        startSingleStimAnimation: function () {},
+        startSingleBgAnimation: function () {},
+        startCircleAnimation: function () {},
+        startBlinkAnimation: function () {},
+        scheduleVoiceCountdown: function () {}
     };
 
     function setCallbacks(cb) {
@@ -149,6 +160,164 @@
         );
     }
 
+    // ==================== Стимул (граф) ====================
+    function playGraphStimulus(node) {
+        var PS = _PS();
+        if (!PS.playerRunning || PS.isPaused) return;
+        if (global._faceLostPause) {
+            setTimeout(function () { playGraphStimulus(node); }, 500);
+            return;
+        }
+        if (PS._waitingStable) {
+            setTimeout(function () { playGraphStimulus(node); }, 500);
+            return;
+        }
+        PS._answerBlocked = false;
+        if (node.minDetectPct != null) PS._minDetectPct = node.minDetectPct;
+        if (node.tolNearCm != null) PS._tolNearCm = node.tolNearCm;
+        if (node.tolFarCm != null) PS._tolFarCm = node.tolFarCm;
+        if (node.distControlMode === 'auto') PS._distControlMode = 'auto';
+        else PS._distControlMode = 'return';
+        PS.responsePhaseActive = true;
+        PS.responseStartTime = performance.now();
+        PS.lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
+        if (PS.completedSeries >= (node.seriesCount || 5)) {
+            PS.gIndex++;
+            playNextGraphNode();
+            return;
+        }
+        if (PS.seriesStep >= (node.seriesSize || 6)) {
+            finishGraphStimulusSeries(node);
+            return;
+        }
+        var dir;
+        if (node.isActive) {
+            var d = ['вверх', 'вниз', 'влево', 'вправо'];
+            do {
+                dir = d[Math.floor(Math.random() * d.length)];
+            } while (dir === PS.lastDirection);
+        } else dir = node.stimDirectionFixed || 'вверх';
+        PS.lastDirection = dir;
+        PS.currentCorrectDirection = dir;
+        var dCalc = _callbacks._effectiveDistance(node.stimDistance || 1);
+        var pCalc = node.stimPPI || PS.screenPPI || 96;
+        var acuityToSizePx = (global.VissortCore && global.VissortCore.acuityToSizePx) || function () { return 16; };
+        var eff = acuityToSizePx(PS.gNodeAcuityCurrent, dCalc, pCalc);
+        PS.currentSize = eff;
+        var sc = { r: node.stimR || 255, g: node.stimG || 255, b: node.stimB || 255 };
+        if (node.singleStimDynamicEnabled && node.singleStimColor1 && !node.singleCircleEnabled)
+            sc = node.singleStimColor1;
+        var svgData;
+        var getCircleStimulusSVG = (global.VissortCore && global.VissortCore.getCircleStimulusSVG);
+        var getStimulusSVG = (global.VissortCore && global.VissortCore.getStimulusSVG);
+        if (node.singleCircleEnabled) svgData = getCircleStimulusSVG(node, eff);
+        else
+            svgData = getStimulusSVG(
+                {
+                    stimType: node.stimType || 'LETTER_E',
+                    stimDirection: dir,
+                    stimR: sc.r,
+                    stimG: sc.g,
+                    stimB: sc.b,
+                    bgR: node.bgR || 0,
+                    bgG: node.bgG || 0,
+                    bgB: node.bgB || 0
+                },
+                eff
+            );
+        if (node.dfEnabled) {
+            var frame = _callbacks.buildDefocusFrame(node, svgData.html);
+            if (frame) {
+                var sd = _el('stim');
+                if (sd) { sd.innerHTML = ''; sd.appendChild(frame); }
+                var sa = _el('stim-area');
+                if (sa) sa.style.backgroundColor = 'rgb(' + node.dfPeriBg.r + ',' + node.dfPeriBg.g + ',' + node.dfPeriBg.b + ')';
+            } else _callbacks.displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
+            PS.responseStartTime = performance.now();
+        } else _callbacks.displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
+        PS.responseStartTime = performance.now();
+        if (node.singleGridEnabled) {
+            var gx = node.singleGridX || 1, gy = node.singleGridY || 1;
+            var cell = _callbacks.pickSingleGridCell(
+                gx,
+                gy,
+                node.singleGridRandomCell !== false,
+                node.singleGridAvoidRepeat !== false,
+                node.singleGridFixedRow || 0,
+                node.singleGridFixedCol || 0,
+                node.singleGridCells || []
+            );
+            PS.currentSingleCell = cell;
+            _callbacks.applySingleGridPosition(eff, gx, gy, cell.row, cell.col, node.singleGridShowLines === true);
+        } else if (node.singleRandomPos) _callbacks.applyRandomStimulusPosition(eff);
+        _callbacks.buildPeripheralDots(node);
+        _callbacks.stopBlinkAnimation();
+        if (node.singleCircleEnabled) {
+            _callbacks.startCircleAnimation(node);
+            _callbacks.stopSingleStimAnimation();
+        } else {
+            _callbacks.stopCircleAnimation();
+            if (node.singleStimDynamicEnabled) _callbacks.startSingleStimAnimation(node);
+            else _callbacks.stopSingleStimAnimation();
+        }
+        if (node.singleBgDynamicEnabled) _callbacks.startSingleBgAnimation(node);
+        else _callbacks.stopSingleBgAnimation();
+        if (node.blinkEnabled) {
+            _callbacks.startBlinkAnimation({
+                target: node.blinkTarget || 'stim',
+                colorA: node.blinkColorA || { r: 255, g: 0, b: 0 },
+                colorB: node.blinkColorB || { r: 0, g: 0, b: 255 },
+                intervalMs: node.blinkIntervalMs || 500,
+                duty: node.blinkDuty != null ? node.blinkDuty : 0.5,
+                count: node.blinkCount || 0
+            });
+        }
+
+        document.querySelectorAll('.btn-resp[data-dir]').forEach(function (b) { b.style.display = 'flex'; });
+        document.querySelectorAll('.btn-resp[data-answer]').forEach(function (b) { b.style.display = 'none'; });
+        var rb = _el('response-buttons');
+        if (rb) rb.style.display = 'flex';
+        if (global.Voice) global.Voice.sayKey('look', { cancel: true });
+        var sd2 = (node.duration != null ? node.duration : 1000) + (node.response != null ? node.response : 0);
+        if (node.singleStimDynamicEnabled) sd2 = Math.max(sd2, node.singleStimDuration || 0);
+        if (node.singleBgDynamicEnabled) sd2 = Math.max(sd2, node.singleBgDuration || 0);
+        if (node.singleCircleEnabled) {
+            var ci = node.circleInnerEnabled !== false ? node.circleInnerDuration || 0 : 0;
+            var co = node.circleOuterEnabled !== false ? node.circleOuterDuration || 0 : 0;
+            sd2 = Math.max(sd2, ci, co);
+        }
+        _callbacks.scheduleVoiceCountdown(sd2);
+        PS.currentShowTimer = setTimeout(function () {
+            _callbacks.hideStimulus();
+            PS.responsePhaseActive = false;
+            _callbacks.stopSingleStimAnimation();
+            _callbacks.stopSingleBgAnimation();
+            _callbacks.stopCircleAnimation();
+            _callbacks.stopPeripheralAnimation();
+            _callbacks.stopBlinkAnimation();
+            if (PS.lastResponse.answered) {
+                if (PS.lastResponse.isCorrect) PS.seriesCorrect++;
+                else PS.seriesIncorrect++;
+                PS.seriesStep++;
+            } else {
+                PS.seriesNoAnswer++;
+                _callbacks.saveResult(node.id, null, false);
+                if (PS.seriesStep === 0 && PS.seriesNoAnswer >= (node.seriesSize || 6)) {
+                    VLog.log('[pause] полная серия без ответов, пауза');
+                    PS.seriesNoAnswer = 0;
+                    _callbacks.pauseTraining();
+                    return;
+                }
+            }
+            _callbacks.updateCounters();
+            PS.phaseTimers.push(
+                setTimeout(function () {
+                    if (PS.playerRunning && !PS.isPaused) playGraphStimulus(node);
+                }, node.delay2 || 1000)
+            );
+        }, sd2);
+        PS.phaseTimers.push(PS.currentShowTimer);
+    }
     // Авто-пересчёт размера стимула под новую дистанцию (§15.1.2 ч.6/7-2a)
     function recalcStimulusSize() {
         var PS = _PS();
@@ -617,6 +786,7 @@
         buildGraphQueue: buildGraphQueue,
         startGraphPlay: startGraphPlay,
         playNextGraphNode: playNextGraphNode,
+        playGraphStimulus: playGraphStimulus,
         recalcStimulusSize: recalcStimulusSize,
         finishGraphStimulusSeries: finishGraphStimulusSeries,
         playGraphCompare: playGraphCompare,
