@@ -195,12 +195,7 @@ window.stimArea = stimArea;
 const responseButtons = $('response-buttons');
 const hdrScenario = $('hdr-scenario');
 const hdrUser = $('hdr-user');
-const statusOverlay = $('status-overlay');
-const statusTitle = $('status-title');
-const statusText = $('status-text');
-const statusAction = $('status-action');
 const authModal = $('auth-modal');
-const pauseModal = $('pause-modal');
 const btnPlayer = $('btn-player');
 const btnPlayerPause = $('btn-player-pause');
 const btnPlayerStop = $('btn-player-stop');
@@ -225,15 +220,10 @@ function _smoothDistance(raw) {
 }
 
 function showStatus(title, text, actionLabel, actionFn) {
-    statusTitle.textContent = title;
-    statusText.textContent = text || '';
-    statusAction.classList.toggle('hidden', !actionLabel);
-    statusAction.onclick = actionFn || null;
-    if (actionLabel) statusAction.textContent = actionLabel;
-    statusOverlay.classList.remove('hidden');
+    return window.PlayerOverlay.showStatus(title, text, actionLabel, actionFn);
 }
 function hideStatus() {
-    statusOverlay.classList.add('hidden');
+    return window.PlayerOverlay.hideStatus();
 }
 
 function initSupabase() {
@@ -1548,12 +1538,8 @@ function startPlayer() {
         VLog.warn('[player] уже запущен');
         return;
     }
-    // Закрыть status-overlay если открыт
-    var _so = document.getElementById('status-overlay');
-    if (_so && !_so.classList.contains('hidden')) {
-        VLog.log('[player] закрываю status-overlay');
-        _so.classList.add('hidden');
-    }
+    // Закрыть status-overlay если открыт (§15.1.2).
+    window.PlayerOverlay.hideStatus();
     if (!PlayerState.userScenario) {
         _alert('Сценарий не назначен');
         return;
@@ -2461,10 +2447,10 @@ function pauseTraining() {
     responseButtons.style.display = 'none';
     PlayerState.isPaused = true;
     btnPlayerPause.disabled = true;
-    pauseModal.classList.add('open');
+    window.PlayerOverlay.showPause();
 }
 function resumeTraining() {
-    pauseModal.classList.remove('open');
+    window.PlayerOverlay.hidePause();
     PlayerState.isPaused = false;
     PlayerState.noAnswerSeriesStreak = 0;
     btnPlayerPause.disabled = false;
@@ -2509,7 +2495,7 @@ function stopPlayer() {
     btnPlayerStop.disabled = true;
     btnPlayerPause.disabled = true;
     document.body.style.background = '#0b0b0f';
-    pauseModal.classList.remove('open');
+    window.PlayerOverlay.hidePause();
     PlayerState.camBaseline = null;
     PlayerState._stimulusDistance = null;
     PlayerState._waitingStable = false; // ожидание стабилизации
@@ -2552,7 +2538,7 @@ function togglePause() {
     stopBlinkAnimation();
     hideStimulus();
     responseButtons.style.display = 'none';
-    pauseModal.classList.add('open');
+    window.PlayerOverlay.showPause();
 }
 
 // ==================== SAVE RESULT ====================
@@ -2678,7 +2664,7 @@ function init() {
     btnPlayerStop.addEventListener('click', stopPlayer);
     $('pause-continue').addEventListener('click', resumeTraining);
     $('pause-exit').addEventListener('click', () => {
-        pauseModal.classList.remove('open');
+        window.PlayerOverlay.hidePause();
         stopPlayer();
     });
 
