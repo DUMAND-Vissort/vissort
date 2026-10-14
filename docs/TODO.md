@@ -144,42 +144,51 @@
 - [x] **ч.3/7** — `player-reading-mode.js` (254 строки)
 - [x] **ч.4/7** — `player-auth.js` (254 строки)
 - [x] **ч.5/7** — `player-scenarios.js` (~190 строк)
-- [x] **ч.6/7** — `player-graph.js` (633 строки) — **95%** (7 из 8 под-шагов)
+- [x] **ч.6/7** — `player-graph.js` (803 строки) — **100%** ✅
 
-**Прогресс:** `player-runtime.js` — 3002 → 1890 строк (−37%).
+**Прогресс:** `player-runtime.js` — 3002 → **1732** строк (**−42%**).
 
-### 🚧 Остаток
+**Модули:**
+- `player-reading-mode.js` — 254
+- `player-auth.js` — 254
+- `player-scenarios.js` — ~190
+- `player-graph.js` — 803
 
-#### §15.1.2 ч.6/7-2b — `playGraphStimulus` (~2 ч)
+### 🚧 Остаток — §15.1.2 ч.7/7 (~3–4 ч)
 
-**Что:** вынести `playGraphStimulus` (161 строка) из `player-runtime.js` в `player-graph.js`.
+**Что:** разбить оставшиеся **~1732 строки** `player-runtime.js` на модули.
 
-**Где:** `player-runtime.js`, idx ~450.
+#### Что вынести
 
-**Зависимости (20+):**
-- `PlayerState`, DOM (`stimDisplay`, `stimArea`, `responseButtons`)
-- `PlayerAnimation`: `getStimulusSVG`, `getCircleStimulusSVG`, `buildDefocusFrame`
-- Анимации: `startSingleStimAnimation`, `stopSingleStimAnimation`, `startSingleBgAnimation`, `stopSingleBgAnimation`, `startCircleAnimation`, `stopCircleAnimation`, `startBlinkAnimation`, `stopBlinkAnimation`, `stopPeripheralAnimation`
-- Grid: `pickSingleGridCell`, `applySingleGridPosition`, `applyRandomStimulusPosition`
-- Peripheral: `buildPeripheralDots`
-- Результаты: `saveResult`, `scheduleVoiceCountdown`
-- Отображение: `displayStimulus`, `hideStimulus`
+**1. `player-session.js` (~250 строк)** — lifecycle:
+- `startPlayer`, `stopPlayer`
+- `pauseTraining`, `resumeTraining`, `togglePause`
+- `showFinishedReport`, `saveResult`, `scheduleVoiceCountdown`
 
-**План:**
-1. Расширить `setCallbacks` — добавить callbacks на все функции.
-2. Скопировать тело `playGraphStimulus` в модуль, заменить прямые вызовы на `_callbacks.*`.
-3. Заменить в runtime на делегат.
+**2. `player-single.js` (~500 строк)** — одиночный режим:
+- `showNextStimulus`, `finishSeries`
+- `handleDirectionAnswer`, `handleCompareAnswer`
+- `showNextCompareRound`, `showDirectionComparison`, `showFindSameComparison`, `showFindSameComparisonInternal`, `handleFindSameClick`
+- `createCellElement`, `defaultCellParams`
+- `processCompareAnswer`, `finishCompareSeries`
 
-**Риск:** средний (критичный флоу).
+#### Что НЕ выносить
 
-#### §15.1.2 ч.7/7 — остаток runtime (~3–4 ч)
+- **`player-stimulus.js`** — не делать. 19 «функций» — 17 тонких обёрток над `PlayerAnimation.*`, 2 реальные (`displayStimulus`/`hideStimulus`) — вместе ~26 строк. Не тянет на модуль.
+- **`player-camera-ui.js`** — не делать. 7 обёрток над `PlayerCamera.*`, ~21 строка.
+- **~50 тонких обёрток** (`enableCamera`, `disableCamera`, `_checkHardLimit`, `playGraph*`, `playGraphReading` и т.п.) — оставить в runtime или удалить отдельной задачей (30+ замен). Не критично.
 
-**Что:** разбить оставшиеся ~1890 строк на модули:
-- `player-session.js` — lifecycle (`startPlayer`, `stopPlayer`, `pauseTraining`, `resumeTraining`, `togglePause`)
-- `player-single.js` — одиночный режим
-- `player-stimulus.js` — `displayStimulus`, `hideStimulus`, `setStimColorRGB`, grid
-- `player-camera-ui.js` — камера-UI
+#### Порядок работы
 
+1. **`player-session.js`** — lifecycle. ~1 ч, средний риск.
+2. **`player-single.js`** — одиночный режим. ~2 ч, высокий риск (циклические зависимости).
+3. **Опционально** — удалить обёртки (~30 замен). ~1 ч.
+
+#### Целевой результат
+
+- `player-runtime.js`: **~500 строк** (bootstrap + init + обработчики + утилиты).
+- `player-session.js`: ~250.
+- `player-single.js`: ~500.
 ---
 
 ## ⚠️ Уроки сессии 2026-10-14
@@ -189,5 +198,6 @@
 3. **Проверки границ (idx) перед записью** — если сдвиг, файл не портится.
 4. **`pull --rebase` при отказе push** (bump-бот каждые 1–2 мин).
 5. **При патче `};` — пропускать только заменяемую строку**, не блок.
+6. **Тонкие обёртки — не модули.** Если функция = одна строка `return window.X.y()`, не выносить в отдельный модуль. Оставлять в runtime или удалять отдельной задачей.
 
 _Обновлять после каждой сессии._
