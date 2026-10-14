@@ -1611,7 +1611,13 @@ function startPlayer() {
     const tt = p.trainingType || 'single';
     if (tt === 'reading') {
         btnPlayerPause.disabled = true;
-        startReading();
+        window.PlayerReadingMode.start(Object.assign({}, p, {
+            mode: 'flat',
+            text: p.text || '',
+            textColor: p.textColor,
+            acuity: PlayerState.currentAcuity,
+            distance: p.readingDistance || 1
+        }));
     } else if (tt === 'compare') {
         PlayerState.compareMode = p.compareMode || 'direction';
         PlayerState.gridX = Math.max(2, Math.min(6, parseInt(p.gridX) || 3));
