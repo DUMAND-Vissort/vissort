@@ -2492,17 +2492,6 @@ function init() {
         }
         VLog.log('[player-runtime] PlayerCamera callbacks registered');
     }
-    $('auth-submit').addEventListener('click', doAuth);
-    $('auth-toggle').addEventListener('click', () => {
-        PlayerState.authMode = PlayerState.authMode === 'signin' ? 'signup' : 'signin';
-        updateAuthModal();
-    });
-    $('auth-email').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') doAuth();
-    });
-    $('auth-password').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') doAuth();
-    });
     btnLogout.addEventListener('click', async () => {
         try {
             stopPlayer();
