@@ -27,7 +27,8 @@
         stopSingleBgAnimation: function () {},
         stopCircleAnimation: function () {},
         stopPeripheralAnimation: function () {},
-        stopBlinkAnimation: function () {}
+        stopBlinkAnimation: function () {},
+        _effectiveDistance: function (d) { return d; }
     };
 
     function setCallbacks(cb) {
@@ -449,6 +450,167 @@
         );
     }
 
+    // ==================== Ответ на направление ====================
+    function handleGraphDirectionAnswer(dir) {
+        var PS = _PS();
+        if (!PS.responsePhaseActive) return;
+        if (PS._answerBlocked) return;
+        var _inv32 = global._isAnswerInvalid ? global._isAnswerInvalid() : null;
+        if (_inv32) {
+            PS.lastResponse = {
+                answered: true,
+                isCorrect: false,
+                reactionTimeMs: Math.max(0, performance.now() - (PS.responseStartTime || performance.now())),
+                invalidReason: _inv32
+            };
+            if (global._logAnswer)
+                global._logAnswer({
+                    rt: PS.lastResponse.reactionTimeMs,
+                    valid: false,
+                    correct: false,
+                    reason: PS.lastResponse.invalidReason || 'unknown'
+                });
+            PS.responsePhaseActive = false;
+            if (global._markAnswerInvalid) global._markAnswerInvalid(_inv32);
+            if (global.Voice) global.Voice.sayKey('wrong', { cancel: true });
+            document.body.style.background = '#78350f';
+            setTimeout(function () {
+                document.body.style.background = '#0b0b0f';
+            }, 300);
+            return;
+        }
+
+        var ok = dir === PS.currentCorrectDirection;
+
+        // Очистка таймера и DOM сразу после ответа
+        if (PS.currentShowTimer) {
+            clearTimeout(PS.currentShowTimer);
+            PS.currentShowTimer = null;
+        }
+        if (PS.phaseTimers && PS.phaseTimers.length) {
+            PS.phaseTimers.forEach(function (t) { clearTimeout(t); });
+            PS.phaseTimers = [];
+        }
+        try {
+            var _el34 = document.getElementById('stim');
+            if (_el34) _el34.innerHTML = '';
+        } catch (e) {}
+        try {
+            var _ar34 = document.getElementById('stim-display');
+            if (_ar34) _ar34.style.backgroundColor = '';
+        } catch (e) {}
+        try { _callbacks.stopSingleStimAnimation(); } catch (e) {}
+        try { _callbacks.stopSingleBgAnimation(); } catch (e) {}
+        try { _callbacks.stopCircleAnimation(); } catch (e) {}
+        try { _callbacks.stopPeripheralAnimation(); } catch (e) {}
+        try { _callbacks.stopBlinkAnimation(); } catch (e) {}
+        PS.lastResponse = {
+            answered: true,
+            isCorrect: ok,
+            reactionTimeMs: Math.max(0, performance.now() - (PS.responseStartTime || performance.now()))
+        };
+        if (global._logAnswer)
+            global._logAnswer({
+                rt: PS.lastResponse.reactionTimeMs,
+                valid: true,
+                correct: ok,
+                direction: typeof dir !== 'undefined' ? String(dir) : null
+            });
+        PS.responsePhaseActive = false;
+        if (global.Voice) global.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
+        document.body.style.background = ok ? '#0a3d1a' : '#3d0a0a';
+        setTimeout(function () {
+            document.body.style.background = '#0b0b0f';
+        }, 200);
+        _callbacks.saveResult(PS.gCurrentNodeId || 'graph_single', PS.lastResponse.reactionTimeMs, ok);
+
+        // Продвижение серии сразу
+        if (ok) PS.seriesCorrect++;
+        else PS.seriesIncorrect++;
+        PS.seriesStep++;
+        _callbacks.updateCounters();
+        var _n35 = gGetNode(PS.gCurrentNodeId);
+        if (_n35) {
+            if (PS.seriesStep >= (_n35.seriesSize || 6)) {
+                setTimeout(function () {
+                    finishGraphStimulusSeries(_n35);
+                }, 50);
+            } else {
+                setTimeout(
+                    function () {
+                        if (PS.playerRunning && !PS.isPaused) _callbacks.playGraphStimulus(_n35);
+                    },
+                    _n35.delay2 != null ? _n35.delay2 : 1000
+                );
+            }
+        }
+    }
+
+    // ==================== Чтение в графе ====================
+    function playGraphReading(node) {
+        var PS = _PS();
+        if (!PS.playerRunning || PS.isPaused) return;
+        PS.gCurrentNodeId = node.id;
+
+        var bid = node.bookId;
+        if (!bid && global._books) {
+            var keys = Object.keys(global._books);
+            if (keys.length) bid = keys[0];
+        }
+        var bk = bid ? (global._books && global._books[bid]) : null;
+        var text = bk ? bk.text : node.bookText || 'Текст не задан.';
+
+        var dCalc = _callbacks._effectiveDistance(node.readingDistance || 1);
+
+        global.PlayerReadingMode.start({
+            mode: 'graph',
+            text: text,
+            textColor: node.readingTextColor,
+            bgMode: node.readingBgMode || 'solid',
+            bgColor: node.readingBgColor || { r: 255, g: 255, b: 255 },
+            splitLeftWidthPercent: node.readingSplitLeftWidthPercent,
+            splitLeftColor: node.readingSplitLeftColor,
+            splitRightColor: node.readingSplitRightColor,
+            gradientMidEnabled: node.readingGradientMidEnabled,
+            gradientLeftColor: node.readingGradientLeftColor,
+            gradientMidColor: node.readingGradientMidColor,
+            gradientMidPosition: node.readingGradientMidPosition,
+            gradientRightColor: node.readingGradientRightColor,
+            dynamicMode: node.readingDynamicMode || 'simple',
+            dynamicReverse: node.readingDynamicReverse,
+            dynamicMidEnabled: node.readingDynamicMidEnabled,
+            dynamicStartColor: node.readingDynamicStartColor,
+            dynamicMidColor: node.readingDynamicMidColor,
+            dynamicEndColor: node.readingDynamicEndColor,
+            dynamicDuration: node.readingDynamicDuration,
+            dynamicLoop: node.readingDynamicLoop,
+            readingFontFamily: node.readingFontFamily || 'Segoe UI',
+            readingFontWeight: node.readingFontWeight || 'normal',
+            acuity: node.readingAcuity || 1.0,
+            distance: dCalc,
+            duration: node.duration || 60000,
+            onFinish: function () { finishGraphReading(node); }
+        });
+
+        if (PS._readingTimerId) {
+            PS.phaseTimers.push(PS._readingTimerId);
+        }
+    }
+
+    function finishGraphReading(node) {
+        var PS = _PS();
+        if (PS._readingFinishGuard) return;
+        PS._readingFinishGuard = true;
+
+        if (PS._readingTimerId) {
+            clearTimeout(PS._readingTimerId);
+            PS._readingTimerId = null;
+        }
+        if (global.PlayerReadingMode && global.PlayerReadingMode.hideDOM) global.PlayerReadingMode.hideDOM();
+        PS.gIndex++;
+        playNextGraphNode();
+    }
+
     global.PlayerGraph = {
         setCallbacks: setCallbacks,
         gGetNode: gGetNode,
@@ -461,7 +623,10 @@
         playGraphCompareRound: playGraphCompareRound,
         finishGraphCompareSeries: finishGraphCompareSeries,
         handleGraphCompareAnswer: handleGraphCompareAnswer,
-        processGraphCompareAnswer: processGraphCompareAnswer
+        processGraphCompareAnswer: processGraphCompareAnswer,
+        handleGraphDirectionAnswer: handleGraphDirectionAnswer,
+        playGraphReading: playGraphReading,
+        finishGraphReading: finishGraphReading
     };
 
     VLog.log('[player-graph] module installed');
