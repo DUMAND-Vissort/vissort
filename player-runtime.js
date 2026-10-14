@@ -573,105 +573,7 @@ function finishGraphReading(node) {
 }
 // ==================== ЗАПУСК ====================
 function startPlayer() {
-    if (PlayerState.playerRunning) {
-        VLog.warn('[player] уже запущен');
-        return;
-    }
-    // Закрыть status-overlay если открыт (§15.1.2).
-    window.PlayerOverlay.hideStatus();
-    if (!PlayerState.userScenario) {
-        _alert('Сценарий не назначен');
-        return;
-    }
-    if (!validateScenario(PlayerState.userScenario)) {
-        _alert('Сценарий повреждён или содержит некорректные данные.');
-        return;
-    }
-    PlayerState.sessionId =
-        window.crypto && typeof window.crypto.randomUUID === 'function'
-            ? window.crypto.randomUUID()
-            : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
-    const p = PlayerState.userScenario.params || {};
-    PlayerState.playerRunning = true;
-    window._fastLeanAt = 0;
-    window._deviationHistory = [];
-    window._distEMA = null; // EMA-фильтр дистанции
-    window._reactionLog = []; // Логирование реакций
-    window._baselineWaitStart = null; // baseline
-    // Восстановить PlayerState.focalLengthPx если потерян
-    if (!PlayerState.focalLengthPx || PlayerState.focalLengthPx <= 0) {
-        var _lsF2 = parseFloat(localStorage.getItem('focalLengthPx') || '0');
-        if (_lsF2 > 0) PlayerState.focalLengthPx = _lsF2;
-    }
-    // Жёсткий сброс состояния графа
-    PlayerState.graphActive = false;
-    PlayerState.gNodes = [];
-    PlayerState.gConnections = [];
-    PlayerState.gQueue = [];
-    PlayerState.gIndex = 0;
-    PlayerState.gCurrentNodeId = null;
-    PlayerState.gCurrentCompareNode = null;
-    window._invalidAnswerCount = 0;
-    if (window._reactionTimes) window._reactionTimes = [];
-    VLog.log('[graph] state reset');
-    PlayerState.isPaused = false;
-    PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
-    PlayerState.seriesStep = 0;
-    PlayerState.noAnswerSeriesStreak = 0;
-    PlayerState.lastDirection = null;
-    PlayerState.currentSingleCell = { row: 0, col: 0 };
-    PlayerState.screenPPI = p.ppi || PlayerState.screenPPI || 96;
-    if (p.minDetectPct && !isNaN(p.minDetectPct)) PlayerState._minDetectPct = parseFloat(p.minDetectPct);
-    btnPlayer.disabled = true;
-    document.querySelector('.counters')?.style.setProperty('display', 'none');
-    btnPlayerStop.disabled = false;
-    btnPlayerPause.disabled = false;
-    if (window.Voice) window.Voice.sayKey('ready', { cancel: true });
-
-    if (p.graph && Array.isArray(p.graph.nodes) && p.graph.nodes.length > 0) {
-        updateCounters();
-        startGraphPlay(p.graph.nodes, p.graph.connections || [], p.graph.books || {});
-        return;
-    }
-
-    if (p.trainingType !== 'reading')
-        PlayerState.currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
-    else PlayerState.currentAcuity = 1.0;
-    PlayerState.currentStimColor = p.startStimColor ? { ...p.startStimColor } : { r: 0, g: 255, b: 0 };
-    PlayerState.currentBgColor = p.startBgColor ? { ...p.startBgColor } : { r: 0, g: 0, b: 0 };
-    PlayerState.currentDuration = 2550;
-    PlayerState.currentSize = acuityToSizePx(
-        PlayerState.currentAcuity,
-        p.distanceMeters || 1,
-        PlayerState.screenPPI
-    );
-    updateCounters();
-    const tt = p.trainingType || 'single';
-    if (tt === 'reading') {
-        btnPlayerPause.disabled = true;
-        window.PlayerReadingMode.start(Object.assign({}, p, {
-            mode: 'flat',
-            text: p.text || '',
-            textColor: p.textColor,
-            acuity: PlayerState.currentAcuity,
-            distance: p.readingDistance || 1
-        }));
-    } else if (tt === 'compare') {
-        PlayerState.compareMode = p.compareMode || 'direction';
-        PlayerState.gridX = Math.max(2, Math.min(6, parseInt(p.gridX) || 3));
-        PlayerState.gridY = Math.max(1, Math.min(6, parseInt(p.gridY) || 3));
-        PlayerState.activeCells = (p.activeCells || []).slice();
-        PlayerState.cellParams = (p.cellParams || []).slice();
-        if (PlayerState.activeCells.length < 2)
-            PlayerState.activeCells = [
-                { row: 0, col: 0 },
-                { row: 0, col: 1 }
-            ];
-        while (PlayerState.cellParams.length < PlayerState.activeCells.length)
-            PlayerState.cellParams.push(defaultCellParams());
-        showNextCompareRound();
-    } else showNextStimulus();
+    return window.PlayerSession.startPlayer();
 }
 
 function showNextStimulus() {
@@ -1555,7 +1457,11 @@ function init() {
             startPlayer: startPlayer,
             checkRateLimit: checkRateLimit,
             showNextCompareRound: showNextCompareRound,
-            showNextStimulus: showNextStimulus
+            showNextStimulus: showNextStimulus,
+            validateScenario: validateScenario,
+            onError: function (msg) { _alert(msg); },
+            updateCounters: updateCounters,
+            defaultCellParams: defaultCellParams
         });
     }
 

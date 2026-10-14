@@ -18,7 +18,11 @@
         startPlayer: function () {},
         checkRateLimit: function () { return true; },
         showNextCompareRound: function () {},
-        showNextStimulus: function () {}
+        showNextStimulus: function () {},
+        validateScenario: function () { return true; },
+        onError: function (msg) { alert(msg); },
+        updateCounters: function () {},
+        defaultCellParams: function () { return { row: 0, col: 0, size: 1, duration: 1000 }; }
     };
 
     function setCallbacks(cb) {
@@ -202,8 +206,115 @@
         }, 200);
     }
 
+    // ==================== Запуск ====================
+    function startPlayer() {
+        var PS = _PS();
+        if (PS.playerRunning) {
+            VLog.warn('[player] уже запущен');
+            return;
+        }
+        if (global.PlayerOverlay && global.PlayerOverlay.hideStatus) global.PlayerOverlay.hideStatus();
+        if (!PS.userScenario) {
+            _callbacks.onError('Сценарий не назначен');
+            return;
+        }
+        if (!_callbacks.validateScenario(PS.userScenario)) {
+            _callbacks.onError('Сценарий повреждён или содержит некорректные данные.');
+            return;
+        }
+        PS.sessionId =
+            global.crypto && typeof global.crypto.randomUUID === 'function'
+                ? global.crypto.randomUUID()
+                : 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+        var p = (PS.userScenario.params) || {};
+        PS.playerRunning = true;
+        global._fastLeanAt = 0;
+        global._deviationHistory = [];
+        global._distEMA = null;
+        global._reactionLog = [];
+        global._baselineWaitStart = null;
+        if (!PS.focalLengthPx || PS.focalLengthPx <= 0) {
+            var _lsF2 = parseFloat(localStorage.getItem('focalLengthPx') || '0');
+            if (_lsF2 > 0) PS.focalLengthPx = _lsF2;
+        }
+        PS.graphActive = false;
+        PS.gNodes = [];
+        PS.gConnections = [];
+        PS.gQueue = [];
+        PS.gIndex = 0;
+        PS.gCurrentNodeId = null;
+        PS.gCurrentCompareNode = null;
+        global._invalidAnswerCount = 0;
+        if (global._reactionTimes) global._reactionTimes = [];
+        VLog.log('[graph] state reset');
+        PS.isPaused = false;
+        PS.completedSeries = PS.successfulSeries = PS.failedSeries = 0;
+        PS.seriesCorrect = PS.seriesIncorrect = PS.seriesNoAnswer = 0;
+        PS.seriesStep = 0;
+        PS.noAnswerSeriesStreak = 0;
+        PS.lastDirection = null;
+        PS.currentSingleCell = { row: 0, col: 0 };
+        PS.screenPPI = p.ppi || PS.screenPPI || 96;
+        if (p.minDetectPct && !isNaN(p.minDetectPct)) PS._minDetectPct = parseFloat(p.minDetectPct);
+        var bplay = _el('btn-player');
+        if (bplay) bplay.disabled = true;
+        var counters = document.querySelector('.counters');
+        if (counters) counters.style.setProperty('display', 'none');
+        var bstop = _el('btn-player-stop');
+        if (bstop) bstop.disabled = false;
+        var bpause = _el('btn-player-pause');
+        if (bpause) bpause.disabled = false;
+        if (global.Voice) global.Voice.sayKey('ready', { cancel: true });
+
+        if (p.graph && Array.isArray(p.graph.nodes) && p.graph.nodes.length > 0) {
+            _callbacks.updateCounters();
+            global.PlayerGraph.startGraphPlay(p.graph.nodes, p.graph.connections || [], p.graph.books || {});
+            return;
+        }
+
+        if (p.trainingType !== 'reading')
+            PS.currentAcuity = Math.max(0.1, Math.min(1.0, p.startAcuity || 0.5));
+        else PS.currentAcuity = 1.0;
+        PS.currentStimColor = p.startStimColor ? Object.assign({}, p.startStimColor) : { r: 0, g: 255, b: 0 };
+        PS.currentBgColor = p.startBgColor ? Object.assign({}, p.startBgColor) : { r: 0, g: 0, b: 0 };
+        PS.currentDuration = 2550;
+        var acuityToSizePx = (global.VissortCore && global.VissortCore.acuityToSizePx) || function () { return 16; };
+        PS.currentSize = acuityToSizePx(
+            PS.currentAcuity,
+            p.distanceMeters || 1,
+            PS.screenPPI
+        );
+        _callbacks.updateCounters();
+        var tt = p.trainingType || 'single';
+        if (tt === 'reading') {
+            if (bpause) bpause.disabled = true;
+            global.PlayerReadingMode.start(Object.assign({}, p, {
+                mode: 'flat',
+                text: p.text || '',
+                textColor: p.textColor,
+                acuity: PS.currentAcuity,
+                distance: p.readingDistance || 1
+            }));
+        } else if (tt === 'compare') {
+            PS.compareMode = p.compareMode || 'direction';
+            PS.gridX = Math.max(2, Math.min(6, parseInt(p.gridX) || 3));
+            PS.gridY = Math.max(1, Math.min(6, parseInt(p.gridY) || 3));
+            PS.activeCells = (p.activeCells || []).slice();
+            PS.cellParams = (p.cellParams || []).slice();
+            if (PS.activeCells.length < 2)
+                PS.activeCells = [
+                    { row: 0, col: 0 },
+                    { row: 0, col: 1 }
+                ];
+            while (PS.cellParams.length < PS.activeCells.length)
+                PS.cellParams.push(_callbacks.defaultCellParams());
+            _callbacks.showNextCompareRound();
+        } else _callbacks.showNextStimulus();
+    }
+
     global.PlayerSession = {
         setCallbacks: setCallbacks,
+        startPlayer: startPlayer,
         pauseTraining: pauseTraining,
         resumeTraining: resumeTraining,
         togglePause: togglePause,
