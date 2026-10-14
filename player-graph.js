@@ -16,7 +16,13 @@
         playGraphStimulus: function () {},
         playGraphCompare: function () {},
         playGraphReading: function () {},
-        pauseTraining: function () {}
+        pauseTraining: function () {},
+        defaultCellParams: function () { return { row: 0, col: 0, size: 1, duration: 1000 }; },
+        removeSingleGridLines: function () {},
+        showDirectionComparison: function () {},
+        showFindSameComparison: function () {},
+        finishGraphCompareSeries: function () {},
+        saveResult: function () {}
     };
 
     function setCallbacks(cb) {
@@ -224,6 +230,85 @@
         );
     }
 
+    // ==================== Сравнение ====================
+    function playGraphCompare(node) {
+        var PS = _PS();
+        if (!PS.playerRunning || PS.isPaused) return;
+        PS.gCurrentCompareNode = node;
+        PS.gCurrentNodeId = node.id;
+        PS.completedSeries = PS.successfulSeries = PS.failedSeries = 0;
+        PS.seriesCorrect = PS.seriesIncorrect = PS.seriesNoAnswer = 0;
+        PS.seriesStep = 0;
+        PS.noAnswerSeriesStreak = 0;
+        PS.compareMode = node.compareMode || 'direction';
+        PS.gridX = Math.max(2, Math.min(6, parseInt(node.gridX) || 3));
+        PS.gridY = Math.max(1, Math.min(6, parseInt(node.gridY) || 3));
+        PS.activeCells = (node.activeCells || []).slice();
+        PS.cellParams = (node.cellParams || []).slice();
+        if (PS.activeCells.length < 2)
+            PS.activeCells = [
+                { row: 0, col: 0 },
+                { row: 0, col: 1 }
+            ];
+        while (PS.cellParams.length < PS.activeCells.length)
+            PS.cellParams.push(_callbacks.defaultCellParams());
+        _callbacks.updateCounters();
+        _callbacks.hideStimulus();
+        var rb = _el('response-buttons');
+        if (rb) rb.style.display = 'none';
+        PS.phaseTimers.push(
+            setTimeout(
+                function () {
+                    if (PS.playerRunning && !PS.isPaused) playGraphCompareRound(node);
+                },
+                node.delay1 != null ? node.delay1 : 0
+            )
+        );
+    }
+
+    function playGraphCompareRound(node) {
+        var PS = _PS();
+        if (!PS.playerRunning || PS.isPaused) return;
+        if (PS._waitingStable) {
+            setTimeout(function () { playGraphCompareRound(node); }, 500);
+            return;
+        }
+        if (PS.seriesStep >= (node.seriesSize || 6)) {
+            _callbacks.finishGraphCompareSeries(node);
+            return;
+        }
+        _callbacks.removeSingleGridLines();
+        var sd = _el('stim');
+        if (sd) sd.innerHTML = '';
+        var sa = _el('stim-area');
+        if (sa) sa.style.background = '#000';
+        if (PS.compareMode === 'direction') _callbacks.showDirectionComparison();
+        else if (PS.compareMode === 'find_same') _callbacks.showFindSameComparison();
+        var dur = (PS.cellParams[0] && PS.cellParams[0].duration) || node.duration || PS.currentDuration;
+        PS.currentShowTimer = setTimeout(function () {
+            if (PS.responsePhaseActive) {
+                PS.lastResponse = { answered: false, isCorrect: false };
+                PS.seriesNoAnswer++;
+                _callbacks.updateCounters();
+                _callbacks.saveResult(PS.gCurrentNodeId || 'graph_compare', null, false);
+                var _n31 = gGetNode(PS.gCurrentNodeId);
+                if (_n31) {
+                    if (PS.seriesStep >= (_n31.seriesSize || 6)) {
+                        _callbacks.finishGraphCompareSeries(_n31);
+                    } else {
+                        PS.phaseTimers.push(
+                            setTimeout(function () {
+                                if (PS.playerRunning && !PS.isPaused)
+                                    playGraphCompareRound(_n31);
+                            }, _n31.delay2 || 1000)
+                        );
+                    }
+                }
+            }
+        }, dur);
+        PS.phaseTimers.push(PS.currentShowTimer);
+    }
+
     global.PlayerGraph = {
         setCallbacks: setCallbacks,
         gGetNode: gGetNode,
@@ -231,7 +316,9 @@
         startGraphPlay: startGraphPlay,
         playNextGraphNode: playNextGraphNode,
         recalcStimulusSize: recalcStimulusSize,
-        finishGraphStimulusSeries: finishGraphStimulusSeries
+        finishGraphStimulusSeries: finishGraphStimulusSeries,
+        playGraphCompare: playGraphCompare,
+        playGraphCompareRound: playGraphCompareRound
     };
 
     VLog.log('[player-graph] module installed');

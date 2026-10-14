@@ -713,81 +713,12 @@ function handleGraphDirectionAnswer(dir) {
 }
 
 function playGraphCompare(node) {
-    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    PlayerState.gCurrentCompareNode = node;
-    PlayerState.gCurrentNodeId = node.id;
-    PlayerState.completedSeries = PlayerState.successfulSeries = PlayerState.failedSeries = 0;
-    PlayerState.seriesCorrect = PlayerState.seriesIncorrect = PlayerState.seriesNoAnswer = 0;
-    PlayerState.seriesStep = 0;
-    PlayerState.noAnswerSeriesStreak = 0;
-    PlayerState.compareMode = node.compareMode || 'direction';
-    PlayerState.gridX = Math.max(2, Math.min(6, parseInt(node.gridX) || 3));
-    PlayerState.gridY = Math.max(1, Math.min(6, parseInt(node.gridY) || 3));
-    PlayerState.activeCells = (node.activeCells || []).slice();
-    PlayerState.cellParams = (node.cellParams || []).slice();
-    if (PlayerState.activeCells.length < 2)
-        PlayerState.activeCells = [
-            { row: 0, col: 0 },
-            { row: 0, col: 1 }
-        ];
-    while (PlayerState.cellParams.length < PlayerState.activeCells.length)
-        PlayerState.cellParams.push(defaultCellParams());
-    updateCounters();
-    hideStimulus();
-    responseButtons.style.display = 'none';
-    PlayerState.phaseTimers.push(
-        setTimeout(
-            () => {
-                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
-            },
-            node.delay1 != null ? node.delay1 : 0
-        )
-    );
+    return window.PlayerGraph.playGraphCompare(node);
 }
 
 function playGraphCompareRound(node) {
-    if (!PlayerState.playerRunning || PlayerState.isPaused) return;
-    if (PlayerState._waitingStable) {
-        setTimeout(function () {
-            playGraphCompareRound(node);
-        }, 500);
-        return;
-    } // отмена при отклонении
-    if (PlayerState.seriesStep >= (node.seriesSize || 6)) {
-        finishGraphCompareSeries(node);
-        return;
-    }
-    removeSingleGridLines();
-    stimDisplay.innerHTML = '';
-    stimArea.style.background = '#000';
-    if (PlayerState.compareMode === 'direction') showDirectionComparison();
-    else if (PlayerState.compareMode === 'find_same') showFindSameComparison();
-    const dur = PlayerState.cellParams[0]?.duration || node.duration || PlayerState.currentDuration;
-    PlayerState.currentShowTimer = setTimeout(() => {
-        if (PlayerState.responsePhaseActive) {
-            PlayerState.lastResponse = { answered: false, isCorrect: false };
-            // Таймаут → seriesNoAnswer, не seriesIncorrect
-            PlayerState.seriesNoAnswer++;
-            updateCounters();
-            saveResult(PlayerState.gCurrentNodeId || 'graph_compare', null, false);
-            const _n31 = gGetNode(PlayerState.gCurrentNodeId);
-            if (_n31) {
-                if (PlayerState.seriesStep >= (_n31.seriesSize || 6)) {
-                    finishGraphCompareSeries(_n31);
-                } else {
-                    PlayerState.phaseTimers.push(
-                        setTimeout(() => {
-                            if (PlayerState.playerRunning && !PlayerState.isPaused)
-                                playGraphCompareRound(_n31);
-                        }, _n31.delay2 || 1000)
-                    );
-                }
-            }
-        }
-    }, dur);
-    PlayerState.phaseTimers.push(PlayerState.currentShowTimer);
+    return window.PlayerGraph.playGraphCompareRound(node);
 }
-
 function handleGraphCompareAnswer(answer) {
     if (!PlayerState.responsePhaseActive) return;
     if (PlayerState._answerBlocked) return; // Блокировка ответов при заморозке
@@ -2094,7 +2025,13 @@ function init() {
             playGraphStimulus: playGraphStimulus,
             playGraphCompare: playGraphCompare,
             playGraphReading: playGraphReading,
-            pauseTraining: pauseTraining
+            pauseTraining: pauseTraining,
+            defaultCellParams: defaultCellParams,
+            removeSingleGridLines: removeSingleGridLines,
+            showDirectionComparison: showDirectionComparison,
+            showFindSameComparison: showFindSameComparison,
+            finishGraphCompareSeries: finishGraphCompareSeries,
+            saveResult: saveResult
         });
     }
 
