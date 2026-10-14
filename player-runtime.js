@@ -2598,7 +2598,24 @@ function init() {
     }
 
     loadSivtsevFont();
-    initSupabase();
+    // Аутентификация — §15.1.2 ч.4/7 (PlayerAuth)
+    if (window.PlayerAuth && typeof window.PlayerAuth.init === 'function') {
+        window.PlayerAuth.init({
+            onLoggedIn: onLoggedIn,
+            onTestMode: function () { onLoggedIn(); },
+            onSignOut: function () {
+                var _hu = $('hdr-user');
+                if (_hu) _hu.textContent = '—';
+                var _hs = $('hdr-scenario');
+                if (_hs) _hs.textContent = '—';
+                var _bp = $('btn-player');
+                if (_bp) _bp.disabled = true;
+            },
+            onError: function (msg) { _alert(msg); }
+        });
+    } else {
+        initSupabase(); // fallback: если PlayerAuth не загружен
+    }
 }
 async function loadSivtsevFont() {
     const FONT_URL = 'https://cdn.jsdelivr.net/gh/shoorick/sivtsev-font@master/Sivtsev-Eye-Chart.otf';
