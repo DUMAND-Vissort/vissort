@@ -388,18 +388,6 @@ function hideStimulus() {
     stimArea.style.backgroundColor = '';
 }
 
-function _faceEmoji(rate, hasFaceNow) {
-    return window.PlayerCamera._faceEmoji(rate, hasFaceNow);
-}
-function _pushDetection(found) {
-    return window.PlayerCamera._pushDetection(found);
-}
-function _detectRatePct() {
-    return window.PlayerCamera._detectRatePct();
-}
-function _updateDetectUI() {
-    return window.PlayerCamera._updateDetectUI();
-}
 function _checkHardLimit() {
     return window.PlayerCamera._checkHardLimit();
 }
