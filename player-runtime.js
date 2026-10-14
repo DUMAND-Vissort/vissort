@@ -223,191 +223,6 @@ function hideStatus() {
     return window.PlayerOverlay.hideStatus();
 }
 
-function initSupabase() {
-    // Test mode: bypass auth
-    if (location.search.indexOf('test=1') !== -1) {
-        var _raw = null;
-        try {
-            _raw = localStorage.getItem('vissort_test_scenario');
-        } catch (e) {}
-        if (_raw) {
-            try {
-                var _td = JSON.parse(_raw);
-                PlayerState.supabaseClient = null;
-                PlayerState.currentUser = null;
-                PlayerState.sessionId = 'test_' + Date.now();
-                PlayerState.userScenario = {
-                    id: '__test__',
-                    name: '🧪 Тестовый сценарий',
-                    params: _td,
-                    trainingType: _td.trainingType || 'single'
-                };
-                PlayerState.userScenarios = [PlayerState.userScenario];
-                authModal.classList.remove('open');
-                hdrUser.textContent = '🧪';
-                hdrScenario.textContent = PlayerState.userScenario.name;
-                applyScenarioDefaults();
-                updateCounters();
-                hideStatus();
-                btnPlayer.disabled = false;
-                VLog.log('[test] no-login mode');
-                setTimeout(function () {
-                    try {
-                        enableCamera();
-                    } catch (e) {}
-                }, 100);
-                return;
-            } catch (e) {
-                VLog.warn('[test] no-login failed:', e);
-            }
-        }
-    }
-    PlayerState.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    var _onLoggedInFired = false;
-    function _safeOnLoggedIn() {
-        if (_onLoggedInFired) return;
-        _onLoggedInFired = true;
-        onLoggedIn();
-    }
-    PlayerState.supabaseClient.auth.getSession().then(({ data }) => {
-        PlayerState.currentUser = data?.session?.user || null;
-        if (PlayerState.currentUser) _safeOnLoggedIn();
-        else promptLogin();
-    });
-    // Обработка SIGNED_IN и INITIAL_SESSION
-    PlayerState.supabaseClient.auth.onAuthStateChange((event, session) => {
-        PlayerState.currentUser = session?.user || null;
-        if (event === 'SIGNED_OUT') {
-            _onLoggedInFired = false;
-            promptLogin();
-            return;
-        }
-        if (
-            (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') &&
-            PlayerState.currentUser
-        ) {
-            _safeOnLoggedIn();
-        }
-    });
-    // Fallback: если getSession сработал слишком рано, повторить через 1.5с
-    setTimeout(async () => {
-        if (_onLoggedInFired) return;
-        try {
-            const { data } = await PlayerState.supabaseClient.auth.getSession();
-            if (data?.session?.user) {
-                PlayerState.currentUser = data.session.user;
-                VLog.log('[auth] fallback: сессия найдена, вызов onLoggedIn');
-                _safeOnLoggedIn();
-            }
-        } catch (e) {}
-    }, 1500);
-}
-function promptLogin() {
-    hideStatus();
-    PlayerState.authMode = 'signin';
-    updateAuthModal();
-    authModal.classList.add('open');
-    hdrUser.textContent = '—';
-    hdrScenario.textContent = '—';
-    btnPlayer.disabled = true;
-}
-function updateAuthModal() {
-    const t = $('auth-title'),
-        tb = $('auth-toggle'),
-        sb = $('auth-submit');
-    if (PlayerState.authMode === 'signin') {
-        t.textContent = 'Вход';
-        tb.textContent = 'Регистрация';
-        sb.textContent = 'Войти';
-    } else {
-        t.textContent = 'Регистрация';
-        tb.textContent = 'Уже есть аккаунт';
-        sb.textContent = 'Зарегистрироваться';
-    }
-}
-const LS_LAST_EMAIL = 'vissort_last_email';
-
-function encodeCred(s) {
-    try {
-        return btoa(unescape(encodeURIComponent(s)));
-    } catch (_) {
-        return '';
-    }
-}
-function decodeCred(s) {
-    try {
-        return decodeURIComponent(escape(atob(s)));
-    } catch (_) {
-        return '';
-    }
-}
-function saveAuthCreds(email, password) {
-    try {
-        localStorage.setItem(LS_LAST_EMAIL, email);
-        localStorage.setItem('vissort_last_pass', encodeCred(password));
-    } catch (_) {}
-}
-function prefillAuthEmail() {
-    try {
-        const saved = localStorage.getItem(LS_LAST_EMAIL);
-        const el = $('auth-email');
-        if (saved && el && !el.value) el.value = saved;
-        const savedPass = localStorage.getItem('vissort_last_pass');
-        const pel = $('auth-password');
-        if (savedPass && pel && !pel.value) pel.value = decodeCred(savedPass);
-    } catch (_) {}
-}
-
-function focusAuthField() {
-    const emailEl = $('auth-email');
-    const passEl = $('auth-password');
-    if (!emailEl || !passEl) return;
-    setTimeout(() => {
-        try {
-            if (emailEl.value) {
-                passEl.focus();
-                passEl.select();
-            } else {
-                emailEl.focus();
-                emailEl.select();
-            }
-        } catch (_) {}
-    }, 150);
-}
-
-function bindAuthForm() {
-    const form = $('auth-form');
-    if (!form || form._authBound) return;
-    form._authBound = true;
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        doAuth();
-    });
-}
-
-async function doAuth() {
-    const email = $('auth-email').value.trim();
-    const password = $('auth-password').value;
-    if (!email || !password) {
-        _alert('Введите email и пароль');
-        return;
-    }
-    saveAuthCreds(email, password);
-    if (PlayerState.authMode === 'signin') {
-        const { error } = await PlayerState.supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) {
-            _alert('Ошибка: ' + error.message);
-            return;
-        }
-    } else {
-        const { error } = await PlayerState.supabaseClient.auth.signUp({ email, password });
-        if (error) {
-            _alert('Ошибка: ' + error.message);
-            return;
-        }
-    }
-    authModal.classList.remove('open');
-}
 async function onLoggedIn() {
     authModal.classList.remove('open');
     hdrUser.textContent = PlayerState.currentUser.email || '—';
@@ -2508,7 +2323,7 @@ function init() {
         hdrUser.textContent = '—';
         hdrScenario.textContent = '—';
         btnPlayer.disabled = true;
-        promptLogin();
+        window.PlayerAuth.promptLogin();
     });
 
     if (!btnPlayer.__playerBound) {
@@ -2602,8 +2417,6 @@ function init() {
             },
             onError: function (msg) { _alert(msg); }
         });
-    } else {
-        initSupabase(); // fallback: если PlayerAuth не загружен
     }
 }
 async function loadSivtsevFont() {
