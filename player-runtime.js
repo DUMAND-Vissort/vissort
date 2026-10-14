@@ -843,36 +843,7 @@ function processGraphCompareAnswer(isCorrect) {
 }
 
 function finishGraphCompareSeries(node) {
-    if (!node) {
-        PlayerState.gIndex++;
-        playNextGraphNode();
-        return;
-    }
-    const th = node.seriesThreshold || getThreshold(node.seriesSize || 6);
-    const ok = PlayerState.seriesCorrect >= th;
-    PlayerState.completedSeries++;
-    if (ok) PlayerState.successfulSeries++;
-    else PlayerState.failedSeries++;
-    PlayerState.seriesCorrect =
-        PlayerState.seriesIncorrect =
-        PlayerState.seriesNoAnswer =
-        PlayerState.seriesStep =
-            0;
-    updateCounters();
-    if (PlayerState.completedSeries >= (node.seriesCount || 5)) {
-        PlayerState.gCurrentCompareNode = null;
-        PlayerState.gIndex++;
-        playNextGraphNode();
-        return;
-    }
-    PlayerState.phaseTimers.push(
-        setTimeout(
-            () => {
-                if (PlayerState.playerRunning && !PlayerState.isPaused) playGraphCompareRound(node);
-            },
-            node.delay2 != null ? node.delay2 : 500
-        )
-    );
+    return window.PlayerGraph.finishGraphCompareSeries(node);
 }
 
 function playGraphReading(node) {
@@ -2031,7 +2002,12 @@ function init() {
             showDirectionComparison: showDirectionComparison,
             showFindSameComparison: showFindSameComparison,
             finishGraphCompareSeries: finishGraphCompareSeries,
-            saveResult: saveResult
+            saveResult: saveResult,
+            stopSingleStimAnimation: stopSingleStimAnimation,
+            stopSingleBgAnimation: stopSingleBgAnimation,
+            stopCircleAnimation: stopCircleAnimation,
+            stopPeripheralAnimation: stopPeripheralAnimation,
+            stopBlinkAnimation: stopBlinkAnimation
         });
     }
 
