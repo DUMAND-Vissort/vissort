@@ -206,9 +206,6 @@ const cntAcuity = $('cnt-acuity');
 const cntCorrect = $('cnt-correct');
 const cntIncorrect = $('cnt-incorrect');
 const cntNoAnswer = $('cnt-noanswer');
-const readingViewportEl = $('reading-viewport');
-const readingContentEl = $('reading-content');
-const readingToolbarEl = $('reading-toolbar');
 const camIndicator = $('cam-indicator');
 
 function _effectiveDistance(declared) {
@@ -2577,7 +2574,7 @@ function init() {
     $('reading-not-see').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.max(0.1, Math.round((PlayerState.currentAcuity - 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize =
+        $('reading-content').style.fontSize =
             acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
@@ -2587,7 +2584,7 @@ function init() {
     $('reading-see-well').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.min(2.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
-        readingContentEl.style.fontSize =
+        $('reading-content').style.fontSize =
             acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';
         setTimeout(() => {
             PlayerState.readingTotalPages = calcReadingTotalPages();
