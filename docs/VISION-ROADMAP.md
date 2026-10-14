@@ -382,3 +382,142 @@
 
 *Составлено: 2026-10-12.*
 *Источник: обсуждение развития Vissort.*
+
+
+---
+
+## §11. План разбиения монолитов (Фаза 5 / Этапы 3–5)
+
+### §11.1. `player-runtime.js` → 7 модулей
+
+**Было: 3000 строк в одном файле.**
+**Станет: 7 модулей + «дирижёр» (~900 строк).**
+
+| # | Модуль | Что выносим | Строк |
+|---|---|---|---|
+| 1 | `player-installers.js` | `installCamPreview`, `installCamHud`, `installFaceLostPause` | ~400 |
+| 2 | `player-auth.js` | Auth-логика | ~300 |
+| 3 | `player-scenarios.js` | Загрузка сценариев | ~250 |
+| 4 | `player-answer-handlers.js` | `handleDirectionAnswer`, `handleCompareAnswer` | ~600 |
+| 5 | `player-graph.js` | `playNextGraphNode`, `playGraphStimulus`, `playGraphReading`, `playGraphCompare` | ~600 |
+| 6 | `player-reading-mode.js` | Viewport, toolbar, page-info | ~300 |
+| 7 | `player-overlay.js` | `status-overlay`, `pause-modal` | ~200 |
+
+**Остаток в `player-runtime.js`:** ~900 строк — «дирижёр» (`init`, callbacks, `startPlayer`, `stopPlayer`).
+
+### §11.2. `app.js` → 10 модулей
+
+**Было: 7900 строк в одном файле.**
+**Станет: 10 модулей + «ядро» (~2500 строк).**
+
+| # | Модуль | Что выносим | Строк |
+|---|---|---|---|
+| 1 | `app-auth.js` | Auth | ~300 |
+| 2 | `app-generator.js` | Модалка AI-генератора | ~500 |
+| 3 | `app-inspector.js` | 4 инспектора | ~800 |
+| 4 | `app-editor-graph.js` | Граф, drag, связи | ~1000 |
+| 5 | `app-player.js` | Плеер для тестов | ~1200 |
+| 6 | `app-init.js` | Главный init | ~400 |
+| 7 | `app-blocks.js` | Блоки | ~300 |
+| 8 | `app-reading.js` | Книги, закладки | ~400 |
+| 9 | `app-fs.js` | File System Access | ~300 |
+| 10 | `app-sync-ui.js` | Sync UI | ~200 |
+
+**Остаток в `app.js`:** ~2500 строк — константы, утилиты, вспомогательное.
+
+### §11.3. Переработка при выносе (не только перенос)
+
+**Ключевое:** при выносе — улучшаем, а не просто копируем.
+
+#### §11.3.1. Единый `vissort-auth.js`
+
+Было: `player-auth.js` (дублирует) + `app-auth.js` (дублирует) — ~200 строк дублирования.
+Станет: `vissort-auth.js` — единый модуль для всех HTML. Минус 200 строк.
+
+#### §11.3.2. Единый `player-answer.js`
+
+Было: `handleDirectionAnswer`, `handleCompareAnswer`, `handleFindSameClick`, `processComparisonAnswer` — 5+ параллельных.
+Станет: `PlayerAnswer.handle(type, data)` — единый интерфейс.
+
+#### §11.3.3. Единый `player-graph.js`
+
+Было: `playNextGraphNode`, `playGraphStimulus`, `playGraphReading`, `playGraphCompare` — разбросаны.
+Станет: `PlayerGraph.play()`, `.next()`, `.stop()`, `.getNode(id)` — публичный API.
+
+#### §11.3.4. Единый `player-reading.js`
+
+Было: `player-reading.js` (фон) + `player-runtime.js` (viewport, toolbar).
+Станет: `PlayerReading` — фон + viewport + toolbar.
+
+#### §11.3.5. Единый `player-overlay.js`
+
+Было: `status-overlay` + `pause-modal` в `player-runtime.js`.
+Станет: `PlayerOverlay.showStatus()`, `.showPause()`, `.hideStatus()`, `.hidePause()`.
+
+### §11.4. Порядок выноса (по возрастанию сложности)
+
+**Для `player-runtime.js`:**
+
+1. `player-installers.js` — изолирован.
+2. `player-overlay.js` — изолирован.
+3. `player-reading-mode.js` — изолирован.
+4. `player-auth.js` — изолирован.
+5. `player-scenarios.js` — изолирован.
+6. `player-graph.js` — крупный.
+7. `player-answer-handlers.js` — крупный.
+
+**Для `app.js`:**
+
+1. `app-auth.js`.
+2. `app-generator.js`.
+3. `app-sync-ui.js`.
+4. `app-fs.js`.
+5. `app-blocks.js`.
+6. `app-reading.js`.
+7. `app-inspector.js`.
+8. `app-editor-graph.js`.
+9. `app-player.js`.
+10. `app-init.js`.
+
+### §11.5. Устранение дублирования (Этап 5)
+
+| # | Что объединить | Куда |
+|---|---|---|
+| 1 | Auth (`app-auth.js` + `player-auth.js`) | `vissort-auth.js` |
+| 2 | Плеер (`app-player.js` + `player-runtime.js`) | `player-runtime.js` |
+| 3 | Анимации (`app.js` + `player-animation.js`) | `player-animation.js` |
+| 4 | Камера (`app.js` + `player-camera.js`) | `player-camera.js` |
+| 5 | Чтение (`app-reading.js` + `player-reading.js`) | `player-reading.js` |
+
+Эффект: минус ~3000 строк.
+
+### §11.6. Что НЕ выносим
+
+Чтобы не усложнять:
+
+- `player-runtime.js`: `init`, callbacks, `startPlayer`, `stopPlayer` — «дирижёр».
+- `app.js`: константы, утилиты.
+
+Причина: «дирижёр» должен быть видимым — точка сборки.
+
+### §11.7. Сроки
+
+| Этап | Что | Время |
+|---|---|---|
+| §11.1 | `player-runtime.js` → 7 модулей | 1 день |
+| §11.2 | `app.js` → 10 модулей | 1–2 дня |
+| §11.5 | Устранение дублирования | 2–3 дня |
+| **Итого** | Фаза 5 полностью | ~5 дней |
+
+### §11.8. Что это даёт
+
+- `player-runtime.js`: 3000 → 900 строк.
+- `app.js`: 7900 → 2500 строк.
+- Дублирование: −3000 строк.
+- Один источник правды для auth, камеры, анимаций.
+- Лёгкое добавление функционала — новый модуль, не правка монолита.
+- Лёгкая передача партнёру — понятная структура.
+
+---
+
+*Обновлено: 2026-10-13 — раздел §11 «План разбиения монолитов».*
