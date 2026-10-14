@@ -2606,7 +2606,17 @@ function init() {
         if (PlayerState.graphActive && PlayerState.gCurrentNodeId) {
             const n = gGetNode(PlayerState.gCurrentNodeId);
             finishGraphReading(n);
-        } else finishReading();
+        } else {
+            window.PlayerReadingMode.finish();
+            PlayerState.completedSeries++;
+            PlayerState.successfulSeries++;
+            updateCounters();
+            stopPlayer();
+            showStatus('Чтение завершено', 'Тренировка окончена.', 'Ещё раз', () => {
+                hideStatus();
+                startPlayer();
+            });
+        }
     });
     $('reading-not-see').addEventListener('click', () => {
         PlayerState.currentAcuity = Math.max(0.1, Math.round((PlayerState.currentAcuity - 0.1) * 10) / 10);
