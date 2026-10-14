@@ -2324,105 +2324,17 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ==================== ЧТЕНИЕ (плоский режим) ====================
-function startReading() {
-    const p = PlayerState.userScenario?.params || {};
-    const text = p.text || '';
-    const pars = text
-        .split(/\n+/)
-        .map((x) => x.trim())
-        .filter((x) => x.length > 0);
-    readingContentEl.innerHTML = pars.map((x) => `<p>${escapeHtml(x)}</p>`).join('');
-    readingContentEl.style.color = p.textColor
-        ? `rgb(${p.textColor.r},${p.textColor.g},${p.textColor.b})`
-        : '#000';
-    applyReadingBackground(p);
-    stimDisplay.style.display = 'none';
-    responseButtons.style.display = 'none';
-    readingViewportEl.style.display = 'block';
-    readingViewportEl.scrollLeft = 0;
-    PlayerState.readingPaused = false;
-    const pp = $('reading-play-pause');
-    if (pp) pp.textContent = '⏸ Пауза';
-    readingContentEl.style.opacity = '1';
-    applyReadingFont(p);
-    setupReadingColumns();
-    const dCalc = _effectiveDistance(p.readingDistance || 1); // Приоритет измеренной дистанции;
-    readingContentEl.style.fontSize =
-        acuityToFontSizePx(PlayerState.currentAcuity, dCalc, PlayerState.screenPPI) + 'px';
-    setTimeout(() => {
-        PlayerState.readingTotalPages = calcReadingTotalPages();
-        PlayerState.readingPage = 0;
-        scrollReadingToPage(0);
-    }, 80);
-    readingToolbarEl.style.display = 'flex';
-}
-function applyReadingFont(p) {
-    const family = (p.readingFontFamily && p.readingFontFamily.trim()) || 'Segoe UI';
-    const safe = family.replace(/['"]/g, '');
-    readingContentEl.style.fontFamily =
-        safe.toLowerCase() === 'sivtsev'
-            ? `'Sivtsev', 'Segoe UI', sans-serif`
-            : `'${safe}', 'Segoe UI', Tahoma, sans-serif`;
-    readingContentEl.style.fontWeight = p.readingFontWeight || 'normal';
-}
-function setupReadingColumns() {
-    const vw = readingViewportEl.clientWidth;
-    if (vw <= 0) return;
-    const sp = 80,
-        tw = Math.max(200, vw - sp);
-    readingContentEl.style.columnWidth = tw + 'px';
-    readingContentEl.style.columnGap = sp + 'px';
-}
-function calcReadingTotalPages() {
-    const W = readingViewportEl.clientWidth;
-    if (W <= 0) return 1;
-    return Math.max(1, Math.round(readingContentEl.scrollWidth / W));
-}
-function scrollReadingToPage(page) {
-    PlayerState.readingTotalPages = calcReadingTotalPages();
-    PlayerState.readingPage = Math.max(0, Math.min(page, PlayerState.readingTotalPages - 1));
-    readingViewportEl.scrollLeft = PlayerState.readingPage * readingViewportEl.clientWidth;
-    const info = $('reading-page-info');
-    if (info) info.textContent = `Стр. ${PlayerState.readingPage + 1} / ${PlayerState.readingTotalPages}`;
-}
-function prevReadingPage() {
-    if (PlayerState.readingPage > 0) scrollReadingToPage(PlayerState.readingPage - 1);
-}
-function nextReadingPage() {
-    if (PlayerState.readingPage < PlayerState.readingTotalPages - 1)
-        scrollReadingToPage(PlayerState.readingPage + 1);
-}
-function toggleReadingPause() {
-    PlayerState.readingPaused = !PlayerState.readingPaused;
-    const b = $('reading-play-pause');
-    if (PlayerState.readingPaused) {
-        readingContentEl.style.opacity = '0';
-        if (b) b.textContent = '▶ Чтение';
-    } else {
-        readingContentEl.style.opacity = '1';
-        if (b) b.textContent = '⏸ Пауза';
-    }
-}
-function applyReadingBackground(p) {
-    window.PlayerReading.applyBackground(p, readingViewportEl);
-}
-function startReadingDynamicBg(p) {
-    window.PlayerReading.startDynamicBg(p, readingViewportEl, () => PlayerState.readingPaused);
-}
-function stopReadingDynamicBg() {
-    window.PlayerReading.stopDynamicBg();
-}
-function finishReading() {
-    PlayerState.completedSeries++;
-    PlayerState.successfulSeries++;
-    updateCounters();
-    stopPlayer();
-    showStatus('Чтение завершено', 'Тренировка окончена.', 'Ещё раз', () => {
-        hideStatus();
-        startPlayer();
-    });
-}
+// ==================== ЧТЕНИЕ (обёртки над PlayerReadingMode) ====================
+function applyReadingFont(p) { return window.PlayerReadingMode.applyReadingFont(p); }
+function setupReadingColumns() { return window.PlayerReadingMode.setupReadingColumns(); }
+function calcReadingTotalPages() { return window.PlayerReadingMode.calcReadingTotalPages(); }
+function scrollReadingToPage(page) { return window.PlayerReadingMode.scrollReadingToPage(page); }
+function prevReadingPage() { return window.PlayerReadingMode.prevReadingPage(); }
+function nextReadingPage() { return window.PlayerReadingMode.nextReadingPage(); }
+function toggleReadingPause() { return window.PlayerReadingMode.toggleReadingPause(); }
+function applyReadingBackground(p) { return window.PlayerReadingMode.applyReadingBackground(p); }
+function startReadingDynamicBg(p) { return window.PlayerReadingMode.startReadingDynamicBg(p); }
+function stopReadingDynamicBg() { return window.PlayerReadingMode.stopReadingDynamicBg(); }
 
 // ==================== ФИНАЛ / ПАУЗА ====================
 function showFinishedReport() {
