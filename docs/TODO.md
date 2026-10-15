@@ -161,7 +161,7 @@
 
 ### Что осталось
 
-- §13.3.3 — 68 alert/confirm/prompt в app.js → VissortDialog (~2 ч)
+- §13.3.3 ✅ закрыто (2026-10-15): нативных alert/confirm/prompt в app.js нет (все через VissortDialog); в остальных файлах — только fallback'и под `if (VissortDialog)`
 - Фаза 5: разбить app.js (7900 строк), устранить дублирование app.js ↔ player-single.js
 
 ---

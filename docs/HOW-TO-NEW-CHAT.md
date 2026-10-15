@@ -162,7 +162,7 @@
     player-graph (803), player-session (328), player-single (608)
 
 **Остаток:**
-- §13.3.3 (app.js): 68 alert/confirm/prompt → VissortDialog (~2 ч)
+- §13.3.3 ✅ закрыто (2026-10-15)
 - Prettier для docs/*.md (опционально)
 
 **Фаза 5:** разбить app.js (7900 строк); устранить дублирование app.js ↔ player-single.js (~3000 строк);
