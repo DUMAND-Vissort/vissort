@@ -166,6 +166,25 @@
 
 ---
 
+## ✅ §A1 (Фаза 5) — AppState для app.js (ЗАКРЫТО 2026-10-15)
+
+**Итог:** 90 глобальных переменных вынесены в `app-state.js` (шим через `window.AppState`).
+
+### Что сделано
+
+- `app-state.js` — новый файл, 90 переменных + шим `Object.defineProperty`.
+- `app.js` — удалены объявления диапазонов 62–150 и 175–209 (124 строки).
+- `admin.html` — подключён `app-state.js` перед `app.js`.
+- Оставлены в `app.js`: `_blinkState`, `_blinkResponseBlockUntil`, `_blinkCalibration`, `_waitingForOpenEyes`, `createEmptyBlinkState()`, `BLINK_*`.
+- Тесты: 28 passed.
+
+### Коммит
+
+- `818ee24` §A1 (Фаза 5): вынести 90 глобальных переменных в app-state.js
+
+
+---
+
 ## ⚠️ Уроки сессии 2026-10-14
 
 1. **Коммит после каждого под-шага** — `git checkout` снесёт всё незакоммиченное.

@@ -59,6 +59,7 @@
 | `player-reading-mode.js` | Режим чтения (254 строки) |
 | `player-auth.js` | Auth-логика плеера (254 строки) |
 | `player-scenarios.js` | Загрузка сценариев (~190 строк) |
+| `app-state.js` | Состояние app.js (редактор): 90 переменных + шим `window.AppState` |
 | `data-layer.js` | Прослойка UI ↔ Supabase (41 KB) |
 | `vissort-env.js` | Единый источник env: SUPABASE_URL, ANON_KEY (~0.8 KB) |
 | `vissort-core.js` | Общие утилиты (14 KB) |

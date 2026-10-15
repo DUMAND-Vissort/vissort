@@ -1311,6 +1311,20 @@ app.js содержит:
 
 Остаток (перенесено в Фазу 5): app.js 7900 строк, дублирование app.js ↔ player-single.js (~3000 строк), player-installers.js (install* функции), единый player-distance.js.
 
+#### §A1 (Фаза 5) — AppState для app.js ✅ (2026-10-15)
+
+90 глобальных переменных из `app.js` вынесены в новый `app-state.js`. Доступ через `window.AppState` (шим `Object.defineProperty`). Все существующие обращения в `app.js` продолжают работать.
+
+Не перенесены (остаются в app.js):
+
+- `_blinkState`, `_blinkResponseBlockUntil`, `_blinkCalibration`, `_waitingForOpenEyes` — зависят от функции `createEmptyBlinkState()`.
+- `createEmptyBlinkState()` — функция, не переменная.
+- Константы `BLINK_*`, `LS_KEYS`, `MAX_DISTANCE_LOG`.
+
+Коммит: `818ee24`. Тесты: 28 passed.
+
+Далее §A2 — нарезка `app.js` (7756 строк) на модули: `app-editor.js`, `app-player-preview.js`, `app-inspector.js`, `app-generator.js`, `app-scenarios.js`, `app-init.js`.
+
 #### §13.1.3 Три системы дистанции
 
 См. §7. Решение: единый player-distance.js с параметрами из PlayerState, использование во всех модулях.
