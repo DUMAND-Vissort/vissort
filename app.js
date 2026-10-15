@@ -59,95 +59,7 @@ const LS_KEYS = {
 const MAX_DISTANCE_LOG = 2000;
 
 // ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
-let supabaseClient = null,
-    currentUser = null,
-    currentSessionId = null,
-    authMode = 'signin';
-let nodes = [],
-    connections = [],
-    activeNodeId = null;
-let dragNodeId = null,
-    offsetX = 0,
-    offsetY = 0;
-let resizeNodeId = null,
-    startW = 0,
-    startH = 0,
-    startMouseX = 0,
-    startMouseY = 0;
-let currentMode = 'nodes',
-    renderScheduled = false;
-const nodeElements = new Map(),
-    connectionElements = new Map();
-let tempLineElement = null,
-    tempLineMoveHandler = null,
-    currentConnectionForMenu = null;
-let playQueue = [],
-    playIndex = 0;
-let singleStimAnimId = null,
-    singleBgAnimId = null,
-    singleStimAnimStart = null,
-    singleBgAnimStart = null;
-let currentSingleCell = { row: 0, col: 0 };
-let playerRunning = false,
-    isPaused = false;
-let phaseTimers = [],
-    currentShowTimer = null;
-let responsePhaseActive = false,
-    responseStartTime = 0;
-let lastResponse = { answered: false, isCorrect: false, reactionTimeMs: null };
-let currentCorrectDirection = null,
-    lastDirection = null;
-let completedSeries = 0,
-    successfulSeries = 0,
-    failedSeries = 0;
-let seriesCorrect = 0,
-    seriesIncorrect = 0,
-    seriesNoAnswer = 0;
-let seriesStep = 0,
-    noAnswerSeriesStreak = 0;
-let currentSize = 27,
-    currentDuration = 2550;
-let currentStimColor = { r: 0, g: 255, b: 0 };
-let currentBgColor = { r: 0, g: 0, b: 0 };
-let compareMode = 'direction',
-    gridX = 3,
-    gridY = 3;
-let activeCells = [],
-    cellParams = [],
-    currentCompareAnswer = null;
-let selectedCells = [],
-    singleGridX = 1,
-    singleGridY = 1;
-let currentCompareNode = null,
-    _findSameState = null;
-
-let readingDistance = 1,
-    generalDistance = 1;
-let distanceToleranceIncreasePct = 15,
-    distanceToleranceDecreasePct = 10,
-    distanceRestoreTimeoutSec = 3;
-let _distanceBaseline = null,
-    _distanceOutOfBoundsSince = 0,
-    _distanceWarningKind = null,
-    _distanceRecalcScheduled = false;
-
-let _periAnimId = null;
-let _periAnimStart = null;
-
-// --- МОРГАНИЕ ---
-let _blinkTimerId = null;
-let _blinkStateLocal = { tick: 0, current: 'A' };
-
-let blinkEnabled = true;
-let blinkThreshold = 0.21;
-let blinkMinRate = 8;
-let blinkWindowSec = 30;
-let blinkLockShow = true;
-const BLINK_BLOCK_MS = 200;
-const BLINK_AUTOPAUSE_MS = 800;
-const BLINK_SHORT_MS = 100;
-const BLINK_LONG_MS = 400;
-const BLINK_ASYM_RATIO = 0.45;
+// Переменные диапазона 62..150 перенесены в app-state.js (2026-10-15).
 
 let _blinkState = createEmptyBlinkState();
 let _blinkResponseBlockUntil = 0;
@@ -172,41 +84,7 @@ function createEmptyBlinkState() {
     };
 }
 
-let videoStream = null,
-    cameraActive = false;
-let videoFrameId = null;
-let focalLengthPx = localStorage.getItem('focalLengthPx') || null;
-const realIPD_MM = 63;
-let currentDistanceMeters = null,
-    lastEyeDistancePx = null;
-let distanceLog = [],
-    distanceMin = null,
-    distanceMax = null;
-let distanceSum = 0,
-    distanceCount = 0,
-    distanceLastUpdate = 0;
-let currentAcuity = 1.0,
-    screenPPI = 96,
-    trainingDistance = 1;
-
-let readingViewportEl = null,
-    readingContentEl = null,
-    readingToolbarEl = null;
-let readingPage = 0,
-    readingTotalPages = 1,
-    readingPaused = false;
-let readingFontFamily = 'Segoe UI',
-    readingFontWeight = 'normal';
-let readingCurrentNode = null;
-
-let trainingNode = null,
-    blockList = [],
-    selectedFolderHandle = null,
-    templatesFolderHandle = null;
-let currentPlayingNodeId = null,
-    nodeAcuityCurrent = 1.0;
-
-let _saveGraphInFlight = false;
+// Переменные диапазона 175..209 перенесены в app-state.js (2026-10-15).
 
 window._pendingGeneratorMode = false;
 window._books = window._books || {};
