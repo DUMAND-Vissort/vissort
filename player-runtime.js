@@ -774,20 +774,7 @@ function finishSeries() {
     );
 }
 
-function defaultCellParams() {
-    const d = PlayerState.userScenario?.params?.distanceMeters || 1;
-    const ppi = PlayerState.userScenario?.params?.ppi || PlayerState.screenPPI || 96;
-    return {
-        size: acuityToSizePx(1.0, d, ppi),
-        stimR: 255,
-        stimG: 255,
-        stimB: 255,
-        bgR: 0,
-        bgG: 0,
-        bgB: 0,
-        duration: 2000
-    };
-}
+function defaultCellParams() { return window.PlayerSingle.defaultCellParams(); }
 function showNextCompareRound() {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     const p = PlayerState.userScenario?.params || {};
@@ -916,31 +903,7 @@ function handleFindSameClick(idx) {
     }
 }
 // flashCell — в vissort-core.js
-function createCellElement(cell, params, direction, idx) {
-    const cw = stimDisplay.offsetWidth / PlayerState.gridX,
-        ch = stimDisplay.offsetHeight / PlayerState.gridY;
-    const el = document.createElement('div');
-    el.className = 'grid-cell';
-    el.style.cssText = `left:${cell.col * cw}px;top:${cell.row * ch}px;width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;background:rgb(${params.bgR || 0},${params.bgG || 0},${params.bgB || 0});position:absolute;box-sizing:border-box;border:3px solid transparent;`;
-    el.dataset.index = idx !== undefined ? idx : -1;
-    const size = params.size || PlayerState.currentSize;
-    const p = PlayerState.userScenario?.params || {};
-    const svgData = getStimulusSVG(
-        {
-            stimType: p.type || 'LETTER_E',
-            stimDirection: direction,
-            stimR: params.stimR || 255,
-            stimG: params.stimG || 255,
-            stimB: params.stimB || 255,
-            bgR: params.bgR || 0,
-            bgG: params.bgG || 0,
-            bgB: params.bgB || 0
-        },
-        size
-    );
-    el.innerHTML = svgData.html;
-    stimDisplay.appendChild(el);
-}
+function createCellElement(cell, params, direction, idx) { return window.PlayerSingle.createCellElement(cell, params, direction, idx); }
 function processCompareAnswer(isCorrect) {
     if (!PlayerState.playerRunning || PlayerState.isPaused) return;
     if (PlayerState.currentShowTimer) {
