@@ -140,6 +140,7 @@ const stimArea = $('stim-display');
 window.stimDisplay = stimDisplay;
 window.stimArea = stimArea;
 const responseButtons = $('response-buttons');
+window.responseButtons = responseButtons;
 const hdrScenario = $('hdr-scenario');
 const hdrUser = $('hdr-user');
 const authModal = $('auth-modal');
@@ -310,6 +311,7 @@ function updateCounters() {
     cntIncorrect.textContent = PlayerState.seriesIncorrect;
     cntNoAnswer.textContent = PlayerState.seriesNoAnswer;
 }
+window.updateCounters = updateCounters;
 
 function setStimColorRGB(r, g, b) {
     const svg = stimDisplay.querySelector('svg');
@@ -357,6 +359,7 @@ function buildDefocusFrame(node, stimHtml) {
 function removeSingleGridLines() {
     return window.PlayerAnimation.removeSingleGridLines();
 }
+window.removeSingleGridLines = removeSingleGridLines;
 function drawSingleGridLines(gx, gy) {
     return window.PlayerAnimation.drawSingleGridLines(gx, gy);
 }
