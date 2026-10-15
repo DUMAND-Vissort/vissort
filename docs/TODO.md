@@ -182,6 +182,26 @@
 
 - `818ee24` §A1 (Фаза 5): вынести 90 глобальных переменных в app-state.js
 
+---
+
+## ✅ §A2-v2 (Фаза 5) — плеер-превью (ЗАКРЫТО 2026-10-15)
+
+**Итог:** `app.js` 7756 → **6569** (−15.3%).
+
+### Что сделано
+
+- `app-player-preview.js` — новый файл, 34 функции, 1277 строк, экспорт `window.AppPlayerPreview`.
+- Плеер-превью отличается от прод-плеера (`player-single.js`): адаптивная острота, `blinkLockShow`, `sessionId`, `buildBlinkReport`.
+- `app.js` — удалён блок 4270–5519, добавлены 34 обёртки.
+- `AppEditorCore` дополнен `buildPlayQueue` + `nodeToReadingParams`.
+- `switchMode` оставлен в `app.js` (это редактор, не плеер).
+- `admin.html` — подключён `app-player-preview.js` между `app-state.js` и `app.js`.
+- Тесты: 28 passed.
+
+### Коммит
+
+- `c4cc5b1` §A2-v2 (Фаза 5): вынести плеер-превью (34 функции, 1277 строк)
+
 
 ---
 

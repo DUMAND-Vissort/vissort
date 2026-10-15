@@ -1325,6 +1325,23 @@ app.js содержит:
 
 Далее §A2 — нарезка `app.js` (7756 строк) на модули: `app-editor.js`, `app-player-preview.js`, `app-inspector.js`, `app-generator.js`, `app-scenarios.js`, `app-init.js`.
 
+#### §A2-v2 (Фаза 5) — плеер-превью ✅ (2026-10-15)
+
+34 функции плеера-превью вынесены в `app-player-preview.js` (1277 строк). Экспорт — `window.AppPlayerPreview`.
+
+Отличие от прод-плеера (`player-single.js`):
+
+- Адаптивная острота (`currentAcuity` растёт/падает по `acuityStep`).
+- Блокировка показа при моргании (`blinkLockShow`).
+- Сохранение результатов с `sessionId` (`window.Data.saveResult`).
+- Отчёт с дистанцией и морганием (`buildBlinkReport`).
+
+В `app.js` остались 34 тонкие обёртки. `switchMode` оставлен в `app.js` (редактор, не плеер).
+
+`app.js`: 7756 → **6569** строк. Коммит `c4cc5b1`. Тесты: 28 passed.
+
+Далее §A2-v3 — вынести редактор графа в `app-editor.js`.
+
 #### §13.1.3 Три системы дистанции
 
 См. §7. Решение: единый player-distance.js с параметрами из PlayerState, использование во всех модулях.
