@@ -135,52 +135,35 @@
 
 ---
 
-## 🚧 §15.1.2 — рефакторинг player-runtime.js (в работе, 2026-10-14)
+## ✅ §15.1.2 — рефакторинг player-runtime.js (ЗАКРЫТО 2026-10-15)
 
-**Цель:** разбить `player-runtime.js` (было 3002 строки) на модули.
+**Итог:** `player-runtime.js` 3002 → **899** строк (−70%).
 
-### ✅ Закрыто (2026-10-14)
+### Модули
 
-- [x] **ч.3/7** — `player-reading-mode.js` (254 строки)
-- [x] **ч.4/7** — `player-auth.js` (254 строки)
-- [x] **ч.5/7** — `player-scenarios.js` (~190 строк)
-- [x] **ч.6/7** — `player-graph.js` (803 строки) — **100%** ✅
-- [x] **ч.7/7 (частично)** — `player-session.js` (328 строк) — **PlayerSession завершён** ✅
-      - `startPlayer`, `stopPlayer`, `pauseTraining`, `resumeTraining`, `togglePause`
-      - `showFinishedReport`, `saveResult`, `scheduleVoiceCountdown`
+| Файл | Строк |
+|---|---|
+| `player-reading-mode.js` | 254 |
+| `player-auth.js` | 254 |
+| `player-scenarios.js` | ~190 |
+| `player-graph.js` | 803 |
+| `player-session.js` | 328 |
+| `player-single.js` | 608 |
 
-**Прогресс:** `player-runtime.js` — 3002 → **1514** строк (**−49.6%**).
+### Коммиты §15.1.2 ч.7/7
 
-**Модули:**
-- `player-reading-mode.js` — 254
-- `player-auth.js` — 254
-- `player-scenarios.js` — ~190
-- `player-graph.js` — 803
-- `player-session.js` — 328
+- ч.3/7 `player-reading-mode.js`
+- ч.4/7 `player-auth.js`
+- ч.5/7 `player-scenarios.js`
+- ч.6/7 `player-graph.js`
+- ч.7/7 `player-session.js` + `player-single.js` (3a, 3b, 3c)
+- Префаксы: `window.responseButtons/updateCounters/removeSingleGridLines`
 
-### 🚧 Остаток — §15.1.2 ч.7/7 (`player-single.js`, ~2 ч)
+### Что осталось
 
-**Что:** вынести одиночный режим (~500 строк) из `player-runtime.js` в `player-single.js`.
+- §13.3.3 — 68 alert/confirm/prompt в app.js → VissortDialog (~2 ч)
+- Фаза 5: разбить app.js (7900 строк), устранить дублирование app.js ↔ player-single.js
 
-**Что вынести:**
-- `showNextStimulus` (~150 строк)
-- `finishSeries`
-- `handleDirectionAnswer`, `handleCompareAnswer`
-- `showNextCompareRound`, `showDirectionComparison`, `showFindSameComparison`, `showFindSameComparisonInternal`, `handleFindSameClick`
-- `createCellElement`, `defaultCellParams`
-- `processCompareAnswer`, `finishCompareSeries`
-
-**Целевой результат:**
-- `player-runtime.js`: ~1000 строк (bootstrap + init + обработчики + утилиты + ~50 тонких обёрток).
-- `player-single.js`: ~500.
-
-**Риск:** высокий (циклические зависимости между single ↔ stimulus ↔ session).
-
-### Что НЕ выносить
-
-- **`player-stimulus.js`** — не делать. 19 «функций» — 17 тонких обёрток над `PlayerAnimation.*`, 2 реальные (`displayStimulus`/`hideStimulus`) — вместе ~26 строк.
-- **`player-camera-ui.js`** — не делать. 7 обёрток над `PlayerCamera.*`, ~21 строка.
-- **~50 тонких обёрток** — оставить в runtime. Не критично.
 ---
 
 ## ⚠️ Уроки сессии 2026-10-14
