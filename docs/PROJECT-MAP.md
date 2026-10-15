@@ -1293,26 +1293,23 @@ app.js содержит:
 - app-player.js — плеер для тестов.
 - app-init.js — главный init.
 
-#### §13.1.2 player-runtime.js — монолит (116 KB)
+#### §13.1.2 player-runtime.js — РАЗБИТ ✅ (2026-10-15)
 
-Разбит в Фазе 1 на 7 модулей, но runtime всё ещё 2978 строк. Содержит:
+Итог §15.1.2 ч.7/7: **3002 → 899 строк (−70%)**.
 
-- Auth UI (дублирует app.js).
-- Загрузка сценариев.
-- Онбординг-интеграция.
-- Плеер графа.
-- Плеер плоский.
-- Плеер чтения.
-- Плеер сравнения.
-- Обработчики ответов.
-- Установщики (installCamPreview, installCamHud, installFaceLostPause).
+Модули:
 
-Кандидаты на вынос:
+| Файл | Строк | Назначение |
+|---|---|---|
+| `player-runtime.js` | 899 | Bootstrap, init, event-хендлеры, обёртки |
+| `player-graph.js` | 803 | Плеер графа |
+| `player-single.js` | 608 | Плоский и сравнительный режимы |
+| `player-session.js` | 328 | startPlayer/stopPlayer/pauseTraining/saveResult |
+| `player-reading-mode.js` | 254 | Режим чтения |
+| `player-auth.js` | 254 | Auth-логика плеера |
+| `player-scenarios.js` | ~190 | Загрузка сценариев |
 
-- player-auth.js — auth-логика.
-- player-scenarios.js — загрузка сценариев.
-- player-answer-handlers.js — обработчики ответов.
-- player-installers.js — install* функции.
+Остаток (перенесено в Фазу 5): app.js 7900 строк, дублирование app.js ↔ player-single.js (~3000 строк), player-installers.js (install* функции), единый player-distance.js.
 
 #### §13.1.3 Три системы дистанции
 

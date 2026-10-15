@@ -41,7 +41,7 @@
 | `user.html` | пациент (внешняя) | вход, выбор сценария, тренировка, история |
 | `player.html` | разработчик (внутренняя) | быстрая проверка, домен-лок, ?test=1 |
 
-**Ключевое:** `user.html` и `player.html` почти идентичны. Разница только в entry-script и CSP. Вся логика — в `player-runtime.js`.
+**Ключевое:** `user.html` и `player.html` почти идентичны. Разница только в entry-script и CSP. Вся логика — в модулях `player-*.js` (bootstrap в `player-runtime.js`, режимы в `player-single.js`/`player-graph.js`/`player-reading-mode.js`).
 
 ## Файлы проекта
 
@@ -52,7 +52,13 @@
 | `player.html` | Плеер для разработки |
 | `user.js` / `player.js` | Конфиги entry-point |
 | `app.js` | Логика редактора + auth (366 KB) |
-| `player-runtime.js` | Логика плеера (145 KB) |
+| `player-runtime.js` | Bootstrap плеера: init, event-хендлеры, обёртки (899 строк) |
+| `player-single.js` | Плоский и сравнительный режимы: showNextStimulus, finishSeries, handleDirectionAnswer, handleCompareAnswer, displayStimulus, hideStimulus (608 строк) |
+| `player-graph.js` | Плеер графа (803 строки) |
+| `player-session.js` | startPlayer/stopPlayer/pauseTraining/saveResult (328 строк) |
+| `player-reading-mode.js` | Режим чтения (254 строки) |
+| `player-auth.js` | Auth-логика плеера (254 строки) |
+| `player-scenarios.js` | Загрузка сценариев (~190 строк) |
 | `data-layer.js` | Прослойка UI ↔ Supabase (41 KB) |
 | `vissort-env.js` | Единый источник env: SUPABASE_URL, ANON_KEY (~0.8 KB) |
 | `vissort-core.js` | Общие утилиты (14 KB) |
@@ -148,21 +154,21 @@
 - Кнопка 📐 для повторной калибровки
 - Убран `askAboutDevice` — не подставляем чужую калибровку
 
-## Следующие задачи (обновлено 2026-10-12)
+## Следующие задачи (обновлено 2026-10-15)
 
-**Закрыто в сессии 2026-10-12:**
-- §11.3, §11.4, §11.5 — Фаза 4
-- §13.2.1 + §13.2.2–7 — производительность
-- §13.3.1–7 — качество кода (кроме app.js alert)
-- §13.4.1–3 — согласованность
-- §13.5.1–3 — зависимости
+**Закрыто 2026-10-15:**
+- §15.1.2 ч.7/7 — player-runtime.js 3002 → 899 строк (−70%)
+  - Модули: player-reading-mode (254), player-auth (254), player-scenarios (~190),
+    player-graph (803), player-session (328), player-single (608)
 
 **Остаток:**
 - §13.3.3 (app.js): 68 alert/confirm/prompt → VissortDialog (~2 ч)
 - Prettier для docs/*.md (опционально)
 
-**Фаза 5:** разбить app.js (7900 строк), player-runtime.js (3000 строк); устранить дублирование ~3000 строк; единый player-distance.js; авто-bump SW; Sentry performance
+**Фаза 5:** разбить app.js (7900 строк); устранить дублирование app.js ↔ player-single.js (~3000 строк);
+единый player-distance.js; авто-bump SW; Sentry performance
 **Фаза 6:** клинический редактор (6 недель)
+
 ## Принципы работы
 
 1. Прод не ломаем. Каждое изменение — отдельный коммит.
@@ -248,5 +254,5 @@ npx --yes serve -l 5500
 ---
 
 *Дата создания: 2026-10-05*
-*Обновлено: 2026-10-12 (после Фазы 4: RLS+роли, Edge Functions, автобэкап; §13.2–13.5 закрыты)*
+*Обновлено: 2026-10-15 (§15.1.2 ч.7/7 закрыт: player-runtime.js 3002 -> 899 строк)*
 *Копировать: в первое сообщение нового чата.*
