@@ -51,7 +51,7 @@
 | `user.html` | Плеер для пациентов |
 | `player.html` | Плеер для разработки |
 | `user.js` / `player.js` | Конфиги entry-point |
-| `app.js` | Логика редактора + auth (366 KB) |
+| `app.js` | Логика редактора: bootstrap + init + auth + templates (~4690 строк) |
 | `player-runtime.js` | Bootstrap плеера: init, event-хендлеры, обёртки (899 строк) |
 | `player-single.js` | Плоский и сравнительный режимы: showNextStimulus, finishSeries, handleDirectionAnswer, handleCompareAnswer, displayStimulus, hideStimulus (608 строк) |
 | `player-graph.js` | Плеер графа (803 строки) |
@@ -61,6 +61,8 @@
 | `player-scenarios.js` | Загрузка сценариев (~190 строк) |
 | `app-state.js` | Состояние app.js (редактор): 90 переменных + шим `window.AppState` |
 | `app-player-preview.js` | Плеер-превью редактора: 34 функции (startPlayer, playStimulusNodeSeries, playCompareNodeSeries, handleDirectionAnswer, ...) 1277 строк |
+| `app-editor.js` | Редактор графа: узлы, связи, drag/resize, меню связи (1073 строки) |
+| `app-inspector.js` | Инспектор узлов: стимул, чтение, логика, сравнение (926 строк) |
 | `data-layer.js` | Прослойка UI ↔ Supabase (41 KB) |
 | `vissort-env.js` | Единый источник env: SUPABASE_URL, ANON_KEY (~0.8 KB) |
 | `vissort-core.js` | Общие утилиты (14 KB) |
@@ -256,5 +258,5 @@ npx --yes serve -l 5500
 ---
 
 *Дата создания: 2026-10-05*
-*Обновлено: 2026-10-15 (§15.1.2 ч.7/7 закрыт: player-runtime.js 3002 -> 899 строк)*
+*Обновлено: 2026-10-16 (§A2-v4 закрыт: app.js 5546 → 4690, app-inspector.js 926 строк)*
 *Копировать: в первое сообщение нового чата.*

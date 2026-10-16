@@ -66,7 +66,7 @@
 ### Редактор
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 18 | `app.js` | 360.3 KB | 7877 |
+| 18 | `app.js` | ~250 KB | 4690 |
 
 ### HTML + entry
 | # | Файл | Размер | Строк |
@@ -1341,6 +1341,31 @@ app.js содержит:
 `app.js`: 7756 → **6569** строк. Коммит `c4cc5b1`. Тесты: 28 passed.
 
 Далее §A2-v3 — вынести редактор графа в `app-editor.js`.
+
+#### §A2-v3 (Фаза 5) — редактор графа ✅ (2026-10-16)
+
+30 функций графа (включая size-helpers) вынесены в `app-editor.js` (1073 строк). Экспорт — `window.AppEditor` + алиас `window.AppEditorCore` (для AI-генератора).
+
+Импорт: `acuityToSizeMm`, `acuityToSizePx`, `getStimulusSVG` из `VissortCore`; `state` из `AppState`.
+
+В `app.js` — 29 тонких обёрток. Мост: `window.updateInspector`, `window.saveNodeAsTemplate`.
+
+`app.js`: 6569 → **5546** строк. Коммит `ee30bce`. Тесты: 28 passed.
+
+#### §A2-v4 (Фаза 5) — инспектор ✅ (2026-10-16)
+
+17 функций инспектора (стимул, чтение, логика, сравнение) вынесены в `app-inspector.js` (926 строк). Экспорт — `window.AppInspector`.
+
+Импорт: `acuityToSizeMm`, `acuityToSizePx`, `getStimulusSVG`, `rgbToHex`, `hexToRgb`, `escapeHtml`, `detectUnit`, `msToUnit`, `unitToMs` из `VissortCore`; хелперы из `AppEditor`.
+
+В `app.js` — 17 тонких обёрток. Мост: `window.openBookPicker`, `window.saveUserSettings`.
+
+`app.js`: 5546 → **4690** строк (−856). Коммит `02aed43`. Тесты: 28 passed.
+
+`admin.html`: подключён `<script src="app-inspector.js">`.
+`sw.js`: precache добавлены `app-state.js`, `app-player-preview.js`, `app-editor.js`, `app-inspector.js`.
+
+Далее §A2-v5 — вынести генератор в `app-generator.js`.
 
 #### §13.1.3 Три системы дистанции
 

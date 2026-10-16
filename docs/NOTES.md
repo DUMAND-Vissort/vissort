@@ -106,3 +106,83 @@
 ---
 
 *Составлено: 2026-10-12.*
+
+---
+
+## 2026-10-16 — §A2-v4: вынос инспектора в app-inspector.js
+
+### Решение: 17 функций инспектора → отдельный модуль (926 строк)
+
+**Контекст:**
+- §A2-v3 закрыт 16.10 (app.js 6569 → 5546).
+- Инспектор — следующий по размеру блок: 17 функций, ~876 строк (1920–2795).
+- Цель Фазы 5: app.js → ~1000 строк (bootstrap + init + auth).
+
+**Решение:** вынести в `app-inspector.js`:
+- `updateInspector`, `updateStimulusInspector`, `updateLogicInspector`, `updateCompareInspector`, `updateReadingInspector`
+- `renderInspectorGridPreview`, `renderPeriInspectorSection`, `renderDefocusInspectorSection`, `renderBlinkAnimationInspectorSection`
+- `initInspectorEvents`, `applyInspectorChanges` + 7×`apply*InspectorChanges`
+
+**Как:**
+- Экспорт `window.AppInspector` (17 методов).
+- 17 обёрток в `app.js`.
+- Импорт из `VissortCore`: `acuityToSizeMm`, `acuityToSizePx`, `getStimulusSVG`, `rgbToHex`, `hexToRgb`, `escapeHtml`, `detectUnit`, `msToUnit`, `unitToMs`.
+- Хелперы из `AppEditor`: `getNode`, `getNodeComputedSize`, `getNodeComputedSizeMm`, `requestRenderGraph`, `defaultCompareCellParams`.
+- Мост в app.js: `window.openBookPicker`, `window.saveUserSettings`.
+
+**Результат:**
+- `app.js`: 5546 → 4690 (−856).
+- `app-inspector.js`: 926 строк (новый).
+- `admin.html`: подключён `<script src="app-inspector.js">`.
+- `sw.js`: precache добавлены `app-state.js`, `app-player-preview.js`, `app-editor.js`, `app-inspector.js`.
+- Тесты: 28 passed.
+- Коммит: `02aed43`.
+
+**Проблемы по ходу:**
+- PS 7.6.6 падал на больших скриптах → обход через `Add-Content` + `.tmp`.
+- Дубль `requestRenderGraph` в шапке (после повторного патча) → удалён.
+- Лишняя `}` от приблизительной версии (вставили неточный код) → удалена после `node --check`.
+- `app-editor.js` потерял `updateInspector` для AI-генератора → добавлен в экспорт.
+
+**Следующее:** §A2-v5 (генератор → `app-generator.js`, ~658 строк).
+
+
+---
+
+## 2026-10-16 — §A2-v4: вынос инспектора в app-inspector.js
+
+### Решение: 17 функций инспектора → отдельный модуль (926 строк)
+
+**Контекст:**
+- §A2-v3 закрыт 16.10 (app.js 6569 → 5546).
+- Инспектор — следующий по размеру блок: 17 функций, ~876 строк (1920–2795).
+- Цель Фазы 5: app.js → ~1000 строк (bootstrap + init + auth).
+
+**Решение:** вынести в `app-inspector.js`:
+- updateInspector, updateStimulusInspector, updateLogicInspector, updateCompareInspector, updateReadingInspector
+- renderInspectorGridPreview, renderPeriInspectorSection, renderDefocusInspectorSection, renderBlinkAnimationInspectorSection
+- initInspectorEvents, applyInspectorChanges + 7 apply*InspectorChanges
+
+**Как:**
+- Экспорт window.AppInspector (17 методов).
+- 17 обёрток в app.js.
+- Импорт из VissortCore: acuityToSizeMm, acuityToSizePx, getStimulusSVG, rgbToHex, hexToRgb, escapeHtml, detectUnit, msToUnit, unitToMs.
+- Хелперы из AppEditor: getNode, getNodeComputedSize, getNodeComputedSizeMm, requestRenderGraph, defaultCompareCellParams.
+- Мост в app.js: window.openBookPicker, window.saveUserSettings.
+
+**Результат:**
+- app.js: 5546 → 4690 (−856).
+- app-inspector.js: 926 строк (новый).
+- admin.html: подключён app-inspector.js.
+- sw.js: precache добавлены app-state.js, app-player-preview.js, app-editor.js, app-inspector.js.
+- Тесты: 28 passed.
+- Коммит: 02aed43.
+
+**Проблемы по ходу:**
+- PS 7.6.6 падал на больших скриптах → обход через Add-Content + .tmp.
+- Дубль requestRenderGraph в шапке → удалён.
+- Лишняя } от приблизительной версии → удалена после node --check.
+- app-editor.js потерял updateInspector для AI-генератора → добавлен в экспорт.
+
+**Следующее:** §A2-v5 (генератор → app-generator.js, ~658 строк).
+
