@@ -1077,6 +1077,7 @@
         onResizeEnd,
         showConnectionMenu,
         hideConnectionMenu,
+        updateInspector: function () { return window.updateInspector(); },
         state: {
             get nodes() {
                 return state.nodes;
