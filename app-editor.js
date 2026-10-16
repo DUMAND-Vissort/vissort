@@ -641,7 +641,8 @@
                 a.textContent += `→${node.endAcuity.toFixed(1)}`;
         }
         if (mm) mm.textContent = `${getNodeComputedSizeMm(node).toFixed(2)} мм`;
-        if (px) px.textContent = `≈ ${getNodeComputedSize(node)}px @ ${node.stimPPI || state.screenPPI || 96} PPI`;
+        if (px)
+            px.textContent = `≈ ${getNodeComputedSize(node)}px @ ${node.stimPPI || state.screenPPI || 96} PPI`;
         if (dst) dst.textContent = `📏 ${(node.stimDistance || 1).toFixed(2)} м`;
         if (srs) srs.textContent = `📊 ${node.seriesCount || 5}×${node.seriesSize || 6}`;
         if (dyn) {
@@ -659,7 +660,8 @@
             }
             if (node.singleStimDynamicEnabled && !node.singleCircleEnabled) parts.push('🎨');
             if (node.singleBgDynamicEnabled) parts.push('🖼️');
-            if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled) parts.push('🎲');
+            if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled)
+                parts.push('🎲');
             dyn.textContent = parts.join(' ');
         }
     }
@@ -1045,21 +1047,46 @@
     }
     // ==================== EXPORT ====================
     window.AppEditor = {
-        generateId, getNode,
-        getNodeComputedSize, getNodeComputedSizeMm,
-        canAddConnection, buildPlayQueue, nodeToReadingParams, defaultCompareCellParams,
-        createNewNode, deleteNode, selectNode,
-        requestRenderGraph, renderGraph,
-        clearTempLine, createNodeElement, updateNodeElement,
-        fillReadingNodeInfo, fillStimulusNodeInfo, fillCompareNodeInfo,
-        startConnection, cancelConnection,
-        getNodeEdgePoint, createConnectionElements, updateConnectionElements,
-        onDragMove, onDragEnd, onResizeMove, onResizeEnd,
-        showConnectionMenu, hideConnectionMenu,
+        generateId,
+        getNode,
+        getNodeComputedSize,
+        getNodeComputedSizeMm,
+        canAddConnection,
+        buildPlayQueue,
+        nodeToReadingParams,
+        defaultCompareCellParams,
+        createNewNode,
+        deleteNode,
+        selectNode,
+        requestRenderGraph,
+        renderGraph,
+        clearTempLine,
+        createNodeElement,
+        updateNodeElement,
+        fillReadingNodeInfo,
+        fillStimulusNodeInfo,
+        fillCompareNodeInfo,
+        startConnection,
+        cancelConnection,
+        getNodeEdgePoint,
+        createConnectionElements,
+        updateConnectionElements,
+        onDragMove,
+        onDragEnd,
+        onResizeMove,
+        onResizeEnd,
+        showConnectionMenu,
+        hideConnectionMenu,
         state: {
-            get nodes() { return state.nodes; },
-            get connections() { return state.connections; },
-            get activeNodeId() { return state.activeNodeId; }
+            get nodes() {
+                return state.nodes;
+            },
+            get connections() {
+                return state.connections;
+            },
+            get activeNodeId() {
+                return state.activeNodeId;
+            }
         }
     };
 

@@ -147,7 +147,6 @@ const templatesFolderStatus = document.getElementById('templates-folder-status')
 const readingFileInput = document.getElementById('reading-file-input');
 const readingFileName = document.getElementById('reading-file-name');
 
-// ==================== ФОРМУЛЫ ОСТРОТЫ ====================
 // ==================== ФОРМУЛЫ ОСТРОТЫ (обёртки §A2-v3) ====================
 function getNodeComputedSizeMm(node) { return window.AppEditor.getNodeComputedSizeMm(node); }
 function getNodeComputedSize(node) { return window.AppEditor.getNodeComputedSize(node); }
