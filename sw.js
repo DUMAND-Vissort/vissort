@@ -23,6 +23,7 @@ const PRECACHE_URLS = [
     '/app-editor.js',
     '/app-inspector.js',
     '/app-generator.js',
+    '/app-scenarios.js',
     '/app.js',
     '/data-layer.js',
     '/user.js',
