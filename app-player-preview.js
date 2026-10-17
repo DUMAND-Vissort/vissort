@@ -6,6 +6,8 @@
 (function () {
   'use strict';
 // ==================== ПЛЕЕР: СЛУЖЕБНОЕ ====================
+  const responseButtons = document.getElementById('response-buttons');
+
 function displayStimulus(html, bgColor) {
     stimDisplay.innerHTML = html;
     stimArea.style.backgroundColor = `rgb(${bgColor.r},${bgColor.g},${bgColor.b})`;

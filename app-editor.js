@@ -1087,6 +1087,9 @@
             },
             get activeNodeId() {
                 return state.activeNodeId;
+            },
+            set activeNodeId(v) {
+                state.activeNodeId = v;
             }
         }
     };
