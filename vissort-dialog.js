@@ -77,6 +77,7 @@
                 // Fallback, если showModal недоступен (старый браузер)
                 el.setAttribute('open', '');
             }
+            el.setAttribute('open', '');
             if (opts.type === 'prompt')
                 setTimeout(function () {
                     input.focus();
