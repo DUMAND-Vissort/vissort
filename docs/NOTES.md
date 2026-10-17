@@ -186,3 +186,46 @@
 
 **Следующее:** §A2-v5 (генератор → app-generator.js, ~658 строк).
 
+
+---
+
+## 2026-10-17 — §A2-v5: вынос генератора в app-generator.js
+
+### Решение: 26 функций генератора → отдельный модуль (875 строк)
+
+**Контекст:**
+- §A2-v4 закрыт 16.10 (app.js 5546 → 4690).
+- Генератор — следующий блок: 26 функций в 4 местах.
+
+**Решение:** вынести в `app-generator.js` (3 кластера):
+- A: PHYSIOLOGICAL_PHASES + buildPhysiologicalPhases + buildDynamicPhases
+- B: 7× ensure*GeneratorUI, renderGridPreview, generateCellParamsFields, collectCompareParams, buildModeParamsFromUI, modeParamsToNode, modeParamsToReadingNode
+- C: 10× update*Visibility + updatePhysioListHint
+
+**Как:**
+- Экспорт window.AppGenerator (26 методов + PHYSIOLOGICAL_PHASES).
+- 26 обёрток в app.js + const PHYSIOLOGICAL_PHASES = window.AppGenerator.PHYSIOLOGICAL_PHASES.
+- Мост: window.safeVal, window.safeChecked, window.setLastBookId.
+- Импорт из VissortCore: getThreshold, hexToRgb, unitToMs, acuityToSizeMm, acuityToSizePx, sha1.
+- Хелперы из AppEditor: createNewNode, getNode, getNodeComputedSize, canAddConnection, requestRenderGraph.
+- Хелпер из AppInspector: updateInspector.
+
+**Результат:**
+- app.js: 4693 → 3903 (−790).
+- app-generator.js: 875 строк (новый).
+- admin.html: подключён app-generator.js.
+- sw.js: precache app-generator.js.
+- Тесты: 28 passed.
+- Коммит: 5b6e9a8.
+
+**Проблемы по ходу:**
+- Первый скрипт (с [char]96 + конкатенацией) вставил сломанный ensureSingleGridGeneratorUI → удалили (103–126).
+- 4c (renderGridPreview + collectCompareParams + buildModeParamsFromUI) случайно пропустили → добавили после footer (hoisting сработал).
+- vissort-dialog.js: showModal() не ставит [open] → добавили setAttribute('open', '') для тестов.
+
+**Правило (подтверждено):**
+- Here-string @'...'@ работает для JS с backtick, если внутри нет [char]96 и конкатенаций.
+- Длинные блоки — через here-string + WriteAllText.
+
+**Следующее:** §A2-v6 (сохранение + библиотека → app-scenarios.js, ~780 строк).
+

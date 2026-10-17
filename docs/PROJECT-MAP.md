@@ -1367,6 +1367,21 @@ app.js содержит:
 
 Далее §A2-v5 — вынести генератор в `app-generator.js`.
 
+#### §A2-v5 (Фаза 5) — генератор ✅ (2026-10-17)
+
+26 функций генератора (UI, params, физиологические фазы, update*Visibility) вынесены в `app-generator.js` (875 строк). Экспорт — `window.AppGenerator`.
+
+Импорт: `getThreshold`, `hexToRgb`, `unitToMs`, `acuityToSizeMm`, `acuityToSizePx`, `sha1` из `VissortCore`; хелперы из `AppEditor` (`createNewNode`, `getNode`, `getNodeComputedSize`, `canAddConnection`, `requestRenderGraph`) и `AppInspector` (`updateInspector`).
+
+В `app.js` — 26 тонких обёрток + `const PHYSIOLOGICAL_PHASES = window.AppGenerator.PHYSIOLOGICAL_PHASES;`. Мост: `window.safeVal`, `window.safeChecked`, `window.setLastBookId`.
+
+`app.js`: 4693 → **3903** строк (−790). Коммит `5b6e9a8`. Тесты: 28 passed.
+
+`admin.html`: подключён `app-generator.js`.
+`sw.js`: precache `app-generator.js`.
+
+Далее §A2-v6 — вынести сохранение + библиотеку в `app-scenarios.js`.
+
 #### §13.1.3 Три системы дистанции
 
 См. §7. Решение: единый player-distance.js с параметрами из PlayerState, использование во всех модулях.
