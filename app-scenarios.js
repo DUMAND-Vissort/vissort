@@ -763,6 +763,14 @@ async function loadScenarioList() {
     if (!list) return;
     list.innerHTML = '<div style="padding:20px;color:#666;text-align:center;">Загрузка…</div>';
     try {
+        // §vissort-tree: primary — сначала сканируем Vissort/Сценарии (импорт в IDB с id='local_'+key)
+        if (HAS_FS_ACCESS && selectedFolderHandle) {
+            try {
+                await scanScenariosFolder();
+            } catch (e) {
+                VLog.warn('[loadScenarioList] scanScenariosFolder:', e.message);
+            }
+        }
         const scenarios = await window.Data.getScenarios();
         list.innerHTML = '';
         if (scenarios.length === 0) {
