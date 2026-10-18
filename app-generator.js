@@ -614,6 +614,7 @@
     VLog.log('[app-generator] AppGenerator экспортирован');
 })();
     function renderGridPreview() {
+        const state = window.AppState;
         const gX = parseInt(document.getElementById('gen-grid-x').value) || 3;
         const gY = parseInt(document.getElementById('gen-grid-y').value) || 3;
         const c = document.getElementById('grid-preview');
@@ -639,6 +640,8 @@
     }
 
     function generateCellParamsFields() {
+        const state = window.AppState;
+        const acuityToSizeMm = window.VissortCore.acuityToSizeMm;
         const c = document.getElementById('cell-params-container');
         c.innerHTML = '';
         state.selectedCells.forEach((cell) => {
@@ -661,6 +664,9 @@
     }
 
     function collectCompareParams() {
+        const state = window.AppState;
+        const acuityToSizePx = window.VissortCore.acuityToSizePx;
+        const hexToRgb = window.VissortCore.hexToRgb;
         const gX = parseInt(document.getElementById('gen-grid-x').value) || 3;
         const gY = parseInt(document.getElementById('gen-grid-y').value) || 3;
         const cm = document.getElementById('gen-compare-mode').value;
@@ -690,6 +696,7 @@
     }
 
     function buildModeParamsFromUI() {
+        const state = window.AppState;
         const ss = parseInt(document.getElementById('gen-series-size').value) || 6;
         const tt = document.getElementById('gen-training-type').value;
         const gdEl = document.getElementById('gen-general-distance');
