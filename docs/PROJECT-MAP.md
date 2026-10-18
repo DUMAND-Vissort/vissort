@@ -1380,7 +1380,26 @@ app.js содержит:
 `admin.html`: подключён `app-generator.js`.
 `sw.js`: precache `app-generator.js`.
 
-Далее §A2-v6 — вынести сохранение + библиотеку в `app-scenarios.js`.
+#### §A2-v6 (Фаза 5) — сохранение + библиотека ✅ (2026-10-17)
+
+25 функций сохранения/загрузки/библиотеки/шаблонов/book picker вынесены в `app-scenarios.js` (811 строк). Экспорт — `window.AppScenarios`.
+
+Импорт: `window.Data`, `VissortDialog`, `window.AppEditor`, `window.generateScenarioKey` / `bookmarkKeyFor` / `getLastBookId` / `setLastBookId` (ленивые мосты).
+
+`templatesFolderHandle` / `selectedFolderHandle` / `_saveGraphInFlight` — уже в `AppState` (aliases 185, 187), работают через шим `window.*`.
+
+В `app.js` — 25 тонких обёрток + мосты `window.generateScenarioKey` / `bookmarkKeyFor` / `getLastBookId`.
+
+`app.js`: 3903 → **3165** строк (−738). Коммит `af83010`. Тесты: 28 passed.
+
+`admin.html`: подключён `<script src="app-scenarios.js">`.
+`sw.js`: precache `'/app-scenarios.js'`.
+
+**Регрессии, найденные при проверке (починены):**
+- `responseButtons` не был перенесён при §A2-v2 → `const responseButtons = ...` в app-player-preview.js (коммит `5421955`).
+- `AppEditorCore.state.activeNodeId` без сеттера → добавлен `set activeNodeId(v)` в app-editor.js (коммит `5421955`).
+
+Далее §A2-v7 — моргание + камера в `app-blink-camera.js`.
 
 #### §13.1.3 Три системы дистанции
 

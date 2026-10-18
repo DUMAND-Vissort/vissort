@@ -229,3 +229,44 @@
 
 **Следующее:** §A2-v6 (сохранение + библиотека → app-scenarios.js, ~780 строк).
 
+
+---
+
+## 2026-10-17 — §A2-v6: сохранение + библиотека → app-scenarios.js
+
+### Решение: 25 функций → отдельный модуль (811 строк)
+
+**Контекст:**
+- §A2-v5 закрыт 17.10 (app.js 4693 → 3903).
+- Следующий блок — сохранение/загрузка + библиотека + шаблоны + book picker.
+
+**Решение:** вынести в `app-scenarios.js` (5 регионов):
+- TEMPLATES (9): saveNodeAsTemplate, applyTemplateToCanvas, loadTemplatesFolder, importTemplatesFromFolder, importTemplatesFromFileList, refreshTemplatesIfOpen, renderTemplatesList, openTemplatesModal, exportAllTemplates.
+- BOOK PICKER (6): openBookPicker, closeBookPicker, renderBookPickerList, applyBookSelection, detachBookFromActiveNode, handleBookPickerFileUpload.
+- FOLDER HANDLE (4): restoreFolderHandle, restoreTemplatesFolderHandle, selectFolder, scanScenariosFolder.
+- SAVE/LOAD (4): saveGraph, buildScenarioPayloadFromCurrent, migrateScenario, loadGraph.
+- LIBRARY (2): loadScenarioList, saveCurrentScenario.
+
+**Как:**
+- Экспорт `window.AppScenarios` (25 методов).
+- 25 тонких обёрток в app.js перед `// AUTH: SAVE + PREFILL`.
+- Мосты: `window.generateScenarioKey`, `window.bookmarkKeyFor`, `window.getLastBookId` (SCENARIO KEY / BOOKMARKS **остался в app.js**, 4 функции — используются в READING-регионе).
+- `templatesFolderHandle` / `selectedFolderHandle` / `_saveGraphInFlight` — **уже в AppState** (aliases 185, 187). Работают через шим `window.*` → `AppState.*`.
+- `HAS_FS_ACCESS` — удалён из app.js, объявлен в модуле.
+- `'use strict'` в модуле **убран** — иначе присваивание к `window.*` через шим AppState даёт ReferenceError (strict запрещает запись в undeclared variable, даже если она есть на window).
+
+**Результат:**
+- app.js: 3903 → **3165** (−738).
+- app-scenarios.js: **811** строк (новый).
+- admin.html: подключён `<script src="app-scenarios.js">` после `app-generator.js`.
+- sw.js: precache `'/app-scenarios.js'`.
+- Тесты: 28 passed.
+- Коммит: `af83010`.
+
+**Проблемы по ходу (важно для §A2-v7–v9):**
+- **Границы регионов — по функциям, не по заголовкам.** Регион «ПАПКИ» (2398–2486, restoreFolderHandle…scanScenariosFolder) идёт **до** `// === СОХРАНЕНИЕ ===` (2487). При первом проходе `2487..2860` его пропустил → node --check падал.
+- **handleBookPickerFileUpload недобрал `}`** (1989 — последняя строка, `-First 87` взял до 1988). Фикс: +1 `}` перед FOLDER HANDLE.
+- **`'use strict'` в модуле ломает шим AppState.** Убран.
+- **Регрессия §A2-v2:** `responseButtons` не был перенесён в app-player-preview.js. Проявился, когда app.js удалили регион, где она ещё была. Фикс: `const responseButtons = document.getElementById('response-buttons')`.
+- **Регрессия §A2-v3:** `AppEditorCore.state` имел `get activeNodeId`, но без `set`. AI-генератор (`S.activeNodeId = created[0]`) падал. Фикс: `set activeNodeId(v) { state.activeNodeId = v; }`.
+
