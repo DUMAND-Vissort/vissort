@@ -8,6 +8,7 @@ test.describe('Login — admin.html', () => {
     });
 
     test('не-админ редиректится на user.html', async ({ page }) => {
+        test.skip(!process.env.TEST_EMAIL || !process.env.TEST_PASSWORD, 'TEST_EMAIL/TEST_PASSWORD не заданы');
         await page.goto('/admin.html');
         await page.waitForSelector('#auth-email', { state: 'visible' });
 

@@ -39,3 +39,7 @@ docs/_mermaid/
 docs/_parts/
 docs/PART2.md
 docs/PART3.md
+
+# One-time prompt sources (не коммитить)
+_prompt-source.txt
+prompt-source*.txt
