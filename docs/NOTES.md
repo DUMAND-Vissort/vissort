@@ -506,3 +506,75 @@
 - `login.spec.js` — 3 passed (было 1 failed timeout).
 
 **Следующее:** мультитенантность (Фаза 7, после пилота).
+
+---
+
+## 2026-10-18 — авто-дерево Vissort/Сценарии (папка primary)
+
+### Решение: сохранять в папку primary, IndexedDB — кэш, облако — синхронизация
+
+**Контекст:**
+- Пилот с врачом → нужна предсказуемая папка (D:\\Vissort\\Сценарии).
+- Сейчас: `btn-select-folder` → `showDirectoryPicker` → `selectedFolderHandle` → `writeFileToFolder`.
+- Проблема: врач выбирает папку вручную каждый раз (или забывает). Файлы разбросаны.
+
+**Решение:**
+- `ensureVissortTree()` (app-scenarios.js, 360) — 1 раз выбирает корень (D:) → создаёт `Vissort/Сценарии` (`getDirectoryHandle('Vissort', { create: true })` → `getDirectoryHandle('Сценарии', { create: true })`) → handle в IndexedDB (`vissortRootHandle`).
+- `saveGraph` (447) — папка primary (через `ensureVissortTree`), потом `Data.saveScenario` (IndexedDB + syncQueue → облако). Fallback — `<a download>` (если папки нет / FS Access не поддерживается).
+- `btn-select-folder` / `btn-select-templates-folder` / `#folder-status` / `#templates-folder-status` — скрыты CSS (display: none).
+
+**Результат:**
+- Коммиты: `0608403` (saveGraph), `c43c3d5` (CSS clinic).
+- Тесты: 36 passed + 1 skipped.
+
+**Проблемы по ходу:**
+- Патч по номерам строк сломал `scanScenariosFolder` (вставился не туда). Правило: искать функцию (`async function saveGraph`), внутри неё — anchor. Не по номерам.
+- `let savedToFolder` — вставка в чужую функцию → SyntaxError. Откат + патч по функции — сработал.
+
+**Следующее:** `loadScenarioList` (папка primary), `restoreFolderHandle` (vissortRootHandle).
+
+---
+
+## 2026-10-18 — скрытие кнопок (btn-open, btn-select-folder) + импорт в Библиотеку
+
+### Решение: одна кнопка «Библиотека» — хаб (список + импорт)
+
+**Контекст:**
+- Дубли: `btn-open` (📂 файл) vs `btn-select-folder` (📁 папка) vs `btn-library` (📚 список).
+- Врачу непонятно: три кнопки → три источника сценариев.
+
+**Решение:**
+- `btn-open` — скрыт (CSS `display: none`, admin + clinic).
+- `btn-select-folder` / `btn-select-templates-folder` / `folder-status` / `templates-folder-status` — скрыты (CSS).
+- `#btn-library-import` — добавлена в `#library-modal` → `fileInput.click()` (импорт файла в модалке).
+- `#library-modal` — единая точка входа: список (IndexedDB + облако) + импорт файла.
+
+**Результат:**
+- Коммит: `2c01ff6` (admin + clinic + app.js).
+- Тесты: 36 passed + 1 skipped.
+
+**Следующее:** `loadScenarioList` (папка primary) — следующий шаг.
+
+---
+
+## 2026-10-18 — фикс Библиотеки: загрузка сценария → холст
+
+### Решение: `switchMode('nodes')` + `requestRenderGraph` + `updateInspector`
+
+**Контекст:**
+- «Библиотека» → «Загрузить» — сценарий загружался в `trainingNode` + `nodes` / `connections`, но холст не обновлялся.
+- Причина: не было `switchMode('nodes')` (если был режим «Стимулы» — холст скрыт) + не было `updateInspector()` (инспектор пуст).
+
+**Решение:**
+- `loadScenarioList` (app-scenarios.js, 774–789) — после загрузки узлов:
+  - `switchMode('nodes')` — переключить в режим узлов.
+  - `requestRenderGraph()` — отрисовать.
+  - `updateInspector()` — обновить инспектор.
+
+**Результат:**
+- Коммит: `927be46`.
+- Тесты: 36 passed + 1 skipped.
+
+**Проверка локально:** `clinic.html?nocache=1` → Создать узел → Сохранить → Новый → Библиотека → Загрузить → холст обновился.
+
+**Следующее:** `loadScenarioList` (папка primary) — следующий шаг.

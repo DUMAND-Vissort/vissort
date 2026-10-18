@@ -1480,6 +1480,14 @@ Circle state (8 `let`: `_circleAnimId`, `_circleAnimStart`, `_circleInnerPhases`
 - PDF-отчёты.
 - Приглашения врачей.
 
+
+**Авто-дерево Vissort/Сценарии (2026-10-18):**
+- `ensureVissortTree()` — выбор корня 1 раз → `Vissort/Сценарии`.
+- `saveGraph` — папка primary, fallback `<a download>`.
+- `btn-open` / `btn-select-folder` / `btn-select-templates-folder` / `folder-status` / `templates-folder-status` — скрыты (CSS).
+- `#btn-library-import` — импорт в модалке Библиотеки.
+- `loadScenarioList` — `switchMode('nodes')` + `requestRenderGraph` + `updateInspector`.
+- Коммиты: `0608403`, `c43c3d5`, `2c01ff6`, `927be46`.
 #### §13.1.3 Три системы дистанции
 
 См. §7. Решение: единый player-distance.js с параметрами из PlayerState, использование во всех модулях.

@@ -170,22 +170,31 @@
 - §13.3.3 ✅ закрыто (2026-10-15)
 - Prettier для docs/*.md (опционально)
 
-### Фаза 6 MVP — клинический редактор (2026-10-18)
+### Фаза 6 MVP + авто-дерево Vissort/Сценарии (2026-10-18)
 
-**Цель:** врач задаёт протокол → тренажёр строит сценарий → превью.
+**Цель:** врач задаёт протокол → тренажёр строит сценарий → превью. Сохранение — в папку `Vissort/Сценарии` (primary), IndexedDB — кэш, облако — синхронизация.
 
 **Сделано:**
-- `clinic.html` (3043) — копия `admin.html` + `#clinic-header` + `#protocol-panel` (5 полей).
+- `clinic.html` (3050) — копия `admin.html` + `#clinic-header` + `#protocol-panel` (5 полей).
 - `clinic.js` (107) — генерация узлов, сохранение с `doctor_id`, назначение пациенту.
 - `sw.js` — precache `'/clinic.html'`, `'/clinic.js'`.
 - `tests/clinic.spec.js` (121, 6 тестов).
 - Space = Play/Pause, max acuity 1.0, `scheduleVoiceCountdown` восстановлен.
+- **Авто-дерево** `Vissort/Сценарии` — `ensureVissortTree`, `saveGraph` (папка primary, fallback `<a download>`).
+- **Скрытие кнопок:** `btn-open`, `btn-select-folder`, `btn-select-templates-folder`, `folder-status`, `templates-folder-status` (CSS).
+- **`#btn-library-import`** — импорт файла в модалке Библиотеки.
+- **Фикс Библиотеки** — `switchMode('nodes')` + `requestRenderGraph` + `updateInspector`.
 
 **Текущее состояние:**
-- HEAD: `8386699`
-- `app.js`: **1845 строк** (Фаза 5 закрыта, −77%).
-- `clinic.html`: **3043**, `clinic.js`: **107**.
-- Тесты: **34 passed** (28 + 6 clinic).
+- HEAD: `927be46`
+- `app.js`: **1850 строк** (Фаза 5 закрыта, −77%).
+- `clinic.html`: **3050**, `clinic.js`: **107**.
+- `app-scenarios.js`: **839** (авто-дерево `Vissort/Сценарии`).
+- Тесты: **36 passed + 1 skipped** (37 всего).
+
+**Следующее:**
+- `loadScenarioList` — папка primary (`scanScenariosFolder` перед `Data.getScenarios`).
+- `restoreFolderHandle` — `vissortRootHandle` (вместо `scenariosFolderHandle`).
 
 **Не делали (Фаза 7):**
 - Мультитенантность (`tenants`, `tenant_id`, RLS) — после пилота.
@@ -193,8 +202,6 @@
 - Аналитика по клинике.
 - PDF-отчёты.
 - Приглашения врачей.
-
-**Фаза 7:** мультитенантность + роли (после пилота).
 
 ## Принципы работы
 
