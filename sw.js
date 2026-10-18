@@ -25,6 +25,7 @@ const PRECACHE_URLS = [
     '/app-generator.js',
     '/app-scenarios.js',
     '/app-blink-camera.js',
+    '/app-auth.js',
     '/app.js',
     '/data-layer.js',
     '/user.js',
