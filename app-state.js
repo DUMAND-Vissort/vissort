@@ -140,7 +140,14 @@
     nodeAcuityCurrent: 1.0,
 
     // --- Misc ---
-    _saveGraphInFlight: false
+    _saveGraphInFlight: false,
+
+    // §A2-v7 fix: BLINK_* константы (были потеряны при §A1, восстановлено из 818ee24^)
+    BLINK_SHORT_MS: 100,
+    BLINK_LONG_MS: 400,
+    BLINK_ASYM_RATIO: 0.45,
+    BLINK_AUTOPAUSE_MS: 800,
+    BLINK_BLOCK_MS: 200
   };
 
   // --- Шим: window.xxx <-> AppState.xxx (90 имён) ---
@@ -184,7 +191,7 @@
     'readingFontFamily','readingFontWeight','readingCurrentNode',
     'trainingNode','blockList','selectedFolderHandle','templatesFolderHandle',
     'currentPlayingNodeId','nodeAcuityCurrent',
-    '_saveGraphInFlight'
+    '_saveGraphInFlight','BLINK_SHORT_MS','BLINK_LONG_MS','BLINK_ASYM_RATIO','BLINK_AUTOPAUSE_MS','BLINK_BLOCK_MS'
   ];
 
   aliases.forEach(function (name) {
