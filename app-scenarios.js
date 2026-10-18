@@ -330,13 +330,28 @@ async function handleBookPickerFileUpload(file) {
 async function restoreFolderHandle() {
     if (!HAS_FS_ACCESS) return false;
     try {
-        const h = await window.Data.getFolderHandle('scenariosFolderHandle');
-        if (!h) return false;
-        selectedFolderHandle = h;
-        folderStatus.textContent = '📁 ' + h.name;
-        const perm = await h.queryPermission({ mode: 'readwrite' });
+        // §vissort-tree: primary — vissortRootHandle -> Vissort/Сценарии
+        // fallback — старый scenariosFolderHandle (для установок до авто-дерева)
+        let root = await window.Data.getFolderHandle('vissortRootHandle');
+        let scenariosDir = null;
+        if (root) {
+            try {
+                const vDir = await root.getDirectoryHandle('Vissort', { create: true });
+                scenariosDir = await vDir.getDirectoryHandle('Сценарии', { create: true });
+            } catch (e) {
+                VLog.warn('[restoreFolderHandle] Vissort/Сценарии:', e.message);
+            }
+        }
+        if (!scenariosDir) {
+            const legacy = await window.Data.getFolderHandle('scenariosFolderHandle');
+            if (legacy) scenariosDir = legacy;
+        }
+        if (!scenariosDir) return false;
+        selectedFolderHandle = scenariosDir;
+        if (folderStatus) folderStatus.textContent = '📁 ' + scenariosDir.name;
+        const perm = await scenariosDir.queryPermission({ mode: 'readwrite' });
         if (perm !== 'granted') {
-            folderStatus.textContent = '📁 ' + h.name + ' (нужно разрешение)';
+            if (folderStatus) folderStatus.textContent = '📁 ' + scenariosDir.name + ' (нужно разрешение)';
             return false;
         }
         return true;
@@ -344,6 +359,7 @@ async function restoreFolderHandle() {
         return false;
     }
 }
+
 async function restoreTemplatesFolderHandle() {
     if (!HAS_FS_ACCESS) return false;
     try {
