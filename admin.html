@@ -1598,6 +1598,8 @@
                 text-align: center !important;
                 white-space: nowrap !important;
             }
+            /* §vissort-tree: скрыть Открыть (импорт — в Библиотеке) */
+            #btn-open { display: none !important; }
         </style>
     </head>
     <body>
@@ -2639,6 +2641,7 @@
                     style="max-height: 300px; overflow-y: auto; margin-bottom: 10px"
                 ></div>
                 <button class="btn btn-success" id="btn-save-current-scenario">
+                <button class="btn btn-secondary" id="btn-library-import">📂 Импорт из файла (.json)</button>
                     💾 Сохранить текущий сценарий
                 </button>
                 <button class="btn btn-secondary" id="btn-library-close">Закрыть</button>

@@ -1511,6 +1511,11 @@ function init() {
         document.getElementById('library-modal').style.display = 'flex';
         loadScenarioList();
     });
+
+    const btnLibraryImport = document.getElementById('btn-library-import');
+    if (btnLibraryImport && fileInput) {
+        btnLibraryImport.addEventListener('click', () => fileInput.click());
+    }
     document
         .getElementById('btn-library-close')
         .addEventListener('click', () => (document.getElementById('library-modal').style.display = 'none'));
