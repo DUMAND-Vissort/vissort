@@ -356,6 +356,32 @@ async function restoreTemplatesFolderHandle() {
         return false;
     }
 }
+// §vissort-tree: авто-дерево Vissort/Сценарии (выбор папки 1 раз)
+async function ensureVissortTree() {
+    let root = await window.Data.getFolderHandle('vissortRootHandle');
+    if (!root) {
+        if (!window.showDirectoryPicker) {
+            VLog.warn('[vissort-tree] File System Access не поддерживается');
+            return null;
+        }
+        try {
+            root = await window.showDirectoryPicker({ mode: 'readwrite' });
+        } catch (e) {
+            VLog.warn('[vissort-tree] выбор папки отменён', e.message);
+            return null;
+        }
+        await window.Data.saveFolderHandle('vissortRootHandle', root);
+    }
+    try {
+        const vissortDir = await root.getDirectoryHandle('Vissort', { create: true });
+        const scenariosDir = await vissortDir.getDirectoryHandle('Сценарии', { create: true });
+        return scenariosDir;
+    } catch (e) {
+        VLog.warn('[vissort-tree] создание папок:', e.message);
+        return null;
+    }
+}
+
 async function selectFolder() {
     if (HAS_FS_ACCESS) {
         try {
@@ -428,27 +454,29 @@ async function saveGraph() {
         if (!window._currentScenarioKey) window._currentScenarioKey = generateScenarioKey();
         const payload = buildScenarioPayloadFromCurrent();
         const jsonStr = JSON.stringify(payload, null, 2);
-        if (HAS_FS_ACCESS && selectedFolderHandle) {
-            try {
-                const ok = await window.Data.ensurePermission(selectedFolderHandle, 'readwrite');
-                if (ok) {
-                    let fileName = window._currentScenarioFileName;
-                    if (!fileName) {
-                        const ans = await VissortDialog.prompt(
-                            'Имя файла сценария (без пути):',
-                            'scenario_' + new Date().toISOString().slice(0, 10) + '.json'
-                        );
-                        if (!ans) return;
-                        fileName = /\.json$/i.test(ans) ? ans : ans + '.json';
-                        window._currentScenarioFileName = fileName;
-                    }
-                    await window.Data.writeFileToFolder(selectedFolderHandle, fileName, jsonStr);
-                    VissortDialog.alert('📁 Файл сохранён: ' + fileName);
+        // §vissort-tree: папка primary (Vissort/Сценарии), fallback — <a download>
+        let savedToFolder = false;
+        try {
+            const scenariosDir = await ensureVissortTree();
+            if (scenariosDir) {
+                let fileName = window._currentScenarioFileName;
+                if (!fileName) {
+                    const ans = await VissortDialog.prompt(
+                        'Имя файла сценария (без пути):',
+                        'scenario_' + new Date().toISOString().slice(0, 10) + '.json'
+                    );
+                    if (!ans) return;
+                    fileName = /\.json$/i.test(ans) ? ans : ans + '.json';
+                    window._currentScenarioFileName = fileName;
                 }
-            } catch (err) {
-                VLog.warn('[saveGraph] папка:', err);
+                await window.Data.writeFileToFolder(scenariosDir, fileName, jsonStr);
+                savedToFolder = true;
+                VissortDialog.alert('📁 Сохранено: Vissort/Сценарии/' + fileName);
             }
-        } else {
+        } catch (err) {
+            VLog.warn('[saveGraph] папка:', err);
+        }
+        if (!savedToFolder) {
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
