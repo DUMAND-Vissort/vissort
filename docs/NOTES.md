@@ -270,3 +270,82 @@
 - **Регрессия §A2-v2:** `responseButtons` не был перенесён в app-player-preview.js. Проявился, когда app.js удалили регион, где она ещё была. Фикс: `const responseButtons = document.getElementById('response-buttons')`.
 - **Регрессия §A2-v3:** `AppEditorCore.state` имел `get activeNodeId`, но без `set`. AI-генератор (`S.activeNodeId = created[0]`) падал. Фикс: `set activeNodeId(v) { state.activeNodeId = v; }`.
 
+
+---
+
+## 2026-10-18 — §A2-v7: моргание + камера → app-blink-camera.js
+
+### Решение: 24 функции → отдельный модуль (572 строки)
+
+**Контекст:**
+- §A2-v6 закрыт 17.10 (app.js 3903 → 3165).
+- BLINK (17 функций, 680–956) + CAMERA (7 функций, 988–1221).
+
+**Решение:** вынести в app-blink-camera.js:
+- createEmptyBlinkState (68–90).
+- BLINK (17): startBlinkAnimation, stopBlinkAnimation, computeEAR, getBlinkWarningEl, showBlinkWarning, hideBlinkWarning, resetBlinkState, processBlinkFrame, isBlinkResponseBlocked, areEyesClosedNow, ensureBlinkCalibrationUI, startBlinkCalibration, runBlinkCalibrationPhase, finishBlinkCalibration, cancelBlinkCalibration, buildBlinkReport.
+- CAMERA (7): loadFaceApiModels, enableCamera, disableCamera, recalcSizesForNewDistance, processVideoFrame, openCalibrationModal, calibrateFocalLength.
+- Переменные: _blinkState, _blinkResponseBlockUntil, _blinkCalibration, _waitingForOpenEyes.
+
+**Как:**
+- Экспорт window.AppBlinkCamera (24 метода).
+- 23 обёртки в app.js + 1 прямая (createEmptyBlinkState на строке 63).
+- _blinkState / _blinkResponseBlockUntil / _blinkCalibration / _waitingForOpenEyes — только в BLINK/CAMERA → в модуль.
+- _blinkStateLocal — НЕ путать: в AppState (alias 175), отдельная переменная.
+- scheduleVoiceCountdown (957–987) — НЕ наш, остаётся в app.js (между BLINK и CAMERA).
+- AppPlayerPreview не вызывается из CAMERA — мосты не нужны.
+
+**Результат:**
+- app.js: 3165 → 2653 (−512).
+- app-blink-camera.js: 572 строки (новый).
+- admin.html: <script src="app-blink-camera.js"> после app-scenarios.js.
+- sw.js: precache '/app-blink-camera.js'.
+- Тесты: 28 passed.
+- Коммит: 6189ca5.
+
+**Проблемы по ходу:**
+- _blinkState = null в модуле → TypeError: Cannot set properties of null (setting 'lastEAR'). Фикс: let _blinkState = createEmptyBlinkState(); (hoisting function declaration в IIFE работает).
+- realIPD_MM is not defined — потеряна при §A1. Фикс: const realIPD_MM = 63; в модуле.
+- MAX_DISTANCE_LOG is not defined — потеряна при §A1. Фикс: const MAX_DISTANCE_LOG = 2000; в модуле.
+- PowerShell here-string с кириллицей через Set-Content — кракозябры (ANSI). Решение: ASCII-комментарии или .tmp + WriteAllText.
+
+**Следующее:** §A2-v8 (утилиты → app-utils.js).
+
+---
+
+## 2026-10-18 — аудит §A1: восстановление 7 потерянных констант
+
+### Контекст
+
+§A1 (818ee24, 2026-10-15) вынес 90 переменных в app-state.js. При выносе 7 констант потерялись — не попали ни в app.js, ни в AppState (ни в объект state, ни в aliases).
+
+**Проявились только при выносе зависимых регионов (§A2-v7):**
+- BLINK_* (5) — при выносе BLINK.
+- realIPD_MM — при выносе CAMERA.
+- MAX_DISTANCE_LOG — при выносе CAMERA.
+
+**Латентные баги:** processBlinkFrame падал при каждом вызове (но вызывался только при blinkEnabled + камере). distanceLog не обрезался (>2000 рос бесконечно).
+
+### Решение
+
+| Константа | Значение | Где восстановлена | Коммит |
+|---|---|---|---|
+| BLINK_SHORT_MS | 100 | app-state.js (state + aliases) | 32434bc |
+| BLINK_LONG_MS | 400 | app-state.js | 32434bc |
+| BLINK_ASYM_RATIO | 0.45 | app-state.js | 32434bc |
+| BLINK_AUTOPAUSE_MS | 800 | app-state.js | 32434bc |
+| BLINK_BLOCK_MS | 200 | app-state.js | 32434bc |
+| realIPD_MM | 63 | app-blink-camera.js | 6189ca5 |
+| MAX_DISTANCE_LOG | 2000 | app-blink-camera.js | 249fbde |
+
+**Почему BLINK_* в AppState, а realIPD_MM / MAX_DISTANCE_LOG — в модуле:**
+- BLINK_* — клинические пороги, могут настраиваться (через UI) → AppState.
+- realIPD_MM / MAX_DISTANCE_LOG — физические/технические константы → в модуль.
+
+**Точные значения** взяты из git show 818ee24^:app.js (до §A1).
+
+### Правило (зафиксировать в PROMPT.md / HOW-TO)
+
+> Аудит констант при выносе региона. Перед выносом — Select-String по всем UPPER_CASE в регионе, проверить, что каждая объявлена в модуле или AppState. Иначе — ReferenceError при первом вызове функции, где константа используется. §A1 потерял 7 констант — проявились через 3 дня при §A2-v7.
+
+**Следующее:** §A2-v8 (утилиты → app-utils.js).

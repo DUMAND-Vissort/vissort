@@ -1399,7 +1399,27 @@ app.js содержит:
 - `responseButtons` не был перенесён при §A2-v2 → `const responseButtons = ...` в app-player-preview.js (коммит `5421955`).
 - `AppEditorCore.state.activeNodeId` без сеттера → добавлен `set activeNodeId(v)` в app-editor.js (коммит `5421955`).
 
-Далее §A2-v7 — моргание + камера в `app-blink-camera.js`.
+#### §A2-v7 (Фаза 5) — моргание + камера ✅ (2026-10-18)
+
+24 функции (17 BLINK + 7 CAMERA) вынесены в `app-blink-camera.js` (572 строки). Экспорт — `window.AppBlinkCamera`.
+
+`_blinkState` / `_blinkResponseBlockUntil` / `_blinkCalibration` / `_waitingForOpenEyes` — только в BLINK/CAMERA → в модуль. `_blinkStateLocal` — в AppState (alias 175), не путать.
+
+`BLINK_*` (5 констант) — в AppState (aliases 115), читаются через шим.
+`realIPD_MM` (63) и `MAX_DISTANCE_LOG` (2000) — в модуле.
+
+`app.js`: 3165 → **2653** (−512). Коммит `6189ca5`. Тесты: 28 passed.
+
+`admin.html`: подключён `<script src="app-blink-camera.js">` после `app-scenarios.js`.
+`sw.js`: precache `'/app-blink-camera.js'`.
+
+**Регрессии, найденные при проверке:**
+- `_blinkState = null` → `createEmptyBlinkState()` (hoisting).
+- `realIPD_MM` потеряна при §A1 → `const realIPD_MM = 63`.
+- `MAX_DISTANCE_LOG` потеряна при §A1 → `const MAX_DISTANCE_LOG = 2000`.
+- `BLINK_*` (5) потеряны при §A1 → в AppState (коммит `32434bc`).
+
+Далее §A2-v8 — утилиты в `app-utils.js`.
 
 #### §13.1.3 Три системы дистанции
 
