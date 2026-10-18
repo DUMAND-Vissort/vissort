@@ -781,7 +781,9 @@ async function loadScenarioList() {
                     if (sc.params?.scenarioKey) window._currentScenarioKey = sc.params.scenarioKey;
                     window._currentScenarioId = id;
                     window._currentScenarioFileName = (sc.name || 'scenario') + '.json';
-                    requestRenderGraph();
+                    if (typeof switchMode === 'function') switchMode('nodes');
+                    if (typeof requestRenderGraph === 'function') requestRenderGraph();
+                    if (typeof updateInspector === 'function') updateInspector();
                     VissortDialog.alert('Сценарий загружен в граф.');
                 } else VissortDialog.alert('Сценарий загружен. Нажмите «Плеер».');
                 document.getElementById('library-modal').style.display = 'none';
