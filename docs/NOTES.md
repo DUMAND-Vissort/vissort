@@ -385,3 +385,41 @@
 - init() — НЕ выносим: 524 строки, 32 DOM-константы, все обработчики редактора, loadUserSettings/loadSivtsevFont/initScreenCalibration (остаются в app.js).
 
 **Следующее:** §A2-v8 (утилиты → app-utils.js).
+
+---
+
+## 2026-10-18 — §A2-v8: утилиты → app-utils.js
+
+### Решение: 29 функций → отдельный модуль (681 строка)
+
+**Контекст:**
+- §A2-v9 закрыт 18.10 (app.js 2441 → 1846? нет, 2441 → 1846 после §A2-v8).
+- Утилиты: scenario time (487–595), distance warning (597–651), scheduleVoiceCountdown (654–684), animations (685–1115).
+
+**Решение:** вынести в app-utils.js:
+- Scenario time (3): estimateScenarioDurationMs, formatDurationMs, showScenarioTimeReport.
+- Distance warning (8): updateLiveDistanceIndicator, hideLiveDistanceIndicator, getDistanceWarningEl, showDistanceWarning, hideDistanceWarning, resetDistanceTracking, setDistanceBaselineIfNeeded, evaluateDistanceDeviation.
+- scheduleVoiceCountdown (1, мёртвая).
+- Animations (17): setStimColorRGB, startCircleAnimation, stopCircleAnimation, getPeripheralLayer, clearPeripheralLayer, stopPeripheralAnimation, buildPeripheralDots, buildDefocusFrame, removeSingleGridLines, drawSingleGridLines, applySingleGridPosition, pickSingleGridCell, applyRandomStimulusPosition, startSingleStimAnimation, stopSingleStimAnimation, startSingleBgAnimation, stopSingleBgAnimation.
+- Circle state (8 let): _circleAnimId, _circleAnimStart, _circleInnerPhases, _circleOuterPhases, _circleInnerDurationMs, _circleOuterDurationMs, _circleInnerLoop, _circleOuterLoop.
+
+**Как:**
+- Экспорт window.AppUtils (29 методов).
+- 29 тонких обёрток в app.js перед §A2-v9: ОБЁРТКИ.
+- 8 мостов для app-player-preview.js: startSingleStimAnimation, stopSingleStimAnimation, startSingleBgAnimation, stopSingleBgAnimation, startCircleAnimation, stopCircleAnimation, buildPeripheralDots, buildDefocusFrame + resetDistanceTracking, hideLiveDistanceIndicator.
+- 5 мостов для app-blink-camera.js: hideDistanceWarning, updateLiveDistanceIndicator, setDistanceBaselineIfNeeded, evaluateDistanceDeviation, showDistanceWarning.
+- switchMode (1520) — ОСТАЁТСЯ в app.js (редактор, 3 вызова).
+- PHYSIOLOGICAL_PHASES (1116) — ОСТАЁТСЯ в app.js (алиас).
+
+**Результат:**
+- app.js: 2441 → 1846 (−595).
+- app-utils.js: 681 строка (новый).
+- admin.html: <script src="app-utils.js"> после app-auth.js.
+- sw.js: precache '/app-utils.js'.
+- Тесты: 28 passed.
+- Коммит: cae7e5c.
+
+**Фикс (не §A2-v8):**
+- app-generator.js: 4 функции (renderGridPreview, generateCellParamsFields, collectCompareParams, buildModeParamsFromUI) вынесены за `})();` при §A2-v5 — state не видна. Фикс: `const state = window.AppState;` в начало каждой + acuityToSizeMm/acuityToSizePx/hexToRgb из VissortCore.
+
+**Следующее:** §A2-v9b (init + 32 DOM → app-init.js) — отложен (высокий риск). app.js ~1846 — приемлемо.

@@ -1437,7 +1437,26 @@ app.js содержит:
 
 **Решение по `init()`:** §A2-v9b (вынос `init` + 32 DOM) — **отложен** (высокий риск, тесты не покрывают). app.js ~2441 — приемлемо для Фазы 5.
 
-Далее §A2-v8 — утилиты в `app-utils.js`.
+#### §A2-v8 (Фаза 5) — утилиты ✅ (2026-10-18)
+
+29 функций (3 scenario + 8 distance + 1 scheduleVoiceCountdown + 17 animations) вынесены в `app-utils.js` (681 строка). Экспорт — `window.AppUtils`.
+
+Circle state (8 `let`: `_circleAnimId`, `_circleAnimStart`, `_circleInnerPhases`, `_circleOuterPhases`, `_circleInnerDurationMs`, `_circleOuterDurationMs`, `_circleInnerLoop`, `_circleOuterLoop`) — в модуле.
+
+`switchMode` (1520) и `PHYSIOLOGICAL_PHASES` (1116) — **остаются в app.js** (редактор / алиас).
+
+Мосты: 8 animations + 2 distance (для `app-player-preview.js`), 5 distance (для `app-blink-camera.js`).
+
+`app.js`: 2441 → **1846** (−595). Коммит `cae7e5c`. Тесты: 28 passed.
+
+`admin.html`: подключён `<script src="app-utils.js">` после `app-auth.js`.
+`sw.js`: precache `'/app-utils.js'`.
+
+**Фикс (не §A2-v8):** `app-generator.js` — 4 функции (`renderGridPreview`, `generateCellParamsFields`, `collectCompareParams`, `buildModeParamsFromUI`) вынесены за `})();` при §A2-v5. Фикс: `const state = window.AppState;` + `acuityToSizeMm`/`acuityToSizePx`/`hexToRgb`.
+
+**Решение по `init()`:** §A2-v9b — **отложен**. app.js ~1846 — приемлемо для Фазы 5.
+
+**Фаза 5 закрыта:** app.js 7900 → 1846 (−77%). Далее — Фаза 6 (клинический редактор).
 
 #### §13.1.3 Три системы дистанции
 
