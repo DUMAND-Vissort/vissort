@@ -27,6 +27,8 @@ const PRECACHE_URLS = [
     '/app-blink-camera.js',
     '/app-auth.js',
     '/app-utils.js',
+    '/clinic.html',
+    '/clinic.js',
     '/app.js',
     '/data-layer.js',
     '/user.js',
