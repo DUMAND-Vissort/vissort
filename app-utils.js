@@ -174,6 +174,36 @@ function evaluateDistanceDeviation() {
 }
 
   // === SCHEDULE VOICE COUNTDOWN (было app.js 654–684) ===
+  function scheduleVoiceCountdown(durationMs, p) {
+    if (!window.Voice || !window.Voice.enabled) return;
+    if (!durationMs || durationMs < 5000) return;
+    const timers = [];
+    if (durationMs - 5000 > 0) {
+        timers.push(
+            setTimeout(() => {
+                if (!responsePhaseActive || isPaused) return;
+                window.Voice.sayKey('countdown5');
+            }, durationMs - 5000)
+        );
+    }
+    [3, 2, 1].forEach((s) => {
+        const at = durationMs - s * 1000;
+        if (at > 0)
+            timers.push(
+                setTimeout(() => {
+                    if (!responsePhaseActive || isPaused) return;
+                    window.Voice.sayKey('countdown' + s);
+                }, at)
+            );
+    });
+    const watcher = setInterval(() => {
+        if (!responsePhaseActive) {
+            timers.forEach((t) => clearTimeout(t));
+            clearInterval(watcher);
+        }
+    }, 200);
+  }
+
 
 // ==================== КАМЕРА ====================
 
@@ -615,6 +645,7 @@ function stopSingleBgAnimation() {
     updateLiveDistanceIndicator, hideLiveDistanceIndicator,
     getDistanceWarningEl, showDistanceWarning, hideDistanceWarning,
     resetDistanceTracking, setDistanceBaselineIfNeeded, evaluateDistanceDeviation,
+    scheduleVoiceCountdown,
     setStimColorRGB, startCircleAnimation, stopCircleAnimation,
     getPeripheralLayer, clearPeripheralLayer, stopPeripheralAnimation, buildPeripheralDots,
     buildDefocusFrame, removeSingleGridLines, drawSingleGridLines,
@@ -647,5 +678,6 @@ function stopSingleBgAnimation() {
   window.getDistanceWarningEl = getDistanceWarningEl;
   window.setStimColorRGB = setStimColorRGB;
 
+  window.scheduleVoiceCountdown = scheduleVoiceCountdown;
   VLog.log('[app-utils] loaded, methods:', Object.keys(window.AppUtils).length);
 })();
