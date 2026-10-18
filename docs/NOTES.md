@@ -423,3 +423,86 @@
 - app-generator.js: 4 функции (renderGridPreview, generateCellParamsFields, collectCompareParams, buildModeParamsFromUI) вынесены за `})();` при §A2-v5 — state не видна. Фикс: `const state = window.AppState;` в начало каждой + acuityToSizeMm/acuityToSizePx/hexToRgb из VissortCore.
 
 **Следующее:** §A2-v9b (init + 32 DOM → app-init.js) — отложен (высокий риск). app.js ~1846 — приемлемо.
+
+---
+
+## 2026-10-18 — Фаза 6 MVP: clinic.html + clinic.js
+
+### Решение: клинический редактор (одна клиника, без мультитенантности)
+
+**Контекст:**
+- Фаза 5 закрыта 18.10 (app.js 7900 → 1845).
+- Цель Фазы 6 — врач задаёт протокол → тренажёр строит сценарий → превью.
+- **Мультитенантность не делаем** (пилот — 1 клиника, без `tenants`/`tenant_id`). После пилота — Фаза 7.
+
+**Решение:**
+- `clinic.html` (3043) — копия `admin.html` + `#clinic-header` + `#protocol-panel` (5 полей: диоптрии, возраст, тип, время, моргание). **Ничего не удаляли** (AI-генератор, `#btn-test`, sync — как у админа).
+- `clinic.js` (107) — header (email врача), «Сгенерировать» → `AppEditor.createNewNode` (STIMULUS / READING) + `node.params`, «Сохранить» → `Data.saveScenario({ doctor_id, ... })`, «Пользователи» → `#users-modal` → `Data.assignScenario`.
+- `sw.js` — precache `'/clinic.html'`, `'/clinic.js'`.
+
+**Результат:**
+- Коммит: `586f883`.
+- Тесты: 34 passed (28 + 6 clinic).
+
+**Проблемы по ходу:**
+- `scheduleVoiceCountdown` — удалён в §A2-v8 как «мёртвый», но вызывался из `app-player-preview.js:418`. Восстановлен (коммит `ad95574`).
+- Структура `clinic-header` / `protocol-panel` — сначала сломан `</div>` (форма внутри заголовка). Исправлено в `33b5ed8`.
+
+**Следующее:** Space = Play/Pause + max acuity 1.0, tests clinic, мультитенантность (Фаза 7, после пилота).
+
+---
+
+## 2026-10-18 — Space = Play/Pause, max acuity 1.0
+
+### Решение: клавиша Space + ограничение остроты 1.0
+
+**Контекст:**
+- В плеерах стрелки (ArrowLeft/Right/Up/Down) — ответы. Play/Pause — нет.
+- Острота зрения: max 2.0 / 1.5 (визуально нереалистично). Договорённость — 1.0.
+
+**Решение:**
+- `player-runtime.js` (607–612) — `if (e.key === ' ') togglePause()` **до** `if (!PlayerState.responsePhaseActive) return` (работает на паузе).
+- `app-player-preview.js` (1089–1097) — Space: если `_readingNodeWaiting` → `toggleReadingPause()`, иначе → `window.AppPlayerPreview.togglePause()`.
+- Max acuity 1.0 (было 2.0/1.5) — 7 мест: `app.js:170, 615`, `app-generator.js:750`, `app-player-preview.js:819, 821`, `player-runtime.js:783`.
+- **Не трогали:** `MAX_ZOOM = 2.0` (зум), `diopters: 1.5` (диоптрии — не острота).
+
+**Результат:**
+- Коммит: `66e6ef7`.
+- Тесты: 34 passed.
+
+**Следующее:** tests clinic, мультитенантность (Фаза 7).
+
+---
+
+## 2026-10-18 — tests/clinic.spec.js (6 тестов)
+
+### Решение: Playwright для clinic.html
+
+**Контекст:**
+- `clinic.html` (3043) — Фаза 6 MVP. Тестов не было.
+- 28 тестов покрывали `admin`, `player`, `user`, `login`, `schema`, `camera`.
+
+**Решение:** `tests/clinic.spec.js` (121, 6 тестов):
+- `clinic-header виден`
+- `форма протокола видна`
+- `сгенерировать → узел на холсте` (`.scenario-node`)
+- `сохранить → сценарий в IndexedDB` (`vissort-db`, store `scenarios`)
+- `пользователи → модалка`
+- `Space = пауза в превью`
+
+**Мок auth (`mockClinicLogin`)** — как в `editor.spec.js`:
+- `localStorage.setItem('sb-<ref>-auth-token', session)` — **ключевой** (без него `getSession()` → null → `#auth-modal` открыт → click перехвачен).
+- `page.route('**/auth/v1/**')` + `page.route('**/rest/v1/**')`.
+- Калибровка в `vissort_device_calib` (`test-fp`).
+- `waitForSelector('#main-layout')` (не `#clinic-header`).
+
+**Фикс `login.spec.js:33`** (`неверный пароль`):
+- Мок auth (400 `invalid_grant`).
+- `page.goto('/admin.html', { waitUntil: 'domcontentloaded', timeout: 60000 })`.
+
+**Результат:**
+- Коммит: `8386699`.
+- Тесты: **34 passed** (28 + 6).
+- `login.spec.js` — 3 passed (было 1 failed timeout).
+
+**Следующее:** мультитенантность (Фаза 7, после пилота).

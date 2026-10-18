@@ -1456,7 +1456,29 @@ Circle state (8 `let`: `_circleAnimId`, `_circleAnimStart`, `_circleInnerPhases`
 
 **Решение по `init()`:** §A2-v9b — **отложен**. app.js ~1846 — приемлемо для Фазы 5.
 
-**Фаза 5 закрыта:** app.js 7900 → 1846 (−77%). Далее — Фаза 6 (клинический редактор).
+#### Фаза 6 MVP (2026-10-18) ✅
+
+**Цель:** врач задаёт протокол → тренажёр строит сценарий → превью.
+
+**Сделано:**
+- `clinic.html` (3043) — копия `admin.html` + `#clinic-header` + `#protocol-panel` (5 полей).
+- `clinic.js` (107) — генерация узлов, сохранение с `doctor_id`, назначение пациенту.
+- `sw.js` — precache `'/clinic.html'`, `'/clinic.js'`.
+- `tests/clinic.spec.js` (121, 6 тестов) — header, форма, генерация, сохранение, пользователи, Space.
+- Space = Play/Pause: `player-runtime.js`, `app-player-preview.js`.
+- Max acuity 1.0 (было 2.0/1.5) — 7 мест.
+- `scheduleVoiceCountdown` восстановлен (был удалён в §A2-v8, но вызывался из `app-player-preview.js`).
+
+**Коммиты:** `586f883`, `ad95574`, `33b5ed8`, `66e6ef7`, `8386699`.
+
+**Тесты:** 34 passed.
+
+**Не делали (Фаза 7):**
+- Мультитенантность (`tenants`, `tenant_id`, RLS).
+- Роли `clinic_admin` / `nurse`.
+- Аналитика по клинике.
+- PDF-отчёты.
+- Приглашения врачей.
 
 #### §13.1.3 Три системы дистанции
 
