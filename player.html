@@ -471,7 +471,7 @@
                             : 'production',
                     release: (window.VissortEnv && window.VissortEnv.RELEASE) || 'vissort-2.0.0',
                     dataCollection: { userInfo: false, httpBodies: [] },
-                    tracesSampleRate: 0.1,
+                    tracesSampleRate: (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 0 : 0.1,
                     beforeSend: function (event) {
                         var msg = (event.message || '') + ' ' + JSON.stringify(event.exception || {});
                         if (msg.indexOf('Domain not allowed') !== -1) return null;

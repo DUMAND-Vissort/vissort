@@ -267,6 +267,7 @@
 - **`node --check` не понимает `.tmp`** — копировать в `.js` перед проверкой.
 - **`WriteAllText` может упасть в PS 7.6.6 на больших скриптах** — обход через `.tmp` + `Move-Item`.
 - **`vissort-dialog.js`** — `showModal()` не ставит `[open]` → `setAttribute('open', '')` для тестов.
+- **Не выносить функции за `})();`** (закрытие IIFE). §A2-v5 (`app-generator.js`) — 4 функции (`renderGridPreview`, `generateCellParamsFields`, `collectCompareParams`, `buildModeParamsFromUI`) оказались **после** `})();`, `state` / импорты **не видны**. **Проявилось** только при §A2-v8. **Правило:** после выноса — `Select-String -Pattern '^\}\)\(\);'`, все `function` **до** закрытия. Если **после** — **добавить** `const state = window.AppState;` (или **переместить** внутрь).
 
 **Продуктово:**
 - Не обещать излечения.
