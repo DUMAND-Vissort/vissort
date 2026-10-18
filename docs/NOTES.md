@@ -349,3 +349,39 @@
 > Аудит констант при выносе региона. Перед выносом — Select-String по всем UPPER_CASE в регионе, проверить, что каждая объявлена в модуле или AppState. Иначе — ReferenceError при первом вызове функции, где константа используется. §A1 потерял 7 констант — проявились через 3 дня при §A2-v7.
 
 **Следующее:** §A2-v8 (утилиты → app-utils.js).
+
+---
+
+## 2026-10-18 — §A2-v9: auth + SW → app-auth.js
+
+### Решение: 15 функций → отдельный модуль (259 строк)
+
+**Контекст:**
+- §A2-v7 закрыт 18.10 (app.js 3165 → 2653).
+- AUTH (1677–1807) + AUTH-helpers (2403–2501).
+
+**Решение:** вынести в app-auth.js:
+- AUTH-ядро (8): initSupabase, signIn, signUp, signOut, updateAuthUI, showAuthModal, registerServiceWorker, showSWUpdateBanner.
+- AUTH-helpers (7): encodeCred, decodeCred, saveAuthCreds, prefillAuthCreds, focusAuthField, bindAuthForm, handleAuthSubmit + IIFE installAuthObserver.
+- Константы: ADMIN_EMAILS, IS_DEV, LS_LAST_EMAIL, LS_LAST_PASS.
+- supabaseClient — локальная в IIFE, window.supabaseClient — мост.
+
+**Как:**
+- Экспорт window.AppAuth (15 методов + 2 константы).
+- 15 тонких обёрток в app.js перед // START.
+- init() (1809–2333) — ОСТАЁТСЯ в app.js (524 строки, 32 DOM-константы, вся инициализация редактора). Вызывает обёртки initSupabase(), registerServiceWorker(), showAuthModal(), signOut().
+- window.ADMIN_EMAILS = window.AppAuth.ADMIN_EMAILS — мост.
+
+**Результат:**
+- app.js: 2653 → 2441 (−212).
+- app-auth.js: 259 строк (новый).
+- admin.html: <script src="app-auth.js"> после app-blink-camera.js.
+- sw.js: precache '/app-auth.js'.
+- Тесты: 28 passed.
+- Коммит: c57f8f9.
+
+**Проблемы по ходу:**
+- LS_LAST_EMAIL / LS_LAST_PASS — дублировались: в шапке модуля + в AUTH-helpers (2404–2405). Фикс: убрать из шапки, оставить в AUTH-helpers.
+- init() — НЕ выносим: 524 строки, 32 DOM-константы, все обработчики редактора, loadUserSettings/loadSivtsevFont/initScreenCalibration (остаются в app.js).
+
+**Следующее:** §A2-v8 (утилиты → app-utils.js).

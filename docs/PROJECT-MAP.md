@@ -1419,6 +1419,24 @@ app.js содержит:
 - `MAX_DISTANCE_LOG` потеряна при §A1 → `const MAX_DISTANCE_LOG = 2000`.
 - `BLINK_*` (5) потеряны при §A1 → в AppState (коммит `32434bc`).
 
+#### §A2-v9 (Фаза 5) — auth + SW ✅ (2026-10-18)
+
+15 функций (8 AUTH-ядро + 7 AUTH-helpers + IIFE installAuthObserver) вынесены в `app-auth.js` (259 строк). Экспорт — `window.AppAuth`.
+
+Константы `ADMIN_EMAILS`, `IS_DEV`, `LS_LAST_EMAIL`, `LS_LAST_PASS` — в модуле. `supabaseClient` — локальная, `window.supabaseClient` — мост.
+
+`init()` (1809–2333, 524 строки) — **остаётся в app.js**: 32 DOM-константы, обработчики редактора, `loadUserSettings`/`loadSivtsevFont`/`initScreenCalibration`. Вызывает обёртки `initSupabase()`, `registerServiceWorker()`, `showAuthModal()`, `signOut()`.
+
+`app.js`: 2653 → **2441** (−212). Коммит `c57f8f9`. Тесты: 28 passed.
+
+`admin.html`: подключён `<script src="app-auth.js">` после `app-blink-camera.js`.
+`sw.js`: precache `'/app-auth.js'`.
+
+**Проблемы по ходу:**
+- `LS_LAST_EMAIL` / `LS_LAST_PASS` дублировались (шапка модуля + AUTH-helpers). Фикс: убрать из шапки.
+
+**Решение по `init()`:** §A2-v9b (вынос `init` + 32 DOM) — **отложен** (высокий риск, тесты не покрывают). app.js ~2441 — приемлемо для Фазы 5.
+
 Далее §A2-v8 — утилиты в `app-utils.js`.
 
 #### §13.1.3 Три системы дистанции
