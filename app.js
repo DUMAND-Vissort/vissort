@@ -1600,7 +1600,6 @@ function hideDistanceWarning() { return window.AppUtils.hideDistanceWarning(); }
 function resetDistanceTracking() { return window.AppUtils.resetDistanceTracking(); }
 function setDistanceBaselineIfNeeded() { return window.AppUtils.setDistanceBaselineIfNeeded(); }
 function evaluateDistanceDeviation() { return window.AppUtils.evaluateDistanceDeviation(); }
-function scheduleVoiceCountdown(durationMs, p) { return window.AppUtils.scheduleVoiceCountdown(durationMs, p); }
 function setStimColorRGB(r, g, b) { return window.AppUtils.setStimColorRGB(r, g, b); }
 function startCircleAnimation(node) { return window.AppUtils.startCircleAnimation(node); }
 function stopCircleAnimation() { return window.AppUtils.stopCircleAnimation(); }
