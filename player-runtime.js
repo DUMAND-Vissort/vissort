@@ -604,6 +604,12 @@ responseButtons.addEventListener('click', (e) => {
     }
 });
 document.addEventListener('keydown', (e) => {
+    // Play/Pause (Space) — работает всегда (даже на паузе)
+    if (e.key === ' ' && !e.target.matches('input, textarea, select')) {
+        e.preventDefault();
+        if (typeof togglePause === 'function') togglePause();
+        return;
+    }
     if (!PlayerState.responsePhaseActive) return;
     // В режиме сравнения игнорировать Up/Down, только Left/Right = Да/Нет
     if (
@@ -774,7 +780,7 @@ function init() {
         }, 60);
     });
     $('reading-see-well').addEventListener('click', () => {
-        PlayerState.currentAcuity = Math.min(2.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
+        PlayerState.currentAcuity = Math.min(1.0, Math.round((PlayerState.currentAcuity + 0.1) * 10) / 10);
         const d = PlayerState.userScenario?.params?.readingDistance || 1;
         $('reading-content').style.fontSize =
             acuityToFontSizePx(PlayerState.currentAcuity, d, PlayerState.screenPPI) + 'px';

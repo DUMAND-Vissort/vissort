@@ -816,9 +816,9 @@ function finishSeries() {
     if (ok) successfulSeries++;
     else failedSeries++;
     if (ok) {
-        if (currentAcuity < (trainingNode?.params?.endAcuity || 2.0))
+        if (currentAcuity < (trainingNode?.params?.endAcuity || 1.0))
             currentAcuity = Math.min(
-                trainingNode?.params?.endAcuity || 2.0,
+                trainingNode?.params?.endAcuity || 1.0,
                 Math.round((currentAcuity + (trainingNode?.params?.acuityStep || 0.1)) * 10) / 10
             );
     } else {
@@ -1088,7 +1088,11 @@ document.addEventListener('keydown', (e) => {
         }
         if (e.key === ' ') {
             e.preventDefault();
-            toggleReadingPause();
+            if (window._readingNodeWaiting) {
+                toggleReadingPause();
+            } else if (window.AppPlayerPreview && typeof window.AppPlayerPreview.togglePause === 'function') {
+                window.AppPlayerPreview.togglePause();
+            }
             return;
         }
         if (e.key === 'Escape' && window._readingNodeWaiting) {

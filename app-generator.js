@@ -747,7 +747,7 @@
             seriesThreshold: window.safeVal('gen-threshold', getThreshold(ss), parseInt),
             type: window.safeVal('gen-type', 'LETTER_E'),
             startAcuity: window.safeVal('gen-start-acuity', 0.5, parseFloat),
-            endAcuity: window.safeVal('gen-end-acuity', 2.0, parseFloat),
+            endAcuity: window.safeVal('gen-end-acuity', 1.0, parseFloat),
             acuityStep: window.safeVal('gen-acuity-step', 0.1, parseFloat),
             distanceMeters: state.generalDistance,
             readingDistance: state.readingDistance,

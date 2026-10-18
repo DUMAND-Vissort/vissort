@@ -167,7 +167,7 @@ function loadUserSettings() {
     const fw = localStorage.getItem(LS_KEYS.readingFontWeight);
     if (fw === 'normal' || fw === 'bold') readingFontWeight = fw;
     const ac = parseFloat(localStorage.getItem(LS_KEYS.readingAcuity));
-    if (!isNaN(ac) && ac >= 0.1 && ac <= 2.0) currentAcuity = ac;
+    if (!isNaN(ac) && ac >= 0.1 && ac <= 1.0) currentAcuity = ac;
     const rd = parseFloat(localStorage.getItem(LS_KEYS.readingDistance));
     if (!isNaN(rd) && rd > 0) readingDistance = rd;
     const gd = parseFloat(localStorage.getItem(LS_KEYS.generalDistance));
@@ -612,7 +612,7 @@ function changeAcuityByStep(delta) {
     if (!window._currentReadingNodeId) return;
     const node = getNode(window._currentReadingNodeId);
     if (!node || node.nodeType !== 'READING') return;
-    const nV = Math.max(0.1, Math.min(2.0, Math.round((node.readingAcuity + delta) * 10) / 10));
+    const nV = Math.max(0.1, Math.min(1.0, Math.round((node.readingAcuity + delta) * 10) / 10));
     if (Math.abs(nV - node.readingAcuity) < 0.001) return;
     node.readingAcuity = nV;
     const d = currentDistanceMeters || node.readingDistance || readingDistance || 1;
