@@ -186,15 +186,15 @@
 - **Фикс Библиотеки** — `switchMode('nodes')` + `requestRenderGraph` + `updateInspector`.
 
 **Текущее состояние:**
-- HEAD: `927be46`
+- HEAD: `60d4eb9`
 - `app.js`: **1850 строк** (Фаза 5 закрыта, −77%).
 - `clinic.html`: **3050**, `clinic.js`: **107**.
 - `app-scenarios.js`: **839** (авто-дерево `Vissort/Сценарии`).
 - Тесты: **36 passed + 1 skipped** (37 всего).
 
-**Следующее:**
-- `loadScenarioList` — папка primary (`scanScenariosFolder` перед `Data.getScenarios`).
-- `restoreFolderHandle` — `vissortRootHandle` (вместо `scenariosFolderHandle`).
+**Сделано (2026-10-18):**
+- `loadScenarioList` — папка primary (`scanScenariosFolder` перед `Data.getScenarios`), коммит `60d4eb9`.
+- `restoreFolderHandle` — `vissortRootHandle` (вместо `scenariosFolderHandle`), fallback legacy, коммит `7a22322`.
 
 **Не делали (Фаза 7):**
 - Мультитенантность (`tenants`, `tenant_id`, RLS) — после пилота.
@@ -288,5 +288,5 @@ npx --yes serve -l 5500
 ---
 
 *Дата создания: 2026-10-05*
-*Обновлено: 2026-10-17 (§A2-v5 закрыт: app.js 4693 → 3903, app-generator.js 875 строк)*
+*Обновлено: 2026-10-18 (авто-дерево закрыто: restoreFolderHandle -> vissortRootHandle, loadScenarioList сканирует Vissort/Сценарии. HEAD: 60d4eb9)*
 *Копировать: в первое сообщение нового чата.*

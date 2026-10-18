@@ -578,3 +578,32 @@
 **Проверка локально:** `clinic.html?nocache=1` → Создать узел → Сохранить → Новый → Библиотека → Загрузить → холст обновился.
 
 **Следующее:** `loadScenarioList` (папка primary) — следующий шаг.
+
+---
+
+## 2026-10-18 — закрытие авто-дерева: restoreFolderHandle + loadScenarioList
+
+### Решение: primary-папка читается и при загрузке списка, не только при сохранении
+
+**Контекст:**
+- §vissort-tree: saveGraph писал в Vissort/Сценарии (vissortRootHandle).
+- restoreFolderHandle (330) читал старый ключ scenariosFolderHandle → selectedFolderHandle указывал не туда.
+- loadScenarioList брал только Data.getScenarios() — файлы из папки не попадали в список, пока их не импортировали вручную.
+
+**Решение:**
+- restoreFolderHandle (330–363): primary — vissortRootHandle → getDirectoryHandle('Vissort') → getDirectoryHandle('Сценарии'); fallback — scenariosFolderHandle (legacy). selectedFolderHandle = конечная папка. folderStatus = "📁 Сценарии".
+- loadScenarioList (~761): перед Data.getScenarios() — if (HAS_FS_ACCESS && selectedFolderHandle) await scanScenariosFolder(). scanScenariosFolder импортирует .json в IDB (id = 'local_' + key), дальше getScenarios() отдаёт объединённый список (папка + IndexedDB + облако).
+
+**Почему не меняли scanScenariosFolder:** side-effect на IDB уже корректен (id local_<key> — тот же, что даёт buildScenarioPayloadFromCurrent). Дедуп делает Data.saveScenario по id.
+
+**Грабли (для следующих правок):**
+- После P1 файл вырос на 16 строк — старые номера строк (745/750) устарели → P2 отрезал живые функции. Правило: после каждого патча перепроверять Select-String по anchors, а не по номерам.
+- node --check не понимает .tmp (ERR_UNKNOWN_FILE_EXTENSION) — копировать в .check.js.
+- await в не-async — верный признак, что async function ... попал в отрезанный диапазон.
+
+**Результат:**
+- Коммиты: 7a22322 (restore), 60d4eb9 (loadScenarioList).
+- Тесты: 36 passed + 1 skipped.
+- Файлы: app-scenarios.js (+22/−6, +8/−0).
+
+**Следующее:** мультитенантность (Фаза 7, после пилота).
