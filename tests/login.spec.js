@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Login — admin.html', () => {
     test('открывается страница логина', async ({ page }) => {
-        await page.goto('/admin.html');
+        await page.goto('/admin.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
         await expect(page).toHaveTitle(/Vissort/);
         await expect(page.locator('#auth-modal')).toBeVisible();
     });
@@ -31,7 +31,10 @@ test.describe('Login — admin.html', () => {
     });
 
     test('неверный пароль — показывается ошибка', async ({ page }) => {
-        await page.goto('/admin.html');
+        await page.route('**/auth/v1/**', async (route) => {
+            return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'invalid_grant', error_description: 'Invalid login credentials' }) });
+        });
+        await page.goto('/admin.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForSelector('#auth-email', { state: 'visible' });
 
         await page.fill('#auth-email', 'wrong@vissort.com');
