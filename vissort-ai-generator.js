@@ -235,7 +235,7 @@
             target: ($('ai-gen-target')?.value || '').trim(),
             duration: parseInt($('ai-gen-duration')?.value) || 10,
             startAcuity: parseFloat($('ai-gen-v-start')?.value) || 0.5,
-            endAcuity: parseFloat($('ai-gen-v-end')?.value) || 2.0,
+            endAcuity: parseFloat($('ai-gen-v-end')?.value) || 1.0,
             nodeCount: Math.max(1, Math.min(15, parseInt($('ai-gen-count')?.value) || 5)),
             types: []
         };

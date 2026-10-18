@@ -213,4 +213,28 @@ test.describe('Player — player.html', () => {
         });
         expect(startEnabled).toBeTruthy();
     });
+    test('Space ставит на паузу', async ({ page }) => {
+        await page.waitForFunction(
+            () => {
+                const b = document.getElementById('btn-player');
+                return b && !b.disabled;
+            },
+            { timeout: 15000 }
+        );
+
+        await page.click('#btn-player');
+        await page.waitForTimeout(1000);
+
+        await page.keyboard.press('Space');
+        await page.waitForTimeout(300);
+
+        const paused = await page.evaluate(() => window.PlayerState?.isPaused);
+        expect(paused).toBe(true);
+
+        await page.keyboard.press('Space');
+        await page.waitForTimeout(300);
+
+        const resumed = await page.evaluate(() => window.PlayerState?.isPaused);
+        expect(resumed).toBe(false);
+    });
 });

@@ -113,4 +113,26 @@ test.describe('Schema version — миграция', () => {
         // И значение должно быть undefined — миграция происходит при загрузке графа, не в Data
         expect(result.schemaVersion).toBeUndefined();
     });
+    test('max acuity = 1.0 (инспектор)', async ({ page }) => {
+        await page.click('#btn-add-stim');
+        await page.waitForTimeout(300);
+        await page.click('.scenario-node');
+        await page.waitForTimeout(300);
+
+        const maxOption = await page.evaluate(() => {
+            const sel = document.getElementById('inp-acuity');
+            if (!sel) return null;
+            const values = Array.from(sel.options).map((o) => parseFloat(o.value));
+            return Math.max(...values);
+        });
+        expect(maxOption).toBe(1.0);
+
+        const maxEnd = await page.evaluate(() => {
+            const sel = document.getElementById('inp-end-acuity');
+            if (!sel) return null;
+            const values = Array.from(sel.options).map((o) => parseFloat(o.value));
+            return Math.max(...values);
+        });
+        expect(maxEnd).toBe(1.0);
+    });
 });
