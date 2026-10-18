@@ -8,6 +8,7 @@
 
   // §A2-v7 fix: realIPD_MM (межзрачковое расстояние, мм) — потеряна при §A1
   const realIPD_MM = 63;
+  const MAX_DISTANCE_LOG = 2000;
   let _blinkState = createEmptyBlinkState();
   let _blinkResponseBlockUntil = 0;
   let _blinkCalibration = null;
