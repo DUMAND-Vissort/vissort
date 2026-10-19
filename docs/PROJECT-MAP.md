@@ -1754,19 +1754,21 @@ release: 'vissort-2.0.0' в 3 HTML. Не синхронизируется с CAC
 ---
 ## §14. Покрытие тестами
 
-7 spec-файлов, 28 тестов, покрытие ~35 % реального.
+9 spec-файлов, **36 passed + 1 skipped** (37 всего), покрытие ~40 %.
 
 ### §14.1 Общая таблица
 
 | Файл | Тестов | Реально покрывает |
 |---|---|---|
+| tests/ai-generator.spec.js | 1 | мок Edge Function, узлы создаются |
 | tests/camera.spec.js | 4 | ~40 % (мок без face-api) |
+| tests/clinic.spec.js | 6 | клиника: header, протокол, узлы, IndexedDB, модалка, Space |
 | tests/editor.spec.js | 5 | ~25 % (нет saveGraph/UI) |
 | tests/login.spec.js | 3 | ~50 % (1 тест без мока) |
 | tests/offline.spec.js | 5 | ~5 % (SW отключён в IS_DEV) |
-| tests/player.spec.js | 4 | ~50 % (критические баги не ловит) |
+| tests/player.spec.js | 5 | ~50 % (критические баги не ловит) |
 | tests/reading.spec.js | 5 | ~60 % |
-| tests/schema.spec.js | 2 | 0 % (миграция не проверяется) |
+| tests/schema.spec.js | 3 | schemaVersion, миграция, max acuity 1.0 |
 | Итого | 28 | ~35 % |
 
 ### §14.2 Что покрыто
@@ -2150,8 +2152,8 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 | Что | Значение |
 |---|---|
 | schemaVersion (сценарии) | 2 |
-| CACHE_VERSION (SW) | vissort-v34 |
-| release (Sentry) | vissort-2.0.0 |
+| CACHE_VERSION (SW) | auto-bump через CI (`vissort-YYYYMMDD-<hash>`) |
+| release (Sentry) | `VissortEnv.RELEASE` (`vissort-env.js`) |
 | DB_VERSION (IndexedDB) | 3 |
 | Supabase project | hzvypwdpdhsjzaclxmbm |
 | Production | vissort.com |
