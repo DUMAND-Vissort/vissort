@@ -82,9 +82,16 @@ test.describe('AI Generator — admin.html', () => {
             },
             { timeout: 5000 }
         );
+        await page.waitForFunction(
+            (n) => document.querySelectorAll('.scenario-node').length > n,
+            before,
+            { timeout: 5000 }
+        );
         const after = await page.locator('.scenario-node').count();
         expect(after).toBeGreaterThan(before);
-        const status = await page.locator('#ai-gen-status').textContent();
-        expect(status).toMatch(/Создано \d+ узлов/);
+        await expect.poll(
+            async () => (await page.locator('#ai-gen-status').textContent()) || '',
+            { timeout: 5000 }
+        ).toMatch(/Создано \d+ узлов/);
     });
 });
