@@ -340,22 +340,47 @@ Sivtsev OTF (шрифт)
 
 | Неймспейс | Файл | Назначение |
 |---|---|---|
-| `window.VissortEnv` | `vissort-env.js` | SUPABASE_URL, ANON_KEY — единый источник |
+| `window.VLog` | `vissort-logger.js` | единый логгер (no-op в проде) |
+| `window.VissortEnv` | `vissort-env.js` | SUPABASE_URL, ANON_KEY, RELEASE |
+| `window.VissortDialog` | `vissort-dialog.js` | alert / confirm / prompt |
 | `window.VissortCore` | `vissort-core.js` | 24 функции утилит |
 | `window.Voice` | `voice.js` | Web Speech API |
 | `window.Data` | `data-layer.js` | IndexedDB + Supabase + очередь |
 | `window.PlayerState` | `player-state.js` | ~150 полей состояния плеера |
-| `window.PlayerUtils` | `player-utils.js` | 4 функции плеера |
+| `window.PlayerUtils` | `player-utils.js` | rate-limit, validate, distance |
+| `window.PlayerDistWarning` | `player-dist-warning.js` | баннеры дистанции |
+| `window.PlayerDistance` | `player-distance.js` | check, baseline, effectiveTolerance |
+| `window.PlayerReading` | `player-reading.js` | фон чтения |
+| `window.PlayerOverlay` | `player-overlay.js` | HUD-оверлей |
 | `window.PlayerCamera` | `player-camera.js` | камера и face-api |
 | `window.PlayerAnimation` | `player-animation.js` | 7 типов анимаций |
-| `window.PlayerDistWarning` | `player-dist-warning.js` | баннеры дистанции |
 | `window.PlayerInvalidDetection` | `player-invalid-detection.js` | детекция наклона |
-| `window.PlayerReading` | `player-reading.js` | фон чтения |
+| `window.PlayerInstallers` | `player-installers.js` | install* функции |
+| `window.PlayerSingle` | `player-single.js` | плоский и сравнительный режимы |
+| `window.PlayerGraph` | `player-graph.js` | плеер графа |
+| `window.PlayerSession` | `player-session.js` | startPlayer / stopPlayer / saveResult |
+| `window.PlayerReadingMode` | `player-reading-mode.js` | режим чтения |
+| `window.PlayerAuth` | `player-auth.js` | auth-логика плеера |
+| `window.PlayerScenarios` | `player-scenarios.js` | загрузка сценариев |
 | `window.VissortDevice` | `vissort-device.js` | fingerprint + калибровка |
 | `window.Onboarding` | `vissort-onboarding.js` | мастер калибровки |
 | `window.AIGenerator` | `vissort-ai-generator.js` | DeepSeek-генератор |
-| `window.AppEditorCore` | `app.js` | API редактора для AI |
+| `window.AppState` | `app-state.js` | 90 переменных + шим `Object.defineProperty` |
+| `window.AppEditor` | `app-editor.js` | редактор графа |
+| `window.AppEditorCore` | `app-editor.js` | алиас `window.AppEditor` (для AI-генератора) |
+| `window.AppInspector` | `app-inspector.js` | инспектор узлов |
+| `window.AppGenerator` | `app-generator.js` | генератор режимов |
+| `window.AppScenarios` | `app-scenarios.js` | сохранение, библиотека, шаблоны |
+| `window.AppUtils` | `app-utils.js` | утилиты + анимации редактора |
+| `window.AppBlinkCamera` | `app-blink-camera.js` | моргание + камера редактора |
+| `window.AppAuth` | `app-auth.js` | auth-ядро + ADMIN_EMAILS |
+| `window.AppPlayerPreview` | `app-player-preview.js` | плеер-превью редактора |
 | `window.VissortPlayerOptions` | `user.js` / `player.js` | конфиг плеера |
+| `window.VissortClinicOptions` | `clinic.js` | конфиг клиники |
+
+**Диагностика (не неймспейс):** `window.camStats` + `window.camReport()` — `player-camera.js` (59, 76). Только для отладки.
+
+**Всего: 34 неймспейса** (включая алиас `AppEditorCore`). Модули `player-*.js` и `app-*.js` экспортируются через IIFE `(function(global){ … })(window)` с `global.X = X` — потому `Select-String 'window.X = '` их не видит, но `window.X` доступен.
 
 ### §4.1.1 `window.VissortEnv`
 
