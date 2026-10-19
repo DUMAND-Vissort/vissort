@@ -282,11 +282,11 @@
         di = document.getElementById('inp-distance'),
         pp = document.getElementById('inp-ppi');
     const upd = () => {
-        var _w = document.getElementById('insp-v-warn');
-        if (_w) _w.style.display = v > 0.8 ? 'block' : 'none';
         const v = parseFloat(ai?.value) || 1.0,
             d = parseFloat(di?.value) || 1,
             ppi = parseInt(pp?.value) || state.screenPPI || 96;
+        var _w = document.getElementById('insp-v-warn');
+        if (_w) _w.style.display = v > 0.8 ? 'block' : 'none';
         const m = document.getElementById('preview-mm');
         if (m) m.textContent = `📐 ${acuityToSizeMm(v, d).toFixed(2)} мм`;
         const x = document.getElementById('preview-px');
