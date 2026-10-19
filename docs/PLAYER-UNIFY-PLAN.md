@@ -14,14 +14,14 @@
 
 10 функций дублируются. **`handleDirectionAnswer` унифицирован** (`af6b918`).
 
-## 2. Карта расхождения (6 функций, актуально на 2026-10-19)
+## 2. Карта расхождения (4 функции, актуально на 2026-10-19)
 
 | Функция | preview | single | Класс | Приоритет |
 |---|---|---|---|---|
 | `showNextStimulus` | 667 | 87 | специфика preview | не унифицировать |
 | `finishSeries` | 810 | 238 | специфика preview | не унифицировать |
-| `createCellElement` | 976 | 57 | сравнение | P1 |
-| `defaultCellParams` | 1000 | 43 | сравнение | P1 |
+| `createCellElement` | 976 | 57 | адаптация state | не унифицировать |
+| `defaultCellParams` | 1000 | 43 | разное назначение | не унифицировать |
 | `displayStimulus` | 11 | 21 | идентичны | не унифицировать |
 | `hideStimulus` | 15 | 28 | идентичны | не унифицировать |
 | `handleFindSameClick` | 932 | 286 | сравнение | P1 |
@@ -62,9 +62,7 @@
 - **Критерий готовности:** в preview то же поведение, что в prod (стимул, таймеры, `seriesStep`, `finishSeries`, `saveResult`).
 
 **Шаг 3 — ЗАКРЫТО (2026-10-19): `displayStimulus` / `hideStimulus` — идентичны.**
-**Шаг 4 — `createCellElement` + `defaultCellParams` (P1, сравнение, 976/1000 vs 57/43):**
-- Сетка. Делать вместе (одна группа). Вероятно, простой перенос с сохранением сигнатуры.
-
+**Шаг 4 — ЗАКРЫТО (2026-10-19): `createCellElement` / `defaultCellParams` — адаптация state (AppState vs PlayerState), разное назначение.**
 **Шаг 5 — `showDirectionComparison` / `showFindSameComparison` / `showFindSameComparisonInternal` / `handleFindSameClick` (P1, группа, 883/897/913/932 vs 346/332/261/286):**
 - Сравнение. Делать вместе, чтобы не разъезжались.
 
@@ -86,7 +84,7 @@
 
 ## 8. Итог
 
-- Дублирование: ~3000 строк, из них **реально багующих** — 6 функций (после `handleDirectionAnswer`, `displayStimulus`, `hideStimulus`).
+- Дублирование: ~3000 строк, из них **реально багующих** — 4 функции (`showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`).
 - Приоритет: **сравнение** (`createCellElement`, `defaultCellParams`, `showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`), затем простые (`displayStimulus`, `hideStimulus`).
 - Оценка: **5–7 коммитов** по 1 функции (или паре).
 - **Не трогать:** `finishSeries` (адаптивная острота), `showNextStimulus` (blinkLockShow, AppState).
