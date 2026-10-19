@@ -2013,90 +2013,9 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 
 ## Приложение А. Сводная таблица файлов
 
-### А.1 JS-модули
+> **См. §1** — 62 файла, 9 групп, актуальные размеры и строки (HEAD `5b20ace`, 2026-10-19).
 
-| Файл | Размер | Строк | Статус разбора |
-|---|---|---|---|
-| vissort-core.js | 16.5 KB | ~440 | #1 |
-| voice.js | 25.4 KB | ~750 | #2 |
-| data-layer.js | 40.2 KB | ~1030 | #3 |
-| player-state.js | ~5 KB | ~180 | #4 |
-| player-utils.js | ~3 KB | ~90 | #5 |
-| player-dist-warning.js | ~2 KB | ~60 | #6 |
-| player-reading.js | ~5 KB | ~180 | #7 |
-| player-camera.js | ~14 KB | ~480 | #8 |
-| player-animation.js | ~18 KB | ~530 | #9 |
-| player-invalid-detection.js | ~8 KB | ~180 | #10 |
-| vissort-onboarding.js | ~12 KB | ~330 | #11 |
-| vissort-device.js | ~10 KB | ~290 | #12 |
-| vissort-ai-generator.js | ~12 KB | ~300 | #13 |
-| header-drag.js | ~4 KB | ~150 | #14 |
-| keepalive.js | ~5 KB | ~180 | #15 |
-| sw.js | 9 KB | ~290 | #16 |
-| player-runtime.js | 116.2 KB | 2978 | #17, #18 |
-| app.js | 360.3 KB | 7879 | #19–#22 |
-
-### А.2 HTML
-
-| Файл | Размер | Строк | Блок разбора |
-|---|---|---|---|
-| user.html | ~30 KB | ~700 | #23 |
-| player.html | ~32 KB | ~740 | #24 |
-| admin.html | ~184 KB | 3020 | #26, #27 |
-
-### А.3 Entry-скрипты
-
-| Файл | Размер | Строк | Блок |
-|---|---|---|---|
-| user.js | 0.15 KB | 2 | #25 |
-| player.js | 0.15 KB | 2 | #25 |
-
-### А.4 Тесты
-
-| Файл | Тестов | Блок |
-|---|---|---|
-| tests/camera.spec.js | 4 | #28 |
-| tests/editor.spec.js | 5 | #28 |
-| tests/login.spec.js | 3 | #28 |
-| tests/offline.spec.js | 5 | #28 |
-| tests/player.spec.js | 4 | #28 |
-| tests/reading.spec.js | 5 | #28 |
-| tests/schema.spec.js | 2 | #28 |
-
-### А.5 Документы docs
-
-| Файл | Актуален |
-|---|---|
-| HOW-TO-NEW-CHAT.md | да |
-| PLAN.md | да |
-| TODO.md | да |
-| DEPLOY.md | да |
-| VISION.md | да |
-| ECONOMICS.md | да |
-| GO-TO-MARKET.md | да |
-| PARTNERS.md | да |
-| SALES-SCENARIOS.md | да |
-| MARKETING.md | да |
-| PITCH.md | да |
-| PITCH-B2C.md | да |
-| PITCH-EDITOR.md | да |
-| CONTENT-PLAN.md | да |
-| PROJECT-MAP.md | этот документ |
-| ARCHITECTURE.md | устарел (05.10, до Фазы 1) |
-| HANDOFF.md | устарел (10.10, дубль HOW-TO) |
-
-### А.6 Сводка
-
-| Категория | Файлов | Размер |
-|---|---|---|
-| JS-модули | 18 | ~730 KB |
-| HTML | 3 | ~246 KB |
-| Entry | 2 | ~0.3 KB |
-| Тесты | 7 | — |
-| Документы | 17 | ~250 KB |
-| Итого | 30 | ~980 KB |
-
-### А.7 Версии
+### А.1 Версии
 
 | Что | Значение |
 |---|---|
@@ -2107,6 +2026,32 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 | Supabase project | hzvypwdpdhsjzaclxmbm |
 | Production | vissort.com |
 
+### А.2 Документы docs
+
+| Файл | Актуален |
+|---|---|
+| HOW-TO-NEW-CHAT.md | да (2026-10-19, HEAD `6055589`) |
+| NOTES.md | да (сессия 2026-10-19) |
+| PROJECT-MAP.md | этот документ (2026-10-19) |
+| PLAYER-UNIFY-PLAN.md | закрыт (0 функций) |
+| RLS-AUDIT.md | да |
+| BACKUP.md | да |
+| VISION-ROADMAP.md | да |
+| ARCHITECTURE-DIAGRAMS.md | да |
+| ARCHITECTURE.md | устарел (05.10, до Фазы 1) |
+| HANDOFF.md | устарел (10.10, дубль HOW-TO) |
+
+### А.3 Сводка
+
+| Категория | Файлов |
+|---|---|
+| JS-модули | 53 |
+| HTML | 7 |
+| Entry | 2 |
+| Тесты | 9 (37 тестов) |
+| Документы | 10+ |
+| **Итого** | **62 файла** |
+
 ---
 
 Конец документа.
@@ -2114,5 +2059,5 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 ---
 
 Составлено: 2026-10-11.
-Источник: PROJECT-MAP сборка из 16 блоков (A–O).
-Разделов: 15 + Приложение А.
+Обновлено: 2026-10-19 (HEAD `5b20ace`, тесты 36+1, PLAYER-UNIFY-PLAN закрыт).
+
