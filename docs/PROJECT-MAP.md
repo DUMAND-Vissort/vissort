@@ -490,11 +490,10 @@ player.js: requireDomain=true,  showGamesMenu=false
 ---
 ## §5. Callbacks-контракты
 
-Три модуля плеера взаимодействуют с `player-runtime.js` через `setCallbacks`. Контракт не задокументирован в коде — только в этом документе.
+> Пять модулей плеера + 2 ad-hoc init. Контракты не задокументированы в коде — только в этом документе.
+> Актуально на HEAD 812643f (2026-10-19).
 
-### §5.1 `PlayerCamera.setCallbacks`
-
-Регистрируется в `player-runtime.js` (ч.2, `init()`, ~строка 2530).
+### §5.1 `PlayerCamera.setCallbacks` (`player-runtime.js:689`)
 
 | Callback | Сигнатура | Кто вызывает в `player-camera.js` |
 |---|---|---|
@@ -503,32 +502,32 @@ player.js: requireDomain=true,  showGamesMenu=false
 | `onResume` | `() => void` | после стабилизации дистанции (5 кадров, разброс < 3 %, 1 с) |
 | `onRecalcSize` | `() => void` | при `distControlMode === auto` |
 
-Реализация в runtime:
+Реализация в runtime (689–694):
 
     window.PlayerCamera.setCallbacks({
         onStimulusHide: hideStimulus,
         onAbortStimulus: (reason) => _abortCurrentStimulus(reason),
         onResume: () => _resumeAfterStable(),
-        onRecalcSize: () => _recalcStimulusSize()
+        onRecalcSize: () => window.PlayerGraph.recalcStimulusSize()
     });
 
-Хрупкость: регистрация вложена в проверку `PlayerCamera.setCallbacks`. Если `PlayerCamera` не загружен — `PlayerAnimation` и `PlayerInvalidDetection` тоже не получат callbacks.
+**Хрупкость: тройная вложенность** — `PlayerCamera` → `PlayerAnimation` → `PlayerInvalidDetection`. Если `PlayerCamera` не загружен, **ни один из трёх** не получит callbacks.
 
-### §5.2 `PlayerAnimation.setCallbacks`
+### §5.2 `PlayerAnimation.setCallbacks` (`player-runtime.js:696`)
 
 | Callback | Сигнатура | Кто вызывает |
 |---|---|---|
 | `onSetStimColor` | `(r, g, b) => void` | `startSingleStimAnimation`, `startBlinkAnimation` |
 
-Реализация в runtime:
+Реализация (696–698):
 
     window.PlayerAnimation.setCallbacks({
         onSetStimColor: setStimColorRGB
     });
 
-Хрупкость: если callback не зарегистрирован — `startSingleStimAnimation` не перекрашивает стимул. Тихий отказ.
+**Вложен в §5.1** — если `PlayerCamera` не загружен, `PlayerAnimation` не получит callbacks. Тихий отказ.
 
-### §5.3 `PlayerInvalidDetection.setCallbacks`
+### §5.3 `PlayerInvalidDetection.setCallbacks` (`player-runtime.js:703`)
 
 | Callback | Сигнатура | Кто вызывает |
 |---|---|---|
@@ -538,7 +537,7 @@ player.js: requireDomain=true,  showGamesMenu=false
 | `onShowNextStimulus` | `() => void` | fallback в `_resumeAfterStable()` |
 | `onGetNode` | `(id) => node или null` | в `_resumeAfterStable()` |
 
-Реализация в runtime:
+Реализация (703–709):
 
     window.PlayerInvalidDetection.setCallbacks({
         onHideStimulus: hideStimulus,
@@ -548,21 +547,60 @@ player.js: requireDomain=true,  showGamesMenu=false
         onGetNode: (id) => gGetNode(id)
     });
 
-Хрупкость: контракт `onHideStimulus` объявлен, но не вызывается — мёртвая связь, вводит в заблуждение.
+**Вложен в §5.2 → §5.1** — тройная вложенность. Хрупкость: контракт `onHideStimulus` объявлен, но не вызывается.
 
-### §5.4 Мосты через window
+### §5.4 Мосты через window (9)
 
 Помимо `setCallbacks`, есть ad-hoc мосты через глобалы:
 
 | Глобал | Пишет | Читает | Назначение |
 |---|---|---|---|
-| `window._recordDeviation` | `player-runtime.js` (прокси) | `player-camera.js` | запись отклонения дистанции |
-| `window._updateStimulusDim` | `player-runtime.js` (прокси) | `player-camera.js` | притухание стимула |
-| `window._isAnswerInvalid` | `player-runtime.js` (прокси) | `player-runtime.js` | проверка валидности |
-| `window._markAnswerInvalid` | `player-runtime.js` (прокси) | `player-runtime.js` | инкремент счётчика |
-| `window._logAnswer` | `player-runtime.js` (определение) | — | логирование ответа |
+| `window._logAnswer` | `player-runtime.js:57` | — | логирование ответа |
+| `window._reactionReport` | `player-runtime.js:66` | — | отчёт реакций |
+| `window._updateStimulusDim` | `player-runtime.js:110` | `player-camera.js` | притухание стимула |
+| `window._recordDeviation` | `player-runtime.js:117` | `player-camera.js` | запись отклонения дистанции |
+| `window._abortCurrentStimulus` | `player-runtime.js:124` | `player-installers.js:201` | прерывание стимула |
+| `window._resumeAfterStable` | `player-runtime.js:125` | — | возобновление после стабилизации |
+| `window._showInvalidToast` | `player-runtime.js:126` | — | тост «невалидный ответ» |
+| `window._isAnswerInvalid` | `player-runtime.js:127` | `player-runtime.js` | проверка валидности |
+| `window._markAnswerInvalid` | `player-runtime.js:128` | `player-runtime.js` | инкремент счётчика |
 
-Проблема: эти мосты не описаны ни в одном контракте. Связь ломается при переименовании.
+**Проблема:** эти мосты не описаны ни в одном контракте. Связь ломается при переименовании.
+
+### §5.5 `PlayerDistance.setCallbacks` (`player-distance.js:27`)
+
+| Callback | Сигнатура | По умолчанию |
+|---|---|---|
+| `onWarn` | `() => void` | no-op |
+| `onHardLimit` | `() => void` | no-op |
+| `onRecalcSize` | `() => void` | no-op |
+
+`check(curM)` → `{ status, deviationPct, tolNearPct, tolFarPct }`, `status: 'ok' | 'near' | 'far' | 'hard-limit' | 'no-baseline' | 'unknown'`.
+
+**Не регистрируется** ни в одном модуле (проверено 2026-10-19). Контракт объявлен, но не используется — callbacks по умолчанию no-op. Реакция на статус — на стороне вызывающего (`player-camera.js`).
+
+### §5.6 `PlayerGraph.setCallbacks` (`player-runtime.js:800`)
+
+16 колбэков: `stopPlayer`, `startPlayer`, `showStatus`, `hideStatus`, `updateCounters`, `hideStimulus`, `playGraphStimulus`, `playGraphCompare`, `playGraphReading`, `pauseTraining`, `defaultCellParams`, `removeSingleGridLines`, `showDirectionComparison`, `showFindSameComparison`, `finishGraphCompareSeries`, `saveResult`.
+
+**Независимая регистрация** — не вложена в другие.
+
+### §5.7 `PlayerSession.setCallbacks` (`player-runtime.js:839`)
+
+15 колбэков: `showStatus`, `hideStatus`, `stopSingleStimAnimation`, `stopSingleBgAnimation`, `stopCircleAnimation`, `stopPeripheralAnimation`, `stopBlinkAnimation`, `hideStimulus`, `startPlayer`, `checkRateLimit`, `showNextCompareRound`, `showNextStimulus`, `validateScenario`, `onError`, `updateCounters`, `defaultCellParams`.
+
+**Независимая регистрация** — не вложена в другие.
+
+### §5.8 `PlayerAuth.init` (`player-runtime.js:861`)
+
+| Callback | Сигнатура | Что делает |
+|---|---|---|
+| `onLoggedIn` | `() => void` | `onLoggedIn()` |
+| `onTestMode` | `(_td) => void` | фиктивный `currentUser = { id: '__test__', email: 'test@local' }` + `onLoggedIn()` |
+| `onSignOut` | `() => void` | обнуляет `hdr-user`, `hdr-scenario`, `btn-player.disabled = true` |
+| `onError` | `(msg) => void` | `_alert(msg)` |
+
+**Не `setCallbacks`, а `init`** — отдельный паттерн. Независимая регистрация.
 
 ---
 ## §6. Реестр глобалов и ad-hoc состояния
