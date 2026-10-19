@@ -422,7 +422,8 @@ Sivtsev OTF (шрифт)
 
 - `setCallbacks(cb)` — контракт: `{onStimulusHide, onAbortStimulus, onResume, onRecalcSize}`
 - `enableCamera`, `disableCamera`, `startCamLoop`, `processCamFrame`, `evaluateDistance`, `_checkHardLimit`
-- Экспортированные внутренние: `_faceEmoji`, `_pushDetection`, `_updateDetectUI`, `_detectRatePct`, `_isBlinkFromLandmarks`, `_calcEAR`
+- Экспортированные внутренние: `_faceEmoji`, `_pushDetection`, `_updateDetectUI`, `_detectRatePct`
+
 ### §4.7 `window.PlayerAnimation`
 
 - `setCallbacks(cb)` — контракт: `{onSetStimColor(r,g,b)}`
@@ -431,8 +432,10 @@ Sivtsev OTF (шрифт)
 - `startBlinkAnimation`, `stopBlinkAnimation`
 - `startCircleAnimation`, `stopCircleAnimation`
 - `stopPeripheralAnimation`, `buildPeripheralDots`
+- `stopAll` — остановить все анимации (новый, 2026-10-19)
 - `buildDefocusFrame`
 - `removeSingleGridLines`, `drawSingleGridLines`, `applySingleGridPosition`, `pickSingleGridCell`, `applyRandomStimulusPosition`
+
 ### §4.8 `window.PlayerInvalidDetection`
 
 - `setCallbacks(cb)` — контракт: `{onHideStimulus, onPlayGraphStimulus, onPlayGraphCompareRound, onShowNextStimulus, onGetNode}`
