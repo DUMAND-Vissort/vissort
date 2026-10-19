@@ -1049,6 +1049,34 @@ function handleDirectionAnswer(direction) {
     if (window.Voice) window.Voice.sayKey(ok ? 'correct' : 'wrong', { cancel: true });
     document.body.style.backgroundColor = ok ? '#0a0' : '#a00';
     setTimeout(() => (document.body.style.backgroundColor = '#111'), 200);
+    // паритет с player-single.js: продвижение серии (было: серия залипала)
+    if (currentShowTimer) {
+        clearTimeout(currentShowTimer);
+        currentShowTimer = null;
+    }
+    try { stopSingleStimAnimation(); } catch (e) {}
+    try { stopSingleBgAnimation(); } catch (e) {}
+    try { stopCircleAnimation(); } catch (e) {}
+    try { stopPeripheralAnimation(); } catch (e) {}
+    try { stopBlinkAnimation(); } catch (e) {}
+    if (window.Data && currentSessionId) {
+        window.Data.saveResult({
+            session_id: currentSessionId,
+            node_id: 'training_node',
+            response_time_ms: lastResponse.reactionTimeMs,
+            is_correct: ok
+        });
+    }
+    if (ok) seriesCorrect++;
+    else seriesIncorrect++;
+    seriesStep++;
+    updateCounters();
+    const sz = trainingNode?.params?.seriesSize || 6;
+    if (seriesStep >= sz) {
+        setTimeout(() => { if (playerRunning && !isPaused) finishSeries(); }, 50);
+    } else {
+        phaseTimers.push(setTimeout(() => { if (playerRunning && !isPaused) showNextStimulus(); }, trainingNode?.params?.delay2 || 1000));
+    }
 }
 function handleCompareDirectionAnswer(answer) {
     if (!responsePhaseActive) return;
