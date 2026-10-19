@@ -1988,6 +1988,29 @@ GitHub Actions CI: 28 Playwright-тестов на каждый push. Конфи
 | Документация | ARCHITECTURE.md (устарел) | PROJECT-MAP.md + ARCHITECTURE-DIAGRAMS.md |
 
 ---
+### §16.4 Фаза 5 — рефакторинг (2026-10-15…18)
+
+`app.js` 7879 → 1850. Модули: `app-state` (206), `app-player-preview` (1311), `app-editor` (1101), `app-inspector` (926), `app-generator` (882), `app-scenarios` (864), `app-blink-camera` (572), `app-auth` (259), `app-utils` (683).
+
+`player-runtime.js` 2978 → 910. Модули: `player-graph` (803), `player-single` (608), `player-session` (328), `player-reading-mode` (254), `player-auth` (240), `player-scenarios` (125).
+
+### §16.5 Фаза 6 — клиника + авто-дерево (2026-10-18)
+
+`clinic.html` (3051), `clinic.js` (107). `ensureVissortTree` + `saveGraph` (папка primary `Vissort/Сценарии`, fallback `<a download>`). `loadScenarioList` → `scanScenariosFolder` (`60d4eb9`). Space = Play/Pause. Max acuity 1.0. `tests/clinic.spec.js` (6).
+
+### §16.6 Сессия 2026-10-19 — баг-фиксы + план унификации
+
+| # | Коммит | Что |
+|---|---|---|
+| 1 | `af6b918` | P0 preview: `handleDirectionAnswer` — продвижение серии |
+| 2 | `9114a84` | P0 preview: `?test=1` — фиктивный `currentUser` + guard |
+| 3 | `0ba47ae` | P1: `restoreFolderHandle` без `create` при старте |
+| 4 | `d5ac185` | P1: `app-inspector.js` TDZ — `const v` до использования |
+| 5 | `03331fc` | P2: флак `ai-generator.spec.js` — `waitForFunction` + `expect.poll` |
+| 6 | `ed21222`…`3be760a` | `PLAYER-UNIFY-PLAN.md` — создан и закрыт (0 функций) |
+
+**Итог:** тесты 36+1. `PLAYER-UNIFY-PLAN` закрыт — 0 реально багующих, остальное — адаптация к state.
+
 ## Приложение А. Сводная таблица файлов
 
 ### А.1 JS-модули
