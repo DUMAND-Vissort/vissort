@@ -186,17 +186,23 @@
 - **Фикс Библиотеки** — `switchMode('nodes')` + `requestRenderGraph` + `updateInspector`.
 
 **Текущее состояние:**
-- HEAD: `60d4eb9`
+- HEAD: `03331fc`
 - `app.js`: **1850 строк** (Фаза 5 закрыта, −77%).
 - `clinic.html`: **3050**, `clinic.js`: **107**.
 - `app-scenarios.js`: **839** (авто-дерево `Vissort/Сценарии`).
 - Тесты: **36 passed + 1 skipped** (37 всего).
 
-**Сделано (2026-10-18):**
-- `loadScenarioList` — папка primary (`scanScenariosFolder` перед `Data.getScenarios`), коммит `60d4eb9`.
-- `restoreFolderHandle` — `vissortRootHandle` (вместо `scenariosFolderHandle`), fallback legacy, коммит `7a22322`.
+**Сделано (2026-10-19):**
+- `restoreFolderHandle` → `vissortRootHandle` + `Vissort/Сценарии` (fallback legacy) — `7a22322`.
+- `loadScenarioList` → `scanScenariosFolder` перед `Data.getScenarios` — `60d4eb9`.
+- `handleDirectionAnswer` preview — продвижение серии, `saveResult`, очистка таймеров — `af6b918` (**P0 клинический**).
+- `restoreFolderHandle` не создаёт папки при старте (user gesture для `create`) — `0ba47ae`.
+- `?test=1` — фиктивный `currentUser` + guard в `onLoggedIn` — `9114a84` (**preview из клиники не работал**).
+- `app-inspector.js` TDZ — `const v` до использования — `d5ac185`.
+- `PLAYER-UNIFY-PLAN.md` — создан, 10 → 0 функций (закрыт) — `ed21222`…`3be760a`.
+- Флак `ai-generator.spec.js` — `waitForFunction` + `expect.poll` — `03331fc`.
 
-**Не делали (Фаза 7):**
+**Следующее (Фаза 7, после пилота):**
 - Мультитенантность (`tenants`, `tenant_id`, RLS) — после пилота.
 - Роли `clinic_admin` / `nurse`.
 - Аналитика по клинике.
@@ -259,8 +265,8 @@ node --check D:\PROEKT\vissort\vissort-onboarding.js
 node --check D:\PROEKT\vissort\vissort-device.js
 
 **Локальный сервер:**
-npx --yes serve -l 5500
-Затем: http://localhost:5500/player.html или http://localhost:5500/user.html
+npx --yes http-server -p 5500 -c-1
+Затем: http://127.0.0.1:5500/player.html или http://localhost:5500/user.html
 
 ## Антипаттерны
 
@@ -288,5 +294,5 @@ npx --yes serve -l 5500
 ---
 
 *Дата создания: 2026-10-05*
-*Обновлено: 2026-10-18 (авто-дерево закрыто: restoreFolderHandle -> vissortRootHandle, loadScenarioList сканирует Vissort/Сценарии. HEAD: 60d4eb9)*
+*Обновлено: 2026-10-19 (сессия: P0 preview-серия, ?test=1, TDZ инспектора, флак ai-generator, PLAYER-UNIFY-PLAN закрыт. HEAD: 03331fc)*
 *Копировать: в первое сообщение нового чата.*
