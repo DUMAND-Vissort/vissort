@@ -330,21 +330,20 @@ async function handleBookPickerFileUpload(file) {
 async function restoreFolderHandle() {
     if (!HAS_FS_ACCESS) return false;
     try {
-        // §vissort-tree: primary — vissortRootHandle -> Vissort/Сценарии
-        // fallback — старый scenariosFolderHandle (для установок до авто-дерева)
-        let root = await window.Data.getFolderHandle('vissortRootHandle');
+        // primary: vissortRootHandle -> Vissort/Сценарии (без create — создание только по user gesture)
         let scenariosDir = null;
+        const root = await window.Data.getFolderHandle('vissortRootHandle');
         if (root) {
             try {
-                const vDir = await root.getDirectoryHandle('Vissort', { create: true });
-                scenariosDir = await vDir.getDirectoryHandle('Сценарии', { create: true });
+                const vDir = await root.getDirectoryHandle('Vissort');
+                scenariosDir = await vDir.getDirectoryHandle('Сценарии');
             } catch (e) {
                 VLog.warn('[restoreFolderHandle] Vissort/Сценарии:', e.message);
             }
         }
+        // fallback: старый scenariosFolderHandle (для установок до авто-дерева)
         if (!scenariosDir) {
-            const legacy = await window.Data.getFolderHandle('scenariosFolderHandle');
-            if (legacy) scenariosDir = legacy;
+            scenariosDir = await window.Data.getFolderHandle('scenariosFolderHandle');
         }
         if (!scenariosDir) return false;
         selectedFolderHandle = scenariosDir;
