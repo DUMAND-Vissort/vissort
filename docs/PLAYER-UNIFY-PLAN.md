@@ -14,7 +14,7 @@
 
 10 функций дублируются. **`handleDirectionAnswer` унифицирован** (`af6b918`).
 
-## 2. Карта расхождения (8 функций, актуально на 2026-10-19)
+## 2. Карта расхождения (6 функций, актуально на 2026-10-19)
 
 | Функция | preview | single | Класс | Приоритет |
 |---|---|---|---|---|
@@ -22,8 +22,8 @@
 | `finishSeries` | 810 | 238 | специфика preview | не унифицировать |
 | `createCellElement` | 976 | 57 | сравнение | P1 |
 | `defaultCellParams` | 1000 | 43 | сравнение | P1 |
-| `displayStimulus` | 11 | 21 | простые | P1 |
-| `hideStimulus` | 15 | 28 | простые | P1 |
+| `displayStimulus` | 11 | 21 | идентичны | не унифицировать |
+| `hideStimulus` | 15 | 28 | идентичны | не унифицировать |
 | `handleFindSameClick` | 932 | 286 | сравнение | P1 |
 | `showDirectionComparison` | 883 | 346 | сравнение | P1 |
 | `showFindSameComparison` | 897 | 332 | сравнение | P1 |
@@ -61,9 +61,7 @@
 - **Вывод:** не унифицировать. Единственное реальное расхождение — `handleDirectionAnswer` — закрыто (`af6b918`).
 - **Критерий готовности:** в preview то же поведение, что в prod (стимул, таймеры, `seriesStep`, `finishSeries`, `saveResult`).
 
-**Шаг 3 — `displayStimulus` / `hideStimulus` (P1, простые, 11/15 vs 21/28):**
-- Маленькие, механические. Вероятно, простой паритет.
-
+**Шаг 3 — ЗАКРЫТО (2026-10-19): `displayStimulus` / `hideStimulus` — идентичны.**
 **Шаг 4 — `createCellElement` + `defaultCellParams` (P1, сравнение, 976/1000 vs 57/43):**
 - Сетка. Делать вместе (одна группа). Вероятно, простой перенос с сохранением сигнатуры.
 
@@ -88,7 +86,7 @@
 
 ## 8. Итог
 
-- Дублирование: ~3000 строк, из них **реально багующих** — 8 функций (после `handleDirectionAnswer`).
+- Дублирование: ~3000 строк, из них **реально багующих** — 6 функций (после `handleDirectionAnswer`, `displayStimulus`, `hideStimulus`).
 - Приоритет: **сравнение** (`createCellElement`, `defaultCellParams`, `showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`), затем простые (`displayStimulus`, `hideStimulus`).
 - Оценка: **5–7 коммитов** по 1 функции (или паре).
 - **Не трогать:** `finishSeries` (адаптивная острота), `showNextStimulus` (blinkLockShow, AppState).
