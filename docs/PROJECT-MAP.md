@@ -472,7 +472,8 @@ Sivtsev OTF (шрифт)
 - `createNodesFromAI(data)` → number
 ### §4.14 `window.AppEditorCore`
 
-Экспортируется в `app.js` после `init()`:
+Экспортируется в `app-editor.js` после `init()` (алиас `window.AppEditor`):
+
 - `createNewNode(type, x, y)` → id
 - `getNode(id)` → node | undefined
 - `requestRenderGraph()`
