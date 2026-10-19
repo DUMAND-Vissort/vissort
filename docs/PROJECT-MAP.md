@@ -834,14 +834,29 @@ UI:
 Решение (Фаза 5): вынести общее в модули, оставить только UI-адаптеры.
 
 ---
+
 ## §9. Порядок загрузки скриптов
 
-Три HTML-файла грузят скрипты по-разному. Ошибочный порядок ломает функциональность (`VissortCore not loaded`).
+Три HTML-файла (`admin.html`, `clinic.html`, `user.html`/`player.html`) грузят скрипты по-разному. **Порядок критичен:** `VLog` используется всеми модулями, `VissortEnv` — env, `VissortDialog` — модалки, `VissortCore` — утилиты. Ошибка → `ReferenceError` в bootstrap.
 
-### §9.1 user.html
+### §9.0 Базовый порядок (все HTML)
+
+```
+vissort-logger.js      ← VLog (no-op в проде, ?debug=1 для отладки)
+vissort-env.js         ← SUPABASE_URL, ANON_KEY, RELEASE
+vissort-dialog.js      ← VissortDialog (alert/confirm/prompt)
+vissort-core.js        ← VissortCore (24 функции)
+```
+
+**Почему именно так:**
+- `vissort-logger.js` **первым** — VLog используется везде. Если позже — `ReferenceError` во всех файлах.
+- `vissort-env.js` — env для `data-layer.js`, `vissort-ai-generator.js`, `keepalive.js`, `player-runtime.js`.
+- `vissort-dialog.js` — модалки, не зависит от core.
+- `vissort-core.js` — утилиты, зависит от `window`, `document`, `localStorage`.
+
+### §9.1 user.html / player.html (defer)
 
 Порядок в head (defer):
-
 1. face-api.js (defer, CDN)
 2. @supabase/supabase-js@2 (sync, CDN)
 
@@ -852,36 +867,34 @@ UI:
 | 1 | vissort-onboarding.js | да |
 | 2 | vissort-device.js | да |
 | 3 | voice.js | да |
-| 4 | user.js | НЕТ |
-| 5 | vissort-core.js | да |
-| 6 | player-state.js | да |
-| 7 | player-camera.js | да |
-| 8 | player-animation.js | да |
-| 9 | player-invalid-detection.js | да |
-| 10 | player-utils.js | да |
-| 11 | player-dist-warning.js | да |
-| 12 | player-reading.js | да |
-| 13 | player-runtime.js | да |
+| 4 | user.js / player.js | **НЕТ** |
+| 5 | **vissort-logger.js** | да |
+| 6 | **vissort-env.js** | да |
+| 7 | **vissort-dialog.js** | да |
+| 8 | **vissort-core.js** | да |
+| 9 | player-state.js | да |
+| 10 | player-auth.js | да |
+| 11 | player-scenarios.js | да |
+| 12 | player-distance.js | да |
+| 13 | player-camera.js | да |
+| 14 | player-animation.js | да |
+| 15 | player-invalid-detection.js | да |
+| 16 | player-utils.js | да |
+| 17 | player-dist-warning.js | да |
+| 18 | player-reading.js | да |
+| 19 | player-reading-mode.js | да |
+| 20 | player-graph.js | да |
+| 21 | player-session.js | да |
+| 22 | player-single.js | да |
+| 23 | player-installers.js | да |
+| 24 | player-overlay.js | да |
+| 25 | player-runtime.js | да |
 
-Порядок исполнения:
+Порядок исполнения: `user.js`/`player.js` (sync) — сразу, остальные (defer) — после парсинга в порядке регистрации.
 
-- user.js (sync) — сразу при парсинге.
-- face-api.js (defer) — после парсинга.
-- Остальные (defer) — после парсинга в порядке регистрации.
-
-Проблема: user.js синхронный, остальные — defer. user.js не использует VissortCore, но это хрупко.
-
-### §9.2 player.html
-
-Порядок идентичен user.html, кроме:
-
-- player.js вместо user.js.
-- CSP строже.
-
-### §9.3 admin.html
+### §9.2 admin.html / clinic.html (sync, без defer)
 
 Порядок в head:
-
 | # | Скрипт | defer |
 |---|---|---|
 | 1 | face-api.js | да |
@@ -894,58 +907,71 @@ UI:
 
 | # | Скрипт | defer |
 |---|---|---|
-| 1 | vissort-core.js | НЕТ |
-| 2 | data-layer.js | НЕТ |
-| 3 | voice.js | НЕТ |
-| 4 | keepalive.js | НЕТ |
-| 5 | app.js | НЕТ |
-| 6 | header-drag.js | НЕТ |
-| 7 | vissort-ai-generator.js | НЕТ |
-| 8 | Inline installSyncUI() | — |
+| 1 | **vissort-logger.js** | НЕТ |
+| 2 | **vissort-env.js** | НЕТ |
+| 3 | **vissort-dialog.js** | НЕТ |
+| 4 | **vissort-core.js** | НЕТ |
+| 5 | data-layer.js | НЕТ |
+| 6 | voice.js | НЕТ |
+| 7 | keepalive.js | НЕТ |
+| 8 | app-state.js | НЕТ |
+| 9 | app-player-preview.js | НЕТ |
+| 10 | app-editor.js | НЕТ |
+| 11 | app-inspector.js | НЕТ |
+| 12 | app-generator.js | НЕТ |
+| 13 | app-scenarios.js | НЕТ |
+| 14 | app-blink-camera.js | НЕТ |
+| 15 | app-auth.js | НЕТ |
+| 16 | app-utils.js | НЕТ |
+| 17 | app.js | НЕТ |
+| 18 | clinic.js (только clinic.html) | НЕТ |
+| 19 | header-drag.js | НЕТ |
+| 20 | vissort-ai-generator.js | НЕТ |
+| 21 | Inline installSyncUI() | — |
 
-Порядок исполнения (строгий): все без defer, сверху вниз.
+Порядок исполнения — строгий, сверху вниз (без defer).
 
-Проблемы:
+**Проблемы:**
+- `app.js` вызывает `init()` сразу при выполнении (до `DOMContentLoaded`) — работает, потому что `app.js` в конце body.
+- `window.AppEditorCore` экспортируется в конце `app.js` — до `vissort-ai-generator.js`.
+- `#ai-generator-modal` идёт **после** `vissort-ai-generator.js` в HTML, но `AIGenerator.bind()` откладывается до `DOMContentLoaded`.
+- `face-api.js` (defer) грузится **после** `app.js` (sync). `app.js` не использует faceapi синхронно — только по клику.
 
-- app.js вызывает init() сразу при выполнении — до DOMContentLoaded. Работает, потому что app.js в конце body, все DOM-элементы уже есть.
-- window.AppEditorCore экспортируется в конце app.js — до vissort-ai-generator.js.
-- #ai-generator-modal идёт ПОСЛЕ script vissort-ai-generator.js в HTML, но AIGenerator.bind() откладывается до DOMContentLoaded. Хрупко.
-- face-api.js (defer) загружается ПОСЛЕ app.js (sync). app.js не должен использовать faceapi синхронно. Сейчас не использует — только по клику.
-
-### §9.4 Service Worker
+### §9.3 Service Worker
 
 | HTML | Регистрация SW |
 |---|---|
-| admin.html | да, через app.js (registerServiceWorker в init) |
-| user.html | не найдена |
-| player.html | не найдена |
+| admin.html | да, через app.js (`registerServiceWorker` в `init`) |
+| clinic.html | да, через app.js (тот же `init`) |
+| user.html | **нет** (TODO) |
+| player.html | **нет** (TODO) |
 
-Проблема: SW регистрируется только для редактора. Плеер офлайн-первый по дизайну, но без SW. Возможно, регистрация где-то ещё — но user.js и player.js содержат только 2 строки, там её нет. Хвост: либо добавить регистрацию в player-runtime.js, либо в HTML user/player.
+Условие: `if (IS_DEV) — unregister, else register`. `IS_DEV` = `localhost` / `127.0.0.1`. На localhost SW **не работает** по дизайну.
 
-Условие регистрации (в app.js): if (IS_DEV) — unregister, else register. IS_DEV = localhost или 127.0.0.1. Значит, на localhost SW не работает по дизайну.
+### §9.4 SKIP_WAITING
 
-### §9.5 SKIP_WAITING
+Единственное место: `app.js` ч.4, `showSWUpdateBanner`, кнопка «Обновить»:
+```js
+reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+```
+Только при явном клике. Авто-обновления нет.
 
-Единственное место: app.js ч.4, showSWUpdateBanner, кнопка «Обновить»:
-
-    reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
-
-Вызывается только при явном клике пользователя. Авто-обновления нет.
-
-### §9.6 Зависимости порядка
+### §9.5 Зависимости порядка
 
 Критичные пары:
+- `vissort-logger.js` **ДО** всех (VLog).
+- `vissort-env.js` **ДО** `data-layer.js`, `vissort-ai-generator.js`, `keepalive.js`, `player-runtime.js`.
+- `vissort-core.js` **ДО** `player-state.js` (`loadPPI`).
+- `vissort-core.js` **ДО** `player-animation.js` (деструктуризация в начале).
+- `vissort-core.js` **ДО** `player-reading.js` (деструктуризация `lerpColor`).
+- `player-state.js` **ДО** `player-camera.js` (`throw` при отсутствии).
+- `data-layer.js` **ДО** `app.js` (`window.Data`).
+- `voice.js` **ДО** `app.js` (`window.Voice`).
+- `app.js` **ДО** `vissort-ai-generator.js` (`window.AppEditorCore`).
+- `app-state.js` **ДО** `app-player-preview.js` / `app-editor.js` / `app-inspector.js` / `app-generator.js` / `app-scenarios.js` / `app-blink-camera.js` / `app-auth.js` / `app-utils.js`.
+- `vissort-device.js` **ДО** `vissort-onboarding.js` (`ensureDevice`).
 
-- vissort-core.js ДО player-state.js (loadPPI).
-- vissort-core.js ДО player-animation.js (деструктуризация в начале).
-- vissort-core.js ДО player-reading.js (деструктуризация lerpColor).
-- player-state.js ДО player-camera.js (throw при отсутствии).
-- app.js ДО vissort-ai-generator.js (window.AppEditorCore).
-- data-layer.js ДО app.js (window.Data).
-- voice.js ДО app.js (window.Voice).
-- vissort-device.js ДО vissort-onboarding.js (ensureDevice).
-
-В user/player: user.js синхронный, но vissort-core.js — defer. Это работает, потому что user.js только устанавливает VissortPlayerOptions, не использует core.
+---
 
 ---
 ## §10. Различия user/player/admin
