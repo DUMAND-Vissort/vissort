@@ -607,3 +607,89 @@
 - Файлы: app-scenarios.js (+22/−6, +8/−0).
 
 **Следующее:** мультитенантность (Фаза 7, после пилота).
+
+---
+
+## 2026-10-19 — сессия: P0 preview, ?test=1, TDZ, флак, PLAYER-UNIFY-PLAN закрыт
+
+### P0: handleDirectionAnswer в preview не продвигает серию (af6b918)
+
+**Контекст:** preview-плеер (app-player-preview.js) ≠ prod (player-single.js). В preview не было finishSeries/showNextStimulus в хвосте handleDirectionAnswer.
+
+**Решение:** добавить продвижение серии, saveResult, очистку таймеров, гашение анимаций.
+
+**Почему P0 клинический:** врач тестирует протокол → ответ не принимается → «залипает» → ложное впечатление, что методика не работает.
+
+**Результат:** 36 passed + 1 skipped.
+
+### P0: ?test=1 не стартовал превью из клиники (9114a84)
+
+**Контекст:** onLoggedIn в ?test=1 требовал currentUser → guard падал.
+
+**Решение:** фиктивный currentUser + guard в onLoggedIn.
+
+**Почему:** клиника не могла прогнать протокол без реальной сессии.
+
+**Грабли:** ?test=1 работает только в player.html (requireDomain: false), не в admin.html/clinic.html. Проверять на player.html?test=1.
+
+### P1: restoreFolderHandle падал при старте (0ba47ae)
+
+**Контекст:** getDirectoryHandle(..., { create: true }) при старте без user gesture → SecurityError/NotAllowedError.
+
+**Решение:** не создавать папку при старте — только восстанавливать; create — по user gesture.
+
+**Грабли:** create требует user gesture — неочевидно из MDN, выяснилось через консоль.
+
+### P1: app-inspector.js TDZ (d5ac185)
+
+**Контекст:** const v объявлена после использования (после §A2-v4).
+
+**Решение:** переместить const v до первого использования.
+
+**Грабли:** TDZ невидим для node --check — проявляется в рантайме при первом вызове.
+
+### P2: флак ai-generator.spec.js (03331fc)
+
+**Контекст:** count() возвращает 0 до рендера.
+
+**Решение:** waitForFunction + expect.poll.
+
+**Правило:** не count() в assertions — expect.poll с таймаутом.
+### PLAYER-UNIFY-PLAN — создан и закрыт (ed21222…3be760a, af6b918)
+
+**Контекст:** дублирование app-player-preview.js ↔ player-single.js, 10 функций-кандидатов.
+
+**Разведка 2026-10-19:** 0 функций к унификации — все специфика платформы (AppState vs PlayerState).
+
+- showNextStimulus, finishSeries в preview — специфика (blinkLockShow, buildBlinkReport, адаптивная острота).
+- displayStimulus/hideStimulus — идентичны, дублирование безвредно.
+- createCellElement/defaultCellParams — адаптация state.
+- Группа сравнения (showDirectionComparison/showFindSameComparison/handleFindSameClick) — by design.
+
+**Итог:** единственный реальный баг — handleDirectionAnswer — закрыт af6b918.
+
+**Полная унификация** (preview → PlayerState, подключение player-single.js в admin/clinic) — Фаза 8, отдельно.
+### Грабли сессии (сводка)
+
+- serve редиректит .html → 404. http-server для локального стенда (npx --yes http-server -p 5500 -c-1).
+- Номера строк после патча сдвигаются → anchors (Select-String), не номера.
+- node --check не ест .tmp → .check.js.
+- expect.poll / waitForFunction вместо count().
+- Here-string @'...'@ в PS 7.6.6 зависает на длинных текстах → Add-Content блоками по 20–30 строк.
+### Отложено (с причиной)
+
+- **§A2-v9b** (init → app-init.js) — высокий риск, init() (524 строки, 32 DOM-константы) не покрыт тестами. app.js ~1850 — приемлемо.
+- **Фаза 7** (мультитенантность) — продуктовое решение, не техническая опасность. Пилот — 1 клиника. Триггер — второй заказчик.
+### §7/§13.1.3 — уточнение по дистанции (разведка 2026-10-19)
+
+Не «три системы дистанции», а «2 системы дистанции + 1 система наклона»:
+
+- **PlayerDistance** (player-distance.js:91) — единый для плеера/камеры (player-camera.js:196, 464, 480; player-single.js:115; player-graph.js).
+- **app.js:1606–1607** (setDistanceBaselineIfNeeded, evaluateDistanceDeviation) — своя, редактор.
+- **player-invalid-detection.js:77** (_recordDeviation, _deviationHistory) — наклон, не дистанция.
+
+§13.1.3 — «частично закрыто: PlayerDistance создан, плеер/камера используют; app.js — нет (низкий приоритет); PlayerInvalidDetection — отдельно (наклон)».
+
+---
+
+*Составлено: 2026-10-19. HEAD: ec72341. Тесты: 36 passed + 1 skipped.*
