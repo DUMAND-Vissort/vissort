@@ -1314,14 +1314,15 @@ sentry-proxy:
 
 ### §12.4 Сводка P0
 
-Все закрыты:
+Все закрыты (5):
 - §12.1.1 → коммит 34f8659
 - §12.1.2 → коммит f8a82a9
 - §12.1.3 → коммит 9475205
-
+- §12.6.1 → коммит af6b918
+- §12.6.2 → коммит 9114a84
 ### §12.5 Сводка P1
 
-Закрыты (6 из 7):
+Закрыты (8 из 9):
 - §12.2.1 → коммит 303a093
 - §12.2.2 → коммит 6a7cdf1
 - §12.2.3 → коммит 47c8732
@@ -1329,6 +1330,28 @@ sentry-proxy:
 - §12.2.5 → не подтверждён (бага нет)
 - §12.2.7 → коммит 4d0095a
 - §12.2.8 → коммит 24e42c0
+- §12.6.3 → коммит 0ba47ae
+- §12.6.4 → коммит d5ac185
+
+### §12.6 P0/P1/P2 — сессия 2026-10-19 (все FIXED)
+
+| # | Приоритет | Что | Коммит | Статус |
+|---|---|---|---|---|
+| §12.6.1 | **P0** | handleDirectionAnswer в preview не продвигает серию | af6b918 | FIXED |
+| §12.6.2 | **P0** | ?test=1 не стартовал превью из клиники | 9114a84 | FIXED |
+| §12.6.3 | P1 | restoreFolderHandle падал при старте (user gesture) | 0ba47ae | FIXED |
+| §12.6.4 | P1 | app-inspector.js TDZ (const v после использования) | d5ac185 | FIXED |
+| §12.6.5 | P2 | флак ai-generator.spec.js (count() до рендера) | 03331fc | FIXED |
+
+**Детали:**
+
+- **§12.6.1** handleDirectionAnswer (preview) — app-player-preview.js, ~810. Не вызывала finishSeries/showNextStimulus в хвосте. Плоский режим «залипал» после первого ответа. Клинический P0: врач не мог прогнать протокол. Фикс: продвижение серии + saveResult + очистка таймеров + гашение анимаций.
+- **§12.6.2** ?test=1 — app.js, onLoggedIn. Требовал currentUser, без него — guard падал. Фикс: фиктивный currentUser + guard. ?test=1 работает только в player.html (requireDomain: false).
+- **§12.6.3** restoreFolderHandle — app-scenarios.js. getDirectoryHandle(..., { create: true }) при старте без user gesture → SecurityError/NotAllowedError. Фикс: не создавать папку при старте; create — по user gesture.
+- **§12.6.4** TDZ — app-inspector.js. const v объявлена после использования (регрессия §A2-v4). Фикс: переместить const v до первого использования. TDZ невидим для node --check.
+- **§12.6.5** флак — tests/ai-generator.spec.js. count() возвращает 0 до рендера. Фикс: waitForFunction + expect.poll.
+
+**Итог сессии 2026-10-19:** P0 — 2, P1 — 2, P2 — 1. Все FIXED.
 
 ---
 ## §13. Техдолг
