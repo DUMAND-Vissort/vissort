@@ -605,66 +605,70 @@ player.js: requireDomain=true,  showGamesMenu=false
 ---
 ## §6. Реестр глобалов и ad-hoc состояния
 
-Помимо неймспейсов (`VissortCore`, `Data` и т. д.), проект активно использует ad-hoc глобалы в `window`. Единой карты не было. Здесь — полный реестр.
+Помимо неймспейсов (`VissortCore`, `Data` и т. д.), проект активно использует ad-hoc глобалы в `window`. Единой карты не было — здесь полный реестр.
+> Актуально на HEAD 1df8a2f (2026-10-19). Разведка: `Select-String 'window\._[a-zA-Z]+|window\.__[a-zA-Z]+'`.
 
-### §6.1 Глобалы `window._*` — служебные
+### §6.1 Глобалы `window._*` — служебные (30)
 
 | Глобал | Тип | Пишет | Читает | Назначение |
 |---|---|---|---|---|
-| `window._distEMA` | number | `player-utils.js` | `player-utils.js` | EMA-фильтр дистанции |
-| `window._recordDeviation` | function | `player-runtime.js` | `player-camera.js` | мост отклонения |
-| `window._updateStimulusDim` | function | `player-runtime.js` | `player-camera.js` | мост притухания |
-| `window._isAnswerInvalid` | function | `player-runtime.js` | `player-runtime.js` | проверка ответа |
-| `window._markAnswerInvalid` | function | `player-runtime.js` | `player-runtime.js` | инкремент счётчика |
-| `window._logAnswer` | function | `player-runtime.js` | — | логирование |
-| `window._reactionLog` | array | `player-runtime.js` | — | лог ответов (растёт без ограничений) |
-| `window._reactionReport` | function | `player-runtime.js` | — | отчёт реакций |
-| `window._reactionTimes` | array | `player-runtime.js` | `player-runtime.js` | массив RT |
-| `window._books` | object | `app.js`, `player-runtime.js` | `app.js`, `player-runtime.js` | книги по id (sha1) |
+| `window._books` | object | `app.js`, `app-blink-camera.js`, `app-scenarios.js` | `app-editor.js`, `app-generator.js`, `app-inspector.js`, `app-player-preview.js`, `app-scenarios.js`, `app.js`, `clinic.js` | книги (id → `{name, text}`) |
+| `window._currentScenarioKey` | string | `app.js`, `app-scenarios.js`, `app-blink-camera.js` | `app.js`, `app-scenarios.js`, `clinic.js` | ключ сценария (LS bookmarks) |
+| `window._currentScenarioFileName` | string | `app.js`, `app-scenarios.js` | `app-scenarios.js` | имя файла |
+| `window._currentScenarioId` | string | `app.js`, `app-scenarios.js` | `app-scenarios.js` | id в облаке |
+| `window._currentReadingBookId` | string | `app.js`, `app-player-preview.js` | `app.js`, `app-player-preview.js` | текущая книга |
+| `window._currentReadingPage` | number | `app.js`, `app-player-preview.js` | `app.js`, `app-player-preview.js` | текущая страница |
+| `window._currentReadingNodeId` | string | `app.js`, `app-player-preview.js` | `app.js`, `app-player-preview.js`, `app-blink-camera.js` | текущий узел |
+| `window._readingNodeWaiting` | bool | `app-player-preview.js` | `app-player-preview.js` | ожидание «Закончить» |
+| `window._pendingGeneratorMode` | bool | `app.js`, `app-editor.js`, `app-blink-camera.js`, `app-scenarios.js` | `app-player-preview.js` | режим автогенерации |
+| `window._pendingConnectionHandler` | function | `app-editor.js` | `app-editor.js`, `app.js` | pending connection |
 | `window._camDetecting` | bool | `player-camera.js` | `player-camera.js` | защита от реентрантности |
-| `window._faceLostSince` | number | `player-camera.js` | `player-camera.js`, `player-runtime.js` | timestamp потери лица |
+| `window._faceLostSince` | number | `player-camera.js` | `player-camera.js`, `player-installers.js` | timestamp потери лица |
 | `window._fastLeanAt` | number | `player-camera.js`, `player-invalid-detection.js` | `player-invalid-detection.js` | timestamp быстрого наклона |
 | `window._baselineWaitStart` | number | `player-camera.js` | `player-camera.js` | таймер baseline |
 | `window._deviationHistory` | array | `player-camera.js`, `player-invalid-detection.js` | `player-invalid-detection.js` | скользящее окно 2 с |
 | `window._invalidAnswerCount` | number | `player-invalid-detection.js` | `player-invalid-detection.js` | счётчик (пишется в `#cnt-invalid`) |
 | `window._lastLeanLogAt` | number | `player-invalid-detection.js` | `player-invalid-detection.js` | антиспам лога |
-| `window._faceLostPause` | bool | `player-runtime.js` (installFaceLostPause) | `player-runtime.js` | флаг паузы при потере лица |
-| `window._pendingGeneratorMode` | bool | `app.js` | `app.js` | режим автотренировки |
-| `window._currentScenarioKey` | string | `app.js` | `app.js` | ключ сценария |
-| `window._currentScenarioFileName` | string | `app.js` | `app.js` | имя файла |
-| `window._currentScenarioId` | string | `app.js` | `app.js` | id в облаке |
-| `window._currentReadingBookId` | string | `player-runtime.js` | `player-runtime.js` | текущая книга |
-| `window._currentReadingPage` | number | `player-runtime.js` | `player-runtime.js` | текущая страница |
-| `window._currentReadingNodeId` | string | `player-runtime.js` | `player-runtime.js` | текущий узел |
-| `window._readingNodeWaiting` | bool | `player-runtime.js` | `player-runtime.js` | ожидание кнопки «Закончить» |
-| `window._pendingConnectionHandler` | function | `app.js` | `app.js` | pending connection |
-| `window._saveGraphInFlight` | bool | `app.js` | `app.js` | защита от двойного save |
-| `window._camPreviewKey` | string | `player-runtime.js` (installCamPreview) | `player-runtime.js` | ключ LS |
-| `window.__vissort_zoom` | number | `app.js` (installZoom) | `app.js` | уровень зума холста |
-| `window.__vissort_newScenario` | function | `app.js` (installNewScenario) | — | отладочный хук |
+| `window._faceLostPause` | bool | `player-installers.js` | `player-installers.js`, `player-single.js` | флаг паузы при потере лица |
+| `window._distEMA` | number | `player-runtime.js` (null), `player-utils.js` | `player-utils.js` | EMA-фильтр дистанции |
+| `window._reactionLog` | array | `player-runtime.js` | `player-runtime.js` | лог ответов (**растёт без ограничений**) |
+| `window._reactionReport` | function | `player-runtime.js` | — | отчёт реакций |
+| `window._logAnswer` | function | `player-runtime.js` | `player-runtime.js`, `player-single.js` | логирование |
+| `window._updateStimulusDim` | function | `player-runtime.js` | `player-camera.js` | мост притухания |
+| `window._recordDeviation` | function | `player-runtime.js` | `player-camera.js` | мост отклонения |
+| `window._abortCurrentStimulus` | function | `player-runtime.js` | `player-installers.js` | мост прерывания |
+| `window._resumeAfterStable` | function | `player-runtime.js` | — | мост возобновления |
+| `window._showInvalidToast` | function | `player-runtime.js` | — | мост тоста |
+| `window._isAnswerInvalid` | function | `player-runtime.js` | `player-runtime.js`, `player-single.js` | мост валидности |
+| `window._markAnswerInvalid` | function | `player-runtime.js` | `player-runtime.js`, `player-single.js` | мост счётчика |
+| `window.__vissort_zoom` | number | `app.js` | `app-editor.js` | уровень зума холста |
+| `window.__vissort_newScenario` | function | `app.js` | — | отладочный хук |
+
+**Итого:** 30 глобалов, из них **9 мостов** (`_logAnswer`, `_reactionReport`, `_updateStimulusDim`, `_recordDeviation`, `_abortCurrentStimulus`, `_resumeAfterStable`, `_showInvalidToast`, `_isAnswerInvalid`, `_markAnswerInvalid`) и **2 debug-хука** (`__vissort_zoom`, `__vissort_newScenario`).
 
 ### §6.2 Диагностика камеры
 
-Диагностика камеры в `player-camera.js`:
-
-- `window.camStats` — объект со счётчиками (`frames`, `detections`, `fails`, `avgDetectMs`, `fps`, `fpsSamples`, `backend`)
-- `window.camReport()` — печатает статистику в консоль
+- `window.camStats` — объект со счётчиками (`frames`, `detections`, `fails`, `avgDetectMs`, `fps`, `fpsSamples`, `backend`) — `player-camera.js:59`.
+- `window.camReport()` — печатает статистику в консоль — `player-camera.js:76`.
 
 ### §6.3 Глобальные ссылки на DOM
 
 | Глобал | Пишет | Читает |
 |---|---|---|
-| `window.stimDisplay` | `player-runtime.js` | `player-animation.js` |
-| `window.stimArea` | `player-runtime.js` | `player-animation.js` |
+| `window.stimDisplay` | `player-runtime.js:140` | `player-animation.js` |
+| `window.stimArea` | `player-runtime.js:141` | `player-animation.js` |
+| `window.responseButtons` | `player-runtime.js:143` | `player-runtime.js` |
 
-Проблема: `player-animation.js` использует их как implicit globals — если `player-runtime.js` не загружен раньше, будет ReferenceError.
+**Проблема:** `player-animation.js` использует `stimDisplay`/`stimArea` как implicit globals — если `player-runtime.js` не загружен раньше, будет ReferenceError.
 
 ### §6.4 Итог по глобалам
 
-- ~35 ad-hoc глобалов в `window`, не описанных нигде.
-- 5 мостов между модулями через `window._*`.
-- Нет единого reset() — при сбросе плеера каждый глобал сбрасывается вручную (в `stopPlayer` в `player-runtime.js`).
-- Риск: переименование модуля или функции молча ломает связи.
+- **30 ad-hoc глобалов** в `window`, не описанных нигде.
+- **9 мостов** между модулями через `window._*` (было 5, добавились `_abortCurrentStimulus`, `_resumeAfterStable`, `_showInvalidToast`).
+- **2 debug-хука** (`__vissort_zoom`, `__vissort_newScenario`).
+- **Нет единого `reset()`** — при сбросе плеера каждый глобал сбрасывается вручную (в `stopPlayer` в `player-runtime.js`).
+- **`_reactionLog` растёт без ограничений** — при длинной сессии утечка памяти.
+- **Риск:** переименование модуля или функции молча ломает связи.
 
 ---
 ## §7. Три системы дистанции
