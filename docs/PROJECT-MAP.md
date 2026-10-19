@@ -310,11 +310,11 @@ Sivtsev OTF (шрифт)
 
 ### 3.4 Плеер (главный)
 
-**`player-runtime.js`** — вся логика плеера. 2978 строк, 2 части. Экспорт: `window.PlayerState` (использование), `window.AppEditorCore` НЕТ (это app.js). Внутри IIFE. Функции: `initSupabase`, `onLoggedIn`, `loadUserScenarios`, `startPlayer`, `playNextGraphNode`, `playGraphStimulus`, `playGraphReading`, `playGraphCompare`, `handleDirectionAnswer`, `handleCompareAnswer`, `saveResult`, `scheduleVoiceCountdown`, `init`. **Блоки #17 (ч.1), #18 (ч.2).**
+**`player-runtime.js`** — bootstrap плеера, event-хендлеры, обёртки над `PlayerSingle`/`PlayerGraph`/`PlayerSession`/`PlayerReadingMode`/`PlayerAuth`/`PlayerScenarios`. 910 строк. Экспорт: `window.PlayerRuntime` (callbacks). Разбит в Фазе 5: `player-graph.js` (803), `player-single.js` (608), `player-session.js` (328), `player-reading-mode.js` (254), `player-auth.js` (240), `player-scenarios.js` (125). **Блок #17–18.**
 
 ### 3.5 Редактор
 
-**`app.js`** — редактор сценариев. 7877 строк, 4 части. Экспорт: `window.AppEditorCore` (в конце), `window.VissortPlayerOptions` (читает). Функции: `createNewNode`, `deleteNode`, `requestRenderGraph`, `updateInspector`, `applyReadingBackground`, `startPlayer`, `playNodesSequence`, `saveGraph`, `loadGraph`, `migrateScenario`, `initSupabase`, `updateAuthUI`, `init`. **Блоки #19–22.**
+**`app.js`** — редактор: bootstrap + init + auth + обёртки. 1850 строк (было 7877, Фаза 5). Экспорт: `window.AppEditorCore`, `window.VissortPlayerOptions`. Разбит: `app-state.js` (206, 115 алиасов), `app-player-preview.js` (1311), `app-editor.js` (1101), `app-inspector.js` (926), `app-generator.js` (882), `app-scenarios.js` (864), `app-blink-camera.js` (572), `app-auth.js` (259), `app-utils.js` (683). **Блок #19–22.**
 
 ### 3.6 HTML / entry
 
@@ -323,6 +323,7 @@ Sivtsev OTF (шрифт)
 **`player.html`** — плеер для разработчика. CSP строже (`Referrer-Policy: no-referrer`, `form-action 'none'`, `img-src` без `https:`). `player.js` с `requireDomain: true`. **`#v-detect`, `#stim-cam-block`** — dev-индикаторы. Меню игр управляется `showGamesMenu`. **Блок #24.**
 
 **`admin.html`** — редактор. CSP **без `frame-ancestors 'none'`**. **Все скрипты без `defer`.** Модалки через `style.display`. **`.btn-response`**. `#auth-name`, `#btn-test`, `#btn-ai-generator`, `#ai-generator-modal`, `#sync-chip`, `#sync-banner`, `#queue-modal`, `#font-picker-modal` — **только здесь**. **Блоки #26, #27.**
+**`clinic.html`** — клинический редактор (Фаза 6 MVP). 3051 строка. Копия `admin.html` + `#clinic-header` + `#protocol-panel` (5 полей). `clinic.js` (107) — генерация узлов, сохранение с `doctor_id`, назначение пациенту. **Блок #26b.**
 
 **`user.js`** — `window.VissortPlayerOptions = { requireDomain: false, showGamesMenu: true }`. **Блок #25.**
 
@@ -330,7 +331,7 @@ Sivtsev OTF (шрифт)
 
 ### 3.7 Тесты
 
-7 spec-файлов, **28 тестов**, покрытие **~35 % реального**. **Блок #28.**
+9 spec-файлов, **36 passed + 1 skipped** (37 всего), покрытие ~40 %. **Блок #28.**
 
 ---
 ## §4. Публичные API (`window.*`)
