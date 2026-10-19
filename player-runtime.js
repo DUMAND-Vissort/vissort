@@ -173,7 +173,7 @@ function hideStatus() {
 
 async function onLoggedIn() {
     authModal.classList.remove('open');
-    hdrUser.textContent = PlayerState.currentUser.email || '—';
+    hdrUser.textContent = (PlayerState.currentUser && PlayerState.currentUser.email) || '—';
     showStatus('Загрузка сценария…', 'Читаем назначения.');
 
     // Общий блок: fingerprint + Onboarding + enableCamera (§15.1.2 ч.5/7 — устранение дублирования)
@@ -862,7 +862,12 @@ function init() {
     if (window.PlayerAuth && typeof window.PlayerAuth.init === 'function') {
         window.PlayerAuth.init({
             onLoggedIn: onLoggedIn,
-            onTestMode: function () { onLoggedIn(); },
+            onTestMode: function (_td) {
+                if (!PlayerState.currentUser) {
+                    PlayerState.currentUser = { id: '__test__', email: 'test@local' };
+                }
+                onLoggedIn();
+            },
             onSignOut: function () {
                 var _hu = $('hdr-user');
                 if (_hu) _hu.textContent = '—';
