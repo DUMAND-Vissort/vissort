@@ -30,67 +30,108 @@
 ---
 ## §1. Оглавление модулей
 
-### Ядро
+> Актуально на 2026-10-19 (HEAD `6055589`). 62 файла, ~1.2 MB.
+
+### Ядро (6)
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 1 | `vissort-core.js` | 16.5 KB | ~440 |
-| 2 | `voice.js` | 25.4 KB | ~750 |
-| 3 | `data-layer.js` | 40.2 KB | ~1030 |
+| 1 | `vissort-core.js` | 16.8 KB | 501 |
+| 2 | `voice.js` | 25.4 KB | 647 |
+| 3 | `data-layer.js` | 41.9 KB | 1086 |
+| 4 | `vissort-logger.js` | 0.8 KB | 23 |
+| 5 | `vissort-env.js` | 0.9 KB | 23 |
+| 6 | `vissort-dialog.js` | 4.2 KB | 103 |
 
-### Модули плеера (Фаза 1)
+### Плеер (17)
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 4 | `player-state.js` | ~5 KB | ~180 |
-| 5 | `player-utils.js` | ~3 KB | ~90 |
-| 6 | `player-dist-warning.js` | ~2 KB | ~60 |
-| 7 | `player-reading.js` | ~5 KB | ~180 |
-| 8 | `player-camera.js` | ~14 KB | ~480 |
-| 9 | `player-animation.js` | ~18 KB | ~530 |
-| 10 | `player-invalid-detection.js` | ~8 KB | ~180 |
+| 7 | `player-state.js` | 5.1 KB | 177 |
+| 8 | `player-utils.js` | 3.7 KB | 92 |
+| 9 | `player-dist-warning.js` | 2.5 KB | 54 |
+| 10 | `player-reading.js` | 9.9 KB | 255 |
+| 11 | `player-camera.js` | 24.3 KB | 542 |
+| 12 | `player-animation.js` | 22.2 KB | 534 |
+| 13 | `player-invalid-detection.js` | 8.6 KB | 215 |
+| 14 | `player-distance.js` | 3.4 KB | 103 |
+| 15 | `player-graph.js` | 34.2 KB | 803 |
+| 16 | `player-single.js` | 23.8 KB | 608 |
+| 17 | `player-session.js` | 14.1 KB | 328 |
+| 18 | `player-reading-mode.js` | 9.6 KB | 254 |
+| 19 | `player-auth.js` | 9.1 KB | 240 |
+| 20 | `player-scenarios.js` | 5.2 KB | 125 |
+| 21 | `player-installers.js` | 10.6 KB | 225 |
+| 22 | `player-overlay.js` | 1.6 KB | 50 |
+| 23 | `player-runtime.js` | 36.8 KB | 910 |
 
-### Онбординг / device / AI
+### Редактор (10)
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 11 | `vissort-onboarding.js` | ~12 KB | ~330 |
-| 12 | `vissort-device.js` | ~10 KB | ~290 |
-| 13 | `vissort-ai-generator.js` | ~12 KB | ~300 |
-| 14 | `header-drag.js` | ~4 KB | ~150 |
-| 15 | `keepalive.js` | ~5 KB | ~180 |
-| 16 | `sw.js` | 9 KB | ~290 |
+| 24 | `app.js` | 89.0 KB | 1850 |
+| 25 | `app-state.js` | 6.8 KB | 206 |
+| 26 | `app-player-preview.js` | 49.7 KB | 1311 |
+| 27 | `app-editor.js` | 48.4 KB | 1101 |
+| 28 | `app-inspector.js` | 67.8 KB | 926 |
+| 29 | `app-generator.js` | 53.4 KB | 882 |
+| 30 | `app-scenarios.js` | 43.6 KB | 864 |
+| 31 | `app-blink-camera.js` | 25.1 KB | 572 |
+| 32 | `app-auth.js` | 10.0 KB | 259 |
+| 33 | `app-utils.js` | 28.6 KB | 683 |
 
-### Плеер (главный)
+### Клиника (2)
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 17 | `player-runtime.js` | 116.2 KB | 2978 |
+| 34 | `clinic.html` | 132.4 KB | 3051 |
+| 35 | `clinic.js` | 4.2 KB | 107 |
 
-### Редактор
+### Онбординг / device / AI (6)
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 18 | `app.js` | ~250 KB | 4690 |
+| 36 | `vissort-onboarding.js` | 13.9 KB | 301 |
+| 37 | `vissort-device.js` | 7.7 KB | 237 |
+| 38 | `vissort-ai-generator.js` | 12.5 KB | 298 |
+| 39 | `header-drag.js` | 5.4 KB | 162 |
+| 40 | `keepalive.js` | 6.8 KB | 178 |
+| 41 | `sw.js` | 10.2 KB | 276 |
 
-### HTML + entry
+### HTML + entry (5)
 | # | Файл | Размер | Строк |
 |---|---|---|---|
-| 19 | `user.html` | ~30 KB | ~700 |
-| 20 | `player.html` | ~32 KB | ~740 |
-| 21 | `admin.html` | ~184 KB | 3020 |
-| 22 | `user.js` | 0.15 KB | 2 |
-| 23 | `player.js` | 0.15 KB | 2 |
+| 42 | `user.html` | 26.9 KB | 696 |
+| 43 | `player.html` | 28.0 KB | 723 |
+| 44 | `admin.html` | 130.5 KB | 3032 |
+| 45 | `user.js` | 0.2 KB | 3 |
+| 46 | `player.js` | 0.2 KB | 3 |
 
-### Тесты
+### Маркетинг / игры (4)
+| # | Файл | Размер | Строк |
+|---|---|---|---|
+| 47 | `index.html` | 46.3 KB | 1108 |
+| 48 | `features.html` | 82.1 KB | 1814 |
+| 49 | `pyatnashki.html` | 27.6 KB | 683 |
+| 50 | `differences-wolf.html` | 25.6 KB | 632 |
+
+### Инфраструктура (3)
+| # | Файл | Размер | Строк |
+|---|---|---|---|
+| 51 | `eslint.config.js` | 4.2 KB | 120 |
+| 52 | `playwright.config.js` | 0.8 KB | 30 |
+| 53 | `sentry.min.js` | 72.3 KB | 3 |
+
+### Тесты (9, 37 тестов)
 | # | Файл | Тестов |
 |---|---|---|
-| 24 | `tests/camera.spec.js` | 4 |
-| 25 | `tests/editor.spec.js` | 5 |
-| 26 | `tests/login.spec.js` | 3 |
-| 27 | `tests/offline.spec.js` | 5 |
-| 28 | `tests/player.spec.js` | 4 |
-| 29 | `tests/reading.spec.js` | 5 |
-| 30 | `tests/schema.spec.js` | 2 |
+| 54 | `tests/ai-generator.spec.js` | 1 |
+| 55 | `tests/camera.spec.js` | 4 |
+| 56 | `tests/clinic.spec.js` | 6 |
+| 57 | `tests/editor.spec.js` | 5 |
+| 58 | `tests/login.spec.js` | 3 |
+| 59 | `tests/offline.spec.js` | 5 |
+| 60 | `tests/player.spec.js` | 5 |
+| 61 | `tests/reading.spec.js` | 5 |
+| 62 | `tests/schema.spec.js` | 3 |
 
-**Итого:** 30 JS/HTML-файлов + 7 spec-файлов = **37 файлов**, ~400 KB JS.
+**Итого:** 62 файла, ~1.2 MB JS/HTML. Тесты: **36 passed + 1 skipped** (37 всего).
 
----
 ## §2. Архитектура (графы зависимостей)
 
 ASCII-графы вместо mermaid — устойчивы к копипасту.
