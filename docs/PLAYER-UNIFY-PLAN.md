@@ -14,11 +14,11 @@
 
 10 функций дублируются. **`handleDirectionAnswer` унифицирован** (`af6b918`).
 
-## 2. Карта расхождения (10 функций, актуально на 2026-10-19)
+## 2. Карта расхождения (8 функций, актуально на 2026-10-19)
 
 | Функция | preview | single | Класс | Приоритет |
 |---|---|---|---|---|
-| `showNextStimulus` | 667 | 87 | ядро | **P0 — следующий** |
+| `showNextStimulus` | 667 | 87 | специфика preview | не унифицировать |
 | `finishSeries` | 810 | 238 | специфика preview | не унифицировать |
 | `createCellElement` | 976 | 57 | сравнение | P1 |
 | `defaultCellParams` | 1000 | 43 | сравнение | P1 |
@@ -36,7 +36,7 @@
 **Клинические параметры превью:**
 - `updateCounters` — 6 счётчиков (прод — 5).
 - `finishSeries` — адаптивная острота (`currentAcuity += acuityStep`), `noAnswerSeriesStreak`, `buildBlinkReport`. Прод — `PlayerSession.showFinishedReport()`.
-- `showNextStimulus` — `blinkLockShow`, `sessionId`, адаптивная острота. Прод — `PlayerState`-центричный.
+- `showNextStimulus` — `blinkLockShow`, `responsePhaseActive`/`responseStartTime` в хвосте, `buildDefocusFrame` 4 аргумента. `AppState`-центричный, без `PlayerCamera`/`PlayerState`. **Не унифицировать** (разведка 2026-10-19).
 
 **Граф-узлы (только редактор):**
 - `playNodesSequence`, `playStimulusNodeSeries`, `finishStimulusNodeSeries`,
@@ -54,10 +54,11 @@
 
 **Шаг 1 — DONE (`af6b918`):** `handleDirectionAnswer` — продвижение серии, `saveResult`, очистка таймеров, гашение анимаций.
 
-**Шаг 2 — `showNextStimulus` (P0, ядро, 667 vs 87):**
-- Требует **отдельной разведки** — что именно расходится.
-- Гипотезы: `blinkLockShow` (preview), `sessionId` (preview), адаптивная острота (preview), `direction`-логика.
-- Возможный исход: **выровнять поведение**, а не сливать код. `showNextStimulus` — центр плеера; ошибка ломает всё.
+**Шаг 2 — ЗАКРЫТО (разведка 2026-10-19): `showNextStimulus` — специфика preview.**
+- `responsePhaseActive`/`responseStartTime` ставятся в хвосте (750+), flat-путь работает.
+- `checkHardLimit`, `_faceLostPause`, `_waitingStable` — **неприменимы** (preview не использует `PlayerCamera`/`PlayerState`).
+- `blinkLockShow`, `buildDefocusFrame` 4 аргумента — preview-специфика.
+- **Вывод:** не унифицировать. Единственное реальное расхождение — `handleDirectionAnswer` — закрыто (`af6b918`).
 - **Критерий готовности:** в preview то же поведение, что в prod (стимул, таймеры, `seriesStep`, `finishSeries`, `saveResult`).
 
 **Шаг 3 — `displayStimulus` / `hideStimulus` (P1, простые, 11/15 vs 21/28):**
@@ -87,7 +88,7 @@
 
 ## 8. Итог
 
-- Дублирование: ~3000 строк, из них **реально багующих** — 9 функций (после фикса `handleDirectionAnswer`).
-- Приоритет: **`showNextStimulus`** (ядро), затем простые (`displayStimulus`, `hideStimulus`), затем сравнение (`createCellElement`, `defaultCellParams`, `showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`).
+- Дублирование: ~3000 строк, из них **реально багующих** — 8 функций (после `handleDirectionAnswer`).
+- Приоритет: **сравнение** (`createCellElement`, `defaultCellParams`, `showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`), затем простые (`displayStimulus`, `hideStimulus`).
 - Оценка: **5–7 коммитов** по 1 функции (или паре).
-- **Не трогать:** `finishSeries` (специфика preview).
+- **Не трогать:** `finishSeries` (адаптивная острота), `showNextStimulus` (blinkLockShow, AppState).
