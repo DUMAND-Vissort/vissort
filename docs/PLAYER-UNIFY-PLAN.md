@@ -14,7 +14,7 @@
 
 10 функций дублируются. **`handleDirectionAnswer` унифицирован** (`af6b918`).
 
-## 2. Карта расхождения (4 функции, актуально на 2026-10-19)
+## 2. Карта расхождения (0 функций — все специфика платформы, 2026-10-19)
 
 | Функция | preview | single | Класс | Приоритет |
 |---|---|---|---|---|
@@ -24,10 +24,10 @@
 | `defaultCellParams` | 1000 | 43 | разное назначение | не унифицировать |
 | `displayStimulus` | 11 | 21 | идентичны | не унифицировать |
 | `hideStimulus` | 15 | 28 | идентичны | не унифицировать |
-| `handleFindSameClick` | 932 | 286 | сравнение | P1 |
-| `showDirectionComparison` | 883 | 346 | сравнение | P1 |
-| `showFindSameComparison` | 897 | 332 | сравнение | P1 |
-| `showFindSameComparisonInternal` | 913 | 261 | сравнение | P1 |
+| `handleFindSameClick` | 932 | 286 | by design (разные плееры) | не унифицировать |
+| `showDirectionComparison` | 883 | 346 | by design (разные плееры) | не унифицировать |
+| `showFindSameComparison` | 897 | 332 | by design (разные плееры) | не унифицировать |
+| `showFindSameComparisonInternal` | 913 | 261 | by design (разные плееры) | не унифицировать |
 
 ## 3. Специфика preview — НЕ унифицировать
 
@@ -63,10 +63,7 @@
 
 **Шаг 3 — ЗАКРЫТО (2026-10-19): `displayStimulus` / `hideStimulus` — идентичны.**
 **Шаг 4 — ЗАКРЫТО (2026-10-19): `createCellElement` / `defaultCellParams` — адаптация state (AppState vs PlayerState), разное назначение.**
-**Шаг 5 — `showDirectionComparison` / `showFindSameComparison` / `showFindSameComparisonInternal` / `handleFindSameClick` (P1, группа, 883/897/913/932 vs 346/332/261/286):**
-- Сравнение. Делать вместе, чтобы не разъезжались.
-
-## 6. Правила
+**Шаг 5 — ЗАКРЫТО (2026-10-19): группа сравнения — by design (preview = AppState, single = PlayerState).**
 
 1. **Один коммит = одна функция** (или логическая пара, как `createCellElement` + `defaultCellParams`).
 2. **Тесты после каждого** — `npx playwright test --reporter=list` (36+1).
@@ -84,7 +81,7 @@
 
 ## 8. Итог
 
-- Дублирование: ~3000 строк, из них **реально багующих** — 4 функции (`showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`).
-- Приоритет: **сравнение** (`createCellElement`, `defaultCellParams`, `showDirectionComparison`, `showFindSameComparison*`, `handleFindSameClick`), затем простые (`displayStimulus`, `hideStimulus`).
+- Дублирование: ~3000 строк, из них **реально багующих** — 0 (единственный — `handleDirectionAnswer`, закрыт `af6b918`).
+- **План закрыт.** Все функции — специфика платформы (AppState vs PlayerState).
 - Оценка: **5–7 коммитов** по 1 функции (или паре).
 - **Не трогать:** `finishSeries` (адаптивная острота), `showNextStimulus` (blinkLockShow, AppState).
