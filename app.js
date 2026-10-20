@@ -1,4 +1,4 @@
-// ==================== app.js ====================
+﻿// ==================== app.js ====================
 // Vissort Studio — редактор сценариев для админа
 // Data layer (IndexedDB + Supabase REST + syncQueue)
 // ====================
@@ -1070,7 +1070,7 @@ function init() {
     ensureBlinkCalibrationUI();
     const sfn = localStorage.getItem('selectedFolderName');
     if (sfn) folderStatus.textContent = '📁 ' + sfn;
-    btnSelectFolder.addEventListener('click', selectFolder);
+    if (btnSelectFolder) btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
     // Кнопка теста в player.html (?test=1)
@@ -1455,8 +1455,8 @@ function init() {
         inspectorEl.style.display = h ? 'block' : 'none';
     });
     btnSave.addEventListener('click', () => { if (window.AppScenarios && window.AppScenarios.saveCurrentScenario) window.AppScenarios.saveCurrentScenario(); else console.warn('saveCurrentScenario не найдена'); });
-    btnOpen.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
+    if (btnOpen) btnOpen.addEventListener('click', () => fileInput.click());
+    if (fileInput) fileInput.addEventListener('change', (e) => {
         if (e.target.files[0]) loadGraph(e.target.files[0]);
         e.target.value = '';
     });

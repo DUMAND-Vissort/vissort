@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
     <head>
         <meta charset="UTF-8" />
@@ -1735,32 +1735,6 @@
                     <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
                     
                     <input type="file" id="file-input" accept=".json" style="display: none" />
-                    <input
-                        type="file"
-                        id="folder-input"
-                        webkitdirectory
-                        directory
-                        multiple
-                        style="display: none"
-                    />
-                    <button class="btn btn-secondary btn-icon" id="btn-select-folder" title="Папка сценариев">
-                        📁
-                    </button>
-                    <button
-                        class="btn btn-secondary btn-icon"
-                        id="btn-select-templates-folder"
-                        title="Папка заготовок"
-                    >
-                        📋
-                    </button>
-                    <input
-                        type="file"
-                        id="templates-folder-input"
-                        webkitdirectory
-                        directory
-                        multiple
-                        style="display: none"
-                    />
                     <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
                     <span class="header-sep"></span>
                     
@@ -3038,17 +3012,5 @@
         </div>
         <script src="tracker.js" defer></script>
     <script src="clinic.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        ['btn-select-folder', 'btn-select-templates-folder'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                // Удаляем кнопку и, если нужно, её родительский контейнер (чтобы не оставалось пустых дыр)
-                el.remove(); 
-                console.log('[admin] Удалена лишняя кнопка:', id);
-            }
-        });
-    });
-</script>
 </body>
 </html>
