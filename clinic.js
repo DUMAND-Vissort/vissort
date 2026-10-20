@@ -5,7 +5,7 @@ window.VissortClinicOptions = {
   requireRole: 'doctor',
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
   const docEl = document.getElementById('clinic-doctor');
   if (docEl && window.currentUser) docEl.textContent = window.currentUser.email || '';
 

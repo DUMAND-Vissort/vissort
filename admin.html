@@ -1616,6 +1616,19 @@
 <!-- /Yandex.Metrika counter -->
 </head>
     <body>
+<div id="clinic-header" style="flex-shrink: 0; height: 35px; padding: 8px 16px; background: #1e293b; color: #e2e8f0; font-size: 14px; border-bottom: 1px solid #334155;">
+    <span id="clinic-name" style="font-weight: bold;">Vissort — редактор</span>
+    <span id="clinic-doctor" style="margin-left: 16px; color: #94a3b8;"></span>
+</div>
+<div id="protocol-panel" style="flex-shrink: 0; height: 50px; padding: 8px 16px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; gap: 8px; align-items: end; flex-wrap: wrap; font-size: 12px;">
+    <div><label>Диоптрии</label><br><select id="protocol-diopters"><option value="-1">-1.0</option><option value="-2">-2.0</option><option value="-3">-3.0</option><option value="-4">-4.0</option><option value="-5">-5.0</option><option value="-6">-6.0</option></select></div>
+    <div><label>Возраст</label><br><input type="number" id="protocol-age" value="10" min="3" max="99" style="width: 60px;"></div>
+    <div><label>Тип</label><br><select id="protocol-training-type"><option value="single">Стимулы</option><option value="reading">Чтение</option><option value="compare">Сравнение</option></select></div>
+    <div><label>Время (мин)</label><br><input type="number" id="protocol-duration" value="10" min="1" max="60" style="width: 60px;"></div>
+    <div><label><input type="checkbox" id="protocol-blink"> Моргание</label></div>
+    <button class="btn btn-success" id="btn-generate-protocol">Сгенерировать</button>
+    <button class="btn btn-warning" id="btn-save-protocol">Сохранить</button>
+</div>
         <header>
             <div class="header-row">
                 <div class="header-section section-work">
@@ -3042,5 +3055,6 @@
             </div>
         </div>
         <script src="tracker.js" defer></script>
+    <script src="clinic.js"></script>
 </body>
 </html>
