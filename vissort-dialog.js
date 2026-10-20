@@ -13,7 +13,7 @@
         _el = document.createElement('dialog');
         _el.id = 'vissort-dialog';
         _el.style.cssText =
-            'padding:0;border:none;border-radius:12px;background:#1a1a1f;color:#eee;' +
+            'padding:0;border:none;border-radius:12px;background:#334155;color:#eee;border:2px solid #cbd5e1;' +
             'max-width:480px;width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
         _el.innerHTML =
             '<form method="dialog" style="padding:24px;">' +

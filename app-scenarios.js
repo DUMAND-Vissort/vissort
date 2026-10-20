@@ -818,31 +818,34 @@ async function loadScenarioList() {
 }
 async function saveCurrentScenario() {
     if (!window.Data || !window.Data.getCurrentUserId()) {
-        VissortDialog.alert('Войдите');
+        VissortDialog.alert('Войдите в систему');
         return;
     }
-    if (!trainingNode || !trainingNode.params) {
-        VissortDialog.alert('Нет тренировки');
+    if (!window.AppState || !window.AppState.nodes || window.AppState.nodes.length === 0) {
+        VissortDialog.alert('Граф пуст. Создайте хотя бы один узел.');
         return;
     }
-    const name = await VissortDialog.prompt('Название:');
+    const name = await VissortDialog.prompt('Название сценария:');
     if (!name) return;
+
+    const payload = buildScenarioPayloadFromCurrent();
     const record = {
-        id: window.Data.uuid(),
-        name,
-        training_type: trainingNode.params.trainingType || 'single',
-        params: {
-            graph: {
-                nodes: JSON.parse(JSON.stringify(nodes)),
-                connections: JSON.parse(JSON.stringify(connections)),
-                books: JSON.parse(JSON.stringify(window._books))
-            },
-            scenarioKey: window._currentScenarioKey || generateScenarioKey()
-        }
+        id: window._currentScenarioId || window.Data.uuid(),
+        name: name,
+        training_type: payload.trainingType || 'single',
+        params: payload.params || { graph: payload.graph },
+        created_by: window.AppState?.currentUser?.id || null,
+        doctor_id: window.AppState?.currentUser?.id || null
     };
-    await window.Data.saveScenario(record);
-    VissortDialog.alert('Сохранено: ' + name);
-    loadScenarioList();
+
+    try {
+        const saved = await window.Data.saveScenario(record);
+        window._currentScenarioId = saved.id;
+        VissortDialog.alert('Сохранено: ' + name);
+        loadScenarioList();
+    } catch (e) {
+        VissortDialog.alert('Ошибка сохранения: ' + e.message);
+    }
 }
 
 // ==================== ПОЛЬЗОВАТЕЛИ И НАЗНАЧЕНИЯ ====================

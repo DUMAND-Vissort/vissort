@@ -1614,6 +1614,7 @@
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/113678407" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
+
 </head>
     <body>
 <div id="clinic-header" style="flex-shrink: 0; height: 35px; padding: 8px 16px; background: #1e293b; color: #e2e8f0; font-size: 14px; border-bottom: 1px solid #334155;">
@@ -1732,7 +1733,7 @@
                         🆕
                     </button>
                     <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
-                    <button class="btn btn-secondary btn-icon" id="btn-open" title="Открыть">📂</button>
+                    
                     <input type="file" id="file-input" accept=".json" style="display: none" />
                     <input
                         type="file"
@@ -1762,28 +1763,9 @@
                     />
                     <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
                     <span class="header-sep"></span>
-                    <span class="status-chip" id="folder-status" title="Папка">📁 —</span>
-                    <span class="status-chip" id="templates-folder-status" title="Папка заготовок">📋 —</span>
-                    <div class="counters" id="counters">
-                        <span class="counter" title="Полных серий"
-                            ><span class="label">П:</span> <b id="cnt-completed">0</b></span
-                        >
-                        <span class="counter" title="Успешных серий"
-                            ><span class="label">У:</span> <b id="cnt-success">0</b></span
-                        >
-                        <span class="counter" title="Неуспешных серий"
-                            ><span class="label">Н:</span> <b id="cnt-failed">0</b></span
-                        >
-                        <span class="counter" title="Правильных ответов"
-                            ><span class="label">✓</span> <b id="cnt-series-correct">0</b></span
-                        >
-                        <span class="counter" title="Неправильных ответов"
-                            ><span class="label">✗</span> <b id="cnt-series-incorrect">0</b></span
-                        >
-                        <span class="counter" title="Без ответа"
-                            ><span class="label">∅</span> <b id="cnt-series-noanswer">0</b></span
-                        >
-                    </div>
+                    
+                    
+                    
                 </div>
 
                 <span class="section-sep"></span>
@@ -3056,5 +3038,17 @@
         </div>
         <script src="tracker.js" defer></script>
     <script src="clinic.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        ['btn-select-folder', 'btn-select-templates-folder'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                // Удаляем кнопку и, если нужно, её родительский контейнер (чтобы не оставалось пустых дыр)
+                el.remove(); 
+                console.log('[admin] Удалена лишняя кнопка:', id);
+            }
+        });
+    });
+</script>
 </body>
 </html>

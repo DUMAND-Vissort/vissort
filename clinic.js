@@ -49,33 +49,7 @@ window.addEventListener('load', () => {
     alert('Сценарий сгенерирован. Проверьте превью.');
   });
 
-  document.getElementById('btn-save-protocol')?.addEventListener('click', async () => {
-    if (!window.Data || !window.AppState) return;
-    const name = prompt('Название протокола:', 'Протокол ' + new Date().toLocaleDateString());
-    if (!name) return;
-
-    const scenario = {
-      name,
-      training_type: document.getElementById('protocol-training-type').value,
-      params: {
-        graph: {
-          nodes: JSON.parse(JSON.stringify(window.AppState.nodes)),
-          connections: JSON.parse(JSON.stringify(window.AppState.connections)),
-          books: JSON.parse(JSON.stringify(window._books || {}))
-        },
-        scenarioKey: window._currentScenarioKey || null
-      },
-      doctor_id: window.currentUser?.id || null,
-      created_by: window.currentUser?.id || null
-    };
-
-    try {
-      await window.Data.saveScenario(scenario);
-      alert('Сохранено: ' + name);
-    } catch (e) {
-      alert('Ошибка: ' + e.message);
-    }
-  });
+  document.getElementById('btn-save-protocol')?.addEventListener('click', () => { if (window.AppScenarios && window.AppScenarios.saveCurrentScenario) window.AppScenarios.saveCurrentScenario(); });
 
   document.getElementById('btn-users')?.addEventListener('click', async () => {
     document.getElementById('users-modal').style.display = 'flex';

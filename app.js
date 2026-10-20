@@ -1454,7 +1454,7 @@ function init() {
         const h = !inspectorEl.style.display || inspectorEl.style.display === 'none';
         inspectorEl.style.display = h ? 'block' : 'none';
     });
-    btnSave.addEventListener('click', saveGraph);
+    btnSave.addEventListener('click', () => { if (window.AppScenarios && window.AppScenarios.saveCurrentScenario) window.AppScenarios.saveCurrentScenario(); else console.warn('saveCurrentScenario не найдена'); });
     btnOpen.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
         if (e.target.files[0]) loadGraph(e.target.files[0]);
