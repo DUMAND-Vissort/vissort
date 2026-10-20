@@ -17,15 +17,11 @@
         let startX = 0,
             startY = 0;
 
-        header.addEventListener('contextmenu', (e) => {
-            if (e.target.closest('.btn, .status-chip, .counter')) {
-                e.preventDefault();
-            }
-        });
+        
 
         header.addEventListener('mousedown', (e) => {
-            if (e.button !== 2) return;
-            const target = e.target.closest('.btn, .status-chip, .counter');
+            if (e.button !== 0) return; e.preventDefault();
+            const target = e.target.closest('.btn, .status-chip, .counter, .header-sep');
             if (!target) return;
             e.preventDefault();
             e.stopPropagation();
@@ -136,7 +132,7 @@
 
         function restoreOrder() {
             try {
-                const saved = localStorage.getItem(LS_KEY);
+                const saved = null; // Временно отключено
                 if (!saved) return;
                 const ids = JSON.parse(saved);
                 ids.forEach((id) => {
