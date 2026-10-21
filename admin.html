@@ -1614,7 +1614,40 @@
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/113678407" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
-
+<style id="custom-separators">
+    .section-sep {
+        display: inline-block !important;
+        width: 2px !important;
+        height: 20px !important;
+        background-color: #555566 !important; /* Спокойный серый цвет */
+        margin: 0 10px !important;
+        vertical-align: middle !important;
+        border-radius: 1px;
+    }
+    
+    .header-sep {
+        display: inline-block !important;
+        width: 1px !important;
+        height: 16px !important;
+        background-color: #444455 !important; /* Чуть темнее для контраста */
+        margin: 0 8px !important;
+        vertical-align: middle !important;
+    }
+</style>
+<style id="header-left-align">
+    /* Прижимаем шапку к левому краю */
+    .header-row {
+        justify-content: flex-start !important;
+    }
+    /* Запрещаем секциям растягиваться на всю ширину */
+    .header-section {
+        flex: 0 0 auto !important;
+    }
+    /* Убираем авто-отступ у блока аккаунта, если он был */
+    .section-account {
+        margin-left: 0 !important;
+    }
+</style>
 </head>
     <body>
 <div id="clinic-header" style="flex-shrink: 0; height: 35px; padding: 8px 16px; background: #1e293b; color: #e2e8f0; font-size: 14px; border-bottom: 1px solid #334155;">
@@ -1630,128 +1663,73 @@
     <button class="btn btn-success" id="btn-generate-protocol">Сгенерировать</button>
     <button class="btn btn-warning" id="btn-save-protocol">Сохранить</button>
 </div>
-        <header>
+               <header>
             <div class="header-row">
-                <div class="header-section section-work">
+                <div class="header-section section-play">
+				
                     <button class="btn btn-warning btn-icon" id="btn-player" title="Плеер">▶</button>
-                    <button
-                        class="btn btn-dynamic btn-icon"
-                        id="btn-test"
-                        title="Тест в плеере (как у юзера)"
-                    >
-                        🧪
-                    </button>
-                    <button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">
-                        ⏹
-                    </button>
-                    <button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">
-                        ⏸
-                    </button>
-                    <button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
-                    <span class="header-sep"></span>
-                    <button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>
-                    <button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
-                    <button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
-                    <button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">
-                        ⚖️
-                    </button>
-                    <button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
-                    <button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
-                    <button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">
-                        🧰
-                    </button>
-                    <button
-                        class="btn btn-secondary btn-icon"
-                        id="btn-scenario-time"
-                        title="Оценка времени сценария"
-                    >
-                        ⏱
-                    </button>
-                    <span class="header-sep"></span>
-                    <button
-                        class="btn btn-mode btn-icon"
-                        id="btn-zoom-out"
-                        title="Уменьшить масштаб (Ctrl+-)"
-                    >
-                        −
-                    </button>
-                    <button
-                        class="btn btn-secondary"
-                        id="btn-zoom-reset"
-                        title="Сбросить масштаб (Ctrl+0)"
-                        style="min-width: 52px; font-size: 11px"
-                    >
-                        100%
-                    </button>
-                    <button class="btn btn-mode btn-icon" id="btn-zoom-in" title="Увеличить масштаб (Ctrl++)">
-                        +
-                    </button>
-                    <button class="btn btn-success btn-icon" id="btn-ai-generator" title="AI генератор">
-                        AI
-                    </button>
+                    <button class="btn btn-dynamic btn-icon" id="btn-test" title="Тест в плеере">🧪</button>
+                    <button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">⏹</button>
+                    <button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">⏸</button>
+					<button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
+
+                </div>
+
+                <span class="section-sep"></span>
+				
+                <div class="header-section section-nodes-2">
+				
+				    <button class="btn btn-success btn-icon" id="btn-new" title="New scenario">🆕</button>
+                    <button class="btn btn-success btn-icon" id="btn-ai-generator" title="AI генератор">AI</button>
+					<button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
+                    <button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>		
+ 				    <button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
+ 					<button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
+ 					<button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">⚖️</button>
+ 					<button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
+					<button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
+
+                </div>
+
+                <span class="section-sep"></span>
+                
+				<div class="header-section section-nodes">
+				 
+                    <button class="btn btn-mode btn-icon" id="btn-zoom-out" title="Уменьшить масштаб">−</button>
+                    <button class="btn btn-secondary" id="btn-zoom-reset" style="min-width: 52px; font-size: 11px">100%</button>
+                    <button class="btn btn-mode btn-icon" id="btn-zoom-in" title="Увеличить масштаб">+</button>
+ 					<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Время сценария">⏱</button>
+
                 </div>
 
                 <span class="section-sep"></span>
 
                 <div class="header-section section-device">
-                    <button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Включить камеру">
-                        📷
-                    </button>
-                    <button
-                        class="btn btn-success btn-icon"
-                        id="btn-disable-camera"
-                        style="display: none"
-                        title="Выключить камеру"
-                    >
-                        📷
-                    </button>
-                    <button
-                        class="btn btn-warning btn-icon"
-                        id="btn-calibrate-camera"
-                        disabled
-                        title="Калибровка камеры"
-                    >
-                        🎥
-                    </button>
-                    <button
-                        class="btn btn-warning btn-icon"
-                        id="btn-calibrate-screen"
-                        title="Калибровка экрана"
-                    >
-                        📐
-                    </button>
-                    <span class="header-sep"></span>
-                    <span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
+				
+                    <button class="btn btn-secondary btn-icon" id="btn-enable-camera" title="Включить камеру">📷</button>
+                    <button class="btn btn-success btn-icon" id="btn-disable-camera" style="display: none" title="Выключить камеру">📷</button>
+                    <button class="btn btn-warning btn-icon" id="btn-calibrate-camera" disabled title="Калибровка камеры">🎥</button>
+                    <button class="btn btn-warning btn-icon" id="btn-calibrate-screen" title="Калибровка экрана">📐</button>
+					<span class="status-chip" id="camera-status" title="Статус камеры">📷 выкл</span>
                     <span class="status-chip" id="distance-display" title="Дистанция">—</span>
                     <span class="status-chip face-missing" id="face-status" title="Лицо">—</span>
+					
                 </div>
 
                 <span class="section-sep"></span>
 
                 <div class="header-section section-files">
-                    <button class="btn btn-success btn-icon" id="btn-new" title="New scenario (clear canvas)">
-                        🆕
-                    </button>
+
                     <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
-                    
-                    <input type="file" id="file-input" accept=".json" style="display: none" />
                     <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
-                    <span class="header-sep"></span>
-                    
-                    
-                    
+					<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
+					
                 </div>
 
                 <span class="section-sep"></span>
 
                 <div class="header-section section-account">
-                    <span
-                        class="status-chip clickable"
-                        id="sync-chip"
-                        title="Синхронизация — нажмите для очереди"
-                        >🟢 Онлайн</span
-                    >
-                    <button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
+                    <span class="status-chip clickable" id="sync-chip" title="Синхронизация">🟢 Онлайн</span>
                     <span class="header-sep"></span>
                     <button class="btn btn-secondary" id="btn-auth">Войти</button>
                     <span class="status-chip" id="user-email" title="Email" style="display: none"></span>
