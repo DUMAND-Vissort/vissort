@@ -1,4 +1,4 @@
-/* app-scenarios.js — сохранение, загрузка, библиотека, шаблоны, book picker
+﻿/* app-scenarios.js — сохранение, загрузка, библиотека, шаблоны, book picker
  * §A2-v6 (Фаза 5). Экспорт: window.AppScenarios
  * Зависимости: window.Data, VissortDialog, window.AppEditor, VLog,
  *              window.generateScenarioKey, window.bookmarkKeyFor,
@@ -472,21 +472,33 @@ async function saveGraph() {
         // §vissort-tree: папка primary (Vissort/Сценарии), fallback — <a download>
         let savedToFolder = false;
         try {
-            const scenariosDir = await ensureVissortTree();
-            if (scenariosDir) {
-                let fileName = window._currentScenarioFileName;
-                if (!fileName) {
-                    const ans = await VissortDialog.prompt(
-                        'Имя файла сценария (без пути):',
-                        'scenario_' + new Date().toISOString().slice(0, 10) + '.json'
-                    );
-                    if (!ans) return;
-                    fileName = /\.json$/i.test(ans) ? ans : ans + '.json';
-                    window._currentScenarioFileName = fileName;
-                }
-                await window.Data.writeFileToFolder(scenariosDir, fileName, jsonStr);
+            const fileName = window._currentScenarioFileName || 'scenario_' + new Date().toISOString().slice(0, 10) + '.json';
+            
+            if (window.showSaveFilePicker) {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [{ description: 'JSON файл', accept: { 'application/json': ['.json'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(jsonStr);
+                await writable.close();
+                window._currentScenarioFileName = handle.name;
+                const hdr = document.getElementById('hdr-scenario');
+                if (hdr) hdr.textContent = handle.name;
+                VissortDialog.alert('📁 Сохранено: ' + handle.name);
                 savedToFolder = true;
-                VissortDialog.alert('📁 Сохранено: Vissort/Сценарии/' + fileName);
+            } else {
+                // Fallback для старых браузеров (Safari)
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                savedToFolder = true;
             }
         } catch (err) {
             VLog.warn('[saveGraph] папка:', err);
@@ -579,13 +591,35 @@ function migrateScenario(data) {
     return data;
 }
 
+async function openGraphFile() {
+    try {
+        if (window.showOpenFilePicker) {
+            const [handle] = await window.showOpenFilePicker({
+                types: [{ description: 'JSON файл', accept: { 'application/json': ['.json'] } }]
+            });
+            const file = await handle.getFile();
+            loadGraph(file);
+        } else {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                if (e.target.files && e.target.files[0]) loadGraph(e.target.files[0]);
+            };
+            input.click();
+        }
+    } catch (err) {
+        if (err.name !== 'AbortError') console.error(err);
+    }
+}
+
 function loadGraph(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
             let data = JSON.parse(e.target.result);
             data = migrateScenario(data);
-            if (file && file.name) window._currentScenarioFileName = file.name;
+            if (file && file.name) { window._currentScenarioFileName = file.name; const hdr = document.getElementById('hdr-scenario'); if (hdr) hdr.textContent = file.name; }
             const g = data.graph || data;
             nodes = g.nodes || [];
             connections = g.connections || [];
@@ -618,6 +652,7 @@ function loadGraph(file) {
                 delete c.inheritPosition;
             });
             nodes.forEach((node) => {
+                node.isActive = true;
                 if (
                     (node.nodeType === 'STIMULUS' || node.nodeType === 'DYNAMIC') &&
                     node.stimAcuity === undefined
@@ -783,7 +818,17 @@ async function loadScenarioList() {
             const nodeCount = sc.params?.graph?.nodes?.length || 0;
             const connCount = sc.params?.graph?.connections?.length || 0;
             const dirty = sc._dirty ? ' <span style="color:#f59e0b;font-size:10px;">● локально</span>' : '';
-            div.innerHTML = `<b>${escapeHtml(sc.name || '(без имени)')}</b>${dirty} <span style="color:#94a3b8;font-size:11px;">(${escapeHtml(sc.training_type || 'single')})</span><br><span style="font-size:11px;color:#94a3b8;">Узлов: ${nodeCount}, связей: ${connCount}</span><br><button class="btn btn-secondary btn-load-scenario" data-id="${escapeHtml(sc.id)}" style="margin-top:4px;font-size:11px;padding:3px 10px;">Загрузить</button>`;
+            div.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 100px 80px 80px 100px; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #27272a; font-size: 13px; font-family: 'Segoe UI', sans-serif;">
+                    <div style="font-weight: 600; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(sc.name || '(без имени)')} ${dirty}</div>
+                    <div style="color: #94a3b8; font-size: 12px;">${sc.updated_at ? new Date(sc.updated_at).toLocaleDateString() : '—'}</div>
+                    <div style="color: #94a3b8; font-size: 12px;">${nodeCount} узл.</div>
+                    <div style="color: #94a3b8; font-size: 12px;">${connCount} св.</div>
+                    <div style="text-align: right;">
+                        <button class="btn btn-secondary btn-load-scenario" data-id="${escapeHtml(sc.id)}" style="padding: 4px 12px; font-size: 12px; background: #0ea5e9; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Открыть</button>
+                    </div>
+                </div>
+            `;
             list.appendChild(div);
         });
         list.querySelectorAll('.btn-load-scenario').forEach((btn) => {
@@ -803,7 +848,7 @@ async function loadScenarioList() {
                     window._books = graph.books || {};
                     if (sc.params?.scenarioKey) window._currentScenarioKey = sc.params.scenarioKey;
                     window._currentScenarioId = id;
-                    window._currentScenarioFileName = (sc.name || 'scenario') + '.json';
+                    window._currentScenarioFileName = (sc.name || 'scenario') + '.json'; if (document.getElementById('hdr-scenario')) document.getElementById('hdr-scenario').textContent = window._currentScenarioFileName;
                     if (typeof switchMode === 'function') switchMode('nodes');
                     if (typeof requestRenderGraph === 'function') requestRenderGraph();
                     if (typeof updateInspector === 'function') updateInspector();
@@ -825,8 +870,7 @@ async function saveCurrentScenario() {
         VissortDialog.alert('Граф пуст. Создайте хотя бы один узел.');
         return;
     }
-    const name = await VissortDialog.prompt('Название сценария:');
-    if (!name) return;
+    return saveGraph();
 
     const payload = buildScenarioPayloadFromCurrent();
     const record = {
@@ -859,7 +903,7 @@ async function saveCurrentScenario() {
     applyBookSelection, detachBookFromActiveNode, handleBookPickerFileUpload,
     restoreFolderHandle, restoreTemplatesFolderHandle, selectFolder,
     scanScenariosFolder, saveGraph, buildScenarioPayloadFromCurrent,
-    migrateScenario, loadGraph,
+    migrateScenario, loadGraph, openGraphFile,
     loadScenarioList, saveCurrentScenario,
   };
 

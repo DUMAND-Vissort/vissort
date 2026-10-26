@@ -1,4 +1,4 @@
-// ==================== APP-INSPECTOR.JS ====================
+﻿// ==================== APP-INSPECTOR.JS ====================
 // Инспектор узлов: чтение, логика, сравнение, стимул.
 // Вынесено из app.js (§A2-v4, Фаза 5).
 // Зависит: VLog, VissortDialog, AppState, VissortCore, AppEditor.
@@ -46,7 +46,13 @@
 
     // ==================== GRID PREVIEW ====================
     function renderInspectorGridPreview() {
-        const p = document.getElementById('insp-grid-preview');
+
+
+
+
+
+    
+    const p = document.getElementById('insp-grid-preview');
         if (!p) return;
         const gx = Math.max(1, Math.min(10, parseInt(document.getElementById('inp-grid-x')?.value) || 3));
         const gy = Math.max(1, Math.min(10, parseInt(document.getElementById('inp-grid-y')?.value) || 3));
@@ -144,7 +150,8 @@
             <option value="LETTER_E" ${node.stimType === 'LETTER_E' ? 'selected' : ''}>Буква Е</option>
             <option value="LANDOLT" ${node.stimType === 'LANDOLT' ? 'selected' : ''}>Кольцо Ландольта</option></select>`;
         html += `<label><input type="checkbox" id="inp-circle-enabled" ${cir ? 'checked' : ''}> 🎯 Режим «Динамика Круг»</label>`;
-        html += `<label><input type="checkbox" id="inp-active" ${node.isActive ? 'checked' : ''}> Активная тренировка</label></div>`;
+        html += `<label><input type="checkbox" id="inp-active" ${node.isActive ? 'checked' : ''}> Активная тренировка</label>`;
+        html += `<label style="margin-top:6px; display:block; border-top:1px dashed #8b5cf6; padding-top:6px;"><input type="checkbox" id="inp-dyn-enabled" ${node.params?.stimulusDynamic?.active ? 'checked' : ''}> ✨ Живой стимул</label></div>`;
         let acOpts = '';
         for (let i = 1; i <= 10; i++) {
             const v = i / 10;
@@ -273,6 +280,12 @@
     html +=
         '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px;">💾 Применить</button>';
     inspectorEl.innerHTML = html;
+        // === ВЫЗОВ РЕДАКТОРА ЖИВОГО СТИМУЛА ===
+    if (window.AppStimulusEditor) {
+        if (!node.params) node.params = {};
+        window.AppStimulusEditor.render(node, inspectorEl);
+    }
+    
     const p = document.getElementById('insp-grid-preview');
     if (p) {
         p.dataset.selected = JSON.stringify(cells);
@@ -651,6 +664,13 @@
         if (cn) node.blinkCount = Math.max(0, parseInt(cn.value) || 0);
     }
     function applyStimulusInspectorChanges(node) {
+    // Сохраняем чекбокс "Живой стимул"
+    const dynCb = document.getElementById('inp-dyn-enabled');
+    if (dynCb) {
+        if (!node.params) node.params = {};
+        if (!node.params.stimulusDynamic) node.params.stimulusDynamic = {};
+        node.params.stimulusDynamic.active = dynCb.checked;
+    }
         const v = (id) => document.getElementById(id);
         if (v('inp-name')) node.name = v('inp-name').value;
         if (v('inp-type')) node.stimType = v('inp-type').value;

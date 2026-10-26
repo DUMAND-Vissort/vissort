@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // sw.js — Service Worker для Vissort
 //   • Precache локальных файлов
 //   • Network-first для HTML
@@ -55,7 +55,29 @@ const PRECACHE_URLS = [
     '/features.html',
     '/pyatnashki.html',
     '/differences-wolf.html',
-    '/sentry.min.js'
+    '/sentry.min.js',
+    // assets/voice: mp3-фразы (путь A — не стриминговый голос, офлайн)
+    '/assets/voice/ready.mp3',
+    '/assets/voice/look.mp3',
+    '/assets/voice/correct.mp3',
+    '/assets/voice/wrong.mp3',
+    '/assets/voice/timeout.mp3',
+    '/assets/voice/blink.mp3',
+    '/assets/voice/moveBack.mp3',
+    '/assets/voice/moveUp.mp3',
+    '/assets/voice/countdown5.mp3',
+    '/assets/voice/countdown4.mp3',
+    '/assets/voice/countdown3.mp3',
+    '/assets/voice/countdown2.mp3',
+    '/assets/voice/countdown1.mp3',
+    '/assets/voice/paused.mp3',
+    '/assets/voice/resumed.mp3',
+    '/assets/voice/finished.mp3',
+    '/assets/voice/seriesDone.mp3',
+    '/assets/voice/faceLost.mp3',
+    '/assets/voice/returnToFrame.mp3',
+    '/assets/voice/voiceOn.mp3',
+    '/assets/voice/voiceOff.mp3'
 ];
 
 // Домены/пути, которые НЕ кэшируем

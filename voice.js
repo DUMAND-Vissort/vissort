@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // voice.js — голосовое сопровождение тренировки + чтение вслух.
 // Web Speech API, русские системные голоса, без интернета.
 // Публичный интерфейс: window.Voice
@@ -101,10 +101,20 @@
             u.rate = opts.rate != null ? opts.rate : this.rate;
             u.volume = opts.volume != null ? opts.volume : this.volume;
             u.pitch = opts.pitch != null ? opts.pitch : 1.0;
+            // Флаг _speaking: Online-голоса зависают в speechSynthesis.speaking=true,
+            // ждём не его, а onend/onerror + страховочный таймаут
+            this._speaking = true;
+            const self = this;
+            const done = () => { self._speaking = false; clearTimeout(self._speakGuard); };
+            u.onend = done;
+            u.onerror = done;
+            clearTimeout(this._speakGuard);
+            this._speakGuard = setTimeout(done, 2500);
             try {
                 window.speechSynthesis.speak(u);
             } catch (e) {
                 VLog.warn('[voice] speak:', e);
+                done();
             }
         },
 
@@ -331,7 +341,7 @@
 
     Voice.sayKey = function (key, opts) {
         const phrases = {
-            ready: 'Приготовьтесь',
+            ready: 'Приготовьтесь, пожалуйста',
             look: 'Смотрите',
             correct: 'Правильно',
             wrong: 'Ошибка',
@@ -367,6 +377,23 @@
         const text = phrases[key];
         if (!text) {
             VLog.warn('[voice] нет фразы для ключа:', key);
+            return;
+        }
+        // Путь A: локальный mp3 (не стриминговый, не глотает). Fallback — TTS.
+        if (!opts || !opts.forceTTS) {
+            const self = this;
+            const a = new Audio('assets/voice/' + key + '.mp3');
+            a.volume = this.volume;
+            a.onplay = function () { self._speaking = true; };
+            a.onended = function () { self._speaking = false; };
+            a.onerror = function () { self._speaking = false; self.say(text, opts); };
+            const p = a.play();
+            if (p && p.catch) {
+                p.catch(function () {
+                    self._speaking = false;
+                    self.say(text, opts);
+                });
+            }
             return;
         }
         this.say(text, opts);

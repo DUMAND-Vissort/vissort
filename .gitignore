@@ -10,7 +10,6 @@ _archive/
 # Backups and one-time patch scripts
 _backup_*
 patch*.ps1
-
 # Stale root files
 /TODO.md
 /_test_graph.json
@@ -18,20 +17,15 @@ patch*.ps1
 # Supabase CLI (not source code)
 supabase.exe
 supabase/.temp/
-
 # Backup copies
 *.bak
 *.bak_*
 # Supabase local config (cloud is source of truth)
 supabase/config.toml
-
 fix.ps1
-
 patch*.cjs
-
 # Playwright test credentials
 .env.test
-
 # Временные файлы (part-разбиение, бэкапы)
 *.part*.txt
 docs/PROJECT-MAP.backup-*.md
@@ -39,7 +33,8 @@ docs/_mermaid/
 docs/_parts/
 docs/PART2.md
 docs/PART3.md
-
 # One-time prompt sources (не коммитить)
 _prompt-source.txt
 prompt-source*.txt
+*.bak*
+demo 2.exe

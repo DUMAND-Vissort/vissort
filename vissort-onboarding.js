@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // vissort-onboarding.js
 // Мастер первичной настройки: калибровка экрана и камеры.
 // Показывается один раз на устройство.
@@ -66,7 +66,7 @@
                 '<input type="number" id="ob-mm" value="106" min="5" max="500" step="0.5" style="width:100%;padding:10px;background:#0b0b0f;border:1px solid #2a2a35;border-radius:6px;color:#fff;font-size:16px;box-sizing:border-box;">',
                 '<div style="margin-top:10px;font-size:12px;color:#22c55e;">PPI: <b id="ob-ppi">—</b></div>',
                 '<div style="margin-top:24px;display:flex;justify-content:space-between;gap:10px;">',
-                '<button id="ob-skip-1" style="padding:10px 20px;background:transparent;color:#94a3b8;border:1px solid #3f3f46;border-radius:8px;font-size:14px;cursor:pointer;">Пропустить всё</button>',
+                '<button id="ob-skip-1" onclick="window.Onboarding && window.Onboarding.skip && window.Onboarding.skip()" style="padding:10px 20px;background:transparent;color:#94a3b8;border:1px solid #3f3f46;border-radius:8px;font-size:14px;cursor:pointer;">Пропустить всё</button>',
                 '<button id="ob-next" style="padding:10px 24px;background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Далее →</button>',
                 '</div>'
             ].join('');
@@ -115,18 +115,17 @@
 
             startCameraForOnboarding();
 
-            async function skipOnboarding() {
-                if (
-                    !(await _confirm(
-                        'Пропустить калибровку?\n\nДистанция и размер стимулов будут неточными. Калибровку можно пройти позже через кнопку 📐 в шапке.'
-                    ))
-                )
-                    return;
-                stopCamera();
-                sessionStorage.setItem('vissort_onboarding_skipped', '1');
-                if (modal) modal.remove();
-                modal = null;
-                if (typeof onDone === 'function') onDone({ skipped: true });
+            function skipOnboarding() {
+                try {
+                    if (typeof stopCamera === 'function') stopCamera();
+                    sessionStorage.setItem('vissort_onboarding_skipped', '1');
+                    const old = document.getElementById('vissort-onboarding');
+                    if (old) old.remove();
+                    modal = null;
+                    if (typeof onDone === 'function') onDone({ skipped: true });
+                } catch (e) {
+                    console.warn('[onboarding] skip error:', e);
+                }
             }
             const skip1 = document.getElementById('ob-skip-1');
             if (skip1) skip1.addEventListener('click', skipOnboarding);
@@ -296,6 +295,6 @@
         renderStep();
     }
 
-    global.Onboarding = { start, restart };
+    global.Onboarding = { start, restart, skip: function() { const old = document.getElementById('vissort-onboarding'); if (old) old.remove(); if (typeof onDone === 'function') onDone({ skipped: true }); } };
     VLog.log('[onboarding] модуль установлен');
 })(window);

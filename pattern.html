@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Пары с поворотом — острота зрения 0.n / 0.(n+1)</title>
+<style>
+  :root { --mm: 3.7795275591px; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0; padding: 16px; background: #f4f4f4; color: #111;
+  }
+  h1 { font-size: 18px; margin: 0 0 8px; }
+  h2 { font-size: 15px; margin: 16px 0 8px; }
+  .panel {
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 16px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .row > * { flex: 0 0 auto; }
+  label { font-size: 13px; }
+  input[type=range] { width: 240px; }
+  button {
+    font: inherit; padding: 6px 14px; border: 1px solid #888;
+    background: #fff; border-radius: 6px; cursor: pointer;
+  }
+  button:hover { background: #eee; }
+  .hint { font-size: 12px; color: #555; }
+  .grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+  }
+  .tile {
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    padding: 12px; text-align: center;
+  }
+  .tile svg { display: block; margin: 0 auto; }
+  .cap { font-size: 12px; margin-top: 6px; color: #222; }
+  .cap b { font-size: 13px; }
+
+  /* Калибровка */
+  .ruler { position: relative; height: calc(30 * var(--mm)); }
+  .ruler .bar {
+    position: absolute; top: calc(10 * var(--mm));
+    left: calc(10 * var(--mm));
+    width: calc(100 * var(--mm));
+    height: calc(4 * var(--mm));
+    background: repeating-linear-gradient(
+      to right,
+      #000 0 calc(1 * var(--mm)),
+      #fff calc(1 * var(--mm)) calc(2 * var(--mm))
+    );
+    border: 1px solid #000;
+  }
+  .ruler .ticks {
+    position: absolute; top: calc(6 * var(--mm));
+    left: calc(10 * var(--mm));
+    width: calc(100 * var(--mm));
+    height: calc(8 * var(--mm));
+  }
+  .ruler .ticks div {
+    position: absolute; width: 1px; height: calc(6 * var(--mm));
+    background: #000; top: 0;
+  }
+  .ruler .lbl {
+    position: absolute; top: calc(16 * var(--mm));
+    font-size: calc(3 * var(--mm)); color: #000;
+  }
+  .sq {
+    display: inline-block; vertical-align: middle;
+    width: calc(10 * var(--mm)); height: calc(10 * var(--mm));
+    border: 1px solid #000;
+  }
+  .barcode { display: inline-flex; gap: calc(2 * var(--mm)); vertical-align: middle; }
+  .barcode span { display: inline-block; height: calc(10 * var(--mm)); background: #000; }
+
+  /* Ответы */
+  .rot-answers { margin-top: 8px; font-size: 12px; }
+  .rot-answers .line {
+    display: flex; gap: 4px; align-items: center; margin: 3px 0;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .rot-answers button {
+    font-size: 11px; padding: 2px 8px; border: 1px solid #999;
+    background: #fff; border-radius: 4px; cursor: pointer;
+  }
+  .rot-answers button:hover { background: #eee; }
+  .rot-answers button.ok  { background: #c8f7c5; border-color: #2a7; }
+  .rot-answers button.err { background: #f7c5c5; border-color: #a22; }
+  .rot-answers .tag { color: #555; min-width: 60px; text-align: right; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .noprint { display: none !important; }
+    .panel { border: 0; padding: 0; margin: 0; }
+    .grid { gap: 10mm; }
+    .tile { border: 0; padding: 0; page-break-inside: avoid; }
+    @page { size: A4; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Пары с поворотом — острота зрения 0.n / 0.(n+1), шаг V = 0.1</h1>
+<p class="hint noprint">
+  Дистанция 5 м. Перед печатью откалибруйте масштаб: измерьте линейкой эталонный отрезок —
+  он должен быть ровно 100 мм. Для каждой пары определите угол поворота большой и малой фигуры.
+  Если малую не видите — нажмите «Не вижу».
+</p>
+
+<div class="panel noprint">
+  <div class="row">
+    <label>Масштаб (px на 1 мм):
+      <input id="scale" type="range" min="1" max="12" step="0.01" value="3.7795275591">
+    </label>
+    <output id="scaleOut">3.78 px/мм</output>
+    <button onclick="set96()">96 DPI</button>
+    <button onclick="newAngles()">Новые углы</button>
+    <button onclick="printPage()">Печать (A4, 1:1)</button>
+  </div>
+  <p class="hint">
+    На мониторе измерьте линейкой полосу 100 мм ниже. Если не совпало — двигайте ползунок.
+    Принтер: «Actual size» / «100%», не «Fit to page».
+  </p>
+</div>
+
+<!-- ================= КАЛИБРОВКА ================= -->
+<div class="panel">
+  <h2>Калибровка</h2>
+  <div class="ruler">
+    <div class="bar" aria-hidden="true"></div>
+    <div class="ticks" id="ticks"></div>
+    <span class="lbl" style="left:calc(10*var(--mm));">0</span>
+    <span class="lbl" style="left:calc(60*var(--mm)); transform:translateX(-50%);">50</span>
+    <span class="lbl" style="left:calc(110*var(--mm)); transform:translateX(-100%);">100 мм</span>
+  </div>
+  <p style="margin:8px 0 0;">
+    Квадрат: <span class="sq" title="10×10 мм"></span>
+    &nbsp;&nbsp; Штрих-код 1 / 2 / 5 мм:
+    <span class="barcode">
+      <span style="width:calc(1*var(--mm))"></span>
+      <span style="width:calc(2*var(--mm))"></span>
+      <span style="width:calc(5*var(--mm))"></span>
+      <span style="width:calc(1*var(--mm))"></span>
+      <span style="width:calc(2*var(--mm))"></span>
+      <span style="width:calc(5*var(--mm))"></span>
+    </span>
+  </p>
+</div>
+
+<!-- ================= МИШЕНИ ================= -->
+<div class="panel">
+  <h2>Пары Q1–Q9</h2>
+  <div class="grid" id="gridRot"></div>
+</div>
+
+<script>
+// ---------- Параметры ----------
+const D_m = 5;
+const THETA_1MIN = Math.PI / (180 * 60);
+const h_mm = V => 2 * D_m * Math.tan((THETA_1MIN / V) / 2) * 1000;
+
+// ---------- Обёртка SVG ----------
+function wrapRot(w, h, inner) {
+  return `<svg viewBox="${-w/2} ${-h/2} ${w} ${h}"
+    width="calc(${w} * var(--mm))" height="calc(${h} * var(--mm))"
+    xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+// ---------- Асимметричные фигуры (базовая ориентация = 0°) ----------
+const asymShapes = {
+  arrow: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <line x1="${-R}" y1="0" x2="${(R*0.6).toFixed(2)}" y2="0"/>
+      <polyline points="${(R*0.2).toFixed(2)},${(-R*0.4).toFixed(2)} ${R},0 ${(R*0.2).toFixed(2)},${(R*0.4).toFixed(2)}"/>
+    </g>`,
+  flag: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <line x1="${(-R*0.7).toFixed(2)}" y1="${-R}" x2="${(-R*0.7).toFixed(2)}" y2="${R}"/>
+      <polygon points="${(-R*0.7).toFixed(2)},${(-R*0.8).toFixed(2)} ${(R*0.8).toFixed(2)},${(-R*0.4).toFixed(2)} ${(-R*0.7).toFixed(2)},0" fill="#000"/>
+    </g>`,
+  gamma: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round" stroke-linecap="round">
+      <polyline points="${(R*0.7).toFixed(2)},${(-R*0.7).toFixed(2)} ${(-R*0.7).toFixed(2)},${(-R*0.7).toFixed(2)} ${(-R*0.7).toFixed(2)},${(R*0.7).toFixed(2)}"/>
+    </g>`,
+  hammer: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <line x1="${(-R*0.8).toFixed(2)}" y1="0" x2="${(R*0.5).toFixed(2)}" y2="0"/>
+      <rect x="${(R*0.3).toFixed(2)}" y="${(-R*0.6).toFixed(2)}" width="${(R*0.6).toFixed(2)}" height="${(R*1.2).toFixed(2)}" fill="#000" stroke="none"/>
+    </g>`,
+  key: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <circle cx="${(-R*0.6).toFixed(2)}" cy="0" r="${(R*0.3).toFixed(2)}"/>
+      <line x1="${(-R*0.3).toFixed(2)}" y1="0" x2="${(R*0.8).toFixed(2)}" y2="0"/>
+      <line x1="${(R*0.5).toFixed(2)}" y1="0" x2="${(R*0.5).toFixed(2)}" y2="${(R*0.3).toFixed(2)}"/>
+      <line x1="${(R*0.7).toFixed(2)}" y1="0" x2="${(R*0.7).toFixed(2)}" y2="${(R*0.4).toFixed(2)}"/>
+    </g>`,
+  triTail: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <polygon points="0,${(-R*0.7).toFixed(2)} ${(R*0.7).toFixed(2)},${(R*0.4).toFixed(2)} ${(-R*0.7).toFixed(2)},${(R*0.4).toFixed(2)}"/>
+      <line x1="0" y1="${(R*0.4).toFixed(2)}" x2="0" y2="${R}"/>
+    </g>`,
+  ell: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round" stroke-linecap="round">
+      <polyline points="${(-R*0.6).toFixed(2)},${(-R*0.8).toFixed(2)} ${(-R*0.6).toFixed(2)},${(R*0.8).toFixed(2)} ${(R*0.8).toFixed(2)},${(R*0.8).toFixed(2)}"/>
+    </g>`,
+  flagThin: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <line x1="${(-R*0.6).toFixed(2)}" y1="${-R}" x2="${(-R*0.6).toFixed(2)}" y2="${R}"/>
+      <polygon points="${(-R*0.6).toFixed(2)},${(-R*0.7).toFixed(2)} ${(R*0.7).toFixed(2)},${(-R*0.35).toFixed(2)} ${(-R*0.6).toFixed(2)},0" fill="none"/>
+    </g>`,
+  arrowThin: (R, sw) => `
+    <g stroke="#000" stroke-width="${sw}" fill="none" stroke-linejoin="round">
+      <line x1="${-R}" y1="0" x2="${(R*0.5).toFixed(2)}" y2="0"/>
+      <polyline points="${(R*0.1).toFixed(2)},${(-R*0.3).toFixed(2)} ${(R*0.8).toFixed(2)},0 ${(R*0.1).toFixed(2)},${(R*0.3).toFixed(2)}"/>
+    </g>`,
+};
+
+// ---------- Построение пары ----------
+function makeRotPair(shapeKey, V1, V2, angle1, angle2) {
+  const h1 = h_mm(V1), h2 = h_mm(V2);
+  const R = 58, r = 26;
+  const shape = asymShapes[shapeKey];
+  const inner =
+    `<g transform="rotate(${angle1})">${shape(R, h1)}</g>` +
+    `<g transform="rotate(${angle2})">${shape(r, h2)}</g>`;
+  return wrapRot(2*R+4, 2*R+4, inner);
+}
+
+// ---------- Описание пар ----------
+const ROT_PAIRS = [
+  { id:'Q1', V1:0.1, V2:0.2, shape:'arrow',     name:'Стрелка' },
+  { id:'Q2', V1:0.2, V2:0.3, shape:'flag',      name:'Флажок' },
+  { id:'Q3', V1:0.3, V2:0.4, shape:'gamma',     name:'«Г»-фигура' },
+  { id:'Q4', V1:0.4, V2:0.5, shape:'hammer',    name:'Молоток' },
+  { id:'Q5', V1:0.5, V2:0.6, shape:'key',       name:'Ключ' },
+  { id:'Q6', V1:0.6, V2:0.7, shape:'triTail',   name:'Треугольник с хвостом' },
+  { id:'Q7', V1:0.7, V2:0.8, shape:'ell',       name:'«L»-фигура' },
+  { id:'Q8', V1:0.8, V2:0.9, shape:'flagThin',  name:'Флажок (тонкий)' },
+  { id:'Q9', V1:0.9, V2:1.0, shape:'arrowThin', name:'Стрелка (тонкая)' },
+];
+
+// ---------- Случайные углы ----------
+function randomAngle() { return Math.floor(Math.random() * 4) * 90; }
+
+// ---------- Рендер ----------
+const gridRot = document.getElementById('gridRot');
+
+function renderAll() {
+  gridRot.innerHTML = ROT_PAIRS.map(p => {
+    const a1 = randomAngle();
+    const a2 = randomAngle();
+    return `
+  <div class="tile" data-id="${p.id}" data-a1="${a1}" data-a2="${a2}">
+    ${makeRotPair(p.shape, p.V1, p.V2, a1, a2)}
+    <div class="cap">
+      <b>${p.id}: ${p.name} — V₁ = ${p.V1} / V₂ = ${p.V2}</b><br>
+      h₁ = ${h_mm(p.V1).toFixed(2)} мм &nbsp;|&nbsp; h₂ = ${h_mm(p.V2).toFixed(2)} мм
+    </div>
+    <div class="rot-answers">
+      <div class="line">
+        <span class="tag">Большая:</span>
+        <button data-target="big" data-val="0">0°</button>
+        <button data-target="big" data-val="90">90°</button>
+        <button data-target="big" data-val="180">180°</button>
+        <button data-target="big" data-val="270">270°</button>
+      </div>
+      <div class="line">
+        <span class="tag">Малая:</span>
+        <button data-target="small" data-val="0">0°</button>
+        <button data-target="small" data-val="90">90°</button>
+        <button data-target="small" data-val="180">180°</button>
+        <button data-target="small" data-val="270">270°</button>
+        <button data-target="small" data-val="none">Не вижу</button>
+      </div>
+    </div>
+  </div>`;
+  }).join('');
+}
+
+// ---------- Проверка ответов ----------
+gridRot.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const tile = btn.closest('.tile');
+  const a1 = +tile.dataset.a1, a2 = +tile.dataset.a2;
+  const target = btn.dataset.target;
+  const val = btn.dataset.val;
+
+  const line = btn.parentElement;
+  line.querySelectorAll('button').forEach(b => b.classList.remove('ok','err'));
+
+  if (target === 'big') {
+    btn.classList.add((+val === a1) ? 'ok' : 'err');
+  } else {
+    if (val === 'none') btn.classList.add('ok');
+    else btn.classList.add((+val === a2) ? 'ok' : 'err');
+  }
+});
+
+// ---------- Калибровка ----------
+const ticks = document.getElementById('ticks');
+let t = '';
+for (let i = 0; i <= 10; i++) t += `<div style="left:calc(${i*10} * var(--mm));"></div>`;
+ticks.innerHTML = t;
+
+const scaleInput = document.getElementById('scale');
+const scaleOut = document.getElementById('scaleOut');
+function applyScale(px) {
+  document.documentElement.style.setProperty('--mm', px + 'px');
+  scaleOut.textContent = px.toFixed(2) + ' px/мм';
+}
+scaleInput.addEventListener('input', e => applyScale(parseFloat(e.target.value)));
+function set96() {
+  scaleInput.value = 3.7795275591;
+  applyScale(3.7795275591);
+}
+applyScale(parseFloat(scaleInput.value));
+
+function printPage() { window.print(); }
+function newAngles() { renderAll(); }
+
+// ---------- Старт ----------
+renderAll();
+</script>
+</body>
+</html>

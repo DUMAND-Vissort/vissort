@@ -1,4 +1,4 @@
-// player-scenarios.js — сценарии пользователя + история (§15.1.2 ч.5/7).
+﻿// player-scenarios.js — сценарии пользователя + история (§15.1.2 ч.5/7).
 // Зависит: VLog, VissortCore.escapeHtml.
 (function (global) {
     'use strict';
@@ -115,8 +115,32 @@
             '</tr></thead><tbody>' + rows + '</tbody></table>';
     }
 
+    // ==== Тестовый сценарий (?test=1): последний из IndexedDB / localStorage ====
+    async function loadTestScenario() {
+        // 1. localStorage: последний сценарий (быстрый путь)
+        try {
+            var raw = localStorage.getItem('vissort_last_scenario');
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                if (parsed) return [parsed];
+            }
+        } catch (_) {}
+        // 2. IndexedDB: последний по updated_at
+        if (global.Data && global.Data.getScenarios) {
+            try {
+                var list = await global.Data.getScenariosLocal();
+                if (list && list.length) {
+                    list.sort(function (a, b) { return String(b.updated_at || "").localeCompare(String(a.updated_at || "")); });
+                    return [list[0]];
+                }
+            } catch (_) {}
+        }
+        return [];
+    }
+
     global.PlayerScenarios = {
         loadUserScenarios: loadUserScenarios,
+        loadTestScenario: loadTestScenario,
         openPicker: openPicker,
         openHistory: openHistory
     };

@@ -1,4 +1,4 @@
-// player-graph.js — граф-режим плеера (§15.1.2 ч.6/7).
+﻿// player-graph.js — граф-режим плеера (§15.1.2 ч.6/7).
 // Зависит: VLog, PlayerState, PlayerReadingMode.
 (function (global) {
     'use strict';
@@ -97,7 +97,40 @@
         playNextGraphNode();
     }
 
-    function playNextGraphNode() {
+        function playDynamicStimulus(node) {
+        var PS = _PS();
+        if (!PS.playerRunning || PS.isPaused) return;
+        global.VissortCore.playDynamicStimulus(node, {
+            state: PS,
+            callbacks: {
+                displayStimulus: function (html, bg) {
+                    PS.responseStartTime = performance.now();
+                    _callbacks.displayStimulus(html, bg);
+                },
+                hideStimulus: _callbacks.hideStimulus,
+                onFrameEnd: function (n) {
+                    // Если в кадре были повторы (>1), завершаем серию сразу
+                    var reps = n.params?.stimulusDynamic?.frames?.[0]?.repeats || 1;
+                    if (reps > 1) {
+                        if (typeof finishGraphStimulusSeries === 'function') finishGraphStimulusSeries(n);
+                        else { PS.seriesStep++; playNextGraphNode(); }
+                    } else {
+                        if (PS.seriesStep >= (n.seriesSize || 6)) {
+                            if (typeof finishGraphStimulusSeries === 'function') finishGraphStimulusSeries(n);
+                            else { PS.seriesStep++; playNextGraphNode(); }
+                        } else {
+                            PS.seriesStep++;
+                            playGraphStimulus(n);
+                        }
+                    }
+                }
+            },
+            getStimDisplay: function () { return document.getElementById('stim'); },
+            Voice: global.Voice
+        });
+    }
+
+function playNextGraphNode() {
         var PS = _PS();
         if (!PS.playerRunning || PS.isPaused) return;
         if (PS.gIndex >= PS.gQueue.length) {
@@ -164,6 +197,20 @@
     function playGraphStimulus(node) {
         var PS = _PS();
         if (!PS.playerRunning || PS.isPaused) return;
+        // Для ЖС: очищаем старые таймеры, чтобы они не перезапускали стимул
+        if (node.params && node.params.stimulusDynamic && node.params.stimulusDynamic.active === true) {
+            if (PS.currentShowTimer) { clearTimeout(PS.currentShowTimer); PS.currentShowTimer = null; }
+            if (PS.phaseTimers && PS.phaseTimers.length) {
+                PS.phaseTimers.forEach(function(t) { clearTimeout(t); });
+                PS.phaseTimers = [];
+            }
+        }
+        // Проверка 'Живого стимула'
+        if (node.params && node.params.stimulusDynamic && node.params.stimulusDynamic.active === true && node.params.stimulusDynamic.frames && node.params.stimulusDynamic.frames.length > 0) {
+            playDynamicStimulus(node);
+            return;
+        }
+
         if (global._faceLostPause) {
             setTimeout(function () { playGraphStimulus(node); }, 500);
             return;

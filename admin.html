@@ -1592,9 +1592,10 @@
                 flex-wrap: nowrap !important;
             }
             .node-btn {
+                color: #000;
                 width: 100% !important;
                 padding: 2px 4px !important;
-                font-size: 8px !important;
+                font-size: 9px !important;
                 text-align: center !important;
                 white-space: nowrap !important;
             }
@@ -1648,6 +1649,50 @@
         margin-left: 0 !important;
     }
 </style>
+<style id="big-buttons">
+    /* Увеличиваем высоту и отступы у кнопок в шапке */
+    .header-section .btn {
+        height: 34px !important;
+        padding: 0 10px !important;
+        font-size: 13px !important;
+    }
+    
+    /* Увеличиваем размер иконок (эмодзи) и делаем кнопки квадратными */
+    .header-section .btn-icon {
+        font-size: 16px !important;
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        padding: 0 !important;
+    }
+    
+    /* Увеличиваем индикаторы (чипы) */
+    .status-chip {
+        height: 26px !important;
+        font-size: 12px !important;
+        padding: 0 8px !important;
+    }
+</style>
+<style id="checkbox-fix">
+    /* Чекбоксы в одну строку с надписью */
+    .inspector-panel label,
+    .panel-section label,
+    .modal-col label,
+    .checkbox-row label {
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        margin-top: 4px !important;
+    }
+    
+    .inspector-panel label input[type="checkbox"],
+    .panel-section label input[type="checkbox"],
+    .modal-col label input[type="checkbox"],
+    .checkbox-row label input[type="checkbox"] {
+        width: auto !important;
+        margin: 0 !important;
+    }
+</style>
 </head>
     <body>
 <div id="clinic-header" style="flex-shrink: 0; height: 35px; padding: 8px 16px; background: #1e293b; color: #e2e8f0; font-size: 14px; border-bottom: 1px solid #334155;">
@@ -1667,11 +1712,21 @@
             <div class="header-row">
                 <div class="header-section section-play">
 				
+                    <span id="hdr-scenario" style="display: inline-block; padding: 4px 10px; background: #ffffff; color: #000000; border-radius: 4px; font-size: 14px; font-weight: bold; margin-right: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; margin: auto 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #ccc;">Без имени</span>
+                    <span class="section-sep"></span>
+
+                    <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
+                    <button class="btn btn-secondary btn-icon" id="btn-library" title="Открыть файл (Библиотека)" onclick="if (window.AppScenarios && window.AppScenarios.openGraphFile) window.AppScenarios.openGraphFile(); else alert('Модуль сценариев не загружен');">📚</button>
+					<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
+                    <span class="section-sep"></span>
+					
+
                     <button class="btn btn-warning btn-icon" id="btn-player" title="Плеер">▶</button>
                     <button class="btn btn-dynamic btn-icon" id="btn-test" title="Тест в плеере">🧪</button>
                     <button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">⏹</button>
                     <button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">⏸</button>
-					<button class="btn btn-mode" id="btn-mode-toggle">🎯 Узлы</button>
+                    <span class="section-sep"></span>
+					<button class="btn btn-mode" id="btn-mode-toggle" title="Переключить режим (Узлы / Стимулы)">🎯 Узлы</button>
 
                 </div>
 
@@ -1679,7 +1734,7 @@
 				
                 <div class="header-section section-nodes-2">
 				
-				    <button class="btn btn-success btn-icon" id="btn-new" title="New scenario">🆕</button>
+				    <button class="btn btn-success btn-icon" id="btn-new" title="Новый сценарий">🆕</button>
                     <button class="btn btn-success btn-icon" id="btn-ai-generator" title="AI генератор">AI</button>
 					<button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
                     <button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>		
@@ -1696,7 +1751,7 @@
 				<div class="header-section section-nodes">
 				 
                     <button class="btn btn-mode btn-icon" id="btn-zoom-out" title="Уменьшить масштаб">−</button>
-                    <button class="btn btn-secondary" id="btn-zoom-reset" style="min-width: 52px; font-size: 11px">100%</button>
+                    <button class="btn btn-secondary" id="btn-zoom-reset" style="min-width: 52px; font-size: 11px" title="Сбросить масштаб (100%)">100%</button>
                     <button class="btn btn-mode btn-icon" id="btn-zoom-in" title="Увеличить масштаб">+</button>
  					<button class="btn btn-secondary btn-icon" id="btn-scenario-time" title="Время сценария">⏱</button>
 
@@ -1718,13 +1773,7 @@
 
                 <span class="section-sep"></span>
 
-                <div class="header-section section-files">
-
-                    <button class="btn btn-secondary btn-icon" id="btn-save" title="Сохранить">💾</button>
-                    <button class="btn btn-secondary btn-icon" id="btn-library" title="Библиотека">📚</button>
-					<button class="btn btn-secondary btn-icon" id="btn-users" title="Пользователи">👥</button>
-					
-                </div>
+                <div class="header-section section-files"></div>
 
                 <span class="section-sep"></span>
 
@@ -2678,6 +2727,7 @@
 <script src="app-player-preview.js"></script>
 <script src="app-editor.js"></script>
 <script src="app-inspector.js"></script>
+        <script src="app-stimulus-editor.js"></script>
 <script src="app-generator.js"></script>
 <script src="app-scenarios.js"></script>
 <script src="app-blink-camera.js"></script>

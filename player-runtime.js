@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 // ============================================================
 // ============================================================
@@ -198,44 +198,6 @@ async function onLoggedIn() {
             enableCamera();
         }
     }
-    // ==== Тестовый сценарий из админки (player.html?test=1) ====
-    if (location.search.includes('test=1')) {
-        try {
-            const raw = localStorage.getItem('vissort_test_scenario');
-            if (raw) {
-                const testData = JSON.parse(raw);
-                VLog.log('[test] loading test scenario from localStorage');
-                PlayerState.userScenarios = [
-                    {
-                        id: '__test__',
-                        name: '🧪 Тестовый сценарий',
-                        params: testData,
-                        trainingType: testData.trainingType || 'single'
-                    }
-                ];
-                PlayerState.userScenario = PlayerState.userScenarios[0];
-                hdrScenario.textContent = PlayerState.userScenario.name;
-                applyScenarioDefaults();
-                updateCounters();
-                hideStatus();
-                btnPlayer.disabled = false;
-                if (typeof enableCamera === 'function') {
-                    try {
-                        enableCamera();
-                    } catch (e) {
-                        VLog.warn('[test] camera:', e);
-                    }
-                }
-                VLog.log('[test] test scenario loaded, ready to play');
-                return;
-            } else {
-                VLog.warn('[test] no scenario in localStorage');
-            }
-        } catch (e) {
-            VLog.warn('[test] failed:', e);
-        }
-    }
-    // ==== /Тестовый сценарий ====
 
     PlayerState.userScenarios = await loadUserScenarios();
     if (!PlayerState.userScenarios.length) {
@@ -259,6 +221,10 @@ async function onLoggedIn() {
     await _startOnboardingAndCamera();
 }
 async function loadUserScenarios() {
+    // ?test=1: фиктивный __test__ — берём последний сценарий локально
+    if (location.search.includes('test=1') || (PlayerState.currentUser && PlayerState.currentUser.id === '__test__')) {
+        return window.PlayerScenarios.loadTestScenario();
+    }
     return window.PlayerScenarios.loadUserScenarios(
         PlayerState.supabaseClient,
         PlayerState.currentUser && PlayerState.currentUser.id
@@ -714,6 +680,10 @@ function init() {
         VLog.log('[player-runtime] PlayerCamera callbacks registered');
     }
     btnLogout.addEventListener('click', async () => {
+        if (location.search.includes('test=1')) {
+            window.location.href = 'admin.html';
+            return;
+        }
         try { stopPlayer(); } catch (e) {}
         try { disableCamera(); } catch (e) {}
         await window.PlayerAuth.signOut();
@@ -907,4 +877,3 @@ async function loadSivtsevFont() {
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
-

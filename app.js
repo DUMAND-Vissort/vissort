@@ -1508,13 +1508,16 @@ function init() {
     btnClearBlocks.addEventListener('click', clearBlocks);
     btnGenerateSequence.addEventListener('click', generateSequenceFromBlocks);
     btnLibrary.addEventListener('click', () => {
-        document.getElementById('library-modal').style.display = 'flex';
-        loadScenarioList();
+        if (window.AppScenarios && window.AppScenarios.openGraphFile) {
+            window.AppScenarios.openGraphFile();
+        } else {
+            alert('Модуль сценариев не загружен');
+        }
     });
 
     const btnLibraryImport = document.getElementById('btn-library-import');
     if (btnLibraryImport && fileInput) {
-        btnLibraryImport.addEventListener('click', () => fileInput.click());
+        btnLibraryImport.addEventListener('click', () => { if (window.AppScenarios && window.AppScenarios.openGraphFile) window.AppScenarios.openGraphFile(); else fileInput.click(); });
     }
     document
         .getElementById('btn-library-close')
@@ -1831,7 +1834,39 @@ function calibrateFocalLength() { return window.AppBlinkCamera.calibrateFocalLen
     VLog.log('[new] installed');
 })();
 // ==================== ОБЁРТКИ APP-INSPECTOR (§A2-v4) ====================
-function updateInspector() { return window.AppInspector.updateInspector(); }
+function updateInspector() {
+    // Сначала вызываем стандартный инспектор
+    // Обработчик чекбокса 'Живой стимул' (мгновенное переключение)
+    const dynCb = document.getElementById('inp-dyn-enabled');
+    if (dynCb && !dynCb._dynBound) {
+        dynCb._dynBound = true;
+        dynCb.addEventListener('change', () => {
+            const node = window.AppEditor.getNode(window.AppState.activeNodeId);
+            if (!node) return;
+            if (!node.params) node.params = {};
+            if (!node.params.stimulusDynamic) node.params.stimulusDynamic = {};
+            node.params.stimulusDynamic.active = dynCb.checked;
+            window.AppInspector.updateInspector();
+            if (dynCb.checked && window.AppStimulusEditor) {
+                window.AppStimulusEditor.render(node, document.getElementById('inspector'));
+            }
+        });
+    }
+
+    window.AppInspector.updateInspector();
+    
+    // Затем проверяем чекбокс "Живой стимул"
+    const node = window.AppEditor.getNode(window.AppState.activeNodeId);
+    if (!node) return;
+    
+    if (!node.params) node.params = {};
+    if (!node.params.stimulusDynamic) node.params.stimulusDynamic = { active: false };
+    
+    const dynEnabled = document.getElementById('inp-dyn-enabled')?.checked;
+    if (dynEnabled && window.AppStimulusEditor) {
+        window.AppStimulusEditor.render(node, document.getElementById('inspector'));
+    }
+}
 function renderInspectorGridPreview() { return window.AppInspector.renderInspectorGridPreview(); }
 function renderPeriInspectorSection(node) { return window.AppInspector.renderPeriInspectorSection(node); }
 function renderDefocusInspectorSection(node) { return window.AppInspector.renderDefocusInspectorSection(node); }
@@ -1848,3 +1883,44 @@ function applyBlinkAnimationInspectorChanges(node) { return window.AppInspector.
 function applyStimulusInspectorChanges(node) { return window.AppInspector.applyStimulusInspectorChanges(node); }
 function applyCompareInspectorChanges(node) { return window.AppInspector.applyCompareInspectorChanges(node); }
 function applyReadingInspectorChanges(node) { return window.AppInspector.applyReadingInspectorChanges(node); }
+// ==================== ОБРАБОТЧИК ЧЕКБОКСА ЖИВОГО СТИМУЛА ====================
+// Добавлен отдельно, чтобы не ломать существующий код.
+(function() {
+    function bindDynCheckbox() {
+        const cb = document.getElementById('inp-dyn-enabled');
+        if (cb && !cb._dynBound) {
+            cb._dynBound = true;
+            cb.addEventListener('change', function() {
+                const node = window.AppEditor.getNode(window.AppState.activeNodeId);
+                if (!node) return;
+                if (!node.params) node.params = {};
+                if (!node.params.stimulusDynamic) node.params.stimulusDynamic = {};
+                node.params.stimulusDynamic.active = cb.checked;
+                
+                // Удаляем старый блок
+                const inspector = document.getElementById('inspector');
+                const old = inspector.querySelector('#dyn-stimulus-editor-root');
+                if (old) old.remove();
+                
+                // Если включен — создаем заново
+                if (cb.checked && window.AppStimulusEditor) {
+                    window.AppStimulusEditor.render(node, inspector);
+                }
+            });
+        }
+    }
+    
+    // Пытаемся привязать при загрузке и после каждого обновления инспектора
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindDynCheckbox);
+    } else {
+        bindDynCheckbox();
+    }
+    
+    // Также привязываем при клике на инспектор (когда он перерисовывается)
+    const inspectorEl = document.getElementById('inspector');
+    if (inspectorEl) {
+        const observer = new MutationObserver(bindDynCheckbox);
+        observer.observe(inspectorEl, { childList: true, subtree: true });
+    }
+})();

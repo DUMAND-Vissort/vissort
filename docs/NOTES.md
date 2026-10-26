@@ -692,4 +692,30 @@
 
 ---
 
+## 2026-10-24 — Живой стимул (v19): палитра + голос (mp3)
+
+### Решение: colorTable в плеере + mp3-фразы + _speaking + startWhenVoiceDone
+
+**Контекст:**
+- «Живой стимул» (node.params.stimulusDynamic) в preview-плеере (app-player-preview.js) показывал красный → зелёный, а редактор — жёлтый → синий (colorTable OKLCH). Палитры разные.
+- Голос «Приготовьтесь» обрывался («приг», «гот», «приго») — Online-голоса Microsoft (Светлана/Дмитрий Natural) стриминговые, глотают короткие фразы. speechSynthesis.speaking зависает в true навсегда, onend не срабатывает.
+
+**Решение:**
+1. **Палитра:** в playDynamicStimulus (app-player-preview.js) заменить линейный RGB на интерполяцию window.AppStimulusEditor.colorTable (плавно между соседними индексами, i0/i1/frac).
+2. **Голос (путь A):** 21 mp3 в assets/voice/<key>.mp3 (Google Translate TTS, tl=ru). В voice.js sayKey(key) играет mp3 через new Audio(), fallback на speechSynthesis (только onerror/play().catch, без setTimeout(300) — он давал race: TTS перебивал mp3).
+3. **Флаг _speaking:** в voice.js say() ставит _speaking = true перед speak, onend/onerror/setTimeout(2500) → false. В sayKey mp3: onplay → true, onended → false.
+4. **startWhenVoiceDone** (app-player-preview.js): ждёт !window.Voice._speaking (вместо зависшего speechSynthesis.speaking), guard 3000 мс. animateColor запускается после голоса.
+
+**Почему mp3, а не TTS:** Online-голоса стриминговые, глотают короткие фразы, зависают в speaking: true. Локальных русских SAPI-голосов нет (local: false у обоих). mp3 — офлайн, без стриминга, без задержки, кешируется SW.
+
+**Результат:** preview-плеер: цвет жёлтый → синий (colorTable), время 20 сек, «Приготовьтесь» стабильно (mp3), круг после голоса. Тесты 36+1.
+
+**Не сделано (следующее):**
+- player-graph.js (player.html) — там упрощённая версия без colorTable/startWhenVoiceDone.
+- sw.js — precache assets/voice/*.mp3.
+- Несколько кадров (frames.length > 1), repeats, step, mode — играет только frames[0].
+
+**Файлы:** app-player-preview.js, voice.js, assets/voice/*.mp3 (21), docs/TODO.md (техдолг закрыт).
+
+---
 *Составлено: 2026-10-19. HEAD: ec72341. Тесты: 36 passed + 1 skipped.*

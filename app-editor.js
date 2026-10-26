@@ -1,4 +1,4 @@
-// ==================== APP-EDITOR.JS ====================
+﻿// ==================== APP-EDITOR.JS ====================
 // Редактор графа: узлы, связи, рендер, drag/resize, меню связи.
 // Вынесено из app.js (§A2-v3, Фаза 5).
 // Зависит: VLog, VissortDialog, AppState, VissortCore, window.__vissort_zoom.
@@ -397,7 +397,26 @@
         }
     }
     // ==================== РЕНДЕР УЗЛА ====================
-    function createNodeElement(node) {
+    function copyNode(nodeId) {
+    const node = getNode(nodeId);
+    if (!node) return;
+    // Создаем копию узла
+    const newNode = JSON.parse(JSON.stringify(node));
+    newNode.id = generateId();
+    newNode.x = node.x + 30;
+    newNode.y = node.y + 30;
+    newNode.name = node.name + ' (копия)';
+    state.nodes.push(newNode);
+    if (window.AppEditor && window.AppEditor.requestRenderGraph) {
+        window.AppEditor.requestRenderGraph();
+    }
+    if (window.AppInspector && window.AppInspector.updateInspector) {
+        window.AppInspector.updateInspector();
+    }
+    VLog.log('[app-editor] Узел скопирован:', nodeId, '->', newNode.id);
+}
+
+function createNodeElement(node) {
         const el = document.createElement('div');
         el.className = 'scenario-node';
         if (node.nodeType === 'READING') el.classList.add('reading-node');
@@ -514,6 +533,22 @@
         el.appendChild(content);
         const body = document.createElement('div');
         body.className = 'node-body';
+        // Кнопка 'Копировать'
+        const btnCopy = document.createElement('button');
+        btnCopy.className = 'node-btn btn-node-copy';
+        btnCopy.textContent = '📋 Копия';
+        btnCopy.style.background = '#fff';
+        btnCopy.style.color = '#000';
+        btnCopy.style.border = '1px solid #ccc';
+        btnCopy.title = 'Копировать узел';
+        btnCopy.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.AppEditor && window.AppEditor.copyNode) {
+                window.AppEditor.copyNode(node.id);
+            }
+        });
+        body.appendChild(btnCopy);
+
         const cb = document.createElement('button');
         cb.className = 'node-btn btn-node-connect';
         cb.textContent = '🔗 Связать';
