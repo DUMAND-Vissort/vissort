@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // vissort-core.js
 // Shared utilities for Vissort Studio (admin + player).
 // All functions are exposed via window.VissortCore.
@@ -460,6 +460,154 @@
         }
     }
 
+    // ==================== OKLCH + colorTable ====================
+    function rgbToLinear(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+    function linearToRgb(c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; }
+    function rgbToOklch(r, g, b) {
+        const lr = rgbToLinear(r), lg = rgbToLinear(g), lb = rgbToLinear(b);
+        const L = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb;
+        const M = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb;
+        const S = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb;
+        const l_ = Math.cbrt(L), m_ = Math.cbrt(M), s_ = Math.cbrt(S);
+        const L_ok = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+        const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+        const b_ = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
+        const C = Math.sqrt(a * a + b_ * b_);
+        let H = Math.atan2(b_, a) * 180 / Math.PI;
+        if (H < 0) H += 360;
+        return { L: L_ok * 100, C, H };
+    }
+    function oklchToRgb(L, C, H) {
+        const L_ok = L / 100;
+        const a = C * Math.cos(H * Math.PI / 180);
+        const b_ = C * Math.sin(H * Math.PI / 180);
+        const l_ = L_ok + 0.3963377774 * a + 0.2158037573 * b_;
+        const m_ = L_ok - 0.1055613458 * a - 0.0638541728 * b_;
+        const s_ = L_ok - 0.0894841775 * a - 1.2914855480 * b_;
+        const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+        const r_lin =  4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+        const g_lin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+        const b_lin = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+        return {
+            r: Math.round(Math.max(0, Math.min(255, linearToRgb(r_lin) * 255))),
+            g: Math.round(Math.max(0, Math.min(255, linearToRgb(g_lin) * 255))),
+            b: Math.round(Math.max(0, Math.min(255, linearToRgb(b_lin) * 255)))
+        };
+    }
+    const colorTable = [
+        { r: 255, g: 0, b: 0 },     { r: 255, g: 50, b: 0 },    { r: 255, g: 100, b: 0 },   { r: 255, g: 150, b: 0 },   { r: 255, g: 200, b: 0 },
+        { r: 255, g: 255, b: 0 },   { r: 200, g: 255, b: 0 },   { r: 150, g: 255, b: 0 },   { r: 100, g: 255, b: 0 },   { r: 50, g: 255, b: 0 },
+        { r: 0, g: 255, b: 0 },     { r: 0, g: 255, b: 50 },    { r: 0, g: 255, b: 100 },   { r: 0, g: 255, b: 150 },   { r: 0, g: 255, b: 200 },
+        { r: 0, g: 255, b: 255 },   { r: 0, g: 200, b: 255 },   { r: 0, g: 150, b: 255 },   { r: 0, g: 100, b: 255 },   { r: 0, g: 50, b: 255 },    { r: 0, g: 0, b: 255 }
+    ];
+
+    // ==================== playDynamicStimulus (общий для preview и графа) ====================
+    function playDynamicStimulus(node, opts) {
+        var state = opts.state || {};
+        var callbacks = opts.callbacks || {};
+        var getStimDisplay = opts.getStimDisplay || function () { return null; };
+        var Voice = opts.Voice || (typeof window !== 'undefined' ? window.Voice : null);
+
+        if (!state.playerRunning || state.isPaused) return;
+
+        var dyn = node.params.stimulusDynamic;
+        var frame = dyn.frames[0];
+
+        var stimDisplayEl = getStimDisplay();
+        var eff = stimDisplayEl ? Math.min(stimDisplayEl.clientWidth, stimDisplayEl.clientHeight) * 0.8 : 200;
+
+        var startD = (frame.stim && frame.stim.startD != null) ? frame.stim.startD : 0;
+        var endD = (frame.stim && frame.stim.endD != null) ? frame.stim.endD : startD;
+        var duration = (frame.lifecycle.duration || 10) * 1000;
+        var startTime = performance.now();
+        var repeats = frame.repeats || 1;
+        var mode = frame.mode || 'smooth';
+        var currentRepeat = 0;
+
+        var getCircleStimulusSVG = global.VissortCore && global.VissortCore.getCircleStimulusSVG;
+
+        function animateColor() {
+            if (!state.playerRunning || state.isPaused) return;
+            var elapsed = performance.now() - startTime;
+            var t = Math.min(1, elapsed / duration);
+
+            var d = startD + (endD - startD) * t;
+            var sc;
+            if (colorTable) {
+                var pos = Math.max(0, Math.min(20, d * 10));
+                var i0 = Math.floor(pos);
+                var i1 = Math.min(20, i0 + 1);
+                var frac = pos - i0;
+                var c0 = colorTable[i0] || { r: 255, g: 0, b: 0 };
+                var c1 = colorTable[i1] || c0;
+                sc = {
+                    r: Math.round(c0.r + (c1.r - c0.r) * frac),
+                    g: Math.round(c0.g + (c1.g - c0.g) * frac),
+                    b: Math.round(c0.b + (c1.b - c0.b) * frac)
+                };
+            } else {
+                sc = {
+                    r: Math.round(255 * (1 - d / 2)),
+                    g: Math.round(255 * (d / 2)),
+                    b: 0
+                };
+            }
+
+            var tempNode = JSON.parse(JSON.stringify(node));
+            tempNode.circleInnerColor1 = sc;
+            tempNode.circleOuterColor1 = sc;
+            tempNode.circleInnerColor2 = sc;
+            tempNode.circleOuterColor2 = sc;
+            tempNode.circleInnerMidEnabled = false;
+            tempNode.circleOuterMidEnabled = false;
+            tempNode.circleInnerEnabled = true;
+            tempNode.circleOuterEnabled = true;
+            tempNode.circleInnerRadiusPct = 40;
+
+            var svgData = getCircleStimulusSVG(tempNode, eff);
+            callbacks.displayStimulus(svgData.html, { r: 0, g: 0, b: 0 });
+
+            if (t < 1) {
+                requestAnimationFrame(animateColor);
+            } else {
+                if (currentRepeat < repeats - 1) {
+                    currentRepeat++;
+                    startTime = performance.now();
+                    requestAnimationFrame(animateColor);
+                    return;
+                }
+                setTimeout(function () {
+                    if (state.playerRunning && !state.isPaused) {
+                        callbacks.hideStimulus();
+                        if (callbacks.onFrameEnd) callbacks.onFrameEnd(node);
+                    }
+                }, 0);
+            }
+        }
+
+        function startWhenVoiceDone() {
+            var started = false;
+            function go() {
+                if (started) return;
+                started = true;
+                clearInterval(iv);
+                clearTimeout(guard);
+                if (state.playerRunning && !state.isPaused) {
+                    animateColor();
+                }
+            }
+            if (!Voice || !Voice._speaking) {
+                go();
+                return;
+            }
+            var iv = setInterval(function () {
+                if (!Voice || !Voice._speaking) go();
+            }, 100);
+            var guard = setTimeout(go, 3000);
+        }
+        startWhenVoiceDone();
+    }
+
     // ==================== EXPORT ====================
     global.VissortCore = {
         // constants
@@ -480,6 +628,10 @@
         hexToRgb: hexToRgb,
         rgbToHex: rgbToHex,
         lerpColor: lerpColor,
+        playDynamicStimulus: playDynamicStimulus,
+        colorTable: colorTable,
+        rgbToOklch: rgbToOklch,
+        oklchToRgb: oklchToRgb,
         // phases
         buildGenericDynamicPhases: buildGenericDynamicPhases,
         buildCirclePhases: buildCirclePhases,

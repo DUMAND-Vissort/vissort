@@ -1,4 +1,4 @@
-/* Vissort — AppPlayerPreview: плеер-превью в редакторе (admin.html).
+﻿/* Vissort — AppPlayerPreview: плеер-превью в редакторе (admin.html).
  * Вынесено из app.js §A2-v2 (Фаза 5, 2026-10-15).
  * Отличается от прод-плеера (player-single.js): адаптивная острота, blinkLockShow, sessionId.
  * Зависит: AppState (window.xxx через шим), window.AppEditorCore, window.Data, window.Voice.
@@ -27,6 +27,9 @@ function hideStimulus() {
     stimArea.style.backgroundColor = '';
 }
 function updateCounters() {
+    // Проверка: если элементов счетчиков нет (например, в админке), просто выходим
+    const cntCompleted = document.getElementById('cnt-completed');
+    if (!cntCompleted) return;
     cntCompleted.textContent = completedSeries;
     cntSuccess.textContent = successfulSeries;
     cntFailed.textContent = failedSeries;
@@ -285,8 +288,47 @@ function finishCompareNodeSeries(node) {
 }
 
 // ==================== ПЛЕЕР: СТИМУЛ (узел) ====================
+function playDynamicStimulus(node) {
+    if (!playerRunning || isPaused) return;
+    // Fix A: форсировать layout, чтобы stimDisplay получил clientWidth > 0
+    if (stimDisplay) { void stimDisplay.offsetWidth; }
+    window.VissortCore.playDynamicStimulus(node, {
+        // Fix B: живой state через getter — animateColor реально остановится по stopPlayer
+        state: {
+            get playerRunning() { return playerRunning; },
+            get isPaused() { return isPaused; }
+        },
+        callbacks: {
+            displayStimulus: function (html, bg) {
+                responseStartTime = performance.now();
+                displayStimulus(html, bg);
+            },
+            hideStimulus: hideStimulus,
+            onFrameEnd: function (n) {
+                // Fix D2: ЖС — непрерывная анимация, не серия.
+                // repeats уже откручен внутри animateColor. Завершаем узел.
+                if (window.VLog && VLog.log) VLog.log('[DS-end] repeats done, переходим к следующему узлу');
+                playIndex++;
+                playNextQueuedNode();
+            }
+        },
+        getStimDisplay: function () { return stimDisplay; },
+        Voice: window.Voice
+    });
+}
 function playStimulusNodeSeries(node) {
     if (!playerRunning || isPaused) return;
+    
+    // Проверка 'Живого стимула'
+    if (node.params && node.params.stimulusDynamic && node.params.stimulusDynamic.active === true && node.params.stimulusDynamic.frames && node.params.stimulusDynamic.frames.length > 0) {
+        playDynamicStimulus(node);
+        return;
+    }
+
+    // Для ЖС не проверяем completedSeries (иначе бесконечный цикл)
+    if (node.params && node.params.stimulusDynamic && node.params.stimulusDynamic.active === true) {
+        return;
+    }
     if (completedSeries >= (node.seriesCount || 5)) {
         playIndex++;
         playNextQueuedNode();
@@ -1147,6 +1189,8 @@ document.addEventListener('keydown', (e) => {
 
 // ==================== ПЛЕЕР: ПАУЗА / СТОП ====================
 function stopPlayer() {
+    playerRunning = false;
+    isPaused = false;
     phaseTimers.forEach((t) => clearTimeout(t));
     phaseTimers = [];
     if (currentShowTimer) clearTimeout(currentShowTimer);
