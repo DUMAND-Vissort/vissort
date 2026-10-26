@@ -719,3 +719,36 @@
 
 ---
 *Составлено: 2026-10-19. HEAD: ec72341. Тесты: 36 passed + 1 skipped.*
+
+---
+
+## 2026-10-26 — ЖС: плавная анимация (3 бага) + player-graph Fix D2
+
+### Симптом
+Круг ЖС в preview-плеере (admin.html) появлялся, но не анимировался (статичный красный). Потом анимация пошла, но 7 повторов вместо 1. То же в player.html.
+
+### Причины (3 независимых)
+1. eff=0 — stimDisplay.clientWidth = 0 в момент вызова playDynamicStimulus. SVG нулевого размера — невидим.
+2. state — снимок — в preview передавался снимок {playerRunning, isPaused}. Fix B: getter'ы. В player-graph.js state: PS (PlayerState) — уже живой, Fix B там не нужен.
+3. onFrameEnd запускал серию — для ЖС вызывал playStimulusNodeSeries / finishGraphStimulusSeries (серия seriesSize=6), а не завершал узел. Отсюда 7 повторов.
+
+### Фиксы
+app-player-preview.js: Fix A (void offsetWidth), Fix B (живой state через getter'ы), Fix D2 (onFrameEnd → playIndex++; playNextQueuedNode();).
+player-graph.js: Fix D2 (onFrameEnd → PS.seriesStep = 0; playNextGraphNode();, блок 111-119).
+
+### sw.js
+assets/voice/*.mp3 (21) — уже в PRECACHE_URLS (строки 60-80). Офлайн-голос работает.
+
+### Диагностика
+[DS], [DS-init], [DS-frame], [DS-end] — временные логи. Удалены.
+
+### Коммиты
+- e30f163 fix(dynamic-stim): живой state, offsetWidth, завершение узла (preview)
+- 4a63b3d chore: сессия 25.10 (UI, file picker, voice) + assets/voice
+- (следующий) fix(player-graph): ЖС в player.html — завершение узла, не серия
+
+### Грабли
+- PowerShell \[range] = \ не работает — использовать [System.IO.File]::ReadAllText + .Replace(old, new) + WriteAllText.
+- .gitignore в PS Add-Content склеивает строки без \n → правило не работает. Фикс: WriteAllText с \n.
+- PowerShell падает на выводе git ([main abc1234]) при копипасте много строк. Копипастить по одной.
+- git push может наткнуться на bot-коммит. pull --rebase → push.

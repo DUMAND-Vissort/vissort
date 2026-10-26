@@ -1,4 +1,4 @@
-﻿// player-graph.js — граф-режим плеера (§15.1.2 ч.6/7).
+// player-graph.js — граф-режим плеера (§15.1.2 ч.6/7).
 // Зависит: VLog, PlayerState, PlayerReadingMode.
 (function (global) {
     'use strict';
@@ -109,20 +109,10 @@
                 },
                 hideStimulus: _callbacks.hideStimulus,
                 onFrameEnd: function (n) {
-                    // Если в кадре были повторы (>1), завершаем серию сразу
-                    var reps = n.params?.stimulusDynamic?.frames?.[0]?.repeats || 1;
-                    if (reps > 1) {
-                        if (typeof finishGraphStimulusSeries === 'function') finishGraphStimulusSeries(n);
-                        else { PS.seriesStep++; playNextGraphNode(); }
-                    } else {
-                        if (PS.seriesStep >= (n.seriesSize || 6)) {
-                            if (typeof finishGraphStimulusSeries === 'function') finishGraphStimulusSeries(n);
-                            else { PS.seriesStep++; playNextGraphNode(); }
-                        } else {
-                            PS.seriesStep++;
-                            playGraphStimulus(n);
-                        }
-                    }
+                    // Fix D2: ЖС - непрерывная анимация, не серия.
+                    // repeats уже откручен внутри animateColor. Завершаем узел.
+                    PS.seriesStep = 0;
+                    if (typeof playNextGraphNode === 'function') playNextGraphNode();
                 }
             },
             getStimDisplay: function () { return document.getElementById('stim'); },

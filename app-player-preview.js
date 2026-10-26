@@ -1,4 +1,4 @@
-﻿/* Vissort — AppPlayerPreview: плеер-превью в редакторе (admin.html).
+/* Vissort — AppPlayerPreview: плеер-превью в редакторе (admin.html).
  * Вынесено из app.js §A2-v2 (Фаза 5, 2026-10-15).
  * Отличается от прод-плеера (player-single.js): адаптивная острота, blinkLockShow, sessionId.
  * Зависит: AppState (window.xxx через шим), window.AppEditorCore, window.Data, window.Voice.
@@ -307,7 +307,6 @@ function playDynamicStimulus(node) {
             onFrameEnd: function (n) {
                 // Fix D2: ЖС — непрерывная анимация, не серия.
                 // repeats уже откручен внутри animateColor. Завершаем узел.
-                if (window.VLog && VLog.log) VLog.log('[DS-end] repeats done, переходим к следующему узлу');
                 playIndex++;
                 playNextQueuedNode();
             }
