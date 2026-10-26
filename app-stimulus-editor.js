@@ -1,4 +1,4 @@
-﻿// ==================== APP-STIMULUS-EDITOR.JS ====================
+// ==================== APP-STIMULUS-EDITOR.JS ====================
 // Редактор "Живого стимула" (несколько кадров, у каждого свои повторы/шаг/режим).
 // ==================== ==================== ====================
 
@@ -237,6 +237,8 @@
             </div>
         `;
 
+        // Fix: удалить старые блоки ЖС перед добавлением (идемпотентность)
+        container.querySelectorAll('#dyn-stimulus-editor-root').forEach(function(el) { el.remove(); });
         container.insertAdjacentHTML('beforeend', html);
 
         const $ = (id) => document.getElementById(id);

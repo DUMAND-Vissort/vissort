@@ -1,4 +1,4 @@
-﻿// ==================== app.js ====================
+// ==================== app.js ====================
 // Vissort Studio — редактор сценариев для админа
 // Data layer (IndexedDB + Supabase REST + syncQueue)
 // ====================
@@ -1836,22 +1836,7 @@ function calibrateFocalLength() { return window.AppBlinkCamera.calibrateFocalLen
 // ==================== ОБЁРТКИ APP-INSPECTOR (§A2-v4) ====================
 function updateInspector() {
     // Сначала вызываем стандартный инспектор
-    // Обработчик чекбокса 'Живой стимул' (мгновенное переключение)
-    const dynCb = document.getElementById('inp-dyn-enabled');
-    if (dynCb && !dynCb._dynBound) {
-        dynCb._dynBound = true;
-        dynCb.addEventListener('change', () => {
-            const node = window.AppEditor.getNode(window.AppState.activeNodeId);
-            if (!node) return;
-            if (!node.params) node.params = {};
-            if (!node.params.stimulusDynamic) node.params.stimulusDynamic = {};
-            node.params.stimulusDynamic.active = dynCb.checked;
-            window.AppInspector.updateInspector();
-            if (dynCb.checked && window.AppStimulusEditor) {
-                window.AppStimulusEditor.render(node, document.getElementById('inspector'));
-            }
-        });
-    }
+        // Обработчик ЖС — в bindDynCheckbox (ниже, с очисткой контейнера)
 
     window.AppInspector.updateInspector();
     
