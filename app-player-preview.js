@@ -54,7 +54,7 @@ function startPlayer() {
     VissortDialog.alert('Создайте узел или настройте Режим');
 }
 function startAutoTraining() {
-    if (currentMode === 'nodes') switchMode('stimuli');
+    // switchMode('stimuli') отключено (плеер работает в текущем режиме)
     playerRunning = true;
     isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
@@ -110,11 +110,11 @@ function startAutoTraining() {
 }
 function playNodesSequence() {
     window.AppEditorCore.buildPlayQueue();
-    if (playQueue.length === 0) {
+    if ((window.AppState?.playQueue || playQueue).length === 0) {
         stopPlayer();
         return;
     }
-    if (currentMode === 'nodes') switchMode('stimuli');
+    // switchMode('stimuli') отключено (плеер работает в текущем режиме)
     playerRunning = true;
     isPaused = false;
     completedSeries = successfulSeries = failedSeries = 0;
@@ -292,7 +292,7 @@ function playDynamicStimulus(node) {
     if (!playerRunning || isPaused) return;
     // Fix A: форсировать layout, чтобы stimDisplay получил clientWidth > 0
     if (stimDisplay) { void stimDisplay.offsetWidth; }
-    window.VissortCore.playDynamicStimulus(node, {
+    window.PlayerCore.playDynamicStimulus(node, {
         // Fix B: живой state через getter — animateColor реально остановится по stopPlayer
         state: {
             get playerRunning() { return playerRunning; },

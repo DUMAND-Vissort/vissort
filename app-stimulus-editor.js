@@ -72,8 +72,8 @@
                 frames: [
                     {
                         lifecycle: { delay1: 0, duration: 10, responseTime: 0, delay2: 0 },
-                        stim: { startD: 0, endD: 0, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
-                        bg: { startD: 1, endD: 1, startBright: 100, endBright: 100, align: true, level: 70 },
+                        stim: { startD: 0, endD: 2, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
+                        bg: { startD: 0, endD: 0, startBright: 100, endBright: 100, align: true, level: 70 },
                         repeats: 1,
                         step: 0.1,
                         mode: 'smooth'
@@ -291,8 +291,8 @@
                 for (let i = currentFrames; i < newCount; i++) {
                     frames.push({
                         lifecycle: { delay1: 0, duration: 10, responseTime: 0, delay2: 0 },
-                        stim: { startD: 0, endD: 0, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
-                        bg: { startD: 1, endD: 1, startBright: 100, endBright: 100, align: true, level: 70 },
+                        stim: { startD: 0, endD: 2, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
+                        bg: { startD: 0, endD: 0, startBright: 100, endBright: 100, align: true, level: 70 },
                         repeats: 1,
                         step: 0.1,
                         mode: 'smooth'

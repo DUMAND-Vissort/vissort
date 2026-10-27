@@ -1,4 +1,4 @@
-﻿// ==================== APP-EDITOR.JS ====================
+// ==================== APP-EDITOR.JS ====================
 // Редактор графа: узлы, связи, рендер, drag/resize, меню связи.
 // Вынесено из app.js (§A2-v3, Фаза 5).
 // Зависит: VLog, VissortDialog, AppState, VissortCore, window.__vissort_zoom.

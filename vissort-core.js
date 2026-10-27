@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // vissort-core.js
 // Shared utilities for Vissort Studio (admin + player).
 // All functions are exposed via window.VissortCore.
@@ -360,9 +360,9 @@
     }
     function getStimulusSVG(node, size) {
         if (node.singleCircleEnabled) return getCircleStimulusSVG(node, size);
-        const r = node.stimR || 255;
-        const g = node.stimG || 255;
-        const b = node.stimB || 255;
+        const r = node.stimR != null ? node.stimR : 255;
+        const g = node.stimG != null ? node.stimG : 255;
+        const b = node.stimB != null ? node.stimB : 255;
         let html;
         if (node.stimType === 'LANDOLT') {
             html = generateLandoltRing(
@@ -511,28 +511,20 @@
         if (!state.playerRunning || state.isPaused) return;
 
         var dyn = node.params.stimulusDynamic;
-        var frame = dyn.frames[0];
+        var frames = (dyn && dyn.frames) ? dyn.frames : [];
+        if (frames.length === 0) return;
 
         var stimDisplayEl = getStimDisplay();
         var eff = stimDisplayEl ? Math.min(stimDisplayEl.clientWidth, stimDisplayEl.clientHeight) * 0.8 : 200;
+        var baseNode = JSON.parse(JSON.stringify(node));
 
-        var startD = (frame.stim && frame.stim.startD != null) ? frame.stim.startD : 0;
-        var endD = (frame.stim && frame.stim.endD != null) ? frame.stim.endD : startD;
-        var duration = (frame.lifecycle.duration || 10) * 1000;
-        var startTime = performance.now();
-        var repeats = frame.repeats || 1;
-        var mode = frame.mode || 'smooth';
+        var currentFrameIdx = 0;
         var currentRepeat = 0;
+        var frameStartTime = null;
+        var animId = null;
+        var timeoutId = null;
 
-        var getCircleStimulusSVG = global.VissortCore && global.VissortCore.getCircleStimulusSVG;
-
-        function animateColor() {
-            if (!state.playerRunning || state.isPaused) return;
-            var elapsed = performance.now() - startTime;
-            var t = Math.min(1, elapsed / duration);
-
-            var d = startD + (endD - startD) * t;
-            var sc;
+        function getColorByD(d) {
             if (colorTable) {
                 var pos = Math.max(0, Math.min(20, d * 10));
                 var i0 = Math.floor(pos);
@@ -540,74 +532,84 @@
                 var frac = pos - i0;
                 var c0 = colorTable[i0] || { r: 255, g: 0, b: 0 };
                 var c1 = colorTable[i1] || c0;
-                sc = {
-                    r: Math.round(c0.r + (c1.r - c0.r) * frac),
-                    g: Math.round(c0.g + (c1.g - c0.g) * frac),
-                    b: Math.round(c0.b + (c1.b - c0.b) * frac)
-                };
-            } else {
-                sc = {
-                    r: Math.round(255 * (1 - d / 2)),
-                    g: Math.round(255 * (d / 2)),
-                    b: 0
-                };
+                return { r: Math.round(c0.r + (c1.r - c0.r) * frac), g: Math.round(c0.g + (c1.g - c0.g) * frac), b: Math.round(c0.b + (c1.b - c0.b) * frac) };
+            }
+            return { r: Math.round(255 * (1 - d / 2)), g: Math.round(255 * (d / 2)), b: 0 };
+        }
+
+        function renderFrame(frame, t) {
+            var startD = (frame.stim && frame.stim.startD != null) ? frame.stim.startD : 0;
+            var endD = (frame.stim && frame.stim.endD != null) ? frame.stim.endD : startD;
+            var d = startD + (endD - startD) * t;
+            var sc = getColorByD(d);
+
+            baseNode.stimR = sc.r;
+            baseNode.stimG = sc.g;
+            baseNode.stimB = sc.b;
+
+            var bg = { r: 0, g: 0, b: 0 };
+            if (frame.bg) {
+                var bgStartD = frame.bg.startD != null ? frame.bg.startD : 1;
+                var bgEndD = frame.bg.endD != null ? frame.bg.endD : bgStartD;
+                var bd = bgStartD + (bgEndD - bgStartD) * t;
+                bg = getColorByD(bd);
             }
 
-            var tempNode = JSON.parse(JSON.stringify(node));
-            tempNode.circleInnerColor1 = sc;
-            tempNode.circleOuterColor1 = sc;
-            tempNode.circleInnerColor2 = sc;
-            tempNode.circleOuterColor2 = sc;
-            tempNode.circleInnerMidEnabled = false;
-            tempNode.circleOuterMidEnabled = false;
-            tempNode.circleInnerEnabled = true;
-            tempNode.circleOuterEnabled = true;
-            tempNode.circleInnerRadiusPct = 40;
+            var svgData = global.VissortCore.getStimulusSVG(baseNode, eff);
+            callbacks.displayStimulus(svgData.html, bg);
+        }
 
-            var svgData = getCircleStimulusSVG(tempNode, eff);
-            callbacks.displayStimulus(svgData.html, { r: 0, g: 0, b: 0 });
+        function animateFrame() {
+            if (!state.playerRunning || state.isPaused) return;
+            var frame = frames[currentFrameIdx];
+            if (!frame) return;
+
+            var duration = (frame.lifecycle && frame.lifecycle.duration ? frame.lifecycle.duration : 10) * 1000;
+            if (frameStartTime === null) frameStartTime = performance.now();
+
+            var elapsed = performance.now() - frameStartTime;
+            var t = Math.min(1, elapsed / duration);
+
+            if (frame.mode === 'step') renderFrame(frame, t < 1 ? 0 : 1);
+            else renderFrame(frame, t);
 
             if (t < 1) {
-                requestAnimationFrame(animateColor);
+                animId = requestAnimationFrame(animateFrame);
             } else {
+                var repeats = frame.repeats || 1;
                 if (currentRepeat < repeats - 1) {
                     currentRepeat++;
-                    startTime = performance.now();
-                    requestAnimationFrame(animateColor);
-                    return;
-                }
-                setTimeout(function () {
-                    if (state.playerRunning && !state.isPaused) {
-                        callbacks.hideStimulus();
-                        if (callbacks.onFrameEnd) callbacks.onFrameEnd(node);
+                    frameStartTime = null;
+                    animId = requestAnimationFrame(animateFrame);
+                } else {
+                    currentRepeat = 0;
+                    currentFrameIdx++;
+                    frameStartTime = null;
+                    if (currentFrameIdx >= frames.length) {
+                        if (callbacks.onFrameEnd) {
+                            timeoutId = setTimeout(function () {
+                                if (state.playerRunning && !state.isPaused) {
+                                    callbacks.hideStimulus();
+                                    callbacks.onFrameEnd(node);
+                                }
+                            }, 0);
+                        }
+                    } else {
+                        var nextFrame = frames[currentFrameIdx];
+                        var delay = (nextFrame.lifecycle && nextFrame.lifecycle.delay1 ? nextFrame.lifecycle.delay1 : 0) * 1000;
+                        timeoutId = setTimeout(function () {
+                            if (state.playerRunning && !state.isPaused) animateFrame();
+                        }, delay);
                     }
-                }, 0);
-            }
-        }
-
-        function startWhenVoiceDone() {
-            var started = false;
-            function go() {
-                if (started) return;
-                started = true;
-                clearInterval(iv);
-                clearTimeout(guard);
-                if (state.playerRunning && !state.isPaused) {
-                    animateColor();
                 }
             }
-            if (!Voice || !Voice._speaking) {
-                go();
-                return;
-            }
-            var iv = setInterval(function () {
-                if (!Voice || !Voice._speaking) go();
-            }, 100);
-            var guard = setTimeout(go, 3000);
         }
-        startWhenVoiceDone();
-    }
 
+        var firstDelay = (frames[0].lifecycle && frames[0].lifecycle.delay1 ? frames[0].lifecycle.delay1 : 0) * 1000;
+        timeoutId = setTimeout(function () {
+            if (state.playerRunning && !state.isPaused) animateFrame();
+        }, firstDelay);
+    }
     // ==================== EXPORT ====================
     global.VissortCore = {
         // constants

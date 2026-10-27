@@ -858,7 +858,7 @@ function closeFontPicker() {
 function displayStimulus(html, bgColor) { return window.AppPlayerPreview.displayStimulus(html, bgColor); }
 function hideStimulus() { return window.AppPlayerPreview.hideStimulus(); }
 function updateCounters() { return window.AppPlayerPreview.updateCounters(); }
-function startPlayer() { return window.AppPlayerPreview.startPlayer(); }
+function startPlayer() { if (window.AppPlayer) return window.AppPlayer.startPlayer(); else console.warn('[app] AppPlayer не найден'); }
 function startAutoTraining() { return window.AppPlayerPreview.startAutoTraining(); }
 function playNodesSequence() { return window.AppPlayerPreview.playNodesSequence(); }
 function playNextQueuedNode() { return window.AppPlayerPreview.playNextQueuedNode(); }
