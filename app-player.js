@@ -93,8 +93,37 @@
             // Скрываем стимул
             if (stim) stim.innerHTML = '';
             
-            // TODO: Здесь будет переход к следующему стимулу в серии
-            console.log('[app-player] Серия завершена (пока один стимул)');
+            // Переход к следующему стимулу в серии
+            if (typeof node._step === 'undefined') node._step = 0;
+            node._step++;
+            
+            const seriesSize = node.seriesSize || 6;
+            if (node._step >= seriesSize) {
+                console.log('[app-player] Серия завершена (все', seriesSize, 'стимулов)');
+                node._step = 0; // Сброс для следующего запуска
+                
+                // Переход к следующему узлу
+                const connections = global.AppState?.connections || [];
+                const nextConn = connections.find(c => c.fromId === node.id);
+                if (nextConn) {
+                    const nextNode = global.AppState.nodes.find(n => n.id === nextConn.toId);
+                    if (nextNode) {
+                        console.log('[app-player] Переход к следующему узлу:', nextNode.id);
+                        if (nextNode.params?.stimulusDynamic?.active) {
+                            global.PlayerCore.playDynamicStimulus(nextNode, { /* opts */ });
+                        } else {
+                            playSimpleStimulus(nextNode);
+                        }
+                    } else {
+                        console.log('[app-player] Следующий узел не найден');
+                    }
+                } else {
+                    console.log('[app-player] Нет связи к следующему узлу (граф завершен)');
+                }
+            } else {
+                console.log('[app-player] Следующий стимул в серии (', node._step + 1, 'из', seriesSize, ')');
+                playSimpleStimulus(node); // Рекурсивный вызов
+            }
         };
 
         document.addEventListener('keydown', onKeyDown);
@@ -106,6 +135,16 @@
                 document.removeEventListener('keydown', onKeyDown);
                 if (stim) stim.innerHTML = '';
                 console.log('[app-player] Таймаут, ответа не было');
+                // Таймаут тоже считается за шаг в серии
+                if (typeof node._step === 'undefined') node._step = 0;
+                node._step++;
+                const seriesSize = node.seriesSize || 6;
+                if (node._step >= seriesSize) {
+                    console.log('[app-player] Серия завершена (таймаут)');
+                    node._step = 0;
+                } else {
+                    playSimpleStimulus(node);
+                }
             }
         }, duration);
     }
