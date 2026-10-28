@@ -72,13 +72,41 @@
         if (stim) stim.innerHTML = svgData.html;
         if (stimDisplay) stimDisplay.style.backgroundColor = `rgb(${svgData.bgColor})`;
 
-        // 5. Таймер (показ)
+        // 5. Обработка ответа и серии
+        let answered = false;
         const duration = (node.duration || 5) * 1000;
         console.log('[app-player] Показ стимула', dir, 'на', duration, 'мс');
-        
-        setTimeout(() => {
+
+        const onKeyDown = (e) => {
+            if (answered) return;
+            const keyMap = { 'ArrowUp': 'вверх', 'ArrowDown': 'вниз', 'ArrowLeft': 'влево', 'ArrowRight': 'вправо' };
+            const userDir = keyMap[e.key];
+            if (!userDir) return;
+            
+            answered = true;
+            const isCorrect = (userDir === dir);
+            console.log(`[app-player] Ответ: ${userDir}, правильный: ${dir}, верно: ${isCorrect}`);
+            
+            // Убираем обработчик
+            document.removeEventListener('keydown', onKeyDown);
+            
+            // Скрываем стимул
             if (stim) stim.innerHTML = '';
-            console.log('[app-player] Стимул скрыт');
+            
+            // TODO: Здесь будет переход к следующему стимулу в серии
+            console.log('[app-player] Серия завершена (пока один стимул)');
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+
+        // Таймер (если не ответил)
+        setTimeout(() => {
+            if (!answered) {
+                answered = true;
+                document.removeEventListener('keydown', onKeyDown);
+                if (stim) stim.innerHTML = '';
+                console.log('[app-player] Таймаут, ответа не было');
+            }
         }, duration);
     }
     function displayStimulus(html, bg) {
