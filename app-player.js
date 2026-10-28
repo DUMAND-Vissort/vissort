@@ -38,7 +38,50 @@
         }
         // ------------------------------------------
 
-        function displayStimulus(html, bg) {
+        function playSimpleStimulus(node) {
+        console.log('[app-player] Обычный стимул:', node.id);
+        
+        // 1. Определяем направление
+        let dir;
+        if (node.isActive) {
+            const d = ['вверх', 'вниз', 'влево', 'вправо'];
+            dir = d[Math.floor(Math.random() * d.length)];
+        } else {
+            dir = node.stimDirectionFixed || 'вверх';
+        }
+
+        // 2. Вычисляем размер (острота зрения)
+        const dist = node.stimDistance || 1;
+        const ppi = node.stimPPI || 96;
+        const acuity = node.stimAcuity || 1.0; // Пока берем стартовую
+        const eff = global.VissortCore.acuityToSizePx(acuity, dist, ppi);
+
+        // 3. Получаем SVG (Буква E или Ландольт)
+        const svgData = global.VissortCore.getStimulusSVG({
+            stimType: node.stimType || 'LETTER_E',
+            stimDirection: dir,
+            stimR: node.stimR || 255,
+            stimG: node.stimG || 255,
+            stimB: node.stimB || 255,
+            bgR: 0, bgG: 0, bgB: 0 // Черный фон по умолчанию
+        }, eff);
+
+        // 4. Рисуем
+        const stim = document.getElementById('stim');
+        const stimDisplay = document.getElementById('stim-display');
+        if (stim) stim.innerHTML = svgData.html;
+        if (stimDisplay) stimDisplay.style.backgroundColor = `rgb(${svgData.bgColor})`;
+
+        // 5. Таймер (показ)
+        const duration = (node.duration || 5) * 1000;
+        console.log('[app-player] Показ стимула', dir, 'на', duration, 'мс');
+        
+        setTimeout(() => {
+            if (stim) stim.innerHTML = '';
+            console.log('[app-player] Стимул скрыт');
+        }, duration);
+    }
+    function displayStimulus(html, bg) {
             if (stim) stim.innerHTML = html;
             if (stimDisplay) stimDisplay.style.backgroundColor = `rgb(${bg.r},${bg.g},${bg.b})`;
         }
@@ -59,7 +102,7 @@
                 getStimDisplay: () => stimDisplay
             });
         } else {
-            console.warn('[app-player] Обычные стимулы пока не поддерживаются (только ЖС)');
+            playSimpleStimulus(startNode);
         }
     }
 
