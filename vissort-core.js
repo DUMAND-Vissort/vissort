@@ -506,7 +506,6 @@
         var state = opts.state || {};
         var callbacks = opts.callbacks || {};
         var getStimDisplay = opts.getStimDisplay || function () { return null; };
-        var Voice = opts.Voice || (typeof window !== 'undefined' ? window.Voice : null);
 
         if (!state.playerRunning || state.isPaused) return;
 
@@ -514,15 +513,14 @@
         var frames = (dyn && dyn.frames) ? dyn.frames : [];
         if (frames.length === 0) return;
 
+        // Берем ТОЛЬКО ОДИН кадр по индексу (передается через opts.frameIndex)
+        var frameIndex = opts.frameIndex || 0;
+        if (frameIndex >= frames.length) frameIndex = 0; // Зацикливаем, если кадров меньше, чем серия
+        var frame = frames[frameIndex];
+
         var stimDisplayEl = getStimDisplay();
         var eff = stimDisplayEl ? Math.min(stimDisplayEl.clientWidth, stimDisplayEl.clientHeight) * 0.8 : 200;
         var baseNode = JSON.parse(JSON.stringify(node));
-
-        var currentFrameIdx = 0;
-        var currentRepeat = 0;
-        var frameStartTime = null;
-        var animId = null;
-        var timeoutId = null;
 
         function getColorByD(d) {
             if (colorTable) {
@@ -559,56 +557,26 @@
             callbacks.displayStimulus(svgData.html, bg);
         }
 
-        function animateFrame() {
+        var duration = (frame.lifecycle && frame.lifecycle.duration ? frame.lifecycle.duration : 10) * 1000;
+        var startTime = performance.now();
+
+        function animate() {
             if (!state.playerRunning || state.isPaused) return;
-            var frame = frames[currentFrameIdx];
-            if (!frame) return;
-
-            var duration = (frame.lifecycle && frame.lifecycle.duration ? frame.lifecycle.duration : 10) * 1000;
-            if (frameStartTime === null) frameStartTime = performance.now();
-
-            var elapsed = performance.now() - frameStartTime;
+            var elapsed = performance.now() - startTime;
             var t = Math.min(1, elapsed / duration);
 
-            if (frame.mode === 'step') renderFrame(frame, t < 1 ? 0 : 1);
-            else renderFrame(frame, t);
+            renderFrame(frame, t);
 
             if (t < 1) {
-                animId = requestAnimationFrame(animateFrame);
+                requestAnimationFrame(animate);
             } else {
-                var repeats = frame.repeats || 1;
-                if (currentRepeat < repeats - 1) {
-                    currentRepeat++;
-                    frameStartTime = null;
-                    animId = requestAnimationFrame(animateFrame);
-                } else {
-                    currentRepeat = 0;
-                    currentFrameIdx++;
-                    frameStartTime = null;
-                    if (currentFrameIdx >= frames.length) {
-                        if (callbacks.onFrameEnd) {
-                            timeoutId = setTimeout(function () {
-                                if (state.playerRunning && !state.isPaused) {
-                                    callbacks.hideStimulus();
-                                    callbacks.onFrameEnd(node);
-                                }
-                            }, 0);
-                        }
-                    } else {
-                        var nextFrame = frames[currentFrameIdx];
-                        var delay = (nextFrame.lifecycle && nextFrame.lifecycle.delay1 ? nextFrame.lifecycle.delay1 : 0) * 1000;
-                        timeoutId = setTimeout(function () {
-                            if (state.playerRunning && !state.isPaused) animateFrame();
-                        }, delay);
-                    }
-                }
+                // Кадр завершен, сообщаем плееру
+                if (callbacks.onFrameEnd) callbacks.onFrameEnd(node);
             }
         }
 
-        var firstDelay = (frames[0].lifecycle && frames[0].lifecycle.delay1 ? frames[0].lifecycle.delay1 : 0) * 1000;
-        timeoutId = setTimeout(function () {
-            if (state.playerRunning && !state.isPaused) animateFrame();
-        }, firstDelay);
+        // Запускаем анимацию
+        animate();
     }
     // ==================== EXPORT ====================
     global.VissortCore = {
