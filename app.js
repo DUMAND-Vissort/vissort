@@ -1908,4 +1908,31 @@ function applyReadingInspectorChanges(node) { return window.AppInspector.applyRe
         const observer = new MutationObserver(bindDynCheckbox);
         observer.observe(inspectorEl, { childList: true, subtree: true });
     }
+
+// Принудительное скрытие лишних блоков в инспекторе (ЖС - единственный режим)
+function hideExtraInspectorBlocks() {
+    const blocks = document.querySelectorAll('#inspector .panel-section');
+    blocks.forEach(b => {
+        const title = b.querySelector('h3')?.textContent || '';
+        if (title.includes('Цвета') || 
+            title.includes('Цикл показа') || 
+            title.includes('Динамика буквы') || 
+            title.includes('Динамика фона') || 
+            title.includes('Динамика Круг')) {
+            b.style.display = 'none';
+        }
+    });
+    // Скрываем галочку "Активная тренировка"
+    const activeLabel = document.querySelector('label:has(#inp-active)');
+    if (activeLabel) activeLabel.style.display = 'none';
+}
+
+// Вызываем при обновлении инспектора (наблюдаем за изменениями)
+const observer = new MutationObserver(() => {
+    hideExtraInspectorBlocks();
+});
+observer.observe(document.getElementById('inspector') || document.body, { childList: true, subtree: true });
+
+// Вызываем сразу
+setTimeout(hideExtraInspectorBlocks, 500);
 })();

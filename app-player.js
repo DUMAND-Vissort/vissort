@@ -123,6 +123,22 @@
             // 4. Рисуем
             displayStimulus(svgData.html, { r: 0, g: 0, b: 0 });
             if (node.seriesSize === undefined) node.seriesSize = 6;
+
+            // 4.1. Моргание (если включено)
+            let blinkInterval = null;
+            if (node.blinkEnabled) {
+                const stim = document.getElementById('stim');
+                let blinkOn = true;
+                const blinkColorA = node.blinkColorA || { r: 255, g: 0, b: 0 };
+                const blinkColorB = node.blinkColorB || { r: 0, g: 0, b: 255 };
+                blinkInterval = setInterval(() => {
+                    if (!stim) return;
+                    blinkOn = !blinkOn;
+                    const color = blinkOn ? blinkColorA : blinkColorB;
+                    const path = stim.querySelector('svg path');
+                    if (path) path.setAttribute('fill', `rgb(${color.r},${color.g},${color.b})`);
+                }, node.blinkIntervalMs || 500);
+            }
             
             // 5. Обработка ответа
             let answered = false;

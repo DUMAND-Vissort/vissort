@@ -1,7 +1,4 @@
 // ==================== APP-STIMULUS-EDITOR.JS ====================
-// Редактор "Живого стимула" (несколько кадров, у каждого свои повторы/шаг/режим).
-// ==================== ==================== ====================
-
 (function () {
     'use strict';
 
@@ -55,34 +52,24 @@
     }
 
     function render(node, container) {
-        const dynEnabled = document.getElementById('inp-dyn-enabled')?.checked;
-        if (!dynEnabled) {
-            const oldBlocks = container.querySelectorAll('#dyn-stimulus-editor-root');
-            oldBlocks.forEach(el => el.remove());
-            return;
-        }
-
         if (!node.params) node.params = {};
         const params = node.params;
 
-        if (!params.stimulusDynamic || !params.stimulusDynamic.frames) {
-            params.stimulusDynamic = {
-                active: true,
-                framesCount: 1,
-                frames: [
-                    {
-                        lifecycle: { delay1: 0, duration: 10, responseTime: 0, delay2: 0 },
-                        stim: { startD: 0, endD: 2, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
-                        bg: { startD: 0, endD: 0, startBright: 100, endBright: 100, align: true, level: 70 },
-                        repeats: 1,
-                        step: 0.1,
-                        mode: 'smooth'
-                    }
-                ]
-            };
+        if (!params.stimulusDynamic || typeof params.stimulusDynamic !== 'object') {
+            params.stimulusDynamic = {};
         }
-
         const dyn = params.stimulusDynamic;
+        
+        if (!Array.isArray(dyn.frames) || dyn.frames.length === 0) {
+            dyn.frames = [{
+                lifecycle: { delay1: 0, duration: 5, responseTime: 0, delay2: 0 },
+                stim: { startD: 0, endD: 2, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
+                bg: { startD: 0, endD: 0, startBright: 100, endBright: 100, align: true, level: 70 },
+                repeats: 1, step: 0.1, mode: 'smooth'
+            }];
+        }
+        
+        dyn.framesCount = dyn.frames.length;
         const frames = dyn.frames;
 
         const makeOpts = (selD) => {
@@ -96,8 +83,8 @@
 
         const makeEndOpts = (frame, selD) => {
             let o = '';
-            const sInt = Math.round(frame.stim.startD * 10);
-            const stepInt = Math.round(parseFloat(frame.step) * 10) || 1;
+            const sInt = Math.round((frame.stim?.startD || 0) * 10);
+            const stepInt = Math.round(parseFloat(frame.step || 0.1) * 10) || 1;
             for (let i = sInt; i <= 20; i += stepInt) {
                 const D = (i / 10).toFixed(1);
                 o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D (${getColorName(i)})</option>`;
@@ -107,13 +94,16 @@
 
         let html = `
             <div id="dyn-stimulus-editor-root" class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
-                <h3 style="color:#a78bfa;border-color:#8b5cf6;">✨ Живой стимул</h3>
+                <h3 style="color:#a78bfa;border-color:#8b5cf6; display:block;">✨ Живой стимул</h3>
                 
-                <!-- ШАПКА (только количество кадров) -->
                 <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; background: #0b0b12; padding: 6px; border-radius: 4px;">
                     <label style="font-size: 11px; color: #eee; display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="dyn-enabled" ${dyn.active !== false ? 'checked' : ''} style="margin:0;">
+                        Живой стимул активен
+                    </label>
+                    <label style="font-size: 11px; color: #eee; display: flex; align-items: center; gap: 5px;">
                         Кадров:
-                        <input type="number" id="dyn-frames-count" value="${dyn.framesCount || 1}" min="1" max="20" style="width: 50px; padding: 2px; background: #16161a; color: #fff; border: 1px solid #333; border-radius: 2px;">
+                        <input type="number" id="dyn-frames-count" value="${dyn.framesCount}" min="1" max="20" style="width: 50px; padding: 2px; background: #16161a; color: #fff; border: 1px solid #333; border-radius: 2px;">
                     </label>
                 </div>
 
@@ -125,101 +115,84 @@
                 <div style="border:1px solid #333; border-radius:4px; margin-bottom:8px; background:#16161a; padding:6px;">
                     <div style="font-size:11px; color:#8b5cf6; font-weight:bold; margin-bottom:6px; border-bottom:1px solid #333; padding-bottom:3px;">Кадр ${idx + 1}</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <!-- ЛЕВАЯ КОЛОНКА: Жизненный цикл -->
                         <div>
                             <div style="background:#0b0b12; padding:5px; border-radius:4px;">
                                 <div style="font-size:10px; color:#aaa; margin-bottom:3px;">Жизненный цикл (сек):</div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Задержка 1:</label>
-                                    <input type="number" class="dyn-delay1" data-idx="${idx}" value="${frame.lifecycle.delay1}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-delay1" data-idx="${idx}" value="${frame.lifecycle?.delay1 || 0}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Показ:</label>
-                                    <input type="number" class="dyn-duration" data-idx="${idx}" value="${frame.lifecycle.duration}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-duration" data-idx="${idx}" value="${frame.lifecycle?.duration || 5}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Ожидание:</label>
-                                    <input type="number" class="dyn-response" data-idx="${idx}" value="${frame.lifecycle.responseTime}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-response" data-idx="${idx}" value="${frame.lifecycle?.responseTime || 0}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Задержка 2:</label>
-                                    <input type="number" class="dyn-delay2" data-idx="${idx}" value="${frame.lifecycle.delay2}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-delay2" data-idx="${idx}" value="${frame.lifecycle?.delay2 || 0}" step="0.1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                             </div>
                             <div style="background:#0b0b12; padding:5px; border-radius:4px; margin-top:5px;">
                                 <div style="font-size:10px; color:#aaa; margin-bottom:3px;">Параметры кадра:</div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Повторов:</label>
-                                    <input type="number" class="dyn-repeats" data-idx="${idx}" value="${frame.repeats || 1}" min="1" max="20" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-repeats" data-idx="${idx}" value="${frame.repeats || 1}" min="1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Шаг (D):</label>
-                                    <select class="dyn-step" data-idx="${idx}" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px; font-size:10px;">
-                                        ${[0.1,0.2,0.3,0.4,0.5,0.6,0.7,1.0].map(s => `<option value="${s}" ${frame.step==s?'selected':''}>${s}</option>`).join('')}
+                                    <select class="dyn-step" data-idx="${idx}" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">
+                                        ${[0.1,0.2,0.3,0.4,0.5,1.0].map(s => `<option value="${s}" ${frame.step==s?'selected':''}>${s}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div style="display:flex; gap:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Режим:</label>
-                                    <select class="dyn-mode" data-idx="${idx}" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px; font-size:10px;">
+                                    <select class="dyn-mode" data-idx="${idx}" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">
                                         <option value="smooth" ${frame.mode==='smooth'?'selected':''}>Плавно</option>
                                         <option value="jump" ${frame.mode==='jump'?'selected':''}>Скачками</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
-                        <!-- ПРАВАЯ КОЛОНКА: Стимул и Фон -->
                         <div>
                             <div style="background:#0b0b12; padding:5px; border-radius:4px; margin-bottom:3px;">
                                 <div style="font-size:10px; color:#8b5cf6; margin-bottom:3px;">Стимул:</div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Нач. D:</label>
-                                    <select class="dyn-stim-start" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px; font-size:10px;">${makeOpts(frame.stim.startD)}</select>
+                                    <select class="dyn-stim-start" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">${makeOpts(frame.stim?.startD || 0)}</select>
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Кон. D:</label>
-                                    <select class="dyn-stim-end" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px; font-size:10px;">${makeEndOpts(frame, frame.stim.endD)}</select>
+                                    <select class="dyn-stim-end" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">${makeEndOpts(frame, frame.stim?.endD || 0)}</select>
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Ярк %:</label>
-                                    <input type="number" class="dyn-stim-bright-start" data-idx="${idx}" value="${frame.stim.startBright}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
-                                    <input type="number" class="dyn-stim-bright-end" data-idx="${idx}" value="${frame.stim.endBright}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-stim-bright-start" data-idx="${idx}" value="${frame.stim?.startBright || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
+                                    <input type="number" class="dyn-stim-bright-end" data-idx="${idx}" value="${frame.stim?.endBright || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Размер:</label>
-                                    <input type="number" class="dyn-stim-size-start" data-idx="${idx}" value="${frame.stim.startSize}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
-                                    <input type="number" class="dyn-stim-size-end" data-idx="${idx}" value="${frame.stim.endSize}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-stim-size-start" data-idx="${idx}" value="${frame.stim?.startSize || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
+                                    <input type="number" class="dyn-stim-size-end" data-idx="${idx}" value="${frame.stim?.endSize || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
-                                <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
-                                    <label style="font-size:10px; width:40px;">Блюр:</label>
-                                    <input type="number" class="dyn-stim-blur-start" data-idx="${idx}" value="${frame.stim.startBlur}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
-                                    <input type="number" class="dyn-stim-blur-end" data-idx="${idx}" value="${frame.stim.endBlur}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
-                                </div>
-                                <div style="display:flex; gap:3px; align-items:center; margin-top:3px;">
-                                    <input type="checkbox" class="dyn-stim-align" data-idx="${idx}" ${frame.stim.align?'checked':''} style="margin:0;">
-                                    <label style="font-size:10px;">Выравнивать</label>
-                                </div>
-                                <input type="range" class="dyn-stim-level" data-idx="${idx}" min="0" max="100" value="${frame.stim.level}" style="width:100%; margin-top:3px; accent-color:#8b5cf6;">
                             </div>
                             <div style="background:#0b0b12; padding:5px; border-radius:4px;">
                                 <div style="font-size:10px; color:#8b5cf6; margin-bottom:3px;">Фон:</div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Нач. D:</label>
-                                    <select class="dyn-bg-start" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px; font-size:10px;">${makeOpts(frame.bg.startD)}</select>
+                                    <select class="dyn-bg-start" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">${makeOpts(frame.bg?.startD || 0)}</select>
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Кон. D:</label>
-                                    <select class="dyn-bg-end" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px; font-size:10px;">${makeEndOpts(frame, frame.bg.endD)}</select>
+                                    <select class="dyn-bg-end" data-idx="${idx}" style="flex:1; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">${makeEndOpts(frame, frame.bg?.endD || 0)}</select>
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:40px;">Ярк %:</label>
-                                    <input type="number" class="dyn-bg-bright-start" data-idx="${idx}" value="${frame.bg.startBright}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
-                                    <input type="number" class="dyn-bg-bright-end" data-idx="${idx}" value="${frame.bg.endBright}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333; border-radius:2px;">
+                                    <input type="number" class="dyn-bg-bright-start" data-idx="${idx}" value="${frame.bg?.startBright || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
+                                    <input type="number" class="dyn-bg-bright-end" data-idx="${idx}" value="${frame.bg?.endBright || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
-                                <div style="display:flex; gap:3px; align-items:center; margin-top:3px;">
-                                    <input type="checkbox" class="dyn-bg-align" data-idx="${idx}" ${frame.bg.align?'checked':''} style="margin:0;">
-                                    <label style="font-size:10px;">Выравнивать</label>
-                                </div>
-                                <input type="range" class="dyn-bg-level" data-idx="${idx}" min="0" max="100" value="${frame.bg.level}" style="width:100%; margin-top:3px; accent-color:#8b5cf6;">
                             </div>
                         </div>
                     </div>
@@ -229,100 +202,108 @@
 
         html += `
                 </div>
-                <div style="display:flex; gap:5px; margin-top:10px;">
-                    <button id="dyn-calc" style="flex:1; padding:5px; background:#10b981; color:#fff; border:none; border-radius:3px; font-size:10px; cursor:pointer;">📊 Рассчитать</button>
+                <div style="display:flex; gap:5px; margin-top:10px; align-items:center;">
                     <button id="dyn-calib-stim" style="flex:1; padding:5px; background:#f59e0b; color:#fff; border:none; border-radius:3px; font-size:10px; cursor:pointer;">🎯 Калибр. (Стимул)</button>
                     <button id="dyn-calib-bg" style="flex:1; padding:5px; background:#f59e0b; color:#fff; border:none; border-radius:3px; font-size:10px; cursor:pointer;">🎯 Калибр. (Фон)</button>
                 </div>
             </div>
         `;
 
-        // Fix: удалить старые блоки ЖС перед добавлением (идемпотентность)
         container.querySelectorAll('#dyn-stimulus-editor-root').forEach(function(el) { el.remove(); });
         container.insertAdjacentHTML('beforeend', html);
 
         const $ = (id) => document.getElementById(id);
 
         const updateParams = () => {
-            dyn.framesCount = parseInt($('dyn-frames-count')?.value) || 1;
-
+            const cb = $('dyn-enabled');
+            if (cb) dyn.active = cb.checked;
+            
             frames.forEach((frame, idx) => {
-                frame.lifecycle.delay1 = parseFloat(container.querySelector(`.dyn-delay1[data-idx="${idx}"]`)?.value) || 0;
-                frame.lifecycle.duration = parseFloat(container.querySelector(`.dyn-duration[data-idx="${idx}"]`)?.value) || 10;
-                frame.lifecycle.responseTime = parseFloat(container.querySelector(`.dyn-response[data-idx="${idx}"]`)?.value) || 0;
-                frame.lifecycle.delay2 = parseFloat(container.querySelector(`.dyn-delay2[data-idx="${idx}"]`)?.value) || 0;
-                
-                frame.repeats = parseInt(container.querySelector(`.dyn-repeats[data-idx="${idx}"]`)?.value) || 1;
-                frame.step = parseFloat(container.querySelector(`.dyn-step[data-idx="${idx}"]`)?.value) || 0.1;
-                frame.mode = container.querySelector(`.dyn-mode[data-idx="${idx}"]`)?.value || 'smooth';
-                
-                frame.stim.startD = parseFloat(container.querySelector(`.dyn-stim-start[data-idx="${idx}"]`)?.value) || 0;
-                frame.stim.endD = parseFloat(container.querySelector(`.dyn-stim-end[data-idx="${idx}"]`)?.value) || 0;
-                frame.stim.startBright = parseFloat(container.querySelector(`.dyn-stim-bright-start[data-idx="${idx}"]`)?.value) || 100;
-                frame.stim.endBright = parseFloat(container.querySelector(`.dyn-stim-bright-end[data-idx="${idx}"]`)?.value) || 100;
-                frame.stim.startSize = parseFloat(container.querySelector(`.dyn-stim-size-start[data-idx="${idx}"]`)?.value) || 100;
-                frame.stim.endSize = parseFloat(container.querySelector(`.dyn-stim-size-end[data-idx="${idx}"]`)?.value) || 100;
-                frame.stim.startBlur = parseFloat(container.querySelector(`.dyn-stim-blur-start[data-idx="${idx}"]`)?.value) || 0;
-                frame.stim.endBlur = parseFloat(container.querySelector(`.dyn-stim-blur-end[data-idx="${idx}"]`)?.value) || 0;
-                frame.stim.align = container.querySelector(`.dyn-stim-align[data-idx="${idx}"]`)?.checked ?? true;
-                frame.stim.level = parseFloat(container.querySelector(`.dyn-stim-level[data-idx="${idx}"]`)?.value) || 70;
-                
-                frame.bg.startD = parseFloat(container.querySelector(`.dyn-bg-start[data-idx="${idx}"]`)?.value) || 0;
-                frame.bg.endD = parseFloat(container.querySelector(`.dyn-bg-end[data-idx="${idx}"]`)?.value) || 0;
-                frame.bg.startBright = parseFloat(container.querySelector(`.dyn-bg-bright-start[data-idx="${idx}"]`)?.value) || 100;
-                frame.bg.endBright = parseFloat(container.querySelector(`.dyn-bg-bright-end[data-idx="${idx}"]`)?.value) || 100;
-                frame.bg.align = container.querySelector(`.dyn-bg-align[data-idx="${idx}"]`)?.checked ?? true;
-                frame.bg.level = parseFloat(container.querySelector(`.dyn-bg-level[data-idx="${idx}"]`)?.value) || 70;
-            });
+                if (!frame.lifecycle) frame.lifecycle = {};
+                if (!frame.stim) frame.stim = {};
+                if (!frame.bg) frame.bg = {};
 
-            node.params.stimulusDynamic = dyn;
+                let el = document.querySelector(`.dyn-delay1[data-idx="${idx}"]`);
+                if (el) frame.lifecycle.delay1 = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-duration[data-idx="${idx}"]`);
+                if (el) frame.lifecycle.duration = parseFloat(el.value) || 5;
+                
+                el = document.querySelector(`.dyn-response[data-idx="${idx}"]`);
+                if (el) frame.lifecycle.responseTime = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-delay2[data-idx="${idx}"]`);
+                if (el) frame.lifecycle.delay2 = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-repeats[data-idx="${idx}"]`);
+                if (el) frame.repeats = parseInt(el.value) || 1;
+                
+                el = document.querySelector(`.dyn-step[data-idx="${idx}"]`);
+                if (el) frame.step = parseFloat(el.value) || 0.1;
+                
+                el = document.querySelector(`.dyn-mode[data-idx="${idx}"]`);
+                if (el) frame.mode = el.value;
+
+                el = document.querySelector(`.dyn-stim-start[data-idx="${idx}"]`);
+                if (el) frame.stim.startD = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-stim-end[data-idx="${idx}"]`);
+                if (el) frame.stim.endD = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-stim-bright-start[data-idx="${idx}"]`);
+                if (el) frame.stim.startBright = parseFloat(el.value) || 100;
+                
+                el = document.querySelector(`.dyn-stim-bright-end[data-idx="${idx}"]`);
+                if (el) frame.stim.endBright = parseFloat(el.value) || 100;
+                
+                el = document.querySelector(`.dyn-stim-size-start[data-idx="${idx}"]`);
+                if (el) frame.stim.startSize = parseFloat(el.value) || 100;
+                
+                el = document.querySelector(`.dyn-stim-size-end[data-idx="${idx}"]`);
+                if (el) frame.stim.endSize = parseFloat(el.value) || 100;
+
+                el = document.querySelector(`.dyn-bg-start[data-idx="${idx}"]`);
+                if (el) frame.bg.startD = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-bg-end[data-idx="${idx}"]`);
+                if (el) frame.bg.endD = parseFloat(el.value) || 0;
+                
+                el = document.querySelector(`.dyn-bg-bright-start[data-idx="${idx}"]`);
+                if (el) frame.bg.startBright = parseFloat(el.value) || 100;
+                
+                el = document.querySelector(`.dyn-bg-bright-end[data-idx="${idx}"]`);
+                if (el) frame.bg.endBright = parseFloat(el.value) || 100;
+            });
         };
 
-        container.querySelectorAll('input, select').forEach(el => {
+        container.querySelectorAll('#dyn-stimulus-editor-root input, #dyn-stimulus-editor-root select').forEach(el => {
             el.addEventListener('input', updateParams);
             el.addEventListener('change', updateParams);
         });
 
         $('dyn-frames-count')?.addEventListener('change', () => {
             const newCount = parseInt($('dyn-frames-count').value) || 1;
-            const currentFrames = frames.length;
-            
-            if (newCount > currentFrames) {
-                for (let i = currentFrames; i < newCount; i++) {
+            if (newCount > frames.length) {
+                for (let i = frames.length; i < newCount; i++) {
                     frames.push({
-                        lifecycle: { delay1: 0, duration: 10, responseTime: 0, delay2: 0 },
-                        stim: { startD: 0, endD: 2, startBright: 100, endBright: 100, startSize: 100, endSize: 100, startBlur: 0, endBlur: 0, align: true, level: 70 },
-                        bg: { startD: 0, endD: 0, startBright: 100, endBright: 100, align: true, level: 70 },
-                        repeats: 1,
-                        step: 0.1,
-                        mode: 'smooth'
+                        lifecycle: { delay1: 0, duration: 5, responseTime: 0, delay2: 0 },
+                        stim: { startD: 0, endD: 2, startBright: 100, endBright: 100, startSize: 100, endSize: 100 },
+                        bg: { startD: 0, endD: 0, startBright: 100, endBright: 100 },
+                        repeats: 1, step: 0.1, mode: 'smooth'
                     });
                 }
-            } else if (newCount < currentFrames) {
+            } else if (newCount < frames.length) {
                 frames.splice(newCount);
             }
             dyn.framesCount = newCount;
-            node.params.stimulusDynamic = dyn;
-            
-            const old = container.querySelector('#dyn-stimulus-editor-root');
-            if (old) old.remove();
             render(node, container);
         });
 
-        $('dyn-calc')?.addEventListener('click', () => {
-            const step = parseFloat(container.querySelector('.dyn-step[data-idx="0"]')?.value) || 0.1;
-            const stepInt = Math.round(step * 10);
-            const start = Math.round(parseFloat(container.querySelector('.dyn-stim-start[data-idx="0"]').value) * 10);
-            const ends = [];
-            for (let i = start; i <= 20; i += stepInt) ends.push((i / 10).toFixed(1));
-            alert(`Список конечных (стимул):\n${ends.join(', ')}`);
-        });
-
         $('dyn-calib-stim')?.addEventListener('click', () => {
-            const stepInt = Math.round(parseFloat(container.querySelector('.dyn-step[data-idx="0"]')?.value || 0.1) * 10) || 1;
+            const stepInt = Math.round(parseFloat(document.querySelector('.dyn-step[data-idx="0"]')?.value || 0.1) * 10) || 1;
             let minL = 100;
-            const start = Math.round(parseFloat(container.querySelector('.dyn-stim-start[data-idx="0"]').value) * 10);
-            const end = Math.round(parseFloat(container.querySelector('.dyn-stim-end[data-idx="0"]').value) * 10);
+            const start = Math.round(parseFloat(document.querySelector('.dyn-stim-start[data-idx="0"]').value) * 10);
+            const end = Math.round(parseFloat(document.querySelector('.dyn-stim-end[data-idx="0"]').value) * 10);
             for (let i = start; i <= end; i += stepInt) {
                 const c = colorTable[i];
                 if (!c) continue;
@@ -336,10 +317,10 @@
         });
 
         $('dyn-calib-bg')?.addEventListener('click', () => {
-            const stepInt = Math.round(parseFloat(container.querySelector('.dyn-step[data-idx="0"]')?.value || 0.1) * 10) || 1;
+            const stepInt = Math.round(parseFloat(document.querySelector('.dyn-step[data-idx="0"]')?.value || 0.1) * 10) || 1;
             let minL = 100;
-            const start = Math.round(parseFloat(container.querySelector('.dyn-bg-start[data-idx="0"]').value) * 10);
-            const end = Math.round(parseFloat(container.querySelector('.dyn-bg-end[data-idx="0"]').value) * 10);
+            const start = Math.round(parseFloat(document.querySelector('.dyn-bg-start[data-idx="0"]').value) * 10);
+            const end = Math.round(parseFloat(document.querySelector('.dyn-bg-end[data-idx="0"]').value) * 10);
             for (let i = start; i <= end; i += stepInt) {
                 const c = colorTable[i];
                 if (!c) continue;
@@ -360,5 +341,5 @@
         colorTable
     };
 
-    VLog.log('[app-stimulus-editor] AppStimulusEditor экспортирован');
+    VLog.log('[app-stimulus-editor] AppStimulusEditor экспортирован (без кнопки)');
 })();

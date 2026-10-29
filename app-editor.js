@@ -12,7 +12,6 @@
     const state = window.AppState;
     const { acuityToSizeMm, acuityToSizePx, getStimulusSVG } = window.VissortCore;
 
-    // DOM-элементы (те же id, что в app.js)
     const canvas = document.getElementById('canvas');
     const inspectorEl = document.getElementById('inspector');
 
@@ -69,7 +68,7 @@
                     }
                 });
             state.connections
-                .filter((c) => c.fromId === nodeId && !c.isLoop && c.toId !== nodeId)
+                .filter((c) => c.fromId === nodeId && !c.isLoop && c.toId !== nodeId && !c.outcome)
                 .forEach((conn) => visit(conn.toId, conn, nodeId));
         }
         visit(startNode.id, null, null);
@@ -126,176 +125,63 @@
         let node;
         if (type === 'READING') {
             node = {
-                id,
-                nodeType: 'READING',
-                x: x || 100 + Math.random() * 300,
-                y: y || 100 + Math.random() * 200,
-                width: 200,
-                height: 180,
-                name: 'Чтение',
-                bookId: null,
-                bookName: '',
-                continueFromBookmark: true,
-                autoSaveBookmark: true,
-                readingFontFamily: 'Segoe UI',
-                readingFontWeight: 'normal',
-                readingAcuity: 1.0,
-                readingDistance: state.readingDistance || 1,
-                readingPPI: state.screenPPI || 96,
-                readingTextColor: { r: 0, g: 0, b: 0 },
-                readingBgMode: 'solid',
-                readingBgColor: { r: 255, g: 255, b: 255 },
-                readingSplitLeftWidthPercent: 50,
-                readingSplitLeftColor: { r: 0, g: 0, b: 0 },
-                readingSplitRightColor: { r: 255, g: 255, b: 255 },
-                readingGradientMidEnabled: true,
-                readingGradientLeftColor: { r: 255, g: 255, b: 255 },
-                readingGradientMidColor: { r: 204, g: 204, b: 204 },
-                readingGradientMidPosition: 50,
-                readingGradientRightColor: { r: 0, g: 0, b: 0 },
-                readingDynamicMode: 'simple',
-                readingDynamicReverse: false,
-                readingDynamicMidEnabled: false,
-                readingDynamicStartColor: { r: 255, g: 0, b: 0 },
-                readingDynamicMidColor: { r: 255, g: 255, b: 0 },
-                readingDynamicEndColor: { r: 0, g: 0, b: 255 },
-                readingDynamicDuration: 10000,
-                readingDynamicLoop: false,
-                readingDynamicStep: 0.1,
-                readingDynamicStepDuration: 1000,
-                readingDynamicShowLabel: true,
-                duration: 60000,
-                isActive: true,
-                isStart: false
+                id, nodeType: 'READING', x: x || 100 + Math.random() * 300, y: y || 100 + Math.random() * 200,
+                width: 200, height: 180, name: 'Чтение', bookId: null, bookName: '',
+                continueFromBookmark: true, autoSaveBookmark: true, readingFontFamily: 'Segoe UI',
+                readingFontWeight: 'normal', readingAcuity: 1.0, readingDistance: state.readingDistance || 1,
+                readingPPI: state.screenPPI || 96, readingTextColor: { r: 0, g: 0, b: 0 },
+                readingBgMode: 'solid', readingBgColor: { r: 255, g: 255, b: 255 },
+                readingSplitLeftWidthPercent: 50, readingSplitLeftColor: { r: 0, g: 0, b: 0 },
+                readingSplitRightColor: { r: 255, g: 255, b: 255 }, readingGradientMidEnabled: true,
+                readingGradientLeftColor: { r: 255, g: 255, b: 255 }, readingGradientMidColor: { r: 204, g: 204, b: 204 },
+                readingGradientMidPosition: 50, readingGradientRightColor: { r: 0, g: 0, b: 0 },
+                readingDynamicMode: 'simple', readingDynamicReverse: false, readingDynamicMidEnabled: false,
+                readingDynamicStartColor: { r: 255, g: 0, b: 0 }, readingDynamicMidColor: { r: 255, g: 255, b: 0 },
+                readingDynamicEndColor: { r: 0, g: 0, b: 255 }, readingDynamicDuration: 10000, readingDynamicLoop: false,
+                readingDynamicStep: 0.1, readingDynamicStepDuration: 1000, readingDynamicShowLabel: true,
+                duration: 60000, isActive: true, isStart: false,
+                branching: { enabled: false, outcomes: { correct: null, wrong: null, timeout: null } }
             };
         } else if (type === 'COMPARE') {
             node = {
-                id,
-                nodeType: 'COMPARE',
-                x: x || 100 + Math.random() * 300,
-                y: y || 100 + Math.random() * 200,
-                width: 200,
-                height: 180,
-                name: 'Сравнение',
-                compareMode: 'direction',
-                pairsCount: 2,
-                gridX: 3,
-                gridY: 3,
-                activeCells: [
-                    { row: 0, col: 0 },
-                    { row: 0, col: 1 }
-                ],
+                id, nodeType: 'COMPARE', x: x || 100 + Math.random() * 300, y: y || 100 + Math.random() * 200,
+                width: 200, height: 180, name: 'Сравнение', compareMode: 'direction', pairsCount: 2,
+                gridX: 3, gridY: 3, activeCells: [{ row: 0, col: 0 }, { row: 0, col: 1 }],
                 cellParams: [defaultCompareCellParams(), defaultCompareCellParams()],
-                seriesCount: 10,
-                seriesSize: 6,
-                seriesThreshold: 4,
-                adaptiveAcuity: true,
-                delay1: 1000,
-                duration: 2000,
-                delay2: 1000,
-                isActive: true,
-                isStart: false
+                seriesCount: 10, seriesSize: 6, seriesThreshold: 4, adaptiveAcuity: true,
+                delay1: 1000, duration: 2000, delay2: 1000, isActive: true, isStart: false,
+                branching: { enabled: false, outcomes: { correct: null, wrong: null, timeout: null } }
             };
         } else {
             node = {
-                id,
-                nodeType: type,
-                x: x || 100 + Math.random() * 300,
-                y: y || 100 + Math.random() * 200,
-                width: 200,
-                height: 180,
-                name: type === 'STIMULUS' ? 'Стимул' : type === 'LOGIC_IF' ? 'Логика' : 'Динамика',
-                stimType: 'LETTER_E',
-                stimDirection: 'вверх',
-                stimR: 255,
-                stimG: 255,
-                stimB: 255,
-                bgR: 11,
-                bgG: 11,
-                bgB: 13,
-                stimAcuity: 0.5,
-                endAcuity: 1.0,
-                acuityStep: 0.1,
-                stimDistance: dd,
-                stimPPI: dp,
-                stimSize: 40,
-                stimDirectionFixed: 'вверх',
-                seriesCount: 10,
-                seriesSize: 6,
-                seriesThreshold: 4,
-                adaptiveAcuity: true,
-                isActive: true,
-                singleRandomPos: false,
-                singleGridEnabled: false,
-                singleGridX: 3,
-                singleGridY: 3,
-                singleGridShowLines: false,
-                singleGridRandomCell: true,
-                singleGridAvoidRepeat: true,
-                singleGridFixedRow: 0,
-                singleGridFixedCol: 0,
-                singleGridCells: [],
-                singleStimDynamicEnabled: false,
-                singleStimColor1: { r: 255, g: 0, b: 0 },
-                singleStimMidEnabled: false,
-                singleStimColor3: { r: 255, g: 255, b: 0 },
-                singleStimColor2: { r: 0, g: 0, b: 255 },
-                singleStimDuration: 10000,
-                singleStimLoop: false,
-                singleStimReverse: false,
-                singleBgDynamicEnabled: false,
-                singleBgColor1: { r: 255, g: 0, b: 0 },
-                singleBgMidEnabled: false,
-                singleBgColor3: { r: 255, g: 255, b: 0 },
-                singleBgColor2: { r: 0, g: 0, b: 255 },
-                singleBgDuration: 10000,
-                singleBgLoop: false,
-                singleBgReverse: false,
-                singleCircleEnabled: false,
-                circleInnerEnabled: true,
-                circleInnerRadiusPct: 40,
-                circleInnerColor1: { r: 255, g: 0, b: 0 },
-                circleInnerMidEnabled: false,
-                circleInnerColor3: { r: 255, g: 255, b: 0 },
-                circleInnerColor2: { r: 0, g: 0, b: 255 },
-                circleInnerDuration: 10000,
-                circleInnerLoop: true,
-                circleInnerReverse: false,
-                circleOuterEnabled: true,
-                circleOuterColor1: { r: 0, g: 255, b: 0 },
-                circleOuterMidEnabled: false,
-                circleOuterColor3: { r: 0, g: 255, b: 255 },
-                circleOuterColor2: { r: 0, g: 128, b: 255 },
-                circleOuterDuration: 10000,
-                circleOuterLoop: true,
-                circleOuterReverse: false,
-                periEnabled: false,
-                periCount: 4,
-                periAcuity: 0.3,
-                periRadiusMinPct: 60,
-                periRadiusMaxPct: 90,
-                periColor: { r: 0, g: 255, b: 100 },
-                periMotion: 'static',
-                periSpeed: 0.3,
-                periRandomAngles: true,
-                dfEnabled: false,
-                dfCenterRadiusMm: 13,
-                dfCenterBg: { r: 204, g: 0, b: 0 },
-                dfStimColor: { r: 0, g: 0, b: 0 },
-                dfPeriBg: { r: 0, g: 71, b: 171 },
-                dfPeriBlur: 0,
-                blinkEnabled: false,
-                blinkColorA: { r: 255, g: 0, b: 0 },
-                blinkColorB: { r: 0, g: 0, b: 255 },
-                blinkIntervalMs: 500,
-                blinkDuty: 0.5,
-                blinkCount: 0,
-                blinkTarget: 'stim',
-                delay1: 1000,
-                duration: 1000,
-                response: 1000,
-                delay2: 1000,
-                isStart: false
+                id, nodeType: type, x: x || 100 + Math.random() * 300, y: y || 100 + Math.random() * 200,
+                width: 200, height: 180, name: type === 'STIMULUS' ? 'Стимул' : type === 'LOGIC_IF' ? 'Логика' : 'Динамика',
+                stimType: 'LETTER_E', stimDirection: 'вверх', stimR: 255, stimG: 255, stimB: 255,
+                bgR: 11, bgG: 11, bgB: 13, stimAcuity: 0.5, endAcuity: 1.0, acuityStep: 0.1,
+                stimDistance: dd, stimPPI: dp, stimSize: 40, stimDirectionFixed: 'вверх',
+                seriesCount: 10, seriesSize: 6, seriesThreshold: 4, adaptiveAcuity: true, isActive: true,
+                singleRandomPos: false, singleGridEnabled: false, singleGridX: 3, singleGridY: 3,
+                singleGridShowLines: false, singleGridRandomCell: true, singleGridAvoidRepeat: true,
+                singleGridFixedRow: 0, singleGridFixedCol: 0, singleGridCells: [],
+                singleStimDynamicEnabled: false, singleStimColor1: { r: 255, g: 0, b: 0 },
+                singleStimMidEnabled: false, singleStimColor3: { r: 255, g: 255, b: 0 },
+                singleStimColor2: { r: 0, g: 0, b: 255 }, singleStimDuration: 10000, singleStimLoop: false, singleStimReverse: false,
+                singleBgDynamicEnabled: false, singleBgColor1: { r: 255, g: 0, b: 0 },
+                singleBgMidEnabled: false, singleBgColor3: { r: 255, g: 255, b: 0 },
+                singleBgColor2: { r: 0, g: 0, b: 255 }, singleBgDuration: 10000, singleBgLoop: false, singleBgReverse: false,
+                singleCircleEnabled: false, circleInnerEnabled: true, circleInnerRadiusPct: 40,
+                circleInnerColor1: { r: 255, g: 0, b: 0 }, circleInnerMidEnabled: false, circleInnerColor3: { r: 255, g: 255, b: 0 },
+                circleInnerColor2: { r: 0, g: 0, b: 255 }, circleInnerDuration: 10000, circleInnerLoop: true, circleInnerReverse: false,
+                circleOuterEnabled: true, circleOuterColor1: { r: 0, g: 255, b: 0 }, circleOuterMidEnabled: false,
+                circleOuterColor3: { r: 0, g: 255, b: 255 }, circleOuterColor2: { r: 0, g: 128, b: 255 },
+                circleOuterDuration: 10000, circleOuterLoop: true, circleOuterReverse: false,
+                periEnabled: false, periCount: 4, periAcuity: 0.3, periRadiusMinPct: 60, periRadiusMaxPct: 90,
+                periColor: { r: 0, g: 255, b: 100 }, periMotion: 'static', periSpeed: 0.3, periRandomAngles: true,
+                dfEnabled: false, dfCenterRadiusMm: 13, dfCenterBg: { r: 204, g: 0, b: 0 }, dfStimColor: { r: 0, g: 0, b: 0 },
+                dfPeriBg: { r: 0, g: 71, b: 171 }, dfPeriBlur: 0, blinkEnabled: false, blinkColorA: { r: 255, g: 0, b: 0 },
+                blinkColorB: { r: 0, g: 0, b: 255 }, blinkIntervalMs: 500, blinkDuty: 0.5, blinkCount: 0, blinkTarget: 'stim',
+                delay1: 1000, duration: 1000, response: 1000, delay2: 1000, isStart: false,
+                branching: { enabled: false, outcomes: { correct: null, wrong: null, timeout: null } }
             };
             node.stimSize = getNodeComputedSize(node);
         }
@@ -340,8 +226,7 @@
         requestRenderGraph();
         window.updateInspector();
     }
-
-    // ==================== РЕНДЕР ГРАФА ====================
+	    // ==================== РЕНДЕР ГРАФА ====================
     function requestRenderGraph() {
         if (state.renderScheduled) return;
         state.renderScheduled = true;
@@ -398,25 +283,24 @@
     }
     // ==================== РЕНДЕР УЗЛА ====================
     function copyNode(nodeId) {
-    const node = getNode(nodeId);
-    if (!node) return;
-    // Создаем копию узла
-    const newNode = JSON.parse(JSON.stringify(node));
-    newNode.id = generateId();
-    newNode.x = node.x + 30;
-    newNode.y = node.y + 30;
-    newNode.name = node.name + ' (копия)';
-    state.nodes.push(newNode);
-    if (window.AppEditor && window.AppEditor.requestRenderGraph) {
-        window.AppEditor.requestRenderGraph();
+        const node = getNode(nodeId);
+        if (!node) return;
+        const newNode = JSON.parse(JSON.stringify(node));
+        newNode.id = generateId();
+        newNode.x = node.x + 30;
+        newNode.y = node.y + 30;
+        newNode.name = node.name + ' (копия)';
+        state.nodes.push(newNode);
+        if (window.AppEditor && window.AppEditor.requestRenderGraph) {
+            window.AppEditor.requestRenderGraph();
+        }
+        if (window.AppInspector && window.AppInspector.updateInspector) {
+            window.AppInspector.updateInspector();
+        }
+        VLog.log('[app-editor] Узел скопирован:', nodeId, '->', newNode.id);
     }
-    if (window.AppInspector && window.AppInspector.updateInspector) {
-        window.AppInspector.updateInspector();
-    }
-    VLog.log('[app-editor] Узел скопирован:', nodeId, '->', newNode.id);
-}
 
-function createNodeElement(node) {
+    function createNodeElement(node) {
         const el = document.createElement('div');
         el.className = 'scenario-node';
         if (node.nodeType === 'READING') el.classList.add('reading-node');
@@ -424,12 +308,15 @@ function createNodeElement(node) {
         el.dataset.nodeId = node.id;
         el.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.width}px;height:${node.height}px;`;
         if (node.id === state.activeNodeId) el.classList.add('active');
+        
         const header = document.createElement('div');
         header.className = 'node-header';
         if (node.nodeType === 'READING') header.classList.add('reading-header');
         if (node.nodeType === 'COMPARE') header.classList.add('compare-header');
+        
         const title = document.createElement('span');
         title.textContent = node.name;
+        
         const startCb = document.createElement('input');
         startCb.type = 'checkbox';
         startCb.className = 'start-checkbox';
@@ -437,17 +324,54 @@ function createNodeElement(node) {
         startCb.addEventListener('change', (e) => {
             e.stopPropagation();
             if (startCb.checked) {
-                state.nodes.forEach((n) => {
-                    if (n.id !== node.id) n.isStart = false;
-                });
+                state.nodes.forEach((n) => { if (n.id !== node.id) n.isStart = false; });
                 node.isStart = true;
             } else node.isStart = false;
             requestRenderGraph();
             window.updateInspector();
         });
+
+        // ==================== ГАЛОЧКА ВЕТВЛЕНИЯ ====================
+        if (!node.branching) node.branching = { enabled: false, outcomes: { correct: null, wrong: null, timeout: null } };
+        const branchCb = document.createElement('input');
+        branchCb.type = 'checkbox';
+        branchCb.className = 'branch-checkbox';
+        branchCb.title = 'Включить ветвление (логику)';
+        branchCb.checked = node.branching.enabled === true;
+        branchCb.style.cssText = 'width:12px;height:12px;margin-left:4px;cursor:pointer;accent-color:#22c55e;';
+        branchCb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            node.branching.enabled = branchCb.checked;
+            
+            // Принудительно пересоздаем узел, чтобы точки появились
+            const oldEl = state.nodeElements.get(node.id);
+            if (oldEl) {
+                oldEl.remove();
+                state.nodeElements.delete(node.id);
+            }
+            // Удаляем старые связи с этим узлом, чтобы не осталось висящих линий
+            state.connections.forEach(c => {
+                if (c.fromId === node.id || c.toId === node.id) {
+                    const k = c.fromId + '_' + c.toId;
+                    const els = state.connectionElements.get(k);
+                    if (els) {
+                        els.line.remove();
+                        els.arrow.remove();
+                        state.connectionElements.delete(k);
+                    }
+                }
+            });
+            // Перерисовываем
+            requestRenderGraph();
+            
+            if (window.AppInspector) window.AppInspector.updateInspector();
+        });
+
+        header.appendChild(branchCb);
         header.appendChild(title);
         header.appendChild(startCb);
         el.appendChild(header);
+        
         const content = document.createElement('div');
         content.className = 'node-content';
         if (node.nodeType === 'READING') {
@@ -531,9 +455,10 @@ function createNodeElement(node) {
             fillStimulusNodeInfo(a, mm, px, dst, srs, dyn, node);
         }
         el.appendChild(content);
+        
         const body = document.createElement('div');
         body.className = 'node-body';
-        // Кнопка 'Копировать'
+        
         const btnCopy = document.createElement('button');
         btnCopy.className = 'node-btn btn-node-copy';
         btnCopy.textContent = '📋 Копия';
@@ -584,9 +509,85 @@ function createNodeElement(node) {
         body.appendChild(tb);
         body.appendChild(db);
         el.appendChild(body);
+        
         const resize = document.createElement('div');
         resize.className = 'node-resize-handle';
         el.appendChild(resize);
+        
+        // ==================== ПОРТЫ ВЕТВЛЕНИЯ ====================
+        if (node.branching && node.branching.enabled) {
+            const ports = [
+                { id: 'correct', color: '#22c55e', top: '35%', label: '✅' },
+                { id: 'wrong', color: '#ef4444', top: '50%', label: '❌' },
+                { id: 'timeout', color: '#64748b', top: '65%', label: '⏱' }
+            ];
+            ports.forEach(p => {
+                const port = document.createElement('div');
+                port.className = 'node-port';
+                port.dataset.nodeId = node.id;
+                port.dataset.outcome = p.id;
+                port.style.cssText = `position:absolute; right:-10px; top:${p.top}; width:16px; height:16px; border-radius:50%; background:${p.color}; border:2px solid #fff; cursor:pointer; z-index:20; box-shadow:0 0 5px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff;`;
+                port.title = `Ветка: ${p.label}`;
+                
+                port.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const r = canvas.getBoundingClientRect();
+                    const _zoom = window.__vissort_zoom || 1;
+                    const startX = (e.clientX - r.left) / _zoom;
+                    const startY = (e.clientY - r.top) / _zoom;
+                    
+                    clearTempLine();
+                    state.tempLineElement = document.createElement('div');
+                    state.tempLineElement.id = 'temp-line';
+                    state.tempLineElement.style.cssText = 'position:absolute;transform-origin:top left;z-index:4;pointer-events:none;height:0;border-top:3px dashed #f59e0b;';
+                    canvas.appendChild(state.tempLineElement);
+                    
+                    const onMove = (ev) => {
+                        const mx = (ev.clientX - r.left) / _zoom;
+                        const my = (ev.clientY - r.top) / _zoom;
+                        const dx = mx - startX, dy = my - startY;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        const ang = Math.atan2(dy, dx) * (180 / Math.PI);
+                        state.tempLineElement.style.width = len + 'px';
+                        state.tempLineElement.style.left = startX + 'px';
+                        state.tempLineElement.style.top = startY + 'px';
+                        state.tempLineElement.style.transform = `rotate(${ang}deg)`;
+                    };
+                    
+                    const onUp = (ev) => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                        
+                        const target = ev.target.closest('.scenario-node');
+                        if (target) {
+                            const targetId = target.dataset.nodeId;
+                            if (targetId !== node.id) {
+                                const existing = state.connections.find(c => c.fromId === node.id && c.outcome === p.id);
+                                if (existing) {
+                                    existing.toId = targetId;
+                                } else {
+                                    state.connections.push({
+                                        fromId: node.id, toId: targetId, isLoop: false, outcome: p.id,
+                                        loopMode: 'TIME', loopLimit: 1, lifeTime: 0, initiateByAnswer: true,
+                                        condition: 'none', inheritSize: false, inheritSpeed: false
+                                    });
+                                }
+                                requestRenderGraph();
+                            }
+                        }
+                        clearTempLine();
+                    };
+                    
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                el.appendChild(port);
+            });
+        }
+        // ==================== КОНЕЦ ПОРТОВ ====================
+
         el.addEventListener('mousedown', (e) => {
             if (e.button !== 0 || window._pendingConnectionHandler) return;
             if (
@@ -642,7 +643,7 @@ function createNodeElement(node) {
         });
         return el;
     }
-    // ==================== ИНФО О УЗЛЕ ====================
+	    // ==================== ИНФО О УЗЛЕ ====================
     function fillReadingNodeInfo(b, d, v, f, node) {
         if (b) {
             if (node.bookId && window._books[node.bookId]) {
@@ -687,25 +688,18 @@ function createNodeElement(node) {
             if (node.dfEnabled) parts.push('🔴 Дефокус');
             if (node.blinkEnabled) parts.push('🔦 Моргание');
             if (node.singleGridEnabled && !node.singleCircleEnabled) {
-                const cnt =
-                    Array.isArray(node.singleGridCells) && node.singleGridCells.length > 0
-                        ? node.singleGridCells.length
-                        : (node.singleGridX || 1) * (node.singleGridY || 1);
+                const cnt = Array.isArray(node.singleGridCells) && node.singleGridCells.length > 0 ? node.singleGridCells.length : (node.singleGridX || 1) * (node.singleGridY || 1);
                 parts.push(`🔲${node.singleGridX || 1}×${node.singleGridY || 1}(${cnt})`);
             }
             if (node.singleStimDynamicEnabled && !node.singleCircleEnabled) parts.push('🎨');
             if (node.singleBgDynamicEnabled) parts.push('🖼️');
-            if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled)
-                parts.push('🎲');
+            if (node.singleRandomPos && !node.singleGridEnabled && !node.singleCircleEnabled) parts.push('🎲');
             dyn.textContent = parts.join(' ');
         }
     }
     function fillCompareNodeInfo(m, g, s, t, node) {
         if (m) {
-            m.textContent =
-                node.compareMode === 'find_same'
-                    ? `🔍 Найти пары ×${node.pairsCount || 2}`
-                    : '↔️ Сравнить направления';
+            m.textContent = node.compareMode === 'find_same' ? `🔍 Найти пары ×${node.pairsCount || 2}` : '↔️ Сравнить направления';
             m.style.color = '#f97316';
             m.style.fontWeight = 'bold';
         }
@@ -724,6 +718,8 @@ function createNodeElement(node) {
         el.classList.toggle('compare-node', node.nodeType === 'COMPARE');
         const sc = el.querySelector('.start-checkbox');
         if (sc) sc.checked = node.isStart === true;
+        const bc = el.querySelector('.branch-checkbox');
+        if (bc) bc.checked = node.branching && node.branching.enabled;
         if (node.nodeType === 'READING') {
             const p = el.querySelector('.node-preview-area');
             if (p) p.style.background = '#0b0b14';
@@ -776,32 +772,12 @@ function createNodeElement(node) {
             }
             if (canAddConnection(sourceId, tid, isLoop)) {
                 state.connections.push({
-                    fromId: sourceId,
-                    toId: tid,
-                    isLoop,
-                    loopMode: 'TIME',
-                    loopLimit: 1,
-                    lifeTime: 0,
-                    initiateByAnswer: true,
-                    condition: 'none',
-                    inheritSize: false,
-                    inheritSpeed: false
+                    fromId: sourceId, toId: tid, isLoop, loopMode: 'TIME', loopLimit: 1, lifeTime: 0,
+                    initiateByAnswer: true, condition: 'none', inheritSize: false, inheritSpeed: false
                 });
                 const nc = state.connections[state.connections.length - 1];
                 cancelConnection();
-                setTimeout(
-                    () =>
-                        showConnectionMenu(
-                            {
-                                clientX: ev.clientX,
-                                clientY: ev.clientY,
-                                preventDefault: () => {},
-                                stopPropagation: () => {}
-                            },
-                            nc
-                        ),
-                    100
-                );
+                setTimeout(() => showConnectionMenu({ clientX: ev.clientX, clientY: ev.clientY, preventDefault: () => {}, stopPropagation: () => {} }, nc), 100);
             } else {
                 VissortDialog.alert('Такая связь уже существует или превышен лимит.');
                 cancelConnection();
@@ -814,19 +790,15 @@ function createNodeElement(node) {
         clearTempLine();
         state.tempLineElement = document.createElement('div');
         state.tempLineElement.id = 'temp-line';
-        state.tempLineElement.style.cssText =
-            'position:absolute;transform-origin:top left;z-index:4;pointer-events:none;height:0;border-top:3px dashed #f59e0b;';
+        state.tempLineElement.style.cssText = 'position:absolute;transform-origin:top left;z-index:4;pointer-events:none;height:0;border-top:3px dashed #f59e0b;';
         canvas.appendChild(state.tempLineElement);
         state.tempLineMoveHandler = (ev) => {
             const r = canvas.getBoundingClientRect();
-            const mx = ev.clientX - r.left,
-                my = ev.clientY - r.top;
+            const mx = ev.clientX - r.left, my = ev.clientY - r.top;
             const sn = getNode(sourceId);
             if (!sn) return;
-            const fx = sn.x + sn.width / 2,
-                fy = sn.y + sn.height / 2;
-            const dx = mx - fx,
-                dy = my - fy;
+            const fx = sn.x + sn.width / 2, fy = sn.y + sn.height / 2;
+            const dx = mx - fx, dy = my - fy;
             const len = Math.sqrt(dx * dx + dy * dy);
             const ang = Math.atan2(dy, dx) * (180 / Math.PI);
             state.tempLineElement.style.width = len + 'px';
@@ -848,81 +820,55 @@ function createNodeElement(node) {
     }
     // ==================== РЕНДЕР СВЯЗЕЙ ====================
     function getNodeEdgePoint(node, tx, ty) {
-        const cx = node.x + node.width / 2,
-            cy = node.y + node.height / 2;
-        const dx = tx - cx,
-            dy = ty - cy;
+        const cx = node.x + node.width / 2, cy = node.y + node.height / 2;
+        const dx = tx - cx, dy = ty - cy;
         if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return { x: cx, y: cy };
         const s = Math.min(node.width / 2 / Math.abs(dx), node.height / 2 / Math.abs(dy));
         return { x: cx + dx * s, y: cy + dy * s };
     }
     function createConnectionElements(conn) {
-        const fn = getNode(conn.fromId),
-            tn = getNode(conn.toId);
+        const fn = getNode(conn.fromId), tn = getNode(conn.toId);
         if (!fn || !tn) return { line: null, arrow: null };
         if (conn.fromId === conn.toId) {
-            const cx = fn.x + fn.width / 2,
-                cy = fn.y + fn.height / 2,
-                ls = 30;
+            const cx = fn.x + fn.width / 2, cy = fn.y + fn.height / 2, ls = 30;
             const div = document.createElement('div');
             div.className = 'html-graph-line line-dashed';
             div.style.cssText = `left:${cx - ls / 2}px;top:${cy - ls / 2}px;width:${ls}px;height:${ls}px;border:3px dashed #a855f7;border-radius:50%;position:absolute;z-index:5;pointer-events:auto;cursor:pointer;`;
-            div.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                showConnectionMenu(e, conn);
-            });
+            div.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
             const arrow = document.createElement('div');
             arrow.className = 'line-arrow loop-arrow';
             arrow.textContent = '↻';
             arrow.style.cssText = `left:${cx + ls / 2 - 5}px;top:${cy + ls / 2 - 10}px;color:#a855f7;z-index:1000;cursor:pointer;`;
-            arrow.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                showConnectionMenu(e, conn);
-            });
+            arrow.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
             return { line: div, arrow };
         }
         const fp = getNodeEdgePoint(fn, tn.x + tn.width / 2, tn.y + tn.height / 2);
         const tp = getNodeEdgePoint(tn, fn.x + fn.width / 2, fn.y + fn.height / 2);
-        const dx = tp.x - fp.x,
-            dy = tp.y - fp.y;
+        const dx = tp.x - fp.x, dy = tp.y - fp.y;
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len < 2) return { line: null, arrow: null };
         const ang = Math.atan2(dy, dx) * (180 / Math.PI);
         const isLoop = conn.isLoop || false;
-        const color = isLoop ? '#a855f7' : '#10b981';
+        const color = isLoop ? '#a855f7' : (conn.outcome === 'correct' ? '#22c55e' : conn.outcome === 'wrong' ? '#ef4444' : conn.outcome === 'timeout' ? '#64748b' : '#10b981');
         const line = document.createElement('div');
         line.className = 'html-graph-line ' + (isLoop ? 'line-dashed' : 'line-solid');
         if (!isLoop) line.style.background = color;
         else line.style.borderTopColor = color;
         line.style.cssText = `width:${len}px;left:${fp.x}px;top:${fp.y}px;transform:rotate(${ang}deg);pointer-events:auto;cursor:pointer;`;
-        line.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showConnectionMenu(e, conn);
-        });
-        const ax = fp.x + (dx / len) * 35 - 10,
-            ay = fp.y + (dy / len) * 35 - 10;
+        line.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
+        const ax = fp.x + (dx / len) * 35 - 10, ay = fp.y + (dy / len) * 35 - 10;
         const arrow = document.createElement('div');
         arrow.className = 'line-arrow' + (isLoop ? ' loop-arrow' : '');
         arrow.textContent = '▶';
         arrow.style.cssText = `left:${ax}px;top:${ay}px;color:${color};transform:rotate(${ang}deg);position:absolute;display:flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:16px;z-index:1000;cursor:pointer;pointer-events:auto;`;
-        arrow.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showConnectionMenu(e, conn);
-        });
+        arrow.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showConnectionMenu(e, conn); });
         return { line, arrow };
     }
     function updateConnectionElements(els, conn) {
-        const fn = getNode(conn.fromId),
-            tn = getNode(conn.toId);
+        const fn = getNode(conn.fromId), tn = getNode(conn.toId);
         if (!fn || !tn) return;
         if (conn.fromId === conn.toId) {
-            const cx = fn.x + fn.width / 2,
-                cy = fn.y + fn.height / 2,
-                ls = 30;
+            const cx = fn.x + fn.width / 2, cy = fn.y + fn.height / 2, ls = 30;
             els.line.style.left = cx - ls / 2 + 'px';
             els.line.style.top = cy - ls / 2 + 'px';
             els.arrow.style.left = cx + ls / 2 - 5 + 'px';
@@ -931,13 +877,12 @@ function createNodeElement(node) {
         }
         const fp = getNodeEdgePoint(fn, tn.x + tn.width / 2, tn.y + tn.height / 2);
         const tp = getNodeEdgePoint(tn, fn.x + fn.width / 2, fn.y + fn.height / 2);
-        const dx = tp.x - fp.x,
-            dy = tp.y - fp.y;
+        const dx = tp.x - fp.x, dy = tp.y - fp.y;
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len < 2) return;
         const ang = Math.atan2(dy, dx) * (180 / Math.PI);
         const isLoop = conn.isLoop || false;
-        const color = isLoop ? '#a855f7' : '#10b981';
+        const color = isLoop ? '#a855f7' : (conn.outcome === 'correct' ? '#22c55e' : conn.outcome === 'wrong' ? '#ef4444' : conn.outcome === 'timeout' ? '#64748b' : '#10b981');
         els.line.style.width = len + 'px';
         els.line.style.left = fp.x + 'px';
         els.line.style.top = fp.y + 'px';
@@ -946,14 +891,13 @@ function createNodeElement(node) {
         els.arrow.style.top = fp.y + (dy / len) * 35 - 10 + 'px';
         els.arrow.style.transform = `rotate(${ang}deg)`;
         els.arrow.style.color = color;
+        if (!isLoop) els.line.style.background = color;
+        else els.line.style.borderTopColor = color;
     }
     // ==================== DRAG / RESIZE ====================
     function onDragMove(e) {
         if (!state.dragNodeId) return;
-        if (e.buttons === 0) {
-            onDragEnd();
-            return;
-        }
+        if (e.buttons === 0) { onDragEnd(); return; }
         const node = getNode(state.dragNodeId);
         if (node) {
             const r = canvas.getBoundingClientRect();
@@ -974,10 +918,7 @@ function createNodeElement(node) {
     }
     function onResizeMove(e) {
         if (!state.resizeNodeId) return;
-        if (e.buttons === 0) {
-            onResizeEnd();
-            return;
-        }
+        if (e.buttons === 0) { onResizeEnd(); return; }
         const node = getNode(state.resizeNodeId);
         if (node) {
             const _zoomC = window.__vissort_zoom || 1;
@@ -995,7 +936,6 @@ function createNodeElement(node) {
         document.removeEventListener('mousemove', onResizeMove);
         document.removeEventListener('mouseup', onResizeEnd);
     }
-
     // ==================== МЕНЮ СВЯЗИ ====================
     function showConnectionMenu(e, conn) {
         e.preventDefault();
@@ -1015,10 +955,7 @@ function createNodeElement(node) {
         const sC = document.createElement('input');
         sC.type = 'checkbox';
         sC.checked = conn.inheritSize === true;
-        sC.addEventListener('change', (ev) => {
-            conn.inheritSize = ev.target.checked;
-            requestRenderGraph();
-        });
+        sC.addEventListener('change', (ev) => { conn.inheritSize = ev.target.checked; requestRenderGraph(); });
         sL.appendChild(sC);
         sL.appendChild(document.createTextNode('Острота зрения (размер)'));
         menu.appendChild(sL);
@@ -1027,16 +964,12 @@ function createNodeElement(node) {
         const spC = document.createElement('input');
         spC.type = 'checkbox';
         spC.checked = conn.inheritSpeed === true;
-        spC.addEventListener('change', (ev) => {
-            conn.inheritSpeed = ev.target.checked;
-            requestRenderGraph();
-        });
+        spC.addEventListener('change', (ev) => { conn.inheritSpeed = ev.target.checked; requestRenderGraph(); });
         spL.appendChild(spC);
         spL.appendChild(document.createTextNode('Скорость'));
         menu.appendChild(spL);
         const hint = document.createElement('div');
-        hint.style.cssText =
-            'font-size:10px;color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px solid #3f3f46;line-height:1.3;';
+        hint.style.cssText = 'font-size:10px;color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px solid #3f3f46;line-height:1.3;';
         hint.textContent = 'Книга в узлах чтения наследуется автоматически.';
         menu.appendChild(hint);
         if (conn.isLoop) {
@@ -1055,10 +988,7 @@ function createNodeElement(node) {
             lci.min = '1';
             lci.value = conn.loopLimit || 1;
             lci.style.width = '100%';
-            lci.addEventListener('change', (ev) => {
-                conn.loopLimit = parseInt(ev.target.value) || 1;
-                requestRenderGraph();
-            });
+            lci.addEventListener('change', (ev) => { conn.loopLimit = parseInt(ev.target.value) || 1; requestRenderGraph(); });
             lcl.appendChild(lci);
             menu.appendChild(lcl);
         }
@@ -1082,55 +1012,21 @@ function createNodeElement(node) {
     }
     // ==================== EXPORT ====================
     window.AppEditor = {
-        generateId,
-        getNode,
-        getNodeComputedSize,
-        getNodeComputedSizeMm,
-        canAddConnection,
-        buildPlayQueue,
-        nodeToReadingParams,
-        defaultCompareCellParams,
-        createNewNode,
-        deleteNode,
-        selectNode,
-        requestRenderGraph,
-        renderGraph,
-        clearTempLine,
-        createNodeElement,
-        updateNodeElement,
-        fillReadingNodeInfo,
-        fillStimulusNodeInfo,
-        fillCompareNodeInfo,
-        startConnection,
-        cancelConnection,
-        getNodeEdgePoint,
-        createConnectionElements,
-        updateConnectionElements,
-        onDragMove,
-        onDragEnd,
-        onResizeMove,
-        onResizeEnd,
-        showConnectionMenu,
-        hideConnectionMenu,
+        generateId, getNode, getNodeComputedSize, getNodeComputedSizeMm, canAddConnection, buildPlayQueue,
+        nodeToReadingParams, defaultCompareCellParams, createNewNode, deleteNode, selectNode,
+        requestRenderGraph, renderGraph, clearTempLine, createNodeElement, updateNodeElement,
+        fillReadingNodeInfo, fillStimulusNodeInfo, fillCompareNodeInfo,
+        startConnection, cancelConnection, getNodeEdgePoint, createConnectionElements, updateConnectionElements,
+        onDragMove, onDragEnd, onResizeMove, onResizeEnd, showConnectionMenu, hideConnectionMenu,
         updateInspector: function () { return window.updateInspector(); },
         state: {
-            get nodes() {
-                return state.nodes;
-            },
-            get connections() {
-                return state.connections;
-            },
-            get activeNodeId() {
-                return state.activeNodeId;
-            },
-            set activeNodeId(v) {
-                state.activeNodeId = v;
-            }
+            get nodes() { return state.nodes; },
+            get connections() { return state.connections; },
+            get activeNodeId() { return state.activeNodeId; },
+            set activeNodeId(v) { state.activeNodeId = v; }
         }
     };
 
-    // Алиас для AI-генератора (совместимость с app.js:6309)
     window.AppEditorCore = window.AppEditor;
-
     VLog.log('[app-editor] AppEditor + AppEditorCore экспортированы');
 })();
