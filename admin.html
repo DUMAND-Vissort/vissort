@@ -3045,5 +3045,33 @@
         </div>
         <script src="tracker.js" defer></script>
     <script src="clinic.js"></script>
+	<script>
+    (function() {
+        function updateLock() {
+            const dynCb = document.getElementById('dyn-enabled');
+            if (!dynCb) return;
+            const isActive = dynCb.checked;
+            const endFields = document.querySelectorAll('.dyn-stim-end, .dyn-bg-end, .dyn-stim-bright-end, .dyn-bg-bright-end');
+            endFields.forEach(el => {
+                el.disabled = !isActive;
+                const parent = el.closest('div');
+                if (parent) {
+                    parent.style.opacity = isActive ? '1' : '0.5';
+                    parent.style.pointerEvents = isActive ? 'auto' : 'none';
+                }
+            });
+        }
+
+        const observer = new MutationObserver(updateLock);
+        const inspector = document.getElementById('inspector');
+        if (inspector) {
+            observer.observe(inspector, { childList: true, subtree: true });
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'dyn-enabled') updateLock();
+        });
+    })();
+</script>
 </body>
 </html>

@@ -1,6 +1,5 @@
-// ============================================================
-// app-player.js — Новый адаптер плеера для редактора (Фаза 3)
-// Связывает AppState с PlayerCore (единый движок).
+﻿// ============================================================
+// app-player.js вЂ” Р’РµСЂСЃРёСЏ 10 (СЃРІРѕРё РєРЅРѕРїРєРё-СЃС‚СЂРµР»РєРё)
 // ============================================================
 (function (global) {
     'use strict';
@@ -9,14 +8,14 @@
         const nodes = global.AppState?.nodes || [];
         const startNode = nodes.find(n => n.isStart && n.isActive);
         if (!startNode) {
-            console.warn('[app-player] Нет стартового узла (isStart = true)');
+            console.warn('[app-player] РќРµС‚ СЃС‚Р°СЂС‚РѕРІРѕРіРѕ СѓР·Р»Р° (isStart = true)');
             return;
         }
 
-        // --- ПРИНУДИТЕЛЬНЫЙ ПОКАЗ ЭКРАНА СТИМУЛА ---
         const stimDisplay = document.getElementById('stim-display');
         const stim = document.getElementById('stim');
         const canvas = document.getElementById('canvas');
+        const responseBtns = document.getElementById('response-buttons');
 
         if (canvas) canvas.style.display = 'none';
         if (stimDisplay) {
@@ -36,7 +35,66 @@
             stim.style.width = '100%';
             stim.style.height = '100%';
         }
-        // ------------------------------------------
+
+        // === РЎР’РћР РљРќРћРџРљР-РЎРўР Р•Р›РљР ===
+        let myArrows = document.getElementById('my-response-arrows');
+        if (myArrows) myArrows.remove();
+
+        myArrows = document.createElement('div');
+        myArrows.id = 'my-response-arrows';
+        myArrows.style.cssText = `
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 10005;
+        `;
+
+        ['РІРІРµСЂС…', 'РІРЅРёР·', 'РІР»РµРІРѕ', 'РІРїСЂР°РІРѕ'].forEach(dir => {
+            const btn = document.createElement('button');
+            btn.textContent = dir === 'РІРІРµСЂС…' ? 'в–І' : dir === 'РІРЅРёР·' ? 'в–ј' : dir === 'РІР»РµРІРѕ' ? 'в—Ђ' : 'в–¶';
+            btn.dataset.dir = dir;
+            btn.style.cssText = `
+                width: 64px; height: 64px; border-radius: 12px;
+                background: #1e1e28; border: 1px solid #3f3f46;
+                color: #fff; font-size: 28px; cursor: pointer;
+                pointer-events: auto; z-index: 10006;
+            `;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log('[my-arrow] РљР»РёРє:', dir);
+                if (window._currentHandleAnswer) {
+                    window._currentHandleAnswer(dir);
+                }
+            });
+            myArrows.appendChild(btn);
+        });
+
+        document.body.appendChild(myArrows);
+
+        // === РљРќРћРџРљРђ Р’Р«РҐРћР”Рђ ===
+        const oldExit = document.getElementById('btn-exit-player');
+        if (oldExit) oldExit.remove();
+
+        const exitBtn = document.createElement('button');
+        exitBtn.id = 'btn-exit-player';
+        exitBtn.textContent = 'вњ• Р’С‹Р№С‚Рё РІ СЂРµРґР°РєС‚РѕСЂ';
+        exitBtn.style.cssText = `
+            position: fixed; top: 20px; right: 20px; z-index: 10001;
+            background: #dc2626; color: white; border: 2px solid white;
+            border-radius: 6px; padding: 10px 20px; font-size: 16px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-family: 'Segoe UI', sans-serif;
+        `;
+        exitBtn.addEventListener('click', () => {
+            hideStimulus();
+            if (stimDisplay) stimDisplay.style.display = 'none';
+            if (canvas) canvas.style.display = 'block';
+            if (myArrows) myArrows.style.display = 'none';
+            exitBtn.remove();
+            const btnPlay = document.getElementById('btn-player');
+            if (btnPlay) btnPlay.disabled = false;
+            console.log('[app-player] Р’С‹С…РѕРґ РІ СЂРµРґР°РєС‚РѕСЂ');
+        });
+        document.body.appendChild(exitBtn);
 
         function displayStimulus(html, bg) {
             if (stim) stim.innerHTML = html;
@@ -49,19 +107,14 @@
 
         function playNode(node) {
             if (!node) return;
-            console.log('[app-player] Запуск узла:', node.id);
+            console.log('[app-player] Р—Р°РїСѓСЃРє СѓР·Р»Р°:', node.id);
 
-            // Сброс шага при старте
             if (typeof node._step === 'undefined') node._step = 0;
             const seriesSize = node.seriesSize || 6;
 
             if (node.params?.stimulusDynamic?.active) {
-                // --- ЖС (Живой стимул) ---
                 const frames = node.params.stimulusDynamic.frames || [];
-                if (frames.length === 0) {
-                    console.warn('[app-player] Нет кадров в ЖС');
-                    return;
-                }
+                if (frames.length === 0) { console.warn('[app-player] РќРµС‚ РєР°РґСЂРѕРІ РІ Р–РЎ'); return; }
                 
                 const frameIndex = node._step % frames.length;
 
@@ -75,42 +128,36 @@
                             hideStimulus();
                             node._step++;
                             if (node._step >= seriesSize) {
-                                console.log('[app-player] Серия ЖС завершена (все', seriesSize, 'кадров)');
                                 node._step = 0;
-                                playNextNode(node);
+                                playNextNode(node, 'timeout');
                             } else {
-                                console.log('[app-player] ЖС: следующий кадр (', node._step + 1, 'из', seriesSize, ')');
-                                playNode(node); // Рекурсия
+                                playNode(node);
                             }
                         }
                     },
                     getStimDisplay: () => stimDisplay
                 });
             } else {
-                // --- Обычный стимул ---
                 playSimpleStimulus(node);
             }
         }
 
         function playSimpleStimulus(node) {
-            console.log('[app-player] Обычный стимул:', node.id);
+            console.log('[app-player] РћР±С‹С‡РЅС‹Р№ СЃС‚РёРјСѓР»:', node.id);
             
-            // 1. Определяем направление
             let dir;
             if (node.isActive) {
-                const d = ['вверх', 'вниз', 'влево', 'вправо'];
+                const d = ['РІРІРµСЂС…', 'РІРЅРёР·', 'РІР»РµРІРѕ', 'РІРїСЂР°РІРѕ'];
                 dir = d[Math.floor(Math.random() * d.length)];
             } else {
-                dir = node.stimDirectionFixed || 'вверх';
+                dir = node.stimDirectionFixed || 'РІРІРµСЂС…';
             }
 
-            // 2. Вычисляем размер (острота зрения)
             const dist = node.stimDistance || 1;
             const ppi = node.stimPPI || 96;
             const acuity = node.stimAcuity || 1.0;
             const eff = global.VissortCore.acuityToSizePx(acuity, dist, ppi);
 
-            // 3. Получаем SVG
             const svgData = global.VissortCore.getStimulusSVG({
                 stimType: node.stimType || 'LETTER_E',
                 stimDirection: dir,
@@ -120,90 +167,122 @@
                 bgR: 0, bgG: 0, bgB: 0
             }, eff);
 
-            // 4. Рисуем
             displayStimulus(svgData.html, { r: 0, g: 0, b: 0 });
+
+            // === ЕСЛИ "ОЖИДАТЬ ОТВЕТЫ" СНЯТА — ТОЛЬКО ПОКАЗ ===
+            if (node.isActive === false) {
+                console.log('[app-player] Режим "Только показ" (без ожидания ответа)');
+                setTimeout(() => {
+                    hideStimulus();
+                    playNextNode(node, null);
+                }, (node.duration || 5) * 1000);
+                return;
+            }
+
+            const stimEl = document.getElementById('stim');
+            if (stimEl) {
+                let blurPx = (node.dfEnabled && node.dfPeriBlur > 0) ? (node.dfPeriBlur / 100) * 20 : 0;
+                stimEl.style.filter = blurPx > 0 ? `blur(${blurPx}px)` : 'none';
+            }
+
             if (node.seriesSize === undefined) node.seriesSize = 6;
 
-            // 4.1. Моргание (если включено)
             let blinkInterval = null;
             if (node.blinkEnabled) {
-                const stim = document.getElementById('stim');
                 let blinkOn = true;
                 const blinkColorA = node.blinkColorA || { r: 255, g: 0, b: 0 };
                 const blinkColorB = node.blinkColorB || { r: 0, g: 0, b: 255 };
                 blinkInterval = setInterval(() => {
-                    if (!stim) return;
+                    if (!stimEl) return;
                     blinkOn = !blinkOn;
                     const color = blinkOn ? blinkColorA : blinkColorB;
-                    const path = stim.querySelector('svg path');
+                    const path = stimEl.querySelector('svg path');
                     if (path) path.setAttribute('fill', `rgb(${color.r},${color.g},${color.b})`);
                 }, node.blinkIntervalMs || 500);
             }
             
-            // 5. Обработка ответа
             let answered = false;
             const duration = (node.duration || 5) * 1000;
 
-            const onKeyDown = (e) => {
+            const handleAnswer = (userDir) => {
                 if (answered) return;
-                const keyMap = { 'ArrowUp': 'вверх', 'ArrowDown': 'вниз', 'ArrowLeft': 'влево', 'ArrowRight': 'вправо' };
-                const userDir = keyMap[e.key];
-                if (!userDir) return;
-                
                 answered = true;
+                if (blinkInterval) clearInterval(blinkInterval);
                 const isCorrect = (userDir === dir);
-                console.log(`[app-player] Ответ: ${userDir}, верно: ${isCorrect}`);
-                document.removeEventListener('keydown', onKeyDown);
+                console.log(`[app-player] РћС‚РІРµС‚: ${userDir}, РїСЂР°РІРёР»СЊРЅС‹Р№: ${dir}, РІРµСЂРЅРѕ: ${isCorrect}`);
                 hideStimulus();
                 
                 node._step = (node._step || 0) + 1;
                 if (node._step >= node.seriesSize) {
-                    console.log('[app-player] Серия завершена (все', node.seriesSize, 'стимулов)');
                     node._step = 0;
-                    playNextNode(node);
+                    playNextNode(node, isCorrect ? 'correct' : 'wrong');
                 } else {
-                    console.log('[app-player] Следующий стимул в серии (', node._step + 1, 'из', node.seriesSize, ')');
                     playNode(node);
                 }
             };
+            
+            window._currentHandleAnswer = handleAnswer;
 
+            const onKeyDown = (e) => {
+                const keyMap = { 'ArrowUp': 'РІРІРµСЂС…', 'ArrowDown': 'РІРЅРёР·', 'ArrowLeft': 'РІР»РµРІРѕ', 'ArrowRight': 'РІРїСЂР°РІРѕ' };
+                const userDir = keyMap[e.key];
+                if (userDir) handleAnswer(userDir);
+            };
             document.addEventListener('keydown', onKeyDown);
 
             setTimeout(() => {
                 if (!answered) {
                     answered = true;
+                    if (blinkInterval) clearInterval(blinkInterval);
                     document.removeEventListener('keydown', onKeyDown);
                     hideStimulus();
-                    console.log('[app-player] Таймаут');
                     node._step = (node._step || 0) + 1;
                     if (node._step >= node.seriesSize) {
-                        console.log('[app-player] Серия завершена (таймаут)');
                         node._step = 0;
-                        playNextNode(node);
+                        playNextNode(node, 'timeout');
                     } else {
                         playNode(node);
                     }
                 }
             }, duration);
         }
-
-        function playNextNode(node) {
+		        function playNextNode(node, outcome = null) {
             const connections = global.AppState?.connections || [];
-            const nextConn = connections.find(c => c.fromId === node.id);
+            console.log(`[app-player] РС‰РµРј СЃР»РµРґСѓСЋС‰РёР№ СѓР·РµР» РґР»СЏ ${node.id}. РСЃС…РѕРґ: ${outcome}`);
+
+            if (node.branching && node.branching.enabled && outcome) {
+                let nextConn = connections.find(c => c.fromId === node.id && c.outcome === outcome);
+                if (!nextConn && node.branching.outcomes && node.branching.outcomes[outcome]) {
+                    const targetId = node.branching.outcomes[outcome];
+                    if (targetId) nextConn = { toId: targetId };
+                }
+                if (nextConn) {
+                    const nextNode = global.AppState.nodes.find(n => n.id === nextConn.toId);
+                    if (nextNode) {
+                        console.log(`[app-player] вњ… РџРµСЂРµС…РѕРґ РїРѕ РІРµС‚РєРµ "${outcome}" Рє СѓР·Р»Сѓ:`, nextNode.id);
+                        playNode(nextNode);
+                        return;
+                    }
+                }
+                console.log(`[app-player] вљ пёЏ Р’РµС‚РєР° "${outcome}" РЅРµ РЅР°Р№РґРµРЅР°. Р—Р°РІРµСЂС€Р°РµРј.`);
+                return;
+            }
+
+            const nextConn = connections.find(c => c.fromId === node.id && !c.outcome);
             if (nextConn) {
                 const nextNode = global.AppState.nodes.find(n => n.id === nextConn.toId);
                 if (nextNode) {
-                    console.log('[app-player] Переход к следующему узлу:', nextNode.id);
+                    console.log('[app-player] РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ СѓР·Р»Сѓ (РѕР±С‹С‡РЅР°СЏ СЃРІСЏР·СЊ):', nextNode.id);
                     playNode(nextNode);
                     return;
                 }
             }
-            console.log('[app-player] Граф завершен');
+            console.log('[app-player] Р“СЂР°С„ Р·Р°РІРµСЂС€РµРЅ');
         }
 
         playNode(startNode);
     }
 
     global.AppPlayer = { startPlayer };
-    console.log('[AppPlayer] loaded (v3)');
+    console.log('[AppPlayer] loaded (v10 вЂ” СЃРІРѕРё СЃС‚СЂРµР»РєРё)');
 })(window);
