@@ -187,6 +187,47 @@
             }
             window.AppStimulusEditor.render(node, inspectorEl);
         }
+        // === БЛОКИРОВКА КОНЕЧНЫХ ПОЛЕЙ ЖС (ПРОСТОЙ ФИКС) ===
+        setTimeout(() => {
+            const dynCb = document.getElementById('dyn-enabled');
+            if (!dynCb) return;
+
+            const updateLock = () => {
+                const isActive = dynCb.checked;
+
+                // 1. Снимаем блокировку и серость со ВСЕХ полей ЖС
+                inspectorEl.querySelectorAll('#dyn-stimulus-editor-root input, #dyn-stimulus-editor-root select').forEach(el => {
+                    el.disabled = false;
+                    el.style.opacity = '1';
+                    el.style.pointerEvents = 'auto';
+                    let p = el.parentElement;
+                    while (p && p !== inspectorEl) {
+                        p.style.opacity = '1';
+                        p.style.pointerEvents = 'auto';
+                        p = p.parentElement;
+                    }
+                });
+
+                // 2. Если ЖС выключен — блокируем ТОЛЬКО конечные поля
+                if (!isActive) {
+                    const endFields = inspectorEl.querySelectorAll(
+                        '.dyn-stim-end, .dyn-bg-end, ' +
+                        '.dyn-stim-bright-end, .dyn-bg-bright-end, ' +
+                        '.dyn-step, .dyn-mode'
+                    );
+                    endFields.forEach(el => {
+                        el.disabled = true;
+                        el.style.opacity = '0.5';
+                        el.style.pointerEvents = 'none';
+                        // Но НЕ трогаем родителя! (чтобы не затемнить начальные)
+                    });
+                }
+            };
+
+            updateLock();
+            dynCb.addEventListener('change', updateLock);
+        }, 100);
+        // === КОНЕЦ БЛОКИРОВКИ ===
 
         // === ЗАЩИТА ГАЛОЧКИ "ОЖИДАТЬ ОТВЕТЫ" ===
         const forceShowActive = () => {

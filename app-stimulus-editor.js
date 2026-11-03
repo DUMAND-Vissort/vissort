@@ -101,10 +101,6 @@
                         <input type="checkbox" id="dyn-enabled" ${dyn.active !== false ? 'checked' : ''} style="margin:0;">
                         Живой стимул активен
                     </label>
-                    <label style="font-size: 11px; color: #eee; display: flex; align-items: center; gap: 5px;">
-                        Кадров:
-                        <input type="number" id="dyn-frames-count" value="${dyn.framesCount}" min="1" max="20" style="width: 50px; padding: 2px; background: #16161a; color: #fff; border: 1px solid #333; border-radius: 2px;">
-                    </label>
                 </div>
 
                 <div id="dyn-frames-container">
@@ -113,8 +109,7 @@
         frames.forEach((frame, idx) => {
             html += `
                 <div style="border:1px solid #333; border-radius:4px; margin-bottom:8px; background:#16161a; padding:6px;">
-                    <div style="font-size:11px; color:#8b5cf6; font-weight:bold; margin-bottom:6px; border-bottom:1px solid #333; padding-bottom:3px;">Кадр ${idx + 1}</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
                             <div style="background:#0b0b12; padding:5px; border-radius:4px;">
                                 <div style="font-size:10px; color:#aaa; margin-bottom:3px;">Жизненный цикл (сек):</div>
@@ -137,10 +132,7 @@
                             </div>
                             <div style="background:#0b0b12; padding:5px; border-radius:4px; margin-top:5px;">
                                 <div style="font-size:10px; color:#aaa; margin-bottom:3px;">Параметры кадра:</div>
-                                <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
-                                    <label style="font-size:10px; width:60px;">Повторов:</label>
-                                    <input type="number" class="dyn-repeats" data-idx="${idx}" value="${frame.repeats || 1}" min="1" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
-                                </div>
+                                
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
                                     <label style="font-size:10px; width:60px;">Шаг (D):</label>
                                     <select class="dyn-step" data-idx="${idx}" style="width:100%; padding:2px; background:#16161a; color:#fff; border:1px solid #333; font-size:10px;">
@@ -173,7 +165,7 @@
                                     <input type="number" class="dyn-stim-bright-end" data-idx="${idx}" value="${frame.stim?.endBright || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
                                 <div style="display:flex; gap:3px; margin-bottom:3px; align-items:center;">
-                                    <label style="font-size:10px; width:40px;">Размер:</label>
+                                    <label style="font-size:10px; width:40px;">Масштаб (%):</label>
                                     <input type="number" class="dyn-stim-size-start" data-idx="${idx}" value="${frame.stim?.startSize || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                     <input type="number" class="dyn-stim-size-end" data-idx="${idx}" value="${frame.stim?.endSize || 100}" style="width:40px; padding:2px; background:#16161a; color:#fff; border:1px solid #333;">
                                 </div>
@@ -213,7 +205,42 @@
         container.insertAdjacentHTML('beforeend', html);
 
         const $ = (id) => document.getElementById(id);
-
+        // === БЛОКИРОВКА КОНЕЧНЫХ ПОЛЕЙ ПРИ ВЫКЛЮЧЕННОМ ЖС ===
+        function updateLock() {
+            const dynCb = document.getElementById('dyn-enabled');
+            if (!dynCb) return;
+            const isActive = dynCb.checked;
+            
+            // Блокируем: конечные значения, шаг, режим
+            const endFields = container.querySelectorAll(
+                '.dyn-stim-end, .dyn-bg-end, ' +
+                '.dyn-stim-bright-end, .dyn-bg-bright-end, ' +
+                '.dyn-step, .dyn-mode'
+            );
+            endFields.forEach(el => {
+                el.disabled = !isActive;
+                const parent = el.closest('div');
+                if (parent) {
+                    parent.style.opacity = isActive ? '1' : '0.5';
+                    parent.style.pointerEvents = isActive ? 'auto' : 'none';
+                }
+            });
+            
+            // Разблокируем: начальные значения
+            const startFields = container.querySelectorAll(
+                '.dyn-stim-start, .dyn-bg-start, ' +
+                '.dyn-stim-bright-start, .dyn-bg-bright-start'
+            );
+            startFields.forEach(el => {
+                el.disabled = false;
+                const parent = el.closest('div');
+                if (parent) {
+                    parent.style.opacity = '1';
+                    parent.style.pointerEvents = 'auto';
+                }
+            });
+        }
+        // === КОНЕЦ ФУНКЦИИ ===
         const updateParams = () => {
             const cb = $('dyn-enabled');
             if (cb) dyn.active = cb.checked;

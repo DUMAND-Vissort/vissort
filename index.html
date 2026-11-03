@@ -1104,5 +1104,68 @@
                 </div>
             </div>
         </footer>
+       <script>
+    (function() {
+        function updateLock() {
+            const dynCb = document.getElementById('dyn-enabled');
+            if (!dynCb) return;
+            const isActive = dynCb.checked;
+
+            // 1. Начальные поля яркости — активны и яркие ВСЕГДА
+            const startBright = document.querySelectorAll(
+                '.dyn-stim-bright-start, .dyn-bg-bright-start'
+            );
+            startBright.forEach(el => {
+                el.disabled = false;
+                el.style.opacity = '1';
+                el.style.pointerEvents = 'auto';
+            });
+
+            // 2. Начальные цвета — активны и яркие ВСЕГДА
+            const startColors = document.querySelectorAll(
+                '.dyn-stim-start, .dyn-bg-start'
+            );
+            startColors.forEach(el => {
+                el.disabled = false;
+                el.style.opacity = '1';
+                el.style.pointerEvents = 'auto';
+            });
+
+            // 3. Все поля масштаба — блокируются, если ЖС выключен
+            const sizeFields = document.querySelectorAll(
+                '.dyn-stim-size-start, .dyn-stim-size-end'
+            );
+            sizeFields.forEach(el => {
+                el.disabled = !isActive;
+                el.style.opacity = isActive ? '1' : '0.5';
+                el.style.pointerEvents = isActive ? 'auto' : 'none';
+            });
+
+            // 4. Конечные поля (яркость, цвет), шаг, режим — блокируются, если ЖС выключен
+            const endFields = document.querySelectorAll(
+                '.dyn-stim-end, .dyn-bg-end, ' +
+                '.dyn-stim-bright-end, .dyn-bg-bright-end, ' +
+                '.dyn-step, .dyn-mode'
+            );
+            endFields.forEach(el => {
+                el.disabled = !isActive;
+                el.style.opacity = isActive ? '1' : '0.5';
+                el.style.pointerEvents = isActive ? 'auto' : 'none';
+            });
+        }
+
+        const observer = new MutationObserver(updateLock);
+        const inspector = document.getElementById('inspector');
+        if (inspector) {
+            observer.observe(inspector, { childList: true, subtree: true });
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'dyn-enabled') updateLock();
+        });
+
+        setInterval(updateLock, 500);
+    })();
+</script>
     </body>
 </html>

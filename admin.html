@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
     <head>
         <meta charset="UTF-8" />
@@ -3045,32 +3045,59 @@
         </div>
         <script src="tracker.js" defer></script>
     <script src="clinic.js"></script>
-	<script>
+	
+<script>
     (function() {
         function updateLock() {
             const dynCb = document.getElementById('dyn-enabled');
             if (!dynCb) return;
             const isActive = dynCb.checked;
-            const endFields = document.querySelectorAll('.dyn-stim-end, .dyn-bg-end, .dyn-stim-bright-end, .dyn-bg-bright-end');
-            endFields.forEach(el => {
+
+            // 1. Поля масштаба — СЕРЫЕ и НЕАКТИВНЫЕ при выключенном ЖС
+            document.querySelectorAll('.dyn-stim-size-start, .dyn-stim-size-end').forEach(el => {
+                el.style.setProperty('opacity', isActive ? '1' : '0.5', 'important');
+                el.style.setProperty('pointer-events', isActive ? 'auto' : 'none', 'important');
                 el.disabled = !isActive;
-                const parent = el.closest('div');
-                if (parent) {
-                    parent.style.opacity = isActive ? '1' : '0.5';
-                    parent.style.pointerEvents = isActive ? 'auto' : 'none';
-                }
+            });
+
+            // 2. Левые поля яркости — ЯРКИЕ и АКТИВНЫЕ всегда
+            document.querySelectorAll('.dyn-stim-bright-start, .dyn-bg-bright-start').forEach(el => {
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('pointer-events', 'auto', 'important');
+                el.disabled = false;
+            });
+
+            // 3. Конечные яркости — СЕРЫЕ и НЕАКТИВНЫЕ при выключенном ЖС
+            document.querySelectorAll('.dyn-stim-bright-end, .dyn-bg-bright-end').forEach(el => {
+                el.style.setProperty('opacity', isActive ? '1' : '0.5', 'important');
+                el.style.setProperty('pointer-events', isActive ? 'auto' : 'none', 'important');
+                el.disabled = !isActive;
+            });
+
+            // 4. Конечные цвета, шаг, режим — СЕРЫЕ при выключенном ЖС
+            document.querySelectorAll('.dyn-stim-end, .dyn-bg-end, .dyn-step, .dyn-mode').forEach(el => {
+                el.style.setProperty('opacity', isActive ? '1' : '0.5', 'important');
+                el.style.setProperty('pointer-events', isActive ? 'auto' : 'none', 'important');
+                el.disabled = !isActive;
+            });
+
+            // 5. Начальные цвета — ЯРКИЕ всегда
+            document.querySelectorAll('.dyn-stim-start, .dyn-bg-start').forEach(el => {
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('pointer-events', 'auto', 'important');
+                el.disabled = false;
             });
         }
 
         const observer = new MutationObserver(updateLock);
         const inspector = document.getElementById('inspector');
-        if (inspector) {
-            observer.observe(inspector, { childList: true, subtree: true });
-        }
+        if (inspector) observer.observe(inspector, { childList: true, subtree: true });
 
         document.addEventListener('change', (e) => {
             if (e.target.id === 'dyn-enabled') updateLock();
         });
+
+        setInterval(updateLock, 300);
     })();
 </script>
 </body>
