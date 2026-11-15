@@ -1,4 +1,4 @@
-// ==================== app.js ====================
+﻿// ==================== app.js ====================
 // Vissort Studio — редактор сценариев для админа
 // Data layer (IndexedDB + Supabase REST + syncQueue)
 // ====================
@@ -1108,10 +1108,10 @@ function init() {
     VLog.log('[test] btn-test handler installed');
     btnPlayerStop.addEventListener('click', stopPlayer);
     btnPlayerPause.addEventListener('click', togglePause);
-    btnModeToggle.addEventListener('click', () => switchMode(currentMode === 'nodes' ? 'stimuli' : 'nodes'));
+    // if (btnModeToggle) btnModeToggle.addEventListener('click', () => switchMode(currentMode === 'nodes' ? 'stimuli' : 'nodes')); // отключено
     btnAddStim.addEventListener('click', () => createNewNode('STIMULUS'));
-    btnAddLogic.addEventListener('click', () => createNewNode('LOGIC_IF'));
-    btnAddDynamic.addEventListener('click', () => createNewNode('DYNAMIC'));
+    if (btnAddLogic) if (btnAddLogic) btnAddLogic.addEventListener('click', () => createNewNode('LOGIC_IF'));
+    if (btnAddDynamic) if (btnAddDynamic) btnAddDynamic.addEventListener('click', () => createNewNode('DYNAMIC'));
     btnAddReading.addEventListener('click', () => createNewNode('READING'));
     if (btnAddCompare) btnAddCompare.addEventListener('click', () => createNewNode('COMPARE'));
     if (btnCalibrateScreen) btnCalibrateScreen.addEventListener('click', openScreenCalibModal);
@@ -1329,7 +1329,7 @@ function init() {
             readingFileInput.value = '';
         });
     }
-    btnGenerator.addEventListener('click', () => {
+    if (btnGenerator) btnGenerator.addEventListener('click', () => {
         modal.style.display = 'flex';
         selectedCells = [];
         const dgX = parseInt(document.getElementById('gen-grid-x').value) || 3,

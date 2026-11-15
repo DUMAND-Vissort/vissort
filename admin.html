@@ -1696,6 +1696,20 @@
  
 <!-- CSS-скрытие блоков удалено: :contains() невалиден, label:has(#inp-active) скрывал галочку -->
  
+<style>
+    /* Инспектор всегда поверх холста */
+    .inspector-panel {
+        position: relative;
+        z-index: 100;
+    }
+    /* Холст не выходит за пределы main-layout */
+    .main-layout {
+        overflow: hidden;
+    }
+    .graph-canvas {
+        overflow: auto;
+    }
+</style>
 </head>
     <body>
 <div id="clinic-header" style="flex-shrink: 0; height: 35px; padding: 8px 16px; background: #1e293b; color: #e2e8f0; font-size: 14px; border-bottom: 1px solid #334155;">
@@ -1729,7 +1743,7 @@
                     <button class="btn btn-secondary btn-icon" id="btn-player-stop" disabled title="Стоп">⏹</button>
                     <button class="btn btn-warning btn-icon" id="btn-player-pause" disabled title="Пауза">⏸</button>
                     <span class="section-sep"></span>
-					<button class="btn btn-mode" id="btn-mode-toggle" title="Переключить режим (Узлы / Стимулы)">🎯 Узлы</button>
+					<!-- <button class="btn btn-mode" id="btn-mode-toggle" title="Переключить режим (Узлы / Стимулы)">🎯 Узлы</button> -->
 
                 </div>
 
@@ -1739,10 +1753,10 @@
 				
 				    <button class="btn btn-success btn-icon" id="btn-new" title="Новый сценарий">🆕</button>
                     <button class="btn btn-success btn-icon" id="btn-ai-generator" title="AI генератор">AI</button>
-					<button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button>
+					<!-- <button class="btn btn-success btn-icon" id="btn-generator" title="Режимы">⚙️</button> -->
                     <button class="btn btn-success btn-icon" id="btn-add-stim" title="Новый узел">➕</button>		
- 				    <button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button>
- 					<button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button>
+ 				    <!-- <button class="btn btn-secondary btn-icon" id="btn-add-logic" title="Логика">🧠</button> -->
+ 					<!-- <button class="btn btn-dynamic btn-icon" id="btn-add-dynamic" title="Динамика">🎬</button> -->
  					<button class="btn btn-compare btn-icon" id="btn-add-compare" title="Сравнение">⚖️</button>
  					<button class="btn btn-reading btn-icon" id="btn-add-reading" title="Чтение">📖</button>
 					<button class="btn btn-secondary btn-icon" id="btn-inspector" title="Инспектор">🧰</button>
@@ -3099,6 +3113,59 @@
 
         setInterval(updateLock, 300);
     })();
+</script>
+
+<script>
+    // Принудительная привязка кнопок (если init() в app.js падает)
+    window.addEventListener('load', function() {
+        // 1. Кнопка "Новый сценарий"
+        const btnNew = document.getElementById('btn-new');
+        if (btnNew && !btnNew._bound) {
+            btnNew._bound = true;
+            btnNew.addEventListener('click', function() {
+                if (window.__vissort_newScenario) {
+                    window.__vissort_newScenario();
+                } else {
+                    // Резервный вариант: очищаем холст вручную
+                    if (!confirm('Начать новый сценарий? Несохранённые изменения будут потеряны.')) return;
+                    window.AppState.nodes.length = 0;
+                    window.AppState.connections.length = 0;
+                    window.AppState.activeNodeId = null;
+                    const canvas = document.getElementById('canvas');
+                    if (canvas) {
+                        canvas.querySelectorAll('.scenario-node, .html-graph-line, .line-arrow').forEach(el => el.remove());
+                    }
+                    if (window.AppEditor) window.AppEditor.requestRenderGraph();
+                    const inspector = document.getElementById('inspector');
+                    if (inspector) inspector.innerHTML = '<h2>Инспектор</h2><p>Нет выбранного узла</p>';
+                }
+            });
+            console.log('[fix] btn-new привязан');
+        }
+
+        // 2. Зум (если не работает installZoom из app.js)
+        const canvas = document.getElementById('canvas');
+        const btnIn = document.getElementById('btn-zoom-in');
+        const btnOut = document.getElementById('btn-zoom-out');
+        const btnReset = document.getElementById('btn-zoom-reset');
+
+        if (canvas && btnIn && btnOut && btnReset && !btnIn._bound) {
+            btnIn._bound = true;
+            let zoom = parseFloat(localStorage.getItem('vissort_canvas_zoom')) || 1.0;
+            function applyZoom() {
+                zoom = Math.max(0.3, Math.min(2.0, Math.round(zoom * 100) / 100));
+                window.__vissort_zoom = zoom;
+                canvas.style.zoom = zoom;
+                btnReset.textContent = Math.round(zoom * 100) + '%';
+                try { localStorage.setItem('vissort_canvas_zoom', String(zoom)); } catch (_) {}
+            }
+            btnIn.addEventListener('click', () => { zoom += 0.1; applyZoom(); });
+            btnOut.addEventListener('click', () => { zoom -= 0.1; applyZoom(); });
+            btnReset.addEventListener('click', () => { zoom = 1.0; applyZoom(); });
+            applyZoom();
+            console.log('[fix] зум привязан');
+        }
+    });
 </script>
 </body>
 </html>

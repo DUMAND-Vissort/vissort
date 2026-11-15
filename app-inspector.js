@@ -1,4 +1,4 @@
-// ==================== APP-INSPECTOR.JS ====================
+﻿// ==================== APP-INSPECTOR.JS ====================
 (function () {
     'use strict';
 
@@ -135,7 +135,7 @@
         html += `<label>V цель</label><select id="inp-end-acuity">${acOpts.replace(`value="${eV}"`, `value="${eV}" selected`)}</select>`;
         html += `<label>Шаг V</label><input type="number" id="inp-acuity-step" value="${node.acuityStep || 0.1}" min="0.05" max="1" step="0.05">`;
         html += `<label>Дистанция (м)</label><input type="number" id="inp-distance" value="${(node.stimDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
-        html += `<label>PPI</label><input type="number" id="inp-ppi" value="${node.stimPPI || state.screenPPI || 96}" min="20" max="1200" step="1">`;
+        html += `<input type="hidden" id="inp-ppi" value="${state.screenPPI || 96}">`;
         html += `<div style="margin-top:6px;padding:6px;background:#000;border-radius:3px;text-align:center;">
             <div style="color:#ffcc00;font-size:13px;font-weight:bold;" id="preview-mm">📐 ${mm.toFixed(2)} мм</div>
             <div style="color:#888;font-size:10px;" id="preview-px">≈ ${px}px @ ${node.stimPPI || state.screenPPI || 96} PPI</div></div>`;
@@ -166,6 +166,12 @@
         html += renderPeriInspectorSection(node);
         html += renderDefocusInspectorSection(node);
         html += renderBlinkAnimationInspectorSection(node);
+
+        // --- СЛУЧАЙНОСТЬ ---
+        html += '<div class="panel-section" style="background:#0a1a20;border-color:#0ea5e9;">';
+        html += '<h3 style="color:#38bdf8;border-color:#0ea5e9;">🎲 Случайность</h3>';
+        html += `<label><input type="checkbox" id="inp-random-pos" ${node.singleRandomPos ? 'checked' : ''}> Случайное положение стимула</label>`;
+        html += '</div>';
 
         // --- СЦЕНАРИЙ ---
         html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
@@ -285,13 +291,201 @@
         html += '<div class="panel-section"><h3>📋 Информация</h3>';
         html += `<label style="display:block; margin-bottom:6px; margin-top:6px; font-weight:bold; border-top:1px dashed #f59e0b; padding-top:6px;"><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> 👁️ Ожидать ответы</label>`;
         html += `<label>Название узла</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
-        html += `<label><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> Активный узел</label></div>`;
+        html += `</div>`;
+        html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
+        html += '<h3 style="color:#c084fc;border-color:#a855f7;">⚖️ Режим</h3>';
+        html += `<label>Тип</label><select id="inp-cmp-mode">
+            <option value="direction" ${(node.compareMode || 'direction') === 'direction' ? 'selected' : ''}>Сравнить направления (Да/Нет)</option>
+            <option value="find_same" ${node.compareMode === 'find_same' ? 'selected' : ''}>Найти одинаковые (клик по парам)</option></select>`;
+        html += `<div id="insp-cmp-pairs-block" style="display:${node.compareMode === 'find_same' ? 'block' : 'none'};margin-top:6px;">`;
+        html += `<label>Количество пар</label><input type="number" id="inp-cmp-pairs" value="${node.pairsCount || 2}" min="1" max="20"></div></div>`;
+        html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
+        html += '<h3 style="color:#4ade80;border-color:#22c55e;">🔲 Сетка</h3>';
+        html += `<label>Столбцов (X)</label><input type="number" id="inp-cmp-gx" value="${node.gridX || 3}" min="2" max="6">`;
+        html += `<label>Строк (Y)</label><input type="number" id="inp-cmp-gy" value="${node.gridY || 3}" min="1" max="6">`;
+        html += '<div id="insp-cmp-grid" class="cmp-grid-preview"></div></div>';
+        html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
+        html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Параметры клеток</h3><div id="insp-cmp-cells"></div></div>';
+        html += '<div class="panel-section" style="background:#1a1000;border-color:#f59e0b;">';
+        html += '<h3 style="color:#fbbf24;border-color:#f59e0b;">🔄 Цикл показа</h3>';
+        var _tfCmp = [
+            { id: 'inp-cmp-d1', label: 'Задержка 1', value: node.delay1 || 0 },
+            { id: 'inp-cmp-dur', label: 'Время показа', value: node.duration || 0 },
+            { id: 'inp-cmp-resp', label: 'Ожидание ответа', value: node.response || 0 },
+            { id: 'inp-cmp-d2', label: 'Задержка 2', value: node.delay2 || 0 }
+        ];
+        _tfCmp.forEach(function (f) {
+            var u = detectUnit(f.value), dv = msToUnit(f.value, u);
+            html += `<label>${f.label}</label><div class="time-group">
+                <input type="number" id="${f.id}" value="${dv}" step="any" min="0">
+                <select id="${f.id}-unit"><option value="ms" ${u === 'ms' ? 'selected' : ''}>мс</option><option value="s" ${u === 's' ? 'selected' : ''}>с</option><option value="min" ${u === 'min' ? 'selected' : ''}>мин</option></select>
+            </div>`;
+        });
+        html += '</div>';
+        html += '<div class="panel-section" style="background:#1a0a1a;border-color:#a855f7;">';
+        html += '<h3 style="color:#c084fc;border-color:#a855f7;">📊 Серия</h3>';
+        html += `<label>Циклов в серии</label><input type="number" id="inp-cmp-ss" value="${node.seriesSize || 6}" min="1" max="20">`;
+        html += `<label>Критерий правильности серии</label><input type="number" id="inp-cmp-st" value="${node.seriesThreshold || 4}" min="1" max="20">`;
+        html += `<label><input type="checkbox" id="inp-cmp-adaptive" ${node.adaptiveAcuity !== false ? 'checked' : ''}> 👁️ Адаптивная острота зрения</label>`;
+        html += '</div>';
+        html += '<div class="panel-section" style="background:#0a1a10;border-color:#22c55e;">';
+        html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
+        html += `<label>Серий всего</label><input type="number" id="inp-cmp-sc" value="${node.seriesCount || 10}" min="1" max="50">`;
+        html += '</div>';
+        html += '</div>';
+        html += '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px; padding:8px;">💾 Применить</button>';
         inspectorEl.innerHTML = html;
+
+        const previewEl = document.getElementById('insp-cmp-grid');
+        previewEl.dataset.selected = JSON.stringify(node.activeCells || []);
+        function renderGrid() {
+            const gx = Math.max(2, Math.min(6, parseInt(document.getElementById('inp-cmp-gx')?.value) || 3));
+            const gy = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-cmp-gy')?.value) || 3));
+            let sel = [];
+            try { sel = JSON.parse(previewEl.dataset.selected || '[]'); } catch (_) { sel = []; }
+            sel = sel.filter((c) => c && c.row < gy && c.col < gx);
+            if (sel.length < 2) sel = [{ row: 0, col: 0 }, { row: 0, col: 1 }].filter((c) => c.row < gy && c.col < gx);
+            previewEl.dataset.selected = JSON.stringify(sel);
+            previewEl.style.gridTemplateColumns = `repeat(${gx}, 42px)`;
+            previewEl.innerHTML = '';
+            for (let r = 0; r < gy; r++)
+                for (let c = 0; c < gx; c++) {
+                    const on = sel.some((x) => x.row === r && x.col === c);
+                    const cEl = document.createElement('div');
+                    cEl.className = 'cmp-grid-cell' + (on ? ' active' : '');
+                    cEl.textContent = `${r + 1},${c + 1}`;
+                    cEl.dataset.row = r;
+                    cEl.dataset.col = c;
+                    cEl.dataset.on = on ? '1' : '0';
+                    cEl.addEventListener('click', () => {
+                        const cur = JSON.parse(previewEl.dataset.selected || '[]');
+                        const was = cEl.dataset.on === '1';
+                        if (was && cur.length <= 2) {
+                            VissortDialog.alert('Нужно минимум 2 активные клетки');
+                            return;
+                        }
+                        cEl.dataset.on = was ? '0' : '1';
+                        cEl.classList.toggle('active', !was);
+                        const list = [];
+                        previewEl.querySelectorAll('[data-on="1"]').forEach((e2) => list.push({ row: parseInt(e2.dataset.row), col: parseInt(e2.dataset.col) }));
+                        previewEl.dataset.selected = JSON.stringify(list);
+                        renderCells();
+                    });
+                    previewEl.appendChild(cEl);
+                }
+            renderCells();
+        }
+        function readCells() {
+            const c = document.getElementById('insp-cmp-cells');
+            if (!c) return [];
+            const res = [];
+            c.querySelectorAll('.cmp-cell-block').forEach((div) => {
+                const V = parseFloat(div.querySelector('.cmp-a').value) || 1.0;
+                const sc = hexToRgb(div.querySelector('.cmp-sc').value);
+                const bc = hexToRgb(div.querySelector('.cmp-bg').value);
+                const d = parseInt(div.querySelector('.cmp-d').value) || 2000;
+                const dist = node.stimDistance || state.trainingNode?.params?.distanceMeters || state.generalDistance || 1;
+                const ppi = node.stimPPI || state.screenPPI || 96;
+                res.push({
+                    acuity: V, distance: dist, ppi, size: acuityToSizePx(V, dist, ppi),
+                    stimR: sc.r, stimG: sc.g, stimB: sc.b,
+                    bgR: bc.r, bgG: bc.g, bgB: bc.b, duration: d
+                });
+            });
+            return res;
+        }
+        function renderCells() {
+            const c = document.getElementById('insp-cmp-cells');
+            if (!c) return;
+            const saved = readCells();
+            c.innerHTML = '';
+            let sel = [];
+            try { sel = JSON.parse(previewEl.dataset.selected || '[]'); } catch (_) { sel = []; }
+            sel.forEach((cell, idx) => {
+                const p = saved[idx] || saved[saved.length - 1] || { acuity: 1, stimR: 255, stimG: 255, stimB: 255, bgR: 0, bgG: 0, bgB: 0, duration: 2000 };
+                const div = document.createElement('div');
+                div.className = 'cmp-cell-block';
+                let opts = '';
+                for (let i = 1; i <= 10; i++) {
+                    const v = i / 10;
+                    opts += `<option value="${v.toFixed(1)}" ${Math.abs((p.acuity || 1) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)}</option>`;
+                }
+                div.innerHTML = `<label><b>Клетка (${cell.row + 1}, ${cell.col + 1})</b></label>
+                    <label>V</label><select class="cmp-a">${opts}</select>
+                    <label>Цвет стимула</label><input type="color" class="cmp-sc" value="${rgbToHex(p.stimR, p.stimG, p.stimB)}">
+                    <label>Цвет фона</label><input type="color" class="cmp-bg" value="${rgbToHex(p.bgR, p.bgG, p.bgB)}">
+                    <label>Время (мс)</label><input type="number" class="cmp-d" value="${p.duration || 2000}" min="200" max="5000">`;
+                c.appendChild(div);
+            });
+        }
+        inspectorEl._cmpReadCells = readCells;
+        inspectorEl._cmpReadGrid = () => JSON.parse(previewEl.dataset.selected || '[]');
+        renderGrid();
+        document.getElementById('inp-cmp-gx')?.addEventListener('input', renderGrid);
+        document.getElementById('inp-cmp-gy')?.addEventListener('input', renderGrid);
+        document.getElementById('inp-cmp-mode')?.addEventListener('change', (e) => {
+            const b = document.getElementById('insp-cmp-pairs-block');
+            if (b) b.style.display = e.target.value === 'find_same' ? 'block' : 'none';
+        });
     }
 
     // ==================== ИНСПЕКТОР: ЧТЕНИЕ ====================
     function updateReadingInspector(node) {
-        inspectorEl.innerHTML = '<h2>Инспектор</h2><p>Чтение (в разработке)</p>';
+        const hasOwn = !!(node.bookId && window._books[node.bookId]);
+        let bookHtml;
+        if (hasOwn) bookHtml = `<span style="color:#7dd3fc;">${escapeHtml(node.bookName || '(без имени)')}</span>`;
+        else if (node.bookName) bookHtml = `<span style="color:#f59e0b;">${escapeHtml(node.bookName)} ⚠</span>`;
+        else bookHtml = `<span style="color:#94a3b8;">Книга из сессии</span>`;
+        let html = '<h2>Инспектор</h2><div class="insp-cols">';
+        html += '<div class="panel-section"><h3>📖 Чтение</h3>';
+        html += `<label>Название узла</label><input type="text" id="inp-name" value="${escapeHtml(node.name)}">`;
+        html += `<label>Книга</label><div style="padding:6px 8px;background:#0b0b14;border-radius:3px;font-size:11px;margin-bottom:4px;">${bookHtml}</div>`;
+        html += `<button class="btn btn-reading" id="inp-reading-choose-book" style="width:100%;margin-bottom:4px;">📚 ${hasOwn ? 'Сменить книгу' : 'Задать книгу'}</button></div>`;
+        html += '<div class="panel-section" style="background:#0a1020;border-color:#0ea5e9;">';
+        html += '<h3 style="color:#38bdf8;border-color:#0ea5e9;">Отображение</h3>';
+        html += `<label>Шрифт</label><input type="text" id="inp-reading-font" value="${escapeHtml(node.readingFontFamily || 'Segoe UI')}">`;
+        html += `<label><input type="checkbox" id="inp-reading-bold" ${node.readingFontWeight === 'bold' ? 'checked' : ''}> Жирный</label>`;
+        let acOpts = '';
+        for (let i = 1; i <= 10; i++) {
+            const v = i / 10, m = acuityToSizeMm(v, 1);
+            acOpts += `<option value="${v.toFixed(1)}" ${Math.abs((node.readingAcuity || 1.0) - v) < 0.001 ? 'selected' : ''}>${v.toFixed(1)} — ${m.toFixed(2)} мм</option>`;
+        }
+        html += `<label>Острота зрения V</label><select id="inp-reading-acuity">${acOpts}</select>`;
+        html += `<label>Дистанция чтения (м)</label><input type="number" id="inp-reading-distance" value="${(node.readingDistance || state.readingDistance || 1).toFixed(1)}" min="0.1" max="20" step="0.1">`;
+        html += `<label>Цвет текста</label><input type="color" id="inp-reading-text-color" value="${rgbToHex(node.readingTextColor?.r, node.readingTextColor?.g, node.readingTextColor?.b)}"></div>`;
+        html += '<div class="panel-section" style="background:#0a1a1a;border-color:#14b8a6;">';
+        html += '<h3 style="color:#2dd4bf;border-color:#14b8a6;">Фон</h3>';
+        html += `<label>Тип фона</label><select id="inp-reading-bg-mode">
+            <option value="solid" ${(node.readingBgMode || 'solid') === 'solid' ? 'selected' : ''}>Сплошной</option>
+            <option value="split" ${node.readingBgMode === 'split' ? 'selected' : ''}>Две половины</option>
+            <option value="gradient" ${node.readingBgMode === 'gradient' ? 'selected' : ''}>Градиент</option>
+            <option value="dynamic" ${node.readingBgMode === 'dynamic' ? 'selected' : ''}>Динамический</option></select>`;
+        html += `<div id="insp-rd-solid" style="display:${(node.readingBgMode || 'solid') === 'solid' ? 'block' : 'none'};margin-top:6px;"><label>Цвет фона</label><input type="color" id="inp-rd-bg-color" value="${rgbToHex(node.readingBgColor?.r, node.readingBgColor?.g, node.readingBgColor?.b)}"></div>`;
+        html += `<div id="insp-rd-split" style="display:${node.readingBgMode === 'split' ? 'block' : 'none'};margin-top:6px;"><label>Ширина левой (%)</label><input type="number" id="inp-rd-split-left-width" value="${node.readingSplitLeftWidthPercent ?? 50}" min="0" max="100"><label>Цвет левой</label><input type="color" id="inp-rd-split-left-color" value="${rgbToHex(node.readingSplitLeftColor?.r, node.readingSplitLeftColor?.g, node.readingSplitLeftColor?.b)}"><label>Цвет правой</label><input type="color" id="inp-rd-split-right-color" value="${rgbToHex(node.readingSplitRightColor?.r, node.readingSplitRightColor?.g, node.readingSplitRightColor?.b)}"></div>`;
+        html += `<div id="insp-rd-gradient" style="display:${node.readingBgMode === 'gradient' ? 'block' : 'none'};margin-top:6px;"><label><input type="checkbox" id="inp-rd-grad-mid-enabled" ${node.readingGradientMidEnabled !== false ? 'checked' : ''}> Цвет 3</label><label>Цвет 1</label><input type="color" id="inp-rd-grad-left-color" value="${rgbToHex(node.readingGradientLeftColor?.r, node.readingGradientLeftColor?.g, node.readingGradientLeftColor?.b)}"><div id="insp-rd-grad-mid-row" style="display:${node.readingGradientMidEnabled !== false ? 'block' : 'none'};"><label>Цвет 3</label><input type="color" id="inp-rd-grad-mid-color" value="${rgbToHex(node.readingGradientMidColor?.r, node.readingGradientMidColor?.g, node.readingGradientMidColor?.b)}"><label>Позиция (%)</label><input type="number" id="inp-rd-grad-mid-pos" value="${node.readingGradientMidPosition ?? 50}" min="0" max="100"></div><label>Цвет 2</label><input type="color" id="inp-rd-grad-right-color" value="${rgbToHex(node.readingGradientRightColor?.r, node.readingGradientRightColor?.g, node.readingGradientRightColor?.b)}"></div>`;
+        html += `<div id="insp-rd-dynamic" style="display:${node.readingBgMode === 'dynamic' ? 'block' : 'none'};margin-top:6px;"><label>Режим динамики</label><select id="inp-rd-dyn-mode"><option value="simple" ${(node.readingDynamicMode || 'simple') === 'simple' ? 'selected' : ''}>A→B</option><option value="rgb" ${node.readingDynamicMode === 'rgb' ? 'selected' : ''}>RGB</option><option value="physiological" ${node.readingDynamicMode === 'physiological' ? 'selected' : ''}>Физиологический</option></select><label>Цвет A</label><input type="color" id="inp-rd-dyn-start" value="${rgbToHex(node.readingDynamicStartColor?.r, node.readingDynamicStartColor?.g, node.readingDynamicStartColor?.b)}"><label>Цвет B</label><input type="color" id="inp-rd-dyn-end" value="${rgbToHex(node.readingDynamicEndColor?.r, node.readingDynamicEndColor?.g, node.readingDynamicEndColor?.b)}"><label>Время цикла (с)</label><input type="number" id="inp-rd-dyn-duration" value="${(node.readingDynamicDuration || 10000) / 1000}" min="0.1" step="0.1"><label><input type="checkbox" id="inp-rd-dyn-loop" ${node.readingDynamicLoop ? 'checked' : ''}> Повторять</label><label><input type="checkbox" id="inp-rd-dyn-reverse" ${node.readingDynamicReverse ? 'checked' : ''}> Пинг-понг</label></div></div>`;
+        html += '<div class="panel-section" style="background:#0a1a0a;border-color:#10b981;">';
+        html += '<h3 style="color:#34d399;border-color:#10b981;">⏱ Время показа</h3>';
+        const du = detectUnit(node.duration || 0), dv = node.duration > 0 ? msToUnit(node.duration, du) : 0;
+        html += `<div class="time-group"><input type="number" id="inp-reading-duration" value="${dv}" step="any" min="0"><select id="inp-reading-duration-unit"><option value="ms" ${du === 'ms' ? 'selected' : ''}>мс</option><option value="s" ${du === 's' ? 'selected' : ''}>с</option><option value="min" ${du === 'min' ? 'selected' : ''}>мин</option></select></div>`;
+        html += `<div class="acuity-hint" style="margin-top:4px;">0 = до кнопки</div>`;
+        html += `<label><input type="checkbox" id="inp-reading-autosave" ${node.autoSaveBookmark !== false ? 'checked' : ''}> Автосохранение</label>`;
+        html += `<label><input type="checkbox" id="inp-active" ${node.isActive !== false ? 'checked' : ''}> Активный узел</label></div></div>`;
+        html += '<button class="btn btn-success" id="inp-apply" style="width:100%;margin-top:6px; padding:8px;">💾 Применить</button>';
+        inspectorEl.innerHTML = html;
+        const bgModeSel = document.getElementById('inp-reading-bg-mode');
+        if (bgModeSel)
+            bgModeSel.addEventListener('change', () => {
+                const m = bgModeSel.value;
+                document.getElementById('insp-rd-solid').style.display = m === 'solid' ? 'block' : 'none';
+                document.getElementById('insp-rd-split').style.display = m === 'split' ? 'block' : 'none';
+                document.getElementById('insp-rd-gradient').style.display = m === 'gradient' ? 'block' : 'none';
+                document.getElementById('insp-rd-dynamic').style.display = m === 'dynamic' ? 'block' : 'none';
+            });
+        const gmc = document.getElementById('inp-rd-grad-mid-enabled');
+        if (gmc) gmc.addEventListener('change', () => {
+            document.getElementById('insp-rd-grad-mid-row').style.display = gmc.checked ? 'block' : 'none';
+        });
     }
 
     // ==================== ПРИМЕНЕНИЕ ====================
@@ -320,18 +514,27 @@
         if (dynCb) node.params.stimulusDynamic.active = dynCb.checked;
 
         const v = (id) => document.getElementById(id);
-        if (v('inp-name')) node.name = v('inp-name').value;
+        if (v('inp-name')) {
+            const newName = v('inp-name').value.trim();
+            const isDuplicate = state.nodes.some(n => n.id !== node.id && n.name === newName);
+            if (isDuplicate) {
+                VissortDialog.alert('Имя "' + newName + '" уже занято. Выберите другое.');
+                return;
+            }
+            node.name = newName || 'Без имени';
+        }
         if (v('inp-type')) node.stimType = v('inp-type').value;
         if (v('inp-active')) node.isActive = v('inp-active').checked;
         if (v('inp-acuity')) node.stimAcuity = parseFloat(v('inp-acuity').value) || 1.0;
         if (v('inp-end-acuity')) node.endAcuity = parseFloat(v('inp-end-acuity').value) || node.stimAcuity;
         if (v('inp-acuity-step')) node.acuityStep = parseFloat(v('inp-acuity-step').value) || 0.1;
         if (v('inp-distance')) node.stimDistance = parseFloat(v('inp-distance').value) || 1;
-        if (v('inp-ppi')) node.stimPPI = parseInt(v('inp-ppi').value) || state.screenPPI || 96;
+        node.stimPPI = state.screenPPI || 96;
         if (v('inp-series-count')) node.seriesCount = Math.max(1, parseInt(v('inp-series-count').value) || 10);
         if (v('inp-adaptive-acuity')) node.adaptiveAcuity = v('inp-adaptive-acuity').checked;
         if (v('inp-series-size')) node.seriesSize = Math.max(1, parseInt(v('inp-series-size').value) || 6);
         if (v('inp-series-threshold')) node.seriesThreshold = Math.max(1, parseInt(v('inp-series-threshold').value) || 4);
+        if (v('inp-random-pos')) node.singleRandomPos = v('inp-random-pos').checked;
         if (v('inp-grid-enabled')) node.singleGridEnabled = v('inp-grid-enabled').checked;
         if (v('inp-grid-x')) node.singleGridX = Math.max(1, Math.min(10, parseInt(v('inp-grid-x').value) || 3));
         if (v('inp-grid-y')) node.singleGridY = Math.max(1, Math.min(10, parseInt(v('inp-grid-y').value) || 3));

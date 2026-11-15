@@ -1,4 +1,4 @@
-// ==================== APP-EDITOR.JS ====================
+﻿// ==================== APP-EDITOR.JS ====================
 // Редактор графа: узлы, связи, рендер, drag/resize, меню связи.
 // Вынесено из app.js (§A2-v3, Фаза 5).
 // Зависит: VLog, VissortDialog, AppState, VissortCore, window.__vissort_zoom.
@@ -185,6 +185,24 @@
             };
             node.stimSize = getNodeComputedSize(node);
         }
+        // === АВТОИМЕНА ПРИ СОЗДАНИИ ===
+        if (node.nodeType === 'STIMULUS') {
+            let base = 'Стимул';
+            let counter = 1;
+            while (state.nodes.some(n => n.name === base + ' ' + counter)) counter++;
+            node.name = base + ' ' + counter;
+        } else if (node.nodeType === 'COMPARE') {
+            let base = 'Сравнение';
+            let counter = 1;
+            while (state.nodes.some(n => n.name === base + ' ' + counter)) counter++;
+            node.name = base + ' ' + counter;
+        } else if (node.nodeType === 'READING') {
+            let base = 'Чтение';
+            let counter = 1;
+            while (state.nodes.some(n => n.name === base + ' ' + counter)) counter++;
+            node.name = base + ' ' + counter;
+        }
+
         state.nodes.push(node);
         state.activeNodeId = id;
         window._pendingGeneratorMode = false;
