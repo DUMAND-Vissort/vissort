@@ -164,10 +164,10 @@
                 stimR: node.stimR || 255,
                 stimG: node.stimG || 255,
                 stimB: node.stimB || 255,
-                bgR: 0, bgG: 0, bgB: 0
+                bgR: node.bgR || 0, bgG: node.bgG || 0, bgB: node.bgB || 0
             }, eff);
 
-            displayStimulus(svgData.html, { r: 0, g: 0, b: 0 });
+            displayStimulus(svgData.html, { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 });
 
             // === ЕСЛИ "ОЖИДАТЬ ОТВЕТЫ" СНЯТА — ТОЛЬКО ПОКАЗ ===
             if (node.isActive === false) {

@@ -120,6 +120,13 @@
             <option value="LANDOLT" ${node.stimType === 'LANDOLT' ? 'selected' : ''}>Кольцо Ландольта</option></select>`;
         html += `</div>`;
 
+        // --- ЦВЕТА ---
+        html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
+        html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета</h3>';
+        html += `<label>Цвет стимула</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
+        html += `<label>Цвет фона</label><input type="color" id="inp-bg" value="${rgbToHex(node.bgR, node.bgG, node.bgB)}">`;
+        html += '</div>';
+
         // --- ОСТРОТА ---
         let acOpts = '';
         for (let i = 1; i <= 10; i++) {
@@ -534,6 +541,10 @@
         if (v('inp-adaptive-acuity')) node.adaptiveAcuity = v('inp-adaptive-acuity').checked;
         if (v('inp-series-size')) node.seriesSize = Math.max(1, parseInt(v('inp-series-size').value) || 6);
         if (v('inp-series-threshold')) node.seriesThreshold = Math.max(1, parseInt(v('inp-series-threshold').value) || 4);
+        if (v('inp-color')) { const c = hexToRgb(v('inp-color').value); node.stimR = c.r; node.stimG = c.g; node.stimB = c.b; }
+        if (v('inp-bg')) { const c = hexToRgb(v('inp-bg').value); node.bgR = c.r; node.bgG = c.g; node.bgB = c.b; }
+        if (v('inp-stim-brightness')) node.stimBrightness = Math.max(0, Math.min(100, parseInt(v('inp-stim-brightness').value) || 100));
+        if (v('inp-bg-brightness')) node.bgBrightness = Math.max(0, Math.min(100, parseInt(v('inp-bg-brightness').value) || 100));
         if (v('inp-random-pos')) node.singleRandomPos = v('inp-random-pos').checked;
         if (v('inp-grid-enabled')) node.singleGridEnabled = v('inp-grid-enabled').checked;
         if (v('inp-grid-x')) node.singleGridX = Math.max(1, Math.min(10, parseInt(v('inp-grid-x').value) || 3));
