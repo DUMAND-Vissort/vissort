@@ -106,6 +106,34 @@
         </div></div>`;
     }
 
+    // ==================== АНИМАЦИЯ (ЖС) В ИНСПЕКТОРЕ ====================
+    function renderDynamicInspectorSection(node) {
+        if (!node.params) node.params = {};
+        const dyn = node.params.stimulusDynamic || {};
+        if (!Array.isArray(dyn.frames) || dyn.frames.length === 0) {
+            dyn.frames = [{ lifecycle: { delay1: 0, duration: 5, responseTime: 0, delay2: 0 }, stim: {}, bg: {}, repeats: 1, step: 0.1, mode: 'smooth' }];
+        }
+        const fr = dyn.frames[0] || {};
+        const stim = fr.stim || {}, bg = fr.bg || {};
+        const active = dyn.active !== false;
+        const stepSel = [0.1, 0.2, 0.3, 0.4, 0.5, 1.0].map((s) => `<option value="${s}" ${Math.abs((fr.step || 0.1) - s) < 1e-9 ? 'selected' : ''}>${s}</option>`).join('');
+        return `<div class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
+        <h3 style="color:#a78bfa;border-color:#8b5cf6;">🎬 Анимация (Живой стимул)</h3>
+        <label style="display:block;margin-bottom:6px;"><input type="checkbox" id="dyn-enabled" ${active ? 'checked' : ''}> Живой стимул активен</label>
+        <div id="dyn-settings" style="display:${active ? 'block' : 'none'};margin-top:6px;">
+            <label>Режим</label><select id="dyn-mode">
+                <option value="smooth" ${fr.mode !== 'jump' ? 'selected' : ''}>Плавно</option>
+                <option value="jump" ${fr.mode === 'jump' ? 'selected' : ''}>Скачками</option></select>
+            <label>Шаг (D)</label><select id="dyn-step">${stepSel}</select>
+            <label>Стимул: начальный D</label><input type="number" id="dyn-stim-start" value="${stim.startD ?? 0}" min="0" max="2" step="0.1">
+            <label>Стимул: конечный D</label><input type="number" id="dyn-stim-end" value="${stim.endD ?? 0}" min="0" max="2" step="0.1">
+            <label>Стимул: яркость (%)</label><div style="display:flex;gap:4px;"><input type="number" id="dyn-stim-bright-start" value="${stim.startBright ?? 100}" min="0" max="100"><input type="number" id="dyn-stim-bright-end" value="${stim.endBright ?? 100}" min="0" max="100"></div>
+            <label>Фон: начальный D</label><input type="number" id="dyn-bg-start" value="${bg.startD ?? 0}" min="0" max="2" step="0.1">
+            <label>Фон: конечный D</label><input type="number" id="dyn-bg-end" value="${bg.endD ?? 0}" min="0" max="2" step="0.1">
+            <label>Фон: яркость (%)</label><div style="display:flex;gap:4px;"><input type="number" id="dyn-bg-bright-start" value="${bg.startBright ?? 100}" min="0" max="100"><input type="number" id="dyn-bg-bright-end" value="${bg.endBright ?? 100}" min="0" max="100"></div>
+        </div></div>`;
+    }
+
     // ==================== ИНСПЕКТОР: СТИМУЛ ====================
     function updateStimulusInspector(node) {
         const mm = getNodeComputedSizeMm(node), px = getNodeComputedSize(node);
@@ -122,9 +150,11 @@
 
         // --- ЦВЕТА ---
         html += '<div class="panel-section" style="background:#1a1a0a;border-color:#eab308;">';
-        html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета</h3>';
+        html += '<h3 style="color:#fde047;border-color:#eab308;">🎨 Цвета и яркость</h3>';
         html += `<label>Цвет стимула</label><input type="color" id="inp-color" value="${rgbToHex(node.stimR, node.stimG, node.stimB)}">`;
         html += `<label>Цвет фона</label><input type="color" id="inp-bg" value="${rgbToHex(node.bgR, node.bgG, node.bgB)}">`;
+        html += `<label>Яркость стимула (%)</label><input type="number" id="inp-stim-brightness" value="${node.stimBrightness ?? 100}" min="0" max="100" step="1">`;
+        html += `<label>Яркость фона (%)</label><input type="number" id="inp-bg-brightness" value="${node.bgBrightness ?? 100}" min="0" max="100" step="1">`;
         html += '</div>';
 
         // --- ОСТРОТА ---
@@ -185,6 +215,9 @@
         html += '<h3 style="color:#4ade80;border-color:#22c55e;">📈 Сценарий</h3>';
         html += `<label>Серий всего</label><input type="number" id="inp-series-count" value="${node.seriesCount || 10}" min="1" max="50"></div>`;
 
+        // --- АНИМАЦИЯ (ЖС) ---
+        html += renderDynamicInspectorSection(node);
+
         html += '</div>'; // конец insp-cols
 
         // НИЖНЯЯ КНОПКА ПРИМЕНИТЬ
@@ -192,14 +225,24 @@
 
         inspectorEl.innerHTML = html;
 
-        // === ВЫЗОВ РЕДАКТОРА ЖИВОГО СТИМУЛА ===
-        if (window.AppStimulusEditor) {
-            if (!node.params) node.params = {};
-            if (!node.params.stimulusDynamic) {
-                node.params.stimulusDynamic = { active: true, framesCount: 1, frames: [] };
-            }
-            window.AppStimulusEditor.render(node, inspectorEl);
-        }
+        // === ПРИВЯЗКА АНИМАЦИИ (ЖС) ===
+        setTimeout(() => {
+            const dynCb = document.getElementById('dyn-enabled');
+            const settings = document.getElementById('dyn-settings');
+            const endSel = '#dyn-stim-end, #dyn-bg-end, #dyn-stim-bright-end, #dyn-bg-bright-end, #dyn-step, #dyn-mode';
+            const updateLock = () => {
+                const isActive = dynCb && dynCb.checked;
+                if (settings) settings.style.display = isActive ? 'block' : 'none';
+                inspectorEl.querySelectorAll(endSel).forEach((el) => {
+                    el.disabled = !isActive;
+                    el.style.opacity = isActive ? '1' : '0.5';
+                    el.style.pointerEvents = isActive ? 'auto' : 'none';
+                });
+            };
+            if (dynCb) dynCb.addEventListener('change', updateLock);
+            updateLock();
+        }, 100);
+        // === КОНЕЦ ПРИВЯЗКИ АНИМАЦИИ ===
         // === БЛОКИРОВКА КОНЕЧНЫХ ПОЛЕЙ ЖС (ПРОСТОЙ ФИКС) ===
         setTimeout(() => {
             const dynCb = document.getElementById('dyn-enabled');
@@ -565,6 +608,26 @@
         if (vp('inp-peri-enabled')) node.periEnabled = vp('inp-peri-enabled').checked;
         if (vp('inp-df-enabled')) node.dfEnabled = vp('inp-df-enabled').checked;
         if (vp('inp-blink-enabled')) node.blinkEnabled = vp('inp-blink-enabled').checked;
+
+        // === АНИМАЦИЯ (ЖС) ===
+        const dyn = node.params.stimulusDynamic;
+        if (!Array.isArray(dyn.frames) || dyn.frames.length === 0) {
+            dyn.frames = [{ lifecycle: { delay1: 0, duration: 5, responseTime: 0, delay2: 0 }, stim: {}, bg: {}, repeats: 1, step: 0.1, mode: 'smooth' }];
+        }
+        const fr = dyn.frames[0];
+        if (!fr.stim) fr.stim = {};
+        if (!fr.bg) fr.bg = {};
+        if (v('dyn-mode')) fr.mode = v('dyn-mode').value;
+        if (v('dyn-step')) fr.step = parseFloat(v('dyn-step').value) || 0.1;
+        if (v('dyn-stim-start')) fr.stim.startD = Math.max(0, Math.min(2, parseFloat(v('dyn-stim-start').value) || 0));
+        if (v('dyn-stim-end')) fr.stim.endD = Math.max(0, Math.min(2, parseFloat(v('dyn-stim-end').value) || 0));
+        if (v('dyn-stim-bright-start')) fr.stim.startBright = Math.max(0, Math.min(100, parseFloat(v('dyn-stim-bright-start').value) || 100));
+        if (v('dyn-stim-bright-end')) fr.stim.endBright = Math.max(0, Math.min(100, parseFloat(v('dyn-stim-bright-end').value) || 100));
+        if (v('dyn-bg-start')) fr.bg.startD = Math.max(0, Math.min(2, parseFloat(v('dyn-bg-start').value) || 0));
+        if (v('dyn-bg-end')) fr.bg.endD = Math.max(0, Math.min(2, parseFloat(v('dyn-bg-end').value) || 0));
+        if (v('dyn-bg-bright-start')) fr.bg.startBright = Math.max(0, Math.min(100, parseFloat(v('dyn-bg-bright-start').value) || 100));
+        if (v('dyn-bg-bright-end')) fr.bg.endBright = Math.max(0, Math.min(100, parseFloat(v('dyn-bg-bright-end').value) || 100));
+        dyn.framesCount = dyn.frames.length;
     }
 
     window.AppInspector = {

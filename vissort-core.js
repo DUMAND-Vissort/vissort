@@ -360,9 +360,14 @@
     }
     function getStimulusSVG(node, size) {
         if (node.singleCircleEnabled) return getCircleStimulusSVG(node, size);
-        const r = node.stimR != null ? node.stimR : 255;
-        const g = node.stimG != null ? node.stimG : 255;
-        const b = node.stimB != null ? node.stimB : 255;
+        const sb = Math.max(0, Math.min(100, node.stimBrightness != null ? node.stimBrightness : 100)) / 100;
+        const bb = Math.max(0, Math.min(100, node.bgBrightness != null ? node.bgBrightness : 100)) / 100;
+        const r = Math.round((node.stimR != null ? node.stimR : 255) * sb);
+        const g = Math.round((node.stimG != null ? node.stimG : 255) * sb);
+        const b = Math.round((node.stimB != null ? node.stimB : 255) * sb);
+        const bgR = Math.round((node.bgR || 0) * bb);
+        const bgG = Math.round((node.bgG || 0) * bb);
+        const bgB = Math.round((node.bgB || 0) * bb);
         let html;
         if (node.stimType === 'LANDOLT') {
             html = generateLandoltRing(
@@ -371,9 +376,9 @@
                 r,
                 g,
                 b,
-                node.bgR || 0,
-                node.bgG || 0,
-                node.bgB || 0
+                bgR,
+                bgG,
+                bgB
             );
         } else {
             const am = {};
@@ -385,7 +390,7 @@
         }
         return {
             html: html,
-            bgColor: 'rgb(' + (node.bgR || 0) + ',' + (node.bgG || 0) + ',' + (node.bgB || 0) + ')',
+            bgColor: 'rgb(' + bgR + ',' + bgG + ',' + bgB + ')',
             size: size
         };
     }
