@@ -898,14 +898,14 @@ function switchMode(mode) {
     if (mode === 'nodes') {
         canvas.style.display = '';
         stimArea.style.display = 'none';
-        btnModeToggle.textContent = '🎯 Узлы';
+        if (btnModeToggle) btnModeToggle.textContent = '🎯 Узлы';
         if (countersEl) countersEl.style.display = 'none';
         if (headerEl) headerEl.classList.remove('stimuli-mode');
         requestRenderGraph();
     } else {
         canvas.style.display = 'none';
         stimArea.style.display = 'flex';
-        btnModeToggle.textContent = '🖼️ Стимулы';
+        if (btnModeToggle) btnModeToggle.textContent = '🖼️ Стимулы';
         if (countersEl) countersEl.style.display = 'inline-flex';
         if (headerEl) headerEl.classList.add('stimuli-mode');
         if (inspectorEl) inspectorEl.style.display = 'none';
@@ -1069,7 +1069,7 @@ function init() {
     ensureBlinkAnimationGeneratorUI();
     ensureBlinkCalibrationUI();
     const sfn = localStorage.getItem('selectedFolderName');
-    if (sfn) folderStatus.textContent = '📁 ' + sfn;
+    if (sfn && folderStatus) folderStatus.textContent = '📁 ' + sfn;
     if (btnSelectFolder) btnSelectFolder.addEventListener('click', selectFolder);
     if (btnSelectTemplatesFolder) btnSelectTemplatesFolder.addEventListener('click', loadTemplatesFolder);
     btnPlayer.addEventListener('click', startPlayer);
@@ -1491,7 +1491,7 @@ function init() {
                         imported++;
                     } catch (_) {}
                 }
-                folderStatus.textContent = '📁 ' + (list[0].webkitRelativePath.split('/')[0] || 'папка');
+                if (folderStatus) folderStatus.textContent = '📁 ' + (list[0].webkitRelativePath.split('/')[0] || 'папка');
                 VissortDialog.alert(`📁 Импортировано сценариев: ${imported}`);
             }
             folderInput.value = '';
@@ -1644,7 +1644,13 @@ function bindAuthForm() { return window.AppAuth.bindAuthForm(); }
 async function handleAuthSubmit() { return window.AppAuth.handleAuthSubmit(); }
 
 // ==================== START ====================
-init();
+try {
+    init();
+} catch (e) {
+    try { if (typeof VLog !== 'undefined' && VLog && VLog.error) VLog.error('[app] init() failed:', e); }
+    catch (_) { /* ignore */ }
+    console.error('[app] init() failed:', e);
+}
 
 
 // ==================== §A2-v6: ОБЁРТКИ (app-scenarios.js) ====================
@@ -1779,6 +1785,12 @@ function calibrateFocalLength() { return window.AppBlinkCamera.calibrateFocalLen
         { passive: false }
     );
 
+    // Помечаем кнопки как уже привязанные, чтобы резервный inline-скрипт
+    // в admin.html (window load → btn-zoom-*) не навесил обработчики повторно.
+    if (btnIn) btnIn._bound = true;
+    if (btnOut) btnOut._bound = true;
+    if (btnReset) btnReset._bound = true;
+
     applyZoom();
     VLog.log('[zoom] installed, level =', zoomLevel, '');
 })();
@@ -1830,27 +1842,14 @@ function calibrateFocalLength() { return window.AppBlinkCamera.calibrateFocalLen
     }
 
     btn.addEventListener('click', doNew);
+    // Помечаем кнопку, чтобы резервный inline-скрипт admin.html не дублировал обработчик.
+    btn._bound = true;
     window.__vissort_newScenario = doNew;
     VLog.log('[new] installed');
 })();
 // ==================== ОБЁРТКИ APP-INSPECTOR (§A2-v4) ====================
 function updateInspector() {
-    // Сначала вызываем стандартный инспектор
-        // Обработчик ЖС — в bindDynCheckbox (ниже, с очисткой контейнера)
-
     window.AppInspector.updateInspector();
-    
-    // Затем проверяем чекбокс "Живой стимул"
-    const node = window.AppEditor.getNode(window.AppState.activeNodeId);
-    if (!node) return;
-    
-    if (!node.params) node.params = {};
-    if (!node.params.stimulusDynamic) node.params.stimulusDynamic = { active: false };
-    
-    const dynEnabled = document.getElementById('inp-dyn-enabled')?.checked;
-    if (dynEnabled && window.AppStimulusEditor) {
-        window.AppStimulusEditor.render(node, document.getElementById('inspector'));
-    }
 }
 function renderInspectorGridPreview() { return window.AppInspector.renderInspectorGridPreview(); }
 function renderPeriInspectorSection(node) { return window.AppInspector.renderPeriInspectorSection(node); }
@@ -1887,10 +1886,7 @@ function applyReadingInspectorChanges(node) { return window.AppInspector.applyRe
                 const old = inspector.querySelector('#dyn-stimulus-editor-root');
                 if (old) old.remove();
                 
-                // Если включен — создаем заново
-                if (cb.checked && window.AppStimulusEditor) {
-                    window.AppStimulusEditor.render(node, inspector);
-                }
+                // ЖС перенесён в инспектор (app-inspector.js) — здесь больше ничего не рендерим.
             });
         }
     }
@@ -1929,10 +1925,10 @@ function hideExtraInspectorBlocks() {
 
 // Вызываем при обновлении инспектора (наблюдаем за изменениями)
 const observer = new MutationObserver(() => {
-    hideExtraInspectorBlocks();
+    // hideExtraInspectorBlocks();
 });
 observer.observe(document.getElementById('inspector') || document.body, { childList: true, subtree: true });
 
 // Вызываем сразу
-setTimeout(hideExtraInspectorBlocks, 500);
+// setTimeout(hideExtraInspectorBlocks, 500);
 })();
