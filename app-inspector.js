@@ -155,6 +155,16 @@
         html += `<label>Цвет фона</label><input type="color" id="inp-bg" value="${rgbToHex(node.bgR, node.bgG, node.bgB)}">`;
         html += `<label>Яркость стимула (%)</label><input type="number" id="inp-stim-brightness" value="${node.stimBrightness ?? 100}" min="0" max="100" step="1">`;
         html += `<label>Яркость фона (%)</label><input type="number" id="inp-bg-brightness" value="${node.bgBrightness ?? 100}" min="0" max="100" step="1">`;
+        // --- КОНТРАСТ: соотношение яркостей стимула и фона (живьём правит два поля выше) ---
+        const _sbCur = clampBright(node.stimBrightness ?? 100);
+        const _bbCur = clampBright(node.bgBrightness ?? 100);
+        const _cCur = contrastFromBrightness(_sbCur, _bbCur);
+        const _baseCur = clampBright((_sbCur + _bbCur) / 2);
+        html += `<label style="margin-top:8px;border-top:1px dashed #eab308;padding-top:8px;display:block;">Контраст стимул/фон (%)</label>`;
+        html += `<input type="range" id="inp-contrast" min="-100" max="100" step="1" value="${_cCur}" style="width:100%;">`;
+        html += `<div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:-4px;"><span>−100</span><span id="inp-contrast-val">${_cCur}</span><span>+100</span></div>`;
+        html += `<label>Базовая яркость (%)</label><input type="number" id="inp-base-brightness" value="${_baseCur}" min="0" max="100" step="1">`;
+        html += `<div id="inp-contrast-hint" style="font-size:10px;color:#fde047;margin-top:4px;">Стимул ${_sbCur}% · Фон ${_bbCur}%${_sbCur === _bbCur ? ' · изолюминантно' : ''}</div>`;
         html += '</div>';
 
         // --- ОСТРОТА ---
@@ -325,6 +335,71 @@
         const gxI = document.getElementById('inp-grid-x'), gyI = document.getElementById('inp-grid-y');
         if (gxI) gxI.addEventListener('input', renderInspectorGridPreview);
         if (gyI) gyI.addEventListener('input', renderInspectorGridPreview);
+
+        // Контраст: ползунок ↔ яркости стимула/фона
+        bindContrastControls();
+    }
+
+    // ==================== КОНТРАСТ (соотношение яркостей) ====================
+    // Ползунок контраста живьём пересчитывает поля «Яркость стимула/фона».
+    // Ядро и плеер не меняются: они уже читают node.stimBrightness / node.bgBrightness.
+    function clampBright(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return 100;
+        return Math.max(0, Math.min(100, Math.round(n)));
+    }
+
+    function contrastFromBrightness(sb, bb) {
+        const sum = sb + bb;
+        if (!(sum > 0)) return 0;
+        return Math.max(-100, Math.min(100, Math.round(((sb - bb) / sum) * 100)));
+    }
+
+    function bindContrastControls() {
+        const slider = document.getElementById('inp-contrast');
+        const baseInp = document.getElementById('inp-base-brightness');
+        const stimInp = document.getElementById('inp-stim-brightness');
+        const bgInp = document.getElementById('inp-bg-brightness');
+        const valEl = document.getElementById('inp-contrast-val');
+        const hintEl = document.getElementById('inp-contrast-hint');
+        if (!slider || !baseInp || !stimInp || !bgInp) return;
+
+        const showHint = () => {
+            if (valEl) valEl.textContent = slider.value;
+            if (hintEl) {
+                hintEl.textContent = `Стимул ${stimInp.value}% · Фон ${bgInp.value}%` +
+                    (String(stimInp.value) === String(bgInp.value) ? ' · изолюминантно' : '');
+            }
+        };
+
+        // Контраст + базовая яркость → яркости стимула и фона
+        const applyContrast = () => {
+            const c = (parseInt(slider.value, 10) || 0) / 100;
+            const base = clampBright(baseInp.value);
+            let s = base * (1 + c);
+            let b2 = base * (1 - c);
+            // Нормировка: чтобы соотношение сохранялось, а не «срезалось» в 100%
+            const mx = Math.max(s, b2);
+            if (mx > 100) { const k = 100 / mx; s *= k; b2 *= k; }
+            stimInp.value = String(clampBright(s));
+            bgInp.value = String(clampBright(b2));
+            showHint();
+        };
+
+        // Ручная правка яркостей → пересчёт ползунка и базовой (обратная задача)
+        const syncFromBrightness = () => {
+            const sb = clampBright(stimInp.value);
+            const bb = clampBright(bgInp.value);
+            baseInp.value = String(clampBright((sb + bb) / 2));
+            slider.value = String(contrastFromBrightness(sb, bb));
+            showHint();
+        };
+
+        slider.addEventListener('input', applyContrast);
+        baseInp.addEventListener('input', applyContrast);
+        stimInp.addEventListener('input', syncFromBrightness);
+        bgInp.addEventListener('input', syncFromBrightness);
+        showHint();
     }
 
     // ==================== ИНСПЕКТОР: ЛОГИКА ====================
@@ -586,8 +661,15 @@
         if (v('inp-series-threshold')) node.seriesThreshold = Math.max(1, parseInt(v('inp-series-threshold').value) || 4);
         if (v('inp-color')) { const c = hexToRgb(v('inp-color').value); node.stimR = c.r; node.stimG = c.g; node.stimB = c.b; }
         if (v('inp-bg')) { const c = hexToRgb(v('inp-bg').value); node.bgR = c.r; node.bgG = c.g; node.bgB = c.b; }
-        if (v('inp-stim-brightness')) node.stimBrightness = Math.max(0, Math.min(100, parseInt(v('inp-stim-brightness').value) || 100));
-        if (v('inp-bg-brightness')) node.bgBrightness = Math.max(0, Math.min(100, parseInt(v('inp-bg-brightness').value) || 100));
+        // ВАЖНО: parseInt('0') || 100 даёт 100 — нулевую яркость нельзя было сохранить
+        if (v('inp-stim-brightness')) {
+            const n = parseInt(v('inp-stim-brightness').value, 10);
+            node.stimBrightness = Math.max(0, Math.min(100, Number.isFinite(n) ? n : 100));
+        }
+        if (v('inp-bg-brightness')) {
+            const n = parseInt(v('inp-bg-brightness').value, 10);
+            node.bgBrightness = Math.max(0, Math.min(100, Number.isFinite(n) ? n : 100));
+        }
         if (v('inp-random-pos')) node.singleRandomPos = v('inp-random-pos').checked;
         if (v('inp-grid-enabled')) node.singleGridEnabled = v('inp-grid-enabled').checked;
         if (v('inp-grid-x')) node.singleGridX = Math.max(1, Math.min(10, parseInt(v('inp-grid-x').value) || 3));
@@ -634,7 +716,8 @@
         updateInspector, renderInspectorGridPreview,
         updateStimulusInspector, updateLogicInspector,
         updateCompareInspector, updateReadingInspector,
-        initInspectorEvents, applyInspectorChanges, applyStimulusInspectorChanges
+        initInspectorEvents, applyInspectorChanges, applyStimulusInspectorChanges,
+        bindContrastControls, contrastFromBrightness
     };
 
     const observer = new MutationObserver(() => {

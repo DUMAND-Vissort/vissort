@@ -172,9 +172,9 @@
             const svgData = global.VissortCore.getStimulusSVG({
                 stimType: node.stimType || 'LETTER_E',
                 stimDirection: dir,
-                stimR: node.stimR || 255,
-                stimG: node.stimG || 255,
-                stimB: node.stimB || 255,
+                stimR: node.stimR != null ? node.stimR : 255,
+                stimG: node.stimG != null ? node.stimG : 255,
+                stimB: node.stimB != null ? node.stimB : 255,
                 bgR: node.bgR || 0, bgG: node.bgG || 0, bgB: node.bgB || 0, stimBrightness: sb, bgBrightness: bb
             }, eff);
 
