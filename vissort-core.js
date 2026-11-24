@@ -527,39 +527,73 @@
         var eff = stimDisplayEl ? Math.min(stimDisplayEl.clientWidth, stimDisplayEl.clientHeight) * 0.8 : 200;
         var baseNode = JSON.parse(JSON.stringify(node));
 
-        function getColorByD(d) {
-            if (colorTable) {
-                var pos = Math.max(0, Math.min(20, d * 10));
-                var i0 = Math.floor(pos);
-                var i1 = Math.min(20, i0 + 1);
-                var frac = pos - i0;
-                var c0 = colorTable[i0] || { r: 255, g: 0, b: 0 };
-                var c1 = colorTable[i1] || c0;
-                return { r: Math.round(c0.r + (c1.r - c0.r) * frac), g: Math.round(c0.g + (c1.g - c0.g) * frac), b: Math.round(c0.b + (c1.b - c0.b) * frac) };
-            }
-            return { r: Math.round(255 * (1 - d / 2)), g: Math.round(255 * (d / 2)), b: 0 };
+        // ==================== ЕДИНАЯ ЦВЕТОВАЯ СИСТЕМА ====================
+        // Цвета стимула и фона — ТОЛЬКО из узла (блок «🎨 Цвета и яркость»): ЖС их не подменяет,
+        // а анимирует:
+        //   • «Яркость %» кадра — множитель к базовой яркости (100 % = ровно как без ЖС);
+        //   • D (дефокус, 0…2) — плавное снижение контраста к цвету партнёра:
+        //     D = 0 — базовые цвета как заданы, D = 2 — стимул полностью сливается с фоном.
+        // Раньше цвет считался по colorTable[D*10] и заменял цвета узла (0.0 D = красный,
+        // 2.0 D = синий) — это была вторая, отдельная цветовая система. Не возвращать.
+        var baseStim = {
+            r: node.stimR != null ? node.stimR : 255,
+            g: node.stimG != null ? node.stimG : 255,
+            b: node.stimB != null ? node.stimB : 255
+        };
+        var baseBg = { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 };
+        var baseStimBright = clampBright(node.stimBrightness != null ? node.stimBrightness : 100);
+        var baseBgBright = clampBright(node.bgBrightness != null ? node.bgBrightness : 100);
+
+        function num(v, def) {
+            return typeof v === 'number' && isFinite(v) ? v : def;
+        }
+        function clampBright(v) {
+            return Math.max(0, Math.min(100, isFinite(v) ? v : 100));
+        }
+        function lerpNum(a, b, t) {
+            return a + (b - a) * t;
+        }
+        function mixColor(a, b, k) {
+            var m = Math.max(0, Math.min(1, k));
+            return {
+                r: Math.round(a.r + (b.r - a.r) * m),
+                g: Math.round(a.g + (b.g - a.g) * m),
+                b: Math.round(a.b + (b.b - a.b) * m)
+            };
         }
 
         function renderFrame(frame, t) {
-            var startD = (frame.stim && frame.stim.startD != null) ? frame.stim.startD : 0;
-            var endD = (frame.stim && frame.stim.endD != null) ? frame.stim.endD : startD;
-            var d = startD + (endD - startD) * t;
-            var sc = getColorByD(d);
+            var st = frame.stim || {};
+            var bgs = frame.bg || {};
 
-            baseNode.stimR = sc.r;
-            baseNode.stimG = sc.g;
-            baseNode.stimB = sc.b;
+            // D → доля «замыливания» к цвету партнёра (оттенок всегда базовый)
+            var stimStart = num(st.startD, 0), stimEnd = num(st.endD, stimStart);
+            var bgStart = num(bgs.startD, 0), bgEnd = num(bgs.endD, bgStart);
+            var stimWash = Math.max(0, Math.min(1, lerpNum(stimStart, stimEnd, t) / 2));
+            var bgWash = Math.max(0, Math.min(1, lerpNum(bgStart, bgEnd, t) / 2));
 
-            var bg = { r: 0, g: 0, b: 0 };
-            if (frame.bg) {
-                var bgStartD = frame.bg.startD != null ? frame.bg.startD : 1;
-                var bgEndD = frame.bg.endD != null ? frame.bg.endD : bgStartD;
-                var bd = bgStartD + (bgEndD - bgStartD) * t;
-                bg = getColorByD(bd);
-            }
+            var stimColor = mixColor(baseStim, baseBg, stimWash);
+            var bgColor = mixColor(baseBg, baseStim, bgWash);
+
+            // Яркость кадра — множитель к базовой яркости из «Цвета и яркость»
+            var stimBright = (clampBright(lerpNum(num(st.startBright, 100), num(st.endBright, num(st.startBright, 100)), t)) * baseStimBright) / 100;
+            var bgBright = (clampBright(lerpNum(num(bgs.startBright, 100), num(bgs.endBright, num(bgs.startBright, 100)), t)) * baseBgBright) / 100;
+
+            baseNode.stimR = stimColor.r;
+            baseNode.stimG = stimColor.g;
+            baseNode.stimB = stimColor.b;
+            baseNode.bgR = bgColor.r;
+            baseNode.bgG = bgColor.g;
+            baseNode.bgB = bgColor.b;
+            baseNode.stimBrightness = stimBright;
+            baseNode.bgBrightness = bgBright;
 
             var svgData = global.VissortCore.getStimulusSVG(baseNode, eff);
-            callbacks.displayStimulus(svgData.html, bg);
+            callbacks.displayStimulus(svgData.html, {
+                r: Math.round((bgColor.r * bgBright) / 100),
+                g: Math.round((bgColor.g * bgBright) / 100),
+                b: Math.round((bgColor.b * bgBright) / 100)
+            });
         }
 
         var duration = (frame.lifecycle && frame.lifecycle.duration ? frame.lifecycle.duration : 10) * 1000;

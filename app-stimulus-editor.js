@@ -45,12 +45,6 @@
         { r: 0, g: 255, b: 255 },   { r: 0, g: 200, b: 255 },   { r: 0, g: 150, b: 255 },   { r: 0, g: 100, b: 255 },   { r: 0, g: 50, b: 255 },    { r: 0, g: 0, b: 255 }
     ];
 
-    function getColorName(idx) {
-        if (idx <= 2) return 'Красный'; if (idx <= 4) return 'Оранжевый'; if (idx <= 6) return 'Желтый';
-        if (idx <= 9) return 'Желто-зеленый'; if (idx === 10) return 'Зеленый'; if (idx <= 14) return 'Голубой';
-        if (idx <= 19) return 'Синий'; return 'Чистый синий';
-    }
-
     function render(node, container) {
         if (!node.params) node.params = {};
         const params = node.params;
@@ -76,7 +70,7 @@
             let o = '';
             for (let i = 0; i <= 20; i++) {
                 const D = (i / 10).toFixed(1);
-                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D (${getColorName(i)})</option>`;
+                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D</option>`;
             }
             return o;
         };
@@ -87,7 +81,7 @@
             const stepInt = Math.round(parseFloat(frame.step || 0.1) * 10) || 1;
             for (let i = sInt; i <= 20; i += stepInt) {
                 const D = (i / 10).toFixed(1);
-                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D (${getColorName(i)})</option>`;
+                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D</option>`;
             }
             return o;
         };
@@ -95,6 +89,7 @@
         let html = `
             <div id="dyn-stimulus-editor-root" class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
                 <h3 style="color:#a78bfa;border-color:#8b5cf6; display:block;">✨ Живой стимул</h3>
+                <div style="font-size:10px; color:#9ca3af; margin-bottom:6px;">Цвета стимула и фона — из блока «🎨 Цвета и яркость». D (дефокус): 0 — базовые цвета, 2 — стимул сливается с фоном. «Ярк %» — множитель к базовой.</div>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; background: #0b0b12; padding: 6px; border-radius: 4px;">
                     <label style="font-size: 11px; color: #eee; display: flex; align-items: center; gap: 5px;">
@@ -327,37 +322,23 @@
         });
 
         $('dyn-calib-stim')?.addEventListener('click', () => {
-            const stepInt = Math.round(parseFloat(document.querySelector('.dyn-step[data-idx="0"]')?.value || 0.1) * 10) || 1;
-            let minL = 100;
-            const start = Math.round(parseFloat(document.querySelector('.dyn-stim-start[data-idx="0"]').value) * 10);
-            const end = Math.round(parseFloat(document.querySelector('.dyn-stim-end[data-idx="0"]').value) * 10);
-            for (let i = start; i <= end; i += stepInt) {
-                const c = colorTable[i];
-                if (!c) continue;
-                const oklch = rgbToOklch(c.r, c.g, c.b);
-                if (oklch.L < minL) minL = oklch.L;
-            }
-            if (minL === 100) minL = 50;
+            // Единая цветовая система: калибруем базовый цвет стимула из узла
+            const c = { r: node.stimR != null ? node.stimR : 255, g: node.stimG != null ? node.stimG : 255, b: node.stimB != null ? node.stimB : 255 };
+            let minL = rgbToOklch(c.r, c.g, c.b).L;
+            if (!isFinite(minL) || minL <= 0) minL = 50;
             frames[0].stim.weakCalibL = minL;
             updateParams();
-            alert(`Калибровка стимула: L = ${minL.toFixed(1)}%`);
+            alert(`Калибровка стимула: L = ${minL.toFixed(1)}% (цвет из «Цвета и яркость»)`);
         });
 
         $('dyn-calib-bg')?.addEventListener('click', () => {
-            const stepInt = Math.round(parseFloat(document.querySelector('.dyn-step[data-idx="0"]')?.value || 0.1) * 10) || 1;
-            let minL = 100;
-            const start = Math.round(parseFloat(document.querySelector('.dyn-bg-start[data-idx="0"]').value) * 10);
-            const end = Math.round(parseFloat(document.querySelector('.dyn-bg-end[data-idx="0"]').value) * 10);
-            for (let i = start; i <= end; i += stepInt) {
-                const c = colorTable[i];
-                if (!c) continue;
-                const oklch = rgbToOklch(c.r, c.g, c.b);
-                if (oklch.L < minL) minL = oklch.L;
-            }
-            if (minL === 100) minL = 50;
+            // Единая цветовая система: калибруем базовый цвет фона из узла
+            const c = { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 };
+            let minL = rgbToOklch(c.r, c.g, c.b).L;
+            if (!isFinite(minL) || minL <= 0) minL = 50;
             frames[0].bg.weakCalibL = minL;
             updateParams();
-            alert(`Калибровка фона: L = ${minL.toFixed(1)}%`);
+            alert(`Калибровка фона: L = ${minL.toFixed(1)}% (цвет из «Цвета и яркость»)`);
         });
     }
 

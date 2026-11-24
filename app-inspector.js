@@ -124,6 +124,7 @@
         const stepSel = [0.1, 0.2, 0.3, 0.4, 0.5, 1.0].map((s) => `<option value="${s}" ${Math.abs((fr.step || 0.1) - s) < 1e-9 ? 'selected' : ''}>${s}</option>`).join('');
         return `<div class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
         <h3 style="color:#a78bfa;border-color:#8b5cf6;">🎬 Анимация (Живой стимул)</h3>
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">Цвета стимула и фона берутся из «🎨 Цвета и яркость» — здесь только динамика. D (дефокус): 0 — базовые цвета, 2 — стимул сливается с фоном. «Яркость %» — множитель к базовой (100 % = как без ЖС).</div>
         <label style="display:block;margin-bottom:6px;"><input type="checkbox" id="dyn-enabled" ${active ? 'checked' : ''}> Живой стимул активен</label>
         <div id="dyn-settings" style="display:${active ? 'block' : 'none'};margin-top:6px;">
             <label>Режим</label><select id="dyn-mode">
