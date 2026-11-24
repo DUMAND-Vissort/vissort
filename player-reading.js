@@ -8,26 +8,15 @@
 
     const { lerpColor } = global.VissortCore;
 
-    // Физиологическая шкала диаптера (Thibos et al.)
-    const PHYSIOLOGICAL_PHASES = [
-        { diopters: 0.0, wavelength_nm: 670, name: 'Глубокий карминно-красный', rgb: [180, 0, 0] },
-        { diopters: 0.1, wavelength_nm: 648, name: 'Классический красный', rgb: [235, 0, 0] },
-        { diopters: 0.2, wavelength_nm: 627, name: 'Алый / насыщенный красный', rgb: [255, 35, 0] },
-        { diopters: 0.3, wavelength_nm: 610, name: 'Огненно-оранжевый', rgb: [255, 90, 0] },
-        { diopters: 0.4, wavelength_nm: 593, name: 'Оранжево-жёлтый', rgb: [255, 145, 0] },
-        { diopters: 0.5, wavelength_nm: 578, name: 'Янтарно-жёлтый', rgb: [215, 215, 0] },
-        { diopters: 0.6, wavelength_nm: 564, name: 'Жёлто-зелёный (лайм)', rgb: [155, 245, 0] },
-        { diopters: 0.7, wavelength_nm: 551, name: 'Салатовый', rgb: [90, 240, 0] },
-        { diopters: 0.8, wavelength_nm: 538, name: 'Изумрудно-зелёный', rgb: [0, 230, 60] },
-        { diopters: 0.9, wavelength_nm: 525, name: 'Ярко-зелёный (мятный)', rgb: [0, 235, 110] },
-        { diopters: 1.0, wavelength_nm: 511, name: 'Мятно-бирюзовый', rgb: [0, 240, 160] },
-        { diopters: 1.1, wavelength_nm: 498, name: 'Морская волна', rgb: [0, 210, 210] },
-        { diopters: 1.2, wavelength_nm: 484, name: 'Яркий голубой', rgb: [0, 175, 255] },
-        { diopters: 1.3, wavelength_nm: 469, name: 'Васильково-голубой', rgb: [0, 115, 255] },
-        { diopters: 1.4, wavelength_nm: 454, name: 'Королевский синий', rgb: [0, 50, 255] },
-        { diopters: 1.5, wavelength_nm: 438, name: 'Ультрамарин / тёмно-синий', rgb: [35, 0, 230] },
-        { diopters: 1.6, wavelength_nm: 421, name: 'Фиолетово-синий', rgb: [90, 0, 190] }
-    ];
+    // Физиологическая шкала диоптрий (LCA) — из VissortCore.PHYSIO_SCALE:
+    // 0.0 дптр = красный (≈670 нм) … 2.0 дптр = сине-фиолетовый (≈423 нм).
+    // Локальной копии не держим: ЖС, генератор и фон чтения должны совпадать цвет в цвет.
+    const PHYSIOLOGICAL_PHASES = ((global.VissortCore && global.VissortCore.PHYSIO_SCALE) || []).map((p) => ({
+        diopters: p.diopters,
+        wavelength_nm: p.wavelength_nm,
+        name: p.name,
+        rgb: [p.rgb.r, p.rgb.g, p.rgb.b]
+    }));
 
     // Состояние анимации динамического фона
     const _state = {

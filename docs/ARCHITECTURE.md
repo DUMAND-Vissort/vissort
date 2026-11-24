@@ -56,7 +56,7 @@
 | `vissort-logger.js` | `VLog` | логгер (no-op в проде, `?debug=1`) |
 | `vissort-env.js` | `VissortEnv` | `SUPABASE_URL`, `ANON_KEY`, `RELEASE` |
 | `vissort-dialog.js` | `VissortDialog` | `alert/confirm/prompt` (стилизованные, Promise) |
-| `vissort-core.js` | `VissortCore` | acuity/time/colors/phases/SVG/utils + `playDynamicStimulus` + `colorTable` |
+| `vissort-core.js` | `VissortCore` | acuity/time/colors/phases/SVG/utils + `playDynamicStimulus` + `PHYSIO_SCALE`/`colorTable` (шкала D ↔ λ, LCA) |
 | `data-layer.js` | `Data` | IndexedDB (9 stores) + Supabase REST + syncQueue (48 методов) |
 | `voice.js` | `Voice` | Web Speech + mp3-фразы (`say`, `sayKey`, `readText`…) |
 | `vissort-device.js` | `VissortDevice` | fingerprint + калибровка (`vissort_device_calib`) |

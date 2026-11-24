@@ -499,12 +499,104 @@
             b: Math.round(Math.max(0, Math.min(255, linearToRgb(b_lin) * 255)))
         };
     }
-    const colorTable = [
-        { r: 255, g: 0, b: 0 },     { r: 255, g: 50, b: 0 },    { r: 255, g: 100, b: 0 },   { r: 255, g: 150, b: 0 },   { r: 255, g: 200, b: 0 },
-        { r: 255, g: 255, b: 0 },   { r: 200, g: 255, b: 0 },   { r: 150, g: 255, b: 0 },   { r: 100, g: 255, b: 0 },   { r: 50, g: 255, b: 0 },
-        { r: 0, g: 255, b: 0 },     { r: 0, g: 255, b: 50 },    { r: 0, g: 255, b: 100 },   { r: 0, g: 255, b: 150 },   { r: 0, g: 255, b: 200 },
-        { r: 0, g: 255, b: 255 },   { r: 0, g: 200, b: 255 },   { r: 0, g: 150, b: 255 },   { r: 0, g: 100, b: 255 },   { r: 0, g: 50, b: 255 },    { r: 0, g: 0, b: 255 }
-    ];
+    // ==================== ФИЗИОЛОГИЧЕСКАЯ ШКАЛА ДИОПТРИЙ (LCA) ====================
+    // D — это НЕ «яркость» и НЕ «контраст», а продольная хроматическая аберрация глаза
+    // (longitudinal chromatic aberration, LCA): показатель преломления сред глаза падает
+    // с ростом длины волны (нормальная дисперсия, Коши: n(λ) = n0 + B/λ²), поэтому короткие
+    // волны преломляются сильнее и фокусируются ближе к хрусталику (относительная миопия).
+    // Отсюда шкала D ↔ цвет:
+    //     0.0 дптр → красный (≈670 нм, длинноволновой эталон)
+    //     2.0 дптр → сине-фиолетовый (≈423 нм)
+    //
+    // Количественная основа (проверяемая по литературе):
+    //   • n (589 нм): роговица 1.376, влага передней камеры 1.336, хрусталик 1.42→1.386,
+    //     стекловидное тело 1.336; Δn на 400→700 нм ≈ 0.012…0.02 (нормальная дисперсия);
+    //   • редуцированный глаз (Emsley): P = n/r, r = 5.55 мм → P ≈ 60 дптр, поэтому ΔP = Δn/r;
+    //   • измеренная LCA глаза: ≈2.4 дптр на 400→700 нм (Bedford & Wyszecki, 1957;
+    //     Thibos et al., 1992 — модель «chromatic eye»); на 420→670 нм ≈ 2.0 дптр.
+    // Калибровка: CDR(670→400 нм) = 2.4 дптр ⇒ λ(2.0 дптр) ≈ 423 нм, λ(0 дптр) = 670 нм.
+    var PHYSIO = {
+        MAX_D: 2,             // верх шкалы ЖС, дптр
+        REF_NM: 670,          // 0 дптр — длинноволновой красный
+        CDR_670_400: 2.4,     // хроматическая разность рефракции 670→400 нм, дптр
+        LAMBDA_MIN_NM: 380,   // границы видимого диапазона для λ→RGB
+        LAMBDA_MAX_NM: 780
+    };
+    // Коэффициент Коши (дптр·мкм²): D(λ) = K·(1/λ² − 1/λ_ref²), λ в мкм
+    PHYSIO.K = PHYSIO.CDR_670_400 / (1 / Math.pow(0.400, 2) - 1 / Math.pow(0.670, 2));
+
+    // D (дптр) → длина волны (нм): обратная к D(λ) = K·(1/λ² − 1/λ_ref²)
+    function defocusToWavelength(D) {
+        var d = Math.max(0, Math.min(PHYSIO.MAX_D, isFinite(D) ? D : 0));
+        var inv = d / PHYSIO.K + 1 / Math.pow(PHYSIO.REF_NM / 1000, 2);
+        var nm = 1000 / Math.sqrt(inv);
+        return Math.max(PHYSIO.LAMBDA_MIN_NM, Math.min(PHYSIO.LAMBDA_MAX_NM, nm));
+    }
+
+    // Длина волны → RGB: спектральное приближение (Bruton), максимум канала = 255.
+    // Точная колориметрия тут не нужна: абсолютная яркость задаётся «Яркость %»/контрастом.
+    // Спад видимости на краях сохранён, иначе 670 и 646 нм дают одинаковый «чистый красный»
+    // и шаг 0.0 → 0.1 дптр визуально неразличим (V(λ) на 670 нм ≈ 0.06 от максимума).
+    function wavelengthToRgb(nm) {
+        var r = 0, g = 0, b = 0, f = 1;
+        if (nm >= 380 && nm < 440) { r = -(nm - 440) / 60; b = 1; }
+        else if (nm < 490) { g = (nm - 440) / 50; b = 1; }
+        else if (nm < 510) { g = 1; b = -(nm - 510) / 20; }
+        else if (nm < 580) { r = (nm - 510) / 70; g = 1; }
+        else if (nm < 645) { r = 1; g = -(nm - 645) / 65; }
+        else { r = 1; }
+        if (nm > 645) f = Math.max(0.25, 0.65 - 0.0114 * (nm - 670));
+        else if (nm < 420) f = 0.3 + 0.7 * (nm - 380) / 40;
+        var gamma = 0.8; // как в стандартном алгоритме Bruton
+        return {
+            r: Math.round(255 * Math.pow(Math.max(0, r) * f, gamma)),
+            g: Math.round(255 * Math.pow(Math.max(0, g) * f, gamma)),
+            b: Math.round(255 * Math.pow(Math.max(0, b) * f, gamma))
+        };
+    }
+
+    // Название цвета по длине волны — для подписей D в панелях
+    function colorNameByWavelength(nm) {
+        if (nm >= 635) return 'Красный';
+        if (nm >= 590) return 'Оранжевый';
+        if (nm >= 560) return 'Жёлтый';
+        if (nm >= 530) return 'Жёлто-зелёный';
+        if (nm >= 490) return 'Зелёный';
+        if (nm >= 470) return 'Бирюзовый';
+        if (nm >= 440) return 'Голубой';
+        if (nm >= 420) return 'Синий';
+        return 'Фиолетово-синий';
+    }
+
+    // Единая шкала (шаг 0.1 дптр, 0.0…2.0 = 21 точка). ИСТОЧНИК ИСТИНЫ для всех панелей.
+    var PHYSIO_SCALE = (function () {
+        var out = [];
+        for (var i = 0; i <= PHYSIO.MAX_D * 10; i++) {
+            var d = i / 10;
+            var nm = Math.round(defocusToWavelength(d));
+            out.push({ diopters: d, wavelength_nm: nm, name: colorNameByWavelength(nm), rgb: wavelengthToRgb(nm) });
+        }
+        return out;
+    })();
+
+    // Совместимость со старыми панелями/сценами: colorTable[i] = цвет при D = i/10
+    var colorTable = PHYSIO_SCALE.map(function (p) { return p.rgb; });
+
+    // Цвет по D с линейной интерполяцией между шагами 0.1 дптр (brightness — % поверх цвета)
+    function getColorByD(D, brightness) {
+        var d = Math.max(0, Math.min(PHYSIO.MAX_D, isFinite(D) ? D : 0));
+        var idxFloat = d * 10;
+        var i1 = Math.floor(idxFloat);
+        var i2 = Math.min(PHYSIO_SCALE.length - 1, Math.ceil(idxFloat));
+        var t = idxFloat - i1;
+        var c1 = PHYSIO_SCALE[i1].rgb, c2 = PHYSIO_SCALE[i2].rgb;
+        var br = Math.max(0, Math.min(100, isFinite(brightness) ? brightness : 100)) / 100;
+        return {
+            r: Math.round((c1.r + (c2.r - c1.r) * t) * br),
+            g: Math.round((c1.g + (c2.g - c1.g) * t) * br),
+            b: Math.round((c1.b + (c2.b - c1.b) * t) * br)
+        };
+    }
 
     // ==================== playDynamicStimulus (общий для preview и графа) ====================
     function playDynamicStimulus(node, opts) {
@@ -527,20 +619,13 @@
         var eff = stimDisplayEl ? Math.min(stimDisplayEl.clientWidth, stimDisplayEl.clientHeight) * 0.8 : 200;
         var baseNode = JSON.parse(JSON.stringify(node));
 
-        // ==================== ЕДИНАЯ ЦВЕТОВАЯ СИСТЕМА ====================
-        // Цвета стимула и фона — ТОЛЬКО из узла (блок «🎨 Цвета и яркость»): ЖС их не подменяет,
-        // а анимирует:
-        //   • «Яркость %» кадра — множитель к базовой яркости (100 % = ровно как без ЖС);
-        //   • D (дефокус, 0…2) — плавное снижение контраста к цвету партнёра:
-        //     D = 0 — базовые цвета как заданы, D = 2 — стимул полностью сливается с фоном.
-        // Раньше цвет считался по colorTable[D*10] и заменял цвета узла (0.0 D = красный,
-        // 2.0 D = синий) — это была вторая, отдельная цветовая система. Не возвращать.
-        var baseStim = {
-            r: node.stimR != null ? node.stimR : 255,
-            g: node.stimG != null ? node.stimG : 255,
-            b: node.stimB != null ? node.stimB : 255
-        };
-        var baseBg = { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 };
+        // ==================== ЦВЕТ = ХРОМАТИЧЕСКАЯ ШКАЛА (LCA) ====================
+        // D (0…2 дптр) — продольная хроматическая аберрация глаза: 0 = красный (670 нм),
+        // 2 = сине-фиолетовый (423 нм). Оттенок стимула и фона считается по единой шкале
+        // PHYSIO_SCALE / getColorByD (физика — в разделе «ФИЗИОЛОГИЧЕСКАЯ ШКАЛА ДИОПТРИЙ»).
+        // Из блока «🎨 Цвета и яркость» при активном ЖС берётся только ЯРКОСТЬ (контраст):
+        //   • «Яркость %» кадра — множитель к базовой яркости узла (100 % = как задано);
+        //   • базовые ЦВЕТА узла работают в статике (ЖС выключен).
         var baseStimBright = clampBright(node.stimBrightness != null ? node.stimBrightness : 100);
         var baseBgBright = clampBright(node.bgBrightness != null ? node.bgBrightness : 100);
 
@@ -553,27 +638,16 @@
         function lerpNum(a, b, t) {
             return a + (b - a) * t;
         }
-        function mixColor(a, b, k) {
-            var m = Math.max(0, Math.min(1, k));
-            return {
-                r: Math.round(a.r + (b.r - a.r) * m),
-                g: Math.round(a.g + (b.g - a.g) * m),
-                b: Math.round(a.b + (b.b - a.b) * m)
-            };
-        }
 
         function renderFrame(frame, t) {
             var st = frame.stim || {};
             var bgs = frame.bg || {};
 
-            // D → доля «замыливания» к цвету партнёра (оттенок всегда базовый)
+            // D → цвет по физиологической шкале (0 дптр = красный 670 нм … 2 дптр = 423 нм)
             var stimStart = num(st.startD, 0), stimEnd = num(st.endD, stimStart);
             var bgStart = num(bgs.startD, 0), bgEnd = num(bgs.endD, bgStart);
-            var stimWash = Math.max(0, Math.min(1, lerpNum(stimStart, stimEnd, t) / 2));
-            var bgWash = Math.max(0, Math.min(1, lerpNum(bgStart, bgEnd, t) / 2));
-
-            var stimColor = mixColor(baseStim, baseBg, stimWash);
-            var bgColor = mixColor(baseBg, baseStim, bgWash);
+            var stimColor = getColorByD(lerpNum(stimStart, stimEnd, t));
+            var bgColor = getColorByD(lerpNum(bgStart, bgEnd, t));
 
             // Яркость кадра — множитель к базовой яркости из «Цвета и яркость»
             var stimBright = (clampBright(lerpNum(num(st.startBright, 100), num(st.endBright, num(st.startBright, 100)), t)) * baseStimBright) / 100;
@@ -639,6 +713,13 @@
         lerpColor: lerpColor,
         playDynamicStimulus: playDynamicStimulus,
         colorTable: colorTable,
+        // физиологическая шкала D ↔ λ ↔ RGB (единый источник цвета для ЖС/генератора/чтения)
+        PHYSIO: PHYSIO,
+        PHYSIO_SCALE: PHYSIO_SCALE,
+        getColorByD: getColorByD,
+        defocusToWavelength: defocusToWavelength,
+        wavelengthToRgb: wavelengthToRgb,
+        colorNameByWavelength: colorNameByWavelength,
         rgbToOklch: rgbToOklch,
         oklchToRgb: oklchToRgb,
         // phases

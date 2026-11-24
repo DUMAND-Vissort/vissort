@@ -124,18 +124,18 @@
         const stepSel = [0.1, 0.2, 0.3, 0.4, 0.5, 1.0].map((s) => `<option value="${s}" ${Math.abs((fr.step || 0.1) - s) < 1e-9 ? 'selected' : ''}>${s}</option>`).join('');
         return `<div class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
         <h3 style="color:#a78bfa;border-color:#8b5cf6;">🎬 Анимация (Живой стимул)</h3>
-        <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">Цвета стимула и фона берутся из «🎨 Цвета и яркость» — здесь только динамика. D (дефокус): 0 — базовые цвета, 2 — стимул сливается с фоном. «Яркость %» — множитель к базовой (100 % = как без ЖС).</div>
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">D — продольная хроматическая аберрация глаза (LCA): <b>0.0 D = красный (≈670 нм)</b> … <b>2.0 D = сине-фиолетовый (≈423 нм)</b>. Оттенок стимула и фона задаётся D; из «🎨 Цвета и яркость» берётся яркость (контраст). «Яркость %» кадра — множитель к базовой (100 % = как задано). Цвета ниже — чипы предпросмотра. Одинаковый D у стимула и фона = одинаковый цвет, стимул не виден.</div>
         <label style="display:block;margin-bottom:6px;"><input type="checkbox" id="dyn-enabled" ${active ? 'checked' : ''}> Живой стимул активен</label>
         <div id="dyn-settings" style="display:${active ? 'block' : 'none'};margin-top:6px;">
             <label>Режим</label><select id="dyn-mode">
                 <option value="smooth" ${fr.mode !== 'jump' ? 'selected' : ''}>Плавно</option>
                 <option value="jump" ${fr.mode === 'jump' ? 'selected' : ''}>Скачками</option></select>
             <label>Шаг (D)</label><select id="dyn-step">${stepSel}</select>
-            <label>Стимул: начальный D</label><input type="number" id="dyn-stim-start" value="${stim.startD ?? 0}" min="0" max="2" step="0.1">
-            <label>Стимул: конечный D</label><input type="number" id="dyn-stim-end" value="${stim.endD ?? 0}" min="0" max="2" step="0.1">
+            <label>Стимул: начальный D <span id="dyn-sw-stim-start" style="display:inline-block;width:26px;height:10px;border:1px solid #000;vertical-align:middle;margin-left:4px;background:#000"></span></label><input type="number" id="dyn-stim-start" value="${stim.startD ?? 0}" min="0" max="2" step="0.1">
+            <label>Стимул: конечный D <span id="dyn-sw-stim-end" style="display:inline-block;width:26px;height:10px;border:1px solid #000;vertical-align:middle;margin-left:4px;background:#000"></span></label><input type="number" id="dyn-stim-end" value="${stim.endD ?? 0}" min="0" max="2" step="0.1">
             <label>Стимул: яркость (%)</label><div style="display:flex;gap:4px;"><input type="number" id="dyn-stim-bright-start" value="${stim.startBright ?? 100}" min="0" max="100"><input type="number" id="dyn-stim-bright-end" value="${stim.endBright ?? 100}" min="0" max="100"></div>
-            <label>Фон: начальный D</label><input type="number" id="dyn-bg-start" value="${bg.startD ?? 0}" min="0" max="2" step="0.1">
-            <label>Фон: конечный D</label><input type="number" id="dyn-bg-end" value="${bg.endD ?? 0}" min="0" max="2" step="0.1">
+            <label>Фон: начальный D <span id="dyn-sw-bg-start" style="display:inline-block;width:26px;height:10px;border:1px solid #000;vertical-align:middle;margin-left:4px;background:#000"></span></label><input type="number" id="dyn-bg-start" value="${bg.startD ?? 0}" min="0" max="2" step="0.1">
+            <label>Фон: конечный D <span id="dyn-sw-bg-end" style="display:inline-block;width:26px;height:10px;border:1px solid #000;vertical-align:middle;margin-left:4px;background:#000"></span></label><input type="number" id="dyn-bg-end" value="${bg.endD ?? 0}" min="0" max="2" step="0.1">
             <label>Фон: яркость (%)</label><div style="display:flex;gap:4px;"><input type="number" id="dyn-bg-bright-start" value="${bg.startBright ?? 100}" min="0" max="100"><input type="number" id="dyn-bg-bright-end" value="${bg.endBright ?? 100}" min="0" max="100"></div>
         </div></div>`;
     }
@@ -259,6 +259,34 @@
             updateLock();
         }, 100);
         // === КОНЕЦ ПРИВЯЗКИ АНИМАЦИИ ===
+        // === ЖИВОЙ ПРОСМОТР ЦВЕТА ПО D (физиологическая шкала LCA) ===
+        setTimeout(() => {
+            const VC = window.VissortCore;
+            if (!VC || typeof VC.getColorByD !== 'function') return;
+            const pairs = [
+                ['dyn-stim-start', 'dyn-sw-stim-start'],
+                ['dyn-stim-end', 'dyn-sw-stim-end'],
+                ['dyn-bg-start', 'dyn-sw-bg-start'],
+                ['dyn-bg-end', 'dyn-sw-bg-end']
+            ];
+            const paint = () => {
+                pairs.forEach(([fieldId, swId]) => {
+                    const f = document.getElementById(fieldId);
+                    const sw = document.getElementById(swId);
+                    if (!f || !sw) return;
+                    const D = Math.max(0, Math.min(2, parseFloat(f.value) || 0));
+                    const c = VC.getColorByD(D);
+                    const nm = Math.round(VC.defocusToWavelength(D));
+                    sw.style.background = `rgb(${c.r},${c.g},${c.b})`;
+                    sw.title = `${D.toFixed(1)} D ≈ ${nm} нм`;
+                });
+            };
+            pairs.forEach(([fieldId]) => {
+                const f = document.getElementById(fieldId);
+                if (f) f.addEventListener('input', paint);
+            });
+            paint();
+        }, 120);
         // === БЛОКИРОВКА КОНЕЧНЫХ ПОЛЕЙ ЖС (ПРОСТОЙ ФИКС) ===
         setTimeout(() => {
             const dynCb = document.getElementById('dyn-enabled');

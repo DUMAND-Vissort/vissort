@@ -38,12 +38,11 @@
         };
     }
 
-    const colorTable = [
-        { r: 255, g: 0, b: 0 },     { r: 255, g: 50, b: 0 },    { r: 255, g: 100, b: 0 },   { r: 255, g: 150, b: 0 },   { r: 255, g: 200, b: 0 },
-        { r: 255, g: 255, b: 0 },   { r: 200, g: 255, b: 0 },   { r: 150, g: 255, b: 0 },   { r: 100, g: 255, b: 0 },   { r: 50, g: 255, b: 0 },
-        { r: 0, g: 255, b: 0 },     { r: 0, g: 255, b: 50 },    { r: 0, g: 255, b: 100 },   { r: 0, g: 255, b: 150 },   { r: 0, g: 255, b: 200 },
-        { r: 0, g: 255, b: 255 },   { r: 0, g: 200, b: 255 },   { r: 0, g: 150, b: 255 },   { r: 0, g: 100, b: 255 },   { r: 0, g: 50, b: 255 },    { r: 0, g: 0, b: 255 }
-    ];
+    // Цвета шагов D — из единой физиологической шкалы VissortCore:
+    // 0.0 дптр = красный (≈670 нм) … 2.0 дптр = сине-фиолетовый (≈423 нм).
+    // Локальной копии палитры быть не должно — иначе снова появляются «две цветовые системы».
+    const colorTable = (window.VissortCore && window.VissortCore.colorTable) || [];
+    const physioScale = (window.VissortCore && window.VissortCore.PHYSIO_SCALE) || [];
 
     function render(node, container) {
         if (!node.params) node.params = {};
@@ -66,11 +65,17 @@
         dyn.framesCount = dyn.frames.length;
         const frames = dyn.frames;
 
+        // Подпись шага D: «1.0 D (Зелёный, 506 нм)» — из единой шкалы VissortCore
+        const dLabel = (idx) => {
+            const p = physioScale[idx];
+            return p ? `${p.diopters.toFixed(1)} D (${p.name}, ${p.wavelength_nm} нм)` : `${(idx / 10).toFixed(1)} D`;
+        };
+
         const makeOpts = (selD) => {
             let o = '';
             for (let i = 0; i <= 20; i++) {
                 const D = (i / 10).toFixed(1);
-                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D</option>`;
+                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${dLabel(i)}</option>`;
             }
             return o;
         };
@@ -81,7 +86,7 @@
             const stepInt = Math.round(parseFloat(frame.step || 0.1) * 10) || 1;
             for (let i = sInt; i <= 20; i += stepInt) {
                 const D = (i / 10).toFixed(1);
-                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${D} D</option>`;
+                o += `<option value="${D}" ${Math.round(selD*10)===i?'selected':''}>${dLabel(i)}</option>`;
             }
             return o;
         };
@@ -89,7 +94,7 @@
         let html = `
             <div id="dyn-stimulus-editor-root" class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
                 <h3 style="color:#a78bfa;border-color:#8b5cf6; display:block;">✨ Живой стимул</h3>
-                <div style="font-size:10px; color:#9ca3af; margin-bottom:6px;">Цвета стимула и фона — из блока «🎨 Цвета и яркость». D (дефокус): 0 — базовые цвета, 2 — стимул сливается с фоном. «Ярк %» — множитель к базовой.</div>
+                <div style="font-size:10px; color:#9ca3af; margin-bottom:6px;">D — продольная хроматическая аберрация глаза (LCA): 0.0 D = красный (≈670 нм) … 2.0 D = сине-фиолетовый (≈423 нм), цвет шага берётся из единой шкалы VissortCore. Из «🎨 Цвета и яркость» при активном ЖС работает только яркость (контраст); «Ярк %» — множитель к базовой. Одинаковый D у стимула и фона = стимул не виден.</div>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; background: #0b0b12; padding: 6px; border-radius: 4px;">
                     <label style="font-size: 11px; color: #eee; display: flex; align-items: center; gap: 5px;">
@@ -322,23 +327,41 @@
         });
 
         $('dyn-calib-stim')?.addEventListener('click', () => {
-            // Единая цветовая система: калибруем базовый цвет стимула из узла
-            const c = { r: node.stimR != null ? node.stimR : 255, g: node.stimG != null ? node.stimG : 255, b: node.stimB != null ? node.stimB : 255 };
-            let minL = rgbToOklch(c.r, c.g, c.b).L;
-            if (!isFinite(minL) || minL <= 0) minL = 50;
+            // Калибровка по слабому: самый тёмный цвет среди шагов D стимула (шкала LCA)
+            const frame = frames[0];
+            const stepInt = Math.round(parseFloat(frame.step || 0.1) * 10) || 1;
+            const start = Math.round((frame.stim?.startD || 0) * 10);
+            const end = Math.round((frame.stim?.endD ?? frame.stim?.startD ?? 0) * 10);
+            let minL = 100;
+            for (let i = start; i <= end; i += stepInt) {
+                const c = colorTable[i];
+                if (!c) continue;
+                const L = rgbToOklch(c.r, c.g, c.b).L;
+                if (isFinite(L) && L < minL) minL = L;
+            }
+            if (minL === 100) minL = 50;
             frames[0].stim.weakCalibL = minL;
             updateParams();
-            alert(`Калибровка стимула: L = ${minL.toFixed(1)}% (цвет из «Цвета и яркость»)`);
+            alert(`Калибровка стимула: L = ${minL.toFixed(1)}% (по шагам D)`);
         });
 
         $('dyn-calib-bg')?.addEventListener('click', () => {
-            // Единая цветовая система: калибруем базовый цвет фона из узла
-            const c = { r: node.bgR || 0, g: node.bgG || 0, b: node.bgB || 0 };
-            let minL = rgbToOklch(c.r, c.g, c.b).L;
-            if (!isFinite(minL) || minL <= 0) minL = 50;
+            // Калибровка по слабому: самый тёмный цвет среди шагов D фона (шкала LCA)
+            const frame = frames[0];
+            const stepInt = Math.round(parseFloat(frame.step || 0.1) * 10) || 1;
+            const start = Math.round((frame.bg?.startD || 0) * 10);
+            const end = Math.round((frame.bg?.endD ?? frame.bg?.startD ?? 0) * 10);
+            let minL = 100;
+            for (let i = start; i <= end; i += stepInt) {
+                const c = colorTable[i];
+                if (!c) continue;
+                const L = rgbToOklch(c.r, c.g, c.b).L;
+                if (isFinite(L) && L < minL) minL = L;
+            }
+            if (minL === 100) minL = 50;
             frames[0].bg.weakCalibL = minL;
             updateParams();
-            alert(`Калибровка фона: L = ${minL.toFixed(1)}% (цвет из «Цвета и яркость»)`);
+            alert(`Калибровка фона: L = ${minL.toFixed(1)}% (по шагам D)`);
         });
     }
 
