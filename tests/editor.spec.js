@@ -144,7 +144,9 @@ test.describe('Editor — admin.html', () => {
         expect(after).toBe(0);
     });
 
-    test('переключение режима Узлы ↔ Стимулы', async ({ page }) => {
+    // Кнопка #btn-mode-toggle закомментирована в admin.html (блок тулбара, ~1755),
+    // режим «Стимулы» отключён после переноса плеера v10 → тест осознанно пропущен.
+    test.skip('переключение режима Узлы ↔ Стимулы (кнопка отключена в admin.html)', async ({ page }) => {
         await expect(page.locator('#canvas')).toBeVisible();
         await page.click('#btn-mode-toggle');
         await page.waitForTimeout(300);
