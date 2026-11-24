@@ -98,7 +98,7 @@
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; background: #0b0b12; padding: 6px; border-radius: 4px;">
                     <label style="font-size: 11px; color: #eee; display: flex; align-items: center; gap: 5px;">
-                        <input type="checkbox" id="dyn-enabled" ${dyn.active !== false ? 'checked' : ''} style="margin:0;">
+                        <input type="checkbox" id="dyn-enabled" ${dyn.active === true ? 'checked' : ''} style="margin:0;">
                         Живой стимул активен
                     </label>
                 </div>

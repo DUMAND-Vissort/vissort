@@ -115,7 +115,12 @@
         }
         const fr = dyn.frames[0] || {};
         const stim = fr.stim || {}, bg = fr.bg || {};
-        const active = dyn.active !== false;
+        // ВАЖНО: чекбокс отмечаем только при явном active === true.
+        // Раньше было `dyn.active !== false` → у обычного узла (без ЖС) галочка стояла,
+        // «Применить» писал active: true, плеер уходил в динамический путь, где D=0
+        // даёт красный цвет и стимулу, и фону (colorTable[0]) — экран становился красным.
+        // Плеерные пути (app-player.js / player-graph.js / app-player-preview.js) проверяют active === true.
+        const active = dyn.active === true;
         const stepSel = [0.1, 0.2, 0.3, 0.4, 0.5, 1.0].map((s) => `<option value="${s}" ${Math.abs((fr.step || 0.1) - s) < 1e-9 ? 'selected' : ''}>${s}</option>`).join('');
         return `<div class="panel-section" style="background:#1a0a2a;border-color:#8b5cf6;">
         <h3 style="color:#a78bfa;border-color:#8b5cf6;">🎬 Анимация (Живой стимул)</h3>
@@ -636,7 +641,7 @@
         if (!node.params) node.params = {};
         if (!node.params.stimulusDynamic) node.params.stimulusDynamic = {};
         const dynCb = document.getElementById('dyn-enabled');
-        if (dynCb) node.params.stimulusDynamic.active = dynCb.checked;
+        if (dynCb) node.params.stimulusDynamic.active = dynCb.checked === true;
 
         const v = (id) => document.getElementById(id);
         if (v('inp-name')) {
